@@ -1,0 +1,200 @@
+.
+├── assets
+│   ├── battery
+│   │   ├── full-battery.png
+│   │   ├── low-battery.png
+│   │   ├── plug.png
+│   │   ├── unplug2.png
+│   │   ├── unplug.png
+│   │   └── warning-battery.png
+│   ├── gitBlack.png
+│   ├── gitRed.png
+│   ├── loudspeaker.png
+│   ├── mail.png
+│   ├── megaphone_marketing_speaker_icon_231474.png
+│   ├── megaphone.png
+│   ├── megaphone.svg
+│   └── speaker
+│       ├── icons8-speaker-30-10.png
+│       ├── icons8-speaker-30-2.png
+│       ├── icons8-speaker-30-3.png
+│       ├── icons8-speaker-30-4.png
+│       ├── icons8-speaker-30-5.png
+│       ├── icons8-speaker-30-6.png
+│       ├── icons8-speaker-30-7.png
+│       ├── icons8-speaker-30-8.png
+│       ├── icons8-speaker-30-9.png
+│       ├── icons8-speaker-30.png
+│       ├── icons8-speaker-50-10.png
+│       ├── icons8-speaker-50-2.png
+│       ├── icons8-speaker-50-3.png
+│       ├── icons8-speaker-50-4.png
+│       ├── icons8-speaker-50-5.png
+│       ├── icons8-speaker-50-6.png
+│       ├── icons8-speaker-50-7.png
+│       ├── icons8-speaker-50-8.png
+│       ├── icons8-speaker-50-9.png
+│       └── icons8-speaker-50.png
+├── bar
+│   ├── ActiveWindow.qml
+│   ├── autoname-config.toml
+│   ├── Bar.qml
+│   ├── Battery.qml
+│   ├── Caffeine.qml
+│   ├── FollowBar.qml
+│   ├── Git.qml
+│   ├── MprisPopup.qml
+│   ├── Mpris.qml
+│   ├── mpv-shot0001.png
+│   ├── Netspeed.qml
+│   ├── Resources.qml
+│   ├── systemTray
+│   │   ├── Cpu.qml
+│   │   ├── Memory.qml
+│   │   └── SystemTray.qml
+│   ├── time
+│   │   ├── ClockPopup.qml
+│   │   ├── ClockWidget.qml
+│   │   └── game_ready.wav
+│   └── Workspaces.qml
+├── customItems
+│   ├── BarBlock.qml
+│   ├── BarText.qml
+│   ├── ClippedProgressBar.qml
+│   ├── CpuBlock.qml
+│   ├── CpuStat.qml
+│   ├── CpuUsage.qml
+│   ├── DiskBlock.qml
+│   ├── GpuBlock.qml
+│   ├── MaterialSymbol.qml
+│   ├── MemoryBlock.qml
+│   ├── MonitorBlock.qml
+│   ├── PipewireBlock.qml
+│   ├── Separator.qml
+│   ├── StyledText.qml
+│   └── WrapperBarBlock.qml
+├── DateToday.qml
+├── extra-icons
+│   ├── icons.nix
+│   ├── raster
+│   │   ├── battlenet.png
+│   │   ├── calendar.png
+│   │   ├── cpu.png
+│   │   ├── dna.png
+│   │   ├── dolphin.png
+│   │   ├── Dota.png
+│   │   ├── firefox_flat.png
+│   │   ├── folder.png
+│   │   ├── freetube.png
+│   │   ├── gamepad2.png
+│   │   ├── gimp.png
+│   │   ├── gnu.png
+│   │   ├── ironman.png
+│   │   ├── mpv2.png
+│   │   ├── mpv3.png
+│   │   ├── mpv.png
+│   │   ├── org.png
+│   │   ├── proc2.png
+│   │   ├── proc3.png
+│   │   ├── proc4.png
+│   │   ├── proc5.png
+│   │   ├── proc6.png
+│   │   ├── proc7.png
+│   │   ├── proc8.png
+│   │   ├── proc.png
+│   │   ├── qbittorrent.png
+│   │   ├── qml.png
+│   │   ├── ram.png
+│   │   ├── speaker2.png
+│   │   ├── speaker4.png
+│   │   ├── speaker5.png
+│   │   ├── speaker.png
+│   │   ├── ssd.png
+│   │   ├── steam_blue.png
+│   │   ├── sys5.png
+│   │   ├── sys6.png
+│   │   ├── system.png
+│   │   ├── terminal10.png
+│   │   ├── vim.png
+│   │   ├── wozzap2.png
+│   │   ├── wps-office.png
+│   │   ├── wps-presentation.png
+│   │   └── wps-spreadsheet.png
+│   ├── result -> /nix/store/s6brfp5lmqzrz1lp7ipzwzin94iand8h-extra-icons-0.0.1
+│   └── vector
+│       ├── firefox-reality.svg
+│       ├── NIXOS.svg
+│       ├── pdf.svg
+│       ├── qutebrowser.svg
+│       ├── youtube-music.svg
+│       └── youtube.svg
+├── IpcHandler.qml
+├── marqueeEffectSongs.qml
+├── notBar
+│   ├── ListView
+│   ├── misc
+│   │   └── Activate.qml
+│   ├── MixerEntry.qml
+│   ├── Mixer.qml
+│   ├── NotificationBox.qml
+│   ├── NotificationOverlay.qml
+│   ├── rofi
+│   │   ├── appLauncher
+│   │   │   ├── AppLauncher.qml
+│   │   │   ├── soramanew
+│   │   │   │   └── Background.qml
+│   │   │   └── TextLauncherDelegate.qml
+│   │   ├── clipHist
+│   │   │   ├── ClipHist.qml
+│   │   │   └── TextClipHistDelegate.qml
+│   │   ├── HighlightItem.qml
+│   │   ├── LauncherDelegate.qml
+│   │   ├── openWindows
+│   │   │   ├── DelegateText.qml
+│   │   │   ├── LauncherData.qml
+│   │   │   └── OpenWindows.qml
+│   │   ├── Rofi.qml
+│   │   └── TopLevelText.qml
+│   ├── Volume.qml
+│   └── wlogout
+│       ├── icons
+│       │   ├── hibernate.png
+│       │   ├── lock.png
+│       │   ├── logout.png
+│       │   ├── reboot.png
+│       │   ├── shutdown.png
+│       │   └── suspend.png
+│       ├── LogoutButton.qml
+│       ├── shell.qml
+│       └── WLogout.qml
+├── RandomQuote.qml
+├── scripts
+│   ├── cpuStat
+│   ├── cpuStat.c
+│   ├── cpuStat.sh
+│   └── cpuTemp.sh
+├── services
+│   ├── ActiveWindowState.qml
+│   ├── BarState.qml
+│   ├── BatteryState.qml
+│   ├── CaffeineService.qml
+│   ├── gptMemInfo.qml
+│   ├── HyprlandService.qml
+│   ├── MiscState.qml
+│   ├── Monitors.qml
+│   ├── MprisState.qml
+│   ├── Network.qml
+│   ├── NetworkState.qml
+│   ├── NotificationState.qml
+│   ├── PipewireState.qml
+│   ├── ResourcesState.qml
+│   ├── RofiState.qml
+│   ├── TimeService.qml
+│   └── WorkspaceService.qml
+├── shell.qml
+├── themes
+│   ├── Fonts.qml
+│   └── Themes.qml
+└── wl-copy
+
+24 directories, 174 files
