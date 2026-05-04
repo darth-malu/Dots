@@ -14,7 +14,6 @@ Text {
         }
     }
     color: Themes.windowTextColor
-    leftPadding: 15
     font: Themes.windowTextFont
     renderType: Text.NativeRendering
     elide: Text.ElideRight

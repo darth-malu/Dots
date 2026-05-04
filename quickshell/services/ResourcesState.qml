@@ -43,9 +43,11 @@ Singleton {
     }
 
     Timer {
+        id: cpuUsage
         interval: 2000
         running: true
         repeat: true
+        triggeredOnStart: true
         onTriggered: {
             cpuUsageFile.reload();
             root.processCpuData(cpuUsageFile.text());
@@ -141,15 +143,18 @@ Singleton {
         interval: 2000
         running: true
         repeat: true
+        /* triggeredOnStart: true */
         onTriggered: () => {
             process_cpu_temp.running = true;
         }
     }
 
     Timer {
+        id: diskTimer
         interval: 10000
         running: true
         repeat: true
+        triggeredOnStart: true
         onTriggered: () => {
             disk_usage.running = true;
         }

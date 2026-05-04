@@ -62,8 +62,10 @@ ShellRoot {
                     spacing: 0.4
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignLeft
-                    Workspaces {}
-                    ActiveWindow {}
+                    // Workspaces {}
+                    ActiveWindow {
+                        // leftPadding: 15
+                    }
                 }
 
                 Mpris {
