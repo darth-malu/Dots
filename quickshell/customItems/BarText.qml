@@ -1,5 +1,7 @@
 import QtQuick
-import Qt5Compat.GraphicalEffects
+import QtQuick.Effects
+
+// import Qt5Compat.GraphicalEffects
 
 Text {
     id: root
@@ -16,6 +18,7 @@ Text {
     color: dim ? "grey" : baseColor
     text: wrapSymbols(symbolText)
     renderType: this.renderNative ?? Text.NativeRendering
+    // renderType: Text.QtRendering
     textFormat: Text.RichText //PlainText, RichText
     leftPadding: root.paddingg
     rightPadding: root.paddingg
@@ -38,13 +41,35 @@ Text {
         rightPadding: root.rightPadding
     }
 
-    DropShadow {
-        visible: textcopy.visible
-        anchors.fill: parent
-        horizontalOffset: 1
-        verticalOffset: 1
-        color: "#000000"
+    // DropShadow {
+    //     visible: textcopy.visible
+    //     anchors.fill: parent
+    //     horizontalOffset: 1
+    //     verticalOffset: 1
+    //     color: "#000000"
+    //     source: textcopy
+    // }
+
+    MultiEffect {
+        id: dropShadow
         source: textcopy
+        anchors.fill: textcopy
+        visible: textcopy.text !== ""
+        // visible: false
+
+        // Shadow Properties
+        shadowEnabled: true
+        // shadowColor: "#000000"
+        shadowHorizontalOffset: 1
+        shadowVerticalOffset: 1
+
+        // MultiEffect shadow is "blurred" by default.
+        // For a sharp 1px offset shadow like the old DropShadow:
+        shadowBlur: 0.0
+
+        // Optional: If you want the original text to show UPON the shadow:
+        // MultiEffect can render the source AND the shadow together.
+        autoPaddingEnabled: true
     }
 
     function wrapSymbols(text) {

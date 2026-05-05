@@ -1,5 +1,5 @@
 import qs.themes
-import QtMultimedia
+// import QtMultimedia
 import QtQuick
 import qs.customItems
 import qs.services
@@ -18,16 +18,16 @@ BarBlock {
     // anchors.verticalCenter: parent.verticalCenter
 
     // hoverEnabled: true
-    SoundEffect {
-        id: beep
-        source: Qt.resolvedUrl("game_ready.wav")
-    }
+    // SoundEffect {
+    //     id: beep
+    //     source: Qt.resolvedUrl("game_ready.wav")
+    // }
 
     onClicked: mouse => {
         // mouse.accepted = true;
         if (mouse.button === Qt.LeftButton) {
             ResourcesState.resourcesVisible = !ResourcesState.resourcesVisible;
-            beep.play();
+            // beep.play();
         } else if (mouse.button === Qt.RightButton)
             NetworkState.netspeedVisible = !NetworkState.netspeedVisible;
         else if (mouse.button === Qt.MiddleButton)

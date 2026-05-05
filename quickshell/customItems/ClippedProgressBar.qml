@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 
-import Qt5Compat.GraphicalEffects
+// import Qt5Compat.GraphicalEffects
 
 ProgressBar {
     id: root
@@ -56,22 +56,22 @@ ProgressBar {
     False: As * (1 - Am).
     */
 
-    OpacityMask {
-        id: roundingMask
-        visible: false
-        anchors.fill: parent
-        source: contentItem
-        maskSource: Rectangle {
-            width: contentItem.width
-            height: contentItem.height
-            radius: contentItem.radius
-        }
-    }
+    // OpacityMask {
+    //     id: roundingMask
+    //     visible: false
+    //     anchors.fill: parent
+    //     source: contentItem
+    //     maskSource: Rectangle {
+    //         width: contentItem.width
+    //         height: contentItem.height
+    //         radius: contentItem.radius
+    //     }
+    // }
 
-    OpacityMask {
-        anchors.fill: parent
-        source: roundingMask
-        invert: true
-        maskSource: root.textMask
-    }
+    // OpacityMask {
+    //     anchors.fill: parent
+    //     source: roundingMask
+    //     invert: true
+    //     maskSource: root.textMask
+    // }
 }
