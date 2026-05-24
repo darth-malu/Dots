@@ -60,12 +60,13 @@ Text {
         // Shadow Properties
         shadowEnabled: true
         // shadowColor: "#000000"
+        // shadowColor: "#000000"
         shadowHorizontalOffset: 1
         shadowVerticalOffset: 1
 
         // MultiEffect shadow is "blurred" by default.
         // For a sharp 1px offset shadow like the old DropShadow:
-        shadowBlur: 0.0
+        shadowBlur: 0.5
 
         // Optional: If you want the original text to show UPON the shadow:
         // MultiEffect can render the source AND the shadow together.

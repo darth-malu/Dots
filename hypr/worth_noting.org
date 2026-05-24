@@ -1,0 +1,5 @@
+#+title: Worth Noting
+
+* Exec_cmd vs Exec_raw
+Exec_cmd will do bash -c exec_raw will not
+
