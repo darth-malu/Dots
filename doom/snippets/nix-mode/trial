@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: trial
+# key: <dd
+# --
+
+if ${1:variable} then ${1} of ${0}

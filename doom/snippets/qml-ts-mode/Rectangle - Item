@@ -1,0 +1,11 @@
+# -*- mode: snippet -*-
+# name: Rectangle - Item
+# key: -rect
+# --
+
+Rectangle {
+    implicitHeight: $1
+    implicitWidth: $2
+    color: '$3'
+    $0
+}

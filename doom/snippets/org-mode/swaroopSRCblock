@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: swaroop tangel
+# key: cHp
+# --
+
+#+begin_src python :tangle ~/CODE/prac/swaroopch/$1
+$2
+#+end_src
+$0

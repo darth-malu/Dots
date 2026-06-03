@@ -1,0 +1,8 @@
+# key: useP
+# name: use-packageDarth
+# --
+(use-package ${1:MELPA}
+  :ensure t
+  :config
+  ${2:Executes after ensure,init})
+  $0

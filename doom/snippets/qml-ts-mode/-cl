@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: console log toggle @darth
+# uuid: 
+# key: -cl
+# condition: t
+# --
+
+console.log($0)
