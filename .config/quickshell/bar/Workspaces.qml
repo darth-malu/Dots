@@ -5,8 +5,7 @@ import Quickshell.Hyprland
 import QtQuick.Layouts
 import Quickshell.Widgets
 import Quickshell
-
-// import Qt5Compat.GraphicalEffects
+import Qt5Compat.GraphicalEffects
 
 RowLayout {
     spacing: 3
@@ -175,15 +174,15 @@ RowLayout {
                                     opacity: ws.active ? 1 : 0.7
                                     // mipmap: true
                                 }
-                                // DropShadow {
-                                //     anchors.fill: parent
-                                //     verticalOffset: 1
-                                //     horizontalOffset: 1
-                                //     radius: 8.0
-                                //     color: Themes.dropShadow
-                                //     source: inside
-                                //     opacity: ws.active ? 1 : 0.2
-                                // }
+                                DropShadow {
+                                    anchors.fill: parent
+                                    verticalOffset: 1
+                                    horizontalOffset: 1
+                                    radius: 8.0
+                                    color: Themes.dropShadow
+                                    source: inside
+                                    opacity: ws.active ? 1 : 0.2
+                                }
                                 Rectangle {
                                     // TODO see if changes needed here
                                     visible: ws.mult > 1
