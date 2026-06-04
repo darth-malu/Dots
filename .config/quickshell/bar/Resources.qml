@@ -6,6 +6,8 @@ import qs.services
 Loader {
     id: resourceLoader
 
+    required property var host
+
     active: ResourcesState.resourcesVisible
 
     visible: active
@@ -14,7 +16,7 @@ Loader {
         id: resourcesRow
 
         PipewireBlock {}
-        DiskBlock {}
+        DiskBlock { host: resourceLoader.host }
         MemoryBlock {}
         CpuBlock {}
     }

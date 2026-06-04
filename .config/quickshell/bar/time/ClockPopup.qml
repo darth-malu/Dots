@@ -6,7 +6,10 @@ import qs.services
 import qs.customItems
 
 ColumnLayout {
+    id: root
     spacing: 3
+
+    signal dayClicked(int day)
 
     BarText {
         font: Themes.quicksand
@@ -36,43 +39,40 @@ ColumnLayout {
         year: TimeService.currentDate.getFullYear()
 
         delegate: Item {
-            implicitWidth: childrenRect.width
-            implicitHeight: childrenRect.height
-            // The Purple Circle
+            implicitWidth: 28
+            implicitHeight: 28
+
             Rectangle {
                 id: todayCircle
                 anchors.centerIn: parent
-                width: 24  // Adjust size to fit your grid
+                width: 24
                 height: 24
-                radius: width / 2 // Makes it a perfect circle
-
-                // Only show if it's today
+                radius: width / 2
                 visible: model.today
-
-                // Purple color - using a slightly transparent version of your border color
                 color: "black"
-                opacity: 0.4  // Makes it a soft glow/background
-
-                // Optional: Add a solid border to the circle
+                opacity: 0.4
                 border.width: 1
                 border.color: 'fuchsia'
             }
 
             Text {
                 anchors.centerIn: parent
-                // horizontalAlignment: Text.AlignHCenter
-                // verticalAlignment: Text.AlignVCenter
                 text: model.day
                 font: Themes.quicksand
-                // Logic for text color
                 color: {
                     if (model.today)
                         return Themes.calendarDayRow;
-
                     if (model.month === grid.month)
                         return "#b19cd9";
                     return "#4a3f5d";
                 }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.dayClicked(model.day)
             }
         }
     }

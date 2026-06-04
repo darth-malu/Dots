@@ -26,6 +26,7 @@ Singleton {
     property string memUsed
     // property string darth_pool
     property string btrfsDevice
+    property string mediaDisks: ""
     property bool resourcesVisible: false
 
     FileView {
@@ -140,13 +141,15 @@ Singleton {
         }
     }
 
-    Timer {
-        interval: 2000
-        running: true
-        repeat: true
-        /* triggeredOnStart: true */
-        onTriggered: () => {
-            process_cpu_temp.running = true;
+    Process {
+        id: mediaCheck
+        running: false
+        command: ["sh", "-c", "findmnt -n -l -o TARGET,AVAIL,SIZE --raw 2>/dev/null | grep '^/media/' || true"]
+        stdout: SplitParser {
+            onRead: data => {
+                if (data.length > 0)
+                    mediaDisks += data + "\n"
+            }
         }
     }
 
@@ -157,7 +160,19 @@ Singleton {
         repeat: true
         triggeredOnStart: true
         onTriggered: () => {
+            mediaDisks = "";
+            mediaCheck.running = true;
             disk_usage.running = true;
+        }
+    }
+
+    Timer {
+        interval: 2000
+        running: true
+        repeat: true
+        /* triggeredOnStart: true */
+        onTriggered: () => {
+            process_cpu_temp.running = true;
         }
     }
 }

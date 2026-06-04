@@ -80,7 +80,7 @@ ShellRoot {
                     spacing: 7 //10, 0.4::
 
                     Netspeed {}
-                    Resources {}
+                    Resources { host: barr }
                     ClockWidget {
                         host: barr
                     }

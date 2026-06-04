@@ -15,6 +15,12 @@ BarBlock {
         return [...configDir, ...homeDir];
     }
 
+    // Bare repos: { alias, dir, workTree }
+    readonly property var bareGitLoc: [
+        { alias: "dots", dir: "/home/malu/.dots", workTree: "/home/malu" },
+        { alias: "studious", dir: "/home/malu/.studious", workTree: "/home/malu" }
+    ]
+
     property bool isDirty: false
 
     property bool isUntracked: false
@@ -46,23 +52,32 @@ BarBlock {
         gitButton.isRunning = true;
 
         gitButton.gitLoc.forEach(location => {
-            let checkCmd = `[ -n "$(git -C "${location}" status --porcelain)" ]`;
             let cleanPath = " " + location.split("/").pop();
-
             let iconDir = "/home/malu/.config/quickshell/assets";
             let icon = gitButton.isDirty ? `${iconDir}/gitRed.png` : `${iconDir}/gitBlack.png`;
 
-            let notifyCmd = `notify-send -i "${icon}" "Git" "Processing ${cleanPath}"`;
-
             if (arg === "commit") {
-                let commit = `${checkCmd} && git -C "${location}" add . && git -C "${location}" commit -m "++AutoCommit++" && notify-send -i "${icon}" "Git" "Commited ${cleanPath}" || true`;
-                Quickshell.execDetached(["sh", "-c", commit]);
-                // TODO add logic
+                let cmd = `git -C "${location}" add . && git -C "${location}" commit -m "++AutoCommit++" && notify-send -i "${icon}" "Git" "Commited ${cleanPath}" || true`;
+                Quickshell.execDetached(["sh", "-c", cmd]);
             } else if (arg === "push") {
-                let push = `git -C "${location}" push && notify-send -i "${icon}" "Git" "Pushed: ${cleanPath}" || true`;
-                Quickshell.execDetached(["sh", "-c", push]);
+                let cmd = `git -C "${location}" push && notify-send -i "${icon}" "Git" "Pushed: ${cleanPath}" || true`;
+                Quickshell.execDetached(["sh", "-c", cmd]);
             }
         });
+
+        gitButton.bareGitLoc.forEach(repo => {
+            let iconDir = "/home/malu/.config/quickshell/assets";
+            let icon = gitButton.isDirty ? `${iconDir}/gitRed.png` : `${iconDir}/gitBlack.png`;
+
+            if (arg === "commit") {
+                let cmd = `git --git-dir="${repo.dir}" --work-tree="${repo.workTree}" add . && git --git-dir="${repo.dir}" --work-tree="${repo.workTree}" commit -m "++AutoCommit++" && notify-send -i "${icon}" "Git" "Commited ${repo.alias}" || true`;
+                Quickshell.execDetached(["sh", "-c", cmd]);
+            } else if (arg === "push") {
+                let cmd = `git --git-dir="${repo.dir}" push && notify-send -i "${icon}" "Git" "Pushed: ${repo.alias}" || true`;
+                Quickshell.execDetached(["sh", "-c", cmd]);
+            }
+        });
+
         cooldownTimer.start();
     }
 
@@ -81,14 +96,17 @@ BarBlock {
 
     Process {
         id: gitStatusProcess
-        command: ["sh", "-c", gitButton.gitLoc.map(loc => `git -C "${loc}" status --porcelain`).join("; ")]
+        command: ["sh", "-c", (() => {
+            const regular = gitButton.gitLoc.map(loc => `git -C "${loc}" status --porcelain`);
+            const bare = gitButton.bareGitLoc.map(r => `git --git-dir="${r.dir}" --work-tree="${r.workTree}" status --porcelain`);
+            return [...regular, ...bare].join("; ");
+        })()]
         running: false
 
         stdout: SplitParser {
             onRead: data => {
                 data = data.trim();
-                // Quickshell.execDetached(["notify-send", data]);
-                if (data.trim().length > 0) {
+                if (data.length > 0) {
                     if (data.startsWith("?"))
                         gitButton.isUntracked = true;
                     else

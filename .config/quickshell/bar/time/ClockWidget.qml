@@ -63,7 +63,6 @@ BarBlock {
             id: popup
             visible: MiscState.showPopup
             color: 'transparent'
-            // closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
 
             anchor.window: root.host
             // anchor.rect.x: root.host.x - popup.width / 2 // TODO make this bound to clock only
@@ -89,6 +88,7 @@ BarBlock {
                 ClockPopup {
                     anchors.fill: parent
                     anchors.margins: 8
+                    onDayClicked: MiscState.showPopup = false
                 }
             }
         }
