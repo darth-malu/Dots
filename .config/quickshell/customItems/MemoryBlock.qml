@@ -7,18 +7,22 @@ BarBlock {
     id: memory
 
     property bool showPercent: false
-    property bool showDetail: false
+    property bool showSwap: false
 
     readonly property int memoryPercent: ResourcesState.memPercent
     readonly property string memoryDetail: `${ResourcesState.memUsed.toFixed(1)}G / ${ResourcesState.memTotal.toFixed(1)}G`
+    readonly property string swapInfo: ResourcesState.swapTotal > 0
+        ? `嗢${ResourcesState.swapUsed.toFixed(1)}G`
+        : ""
 
     readonly property color memoryColor: memoryPercent > 90 ? "#f38ba8" : memoryPercent > 80 ? "#f9e2af" : "#cba6f7"
+    readonly property color swapColor: ResourcesState.swapPercent > 80 ? "#f38ba8" : "#89dceb"
 
     onClicked: mouse => {
         if (mouse.button === Qt.LeftButton)
             showPercent = !showPercent;
         else if (mouse.button === Qt.RightButton)
-            showDetail = !showDetail;
+            showSwap = !showSwap;
     }
 
     content: RowLayout {
@@ -76,10 +80,10 @@ BarBlock {
         }
 
         BarText {
-            id: detailText
-            visible: memory.showDetail
-            symbolText: memory.memoryDetail
-            baseColor: memory.memoryColor
+            id: swapText
+            visible: memory.showSwap
+            symbolText: memory.swapInfo
+            baseColor: memory.swapColor
             pointSize: 11
         }
     }

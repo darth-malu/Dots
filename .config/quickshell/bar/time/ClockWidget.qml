@@ -82,14 +82,8 @@ BarBlock {
                 radius: 10
                 anchors.fill: parent
                 border.width: 1
-                border.color: "#45475a"
-
-                gradient: Gradient {
-                    orientation: Gradient.Vertical
-                    GradientStop { position: 0; color: Qt.rgba(0.78, 0.63, 0.96, 0.1) }
-                    GradientStop { position: 0.15; color: Qt.rgba(0.78, 0.63, 0.96, 0.03) }
-                    GradientStop { position: 1; color: "#1e1e2e" }
-                }
+                border.color: '#A020F0'
+                color: Qt.rgba(0.1, 0.04, 0.18, 0.7)
 
                 ClockPopup {
                     anchors.fill: parent

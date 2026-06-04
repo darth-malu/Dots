@@ -33,6 +33,7 @@ BarBlock {
         spacing: 6
 
         Item {
+            id: volBar
             implicitWidth: 48
             Layout.fillHeight: true
 
@@ -50,6 +51,21 @@ BarBlock {
                     color: root.volColor
                 }
             }
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: mouse => {
+                    if (Pipewire.defaultAudioSink?.audio)
+                        Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(mouse.x / width, 1));
+                }
+                onWheel: event => {
+                    if (!Pipewire.defaultAudioSink?.audio) return;
+                    let v = Pipewire.defaultAudioSink.audio.volume;
+                    v += event.angleDelta.y > 0 ? 0.05 : -0.05;
+                    Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(v, 1));
+                }
+            }
         }
 
         BarText {
@@ -64,11 +80,10 @@ BarBlock {
 
                 onWheel: event => {
                     if (!PipewireState.inputSink?.audio) return;
-                    const step = 4;
-                    let v = PipewireState.inputSink.audio.volume * 100;
-                    v += event.angleDelta.y > 0 ? step : -step;
-                    v = Math.max(0, Math.min(v, 100));
-                    Pipewire.defaultAudioSource.audio.volume = v / 100;
+                    let v = PipewireState.inputSink.audio.volume;
+                    v += event.angleDelta.y > 0 ? 0.05 : -0.05;
+                    v = Math.max(0, Math.min(v, 1));
+                    Pipewire.defaultAudioSource.audio.volume = v;
                 }
 
                 onClicked: mouse => {

@@ -25,10 +25,14 @@ Singleton {
     property int memPercent
     property real memTotal: 0
     property real memUsed: 0
+    property int swapPercent
+    property real swapTotal: 0
+    property real swapUsed: 0
     // property string darth_pool
     property string btrfsDevice
     property string mediaDisks: ""
     property string allDisks: ""
+    property string allDisksPending: ""
     property bool resourcesVisible: false
 
     FileView {
@@ -68,19 +72,32 @@ Singleton {
             return;
 
         let lines = rawText.split('\n');
-        let memTotalLine = lines[0];
-        let memAvailableLine = lines[2];
 
-        // split by spaces to get only the number
-        let memTotalKB = parseInt(memTotalLine.split(/\s+/)[1]);
-        let memAvailableKB = parseInt(memAvailableLine.split(/\s+/)[1]);
-
-        // calculate used ram - difference total - avail
+        // RAM
+        let memTotalKB = parseInt(lines[0].split(/\s+/)[1]);
+        let memAvailableKB = parseInt(lines[2].split(/\s+/)[1]);
         let used = memTotalKB - memAvailableKB;
         let percent = (used / memTotalKB) * 100;
         root.memPercent = Math.round(percent);
         root.memTotal = +(memTotalKB / 1024 / 1024).toFixed(1);
         root.memUsed = +(used / 1024 / 1024).toFixed(1);
+
+        // Swap
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i];
+            if (line.startsWith("SwapTotal:")) {
+                let swapTotalKB = parseInt(line.split(/\s+/)[1]) || 0;
+                root.swapTotal = +(swapTotalKB / 1024 / 1024).toFixed(1);
+                let swapFreeLine = lines[i + 1];
+                if (swapFreeLine && swapFreeLine.startsWith("SwapFree:")) {
+                    let swapFreeKB = parseInt(swapFreeLine.split(/\s+/)[1]) || 0;
+                    let swapUsedKB = swapTotalKB - swapFreeKB;
+                    root.swapUsed = +(swapUsedKB / 1024 / 1024).toFixed(1);
+                    root.swapPercent = swapTotalKB > 0 ? Math.round((swapUsedKB / swapTotalKB) * 100) : 0;
+                }
+                break;
+            }
+        }
     }
 
     function processCpuData(rawText) {
@@ -164,7 +181,7 @@ Singleton {
         running: false
         command: ["sh", "-c", "df -h -x tmpfs -x devtmpfs -x squashfs -x overlay --output=target,size,used,avail,pcent 2>/dev/null | tail -n +2"]
         stdout: SplitParser {
-            onRead: data => allDisks += data + "\n"
+            onRead: data => root.allDisksPending += data + "\n"
         }
     }
 
@@ -176,20 +193,24 @@ Singleton {
         triggeredOnStart: true
         onTriggered: () => {
             mediaDisks = "";
-            allDisks = "";
+            root.allDisksPending = "";
             mediaCheck.running = true;
             allDisksProcess.running = true;
             disk_usage.running = true;
+            diskSwapTimer.restart();
         }
     }
 
     Timer {
-        interval: 2000
-        running: true
-        repeat: true
-        /* triggeredOnStart: true */
+        id: diskSwapTimer
+        interval: 250
+        running: false
+        repeat: false
         onTriggered: () => {
-            process_cpu_temp.running = true;
+            if (root.allDisksPending.trim().length > 0)
+                root.allDisks = root.allDisksPending;
         }
     }
+
+
 }

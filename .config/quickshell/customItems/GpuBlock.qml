@@ -64,7 +64,7 @@ BarBlock {
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
                 ctx.font = `11px "Symbols Nerd Font Mono"`;
-                ctx.fillText("󰢩", cx, cy + 0.5);
+                ctx.fillText("", cx, cy + 0.5);
             }
         }
 
