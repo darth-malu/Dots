@@ -6,7 +6,7 @@ import Quickshell.Hyprland
 Singleton {
     property list<string> preferredMonitorOrder: ["DP-3", "HDMI-A-1", "eDP-1"]
     property var preferredMonitor: () => {
-        for (let mon in preferredMonitorOrder) {
+        for (let mon of preferredMonitorOrder) {
             if (Hyprland.monitors.find(m => m.name == mon))
                 return mon;
         }

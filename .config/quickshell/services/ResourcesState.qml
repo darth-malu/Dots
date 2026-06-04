@@ -57,6 +57,8 @@ Singleton {
             root.processCpuData(cpuUsageFile.text());
             memoryFile.reload();
             root.processMemoryData(memoryFile.text());
+            gpuBusyPercent.reload();
+            root.gpuPercent = parseInt(gpuBusyPercent.text()) || 0;
             process_cpu_temp.running = true;
         }
     }
@@ -160,7 +162,7 @@ Singleton {
     Process {
         id: allDisksProcess
         running: false
-        command: ["sh", "-c", "df -h -x tmpfs -x devtmpfs -x squashfs -x overlay --output=target,size,used,avail 2>/dev/null | tail -n +2"]
+        command: ["sh", "-c", "df -h -x tmpfs -x devtmpfs -x squashfs -x overlay --output=target,size,used,avail,pcent 2>/dev/null | tail -n +2"]
         stdout: SplitParser {
             onRead: data => allDisks += data + "\n"
         }

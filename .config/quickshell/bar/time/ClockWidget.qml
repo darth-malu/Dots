@@ -79,11 +79,17 @@ BarBlock {
             implicitHeight: 220
 
             Rectangle {
-                radius: 6
-                color: Qt.rgba(0.1, 0.04, 0.18, 0.7)
+                radius: 10
                 anchors.fill: parent
                 border.width: 1
-                border.color: '#A020F0'
+                border.color: "#45475a"
+
+                gradient: Gradient {
+                    orientation: Gradient.Vertical
+                    GradientStop { position: 0; color: Qt.rgba(0.78, 0.63, 0.96, 0.1) }
+                    GradientStop { position: 0.15; color: Qt.rgba(0.78, 0.63, 0.96, 0.03) }
+                    GradientStop { position: 1; color: "#1e1e2e" }
+                }
 
                 ClockPopup {
                     anchors.fill: parent

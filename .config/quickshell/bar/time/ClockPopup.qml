@@ -7,15 +7,67 @@ import qs.customItems
 
 ColumnLayout {
     id: root
-    spacing: 3
+    spacing: 6
 
     signal dayClicked(int day)
 
-    BarText {
-        font: Themes.quicksand
-        color: Themes.calendarHeader
-        Layout.alignment: Qt.AlignHCenter
-        text: Qt.formatDateTime(TimeService.currentDate, "MMMM yyyy")
+    property int displayMonth: TimeService.currentDate.getMonth()
+    property int displayYear: TimeService.currentDate.getFullYear()
+
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: 4
+
+        Text {
+            text: ""
+            color: Themes.calendarHeader
+            font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    if (root.displayMonth === 0) {
+                        root.displayMonth = 11;
+                        root.displayYear -= 1;
+                    } else {
+                        root.displayMonth -= 1;
+                    }
+                }
+            }
+        }
+
+        Item { Layout.fillWidth: true }
+
+        BarText {
+            Layout.alignment: Qt.AlignHCenter
+            font: Themes.quicksand
+            color: Themes.calendarHeader
+            text: Qt.formatDateTime(
+                new Date(root.displayYear, root.displayMonth, 1),
+                "MMMM yyyy"
+            )
+            pointSize: 13
+        }
+
+        Item { Layout.fillWidth: true }
+
+        Text {
+            text: ""
+            color: Themes.calendarHeader
+            font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    if (root.displayMonth === 11) {
+                        root.displayMonth = 0;
+                        root.displayYear += 1;
+                    } else {
+                        root.displayMonth += 1;
+                    }
+                }
+            }
+        }
     }
 
     DayOfWeekRow {
@@ -35,24 +87,20 @@ ColumnLayout {
         id: grid
         Layout.fillWidth: true
         Layout.fillHeight: true
-        month: TimeService.currentDate.getMonth()
-        year: TimeService.currentDate.getFullYear()
+        month: root.displayMonth
+        year: root.displayYear
 
         delegate: Item {
-            implicitWidth: 28
-            implicitHeight: 28
+            implicitWidth: 30
+            implicitHeight: 30
+
+            property bool hovered: false
 
             Rectangle {
-                id: todayCircle
-                anchors.centerIn: parent
-                width: 24
-                height: 24
-                radius: width / 2
-                visible: model.today
-                color: "black"
-                opacity: 0.4
-                border.width: 1
-                border.color: 'fuchsia'
+                anchors.fill: parent
+                radius: 6
+                color: model.today ? Themes.calendarToday : parent.hovered ? "#313244" : "transparent"
+                opacity: model.today ? 0.3 : parent.hovered ? 1 : 0
             }
 
             Text {
@@ -60,11 +108,9 @@ ColumnLayout {
                 text: model.day
                 font: Themes.quicksand
                 color: {
-                    if (model.today)
-                        return Themes.calendarDayRow;
-                    if (model.month === grid.month)
-                        return "#b19cd9";
-                    return "#4a3f5d";
+                    if (model.today) return Themes.calendarToday;
+                    if (model.month === grid.month) return Themes.calendarActiveMonth;
+                    return Themes.calendarInactiveMonth;
                 }
             }
 
@@ -72,6 +118,8 @@ ColumnLayout {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
+                onEntered: parent.hovered = true
+                onExited: parent.hovered = false
                 onClicked: root.dayClicked(model.day)
             }
         }

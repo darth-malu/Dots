@@ -25,6 +25,7 @@ Rectangle {
     property bool hoveredBg: true
 
     signal clicked(var mouse)
+    signal wheel(var event)
 
     property string hoveredBgColor: Qt.rgba(1, 1, 1, 0.15)//"#666666"
 
@@ -65,6 +66,7 @@ Rectangle {
         hoverEnabled: true
         acceptedButtons: Qt.RightButton | Qt.LeftButton | Qt.MiddleButton | Qt.ForwardButton | Qt.BackButton
         onClicked: mouse => root.clicked(mouse)
+        onWheel: event => root.wheel(event)
         // propagateComposedEvents: true
     }
 

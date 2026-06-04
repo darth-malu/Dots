@@ -46,7 +46,7 @@ Rectangle {
     bottomRightRadius: if (radiusSide == "right")
         height / 2
 
-    radius: radiusSide == "null" ?? 0
+    radius: radiusSide === "null" ? 0 : height / 2
 
     property string hoveredBgColor: "#666666"
 
@@ -87,7 +87,7 @@ Rectangle {
         id: mouseArea
         anchors.fill: root
         hoverEnabled: true
-        acceptedButtons: Qt.LeftButton | PointerDevice.Mouse | PointerDevice.TouchPad
+        acceptedButtons: Qt.LeftButton
         onClicked: root.clicked()
         // propagateComposedEvents: true
     }

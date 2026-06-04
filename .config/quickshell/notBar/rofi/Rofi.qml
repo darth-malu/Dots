@@ -84,7 +84,7 @@ PanelWindow {
                         } else if (event.key === Qt.Key_Down || (event.key === Qt.Key_J && event.modifiers & Qt.ControlModifier)) {
                             itemLauncher.incrementCurrentIndex();
                             event.accepted = true;
-                        } else if (event.key == Qt.ControlModifier && Qt.Key_Return) {
+                        } else if (event.key == Qt.Key_Return && event.modifiers & Qt.ControlModifier) {
                             //DELETE STUFF HERE
                         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                             let current = itemLauncher.currentItem;

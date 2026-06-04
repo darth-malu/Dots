@@ -8,13 +8,18 @@ BarBlock {
     border.width: 0
 
     property bool showPercent: false
+    property bool showTemp: false
 
     readonly property int cpuPercent: ResourcesState.cpuUsageString
+    readonly property real cpuTemp: ResourcesState.cpuTemp
 
     readonly property color cpuColor: cpuPercent > 80 ? "#ff5370" : cpuPercent > 60 ? "#ffcb6b" : "#82aaff"
 
-    onClicked: {
-        showPercent = !showPercent;
+    onClicked: mouse => {
+        if (mouse.button === Qt.LeftButton)
+            showPercent = !showPercent;
+        else if (mouse.button === Qt.RightButton)
+            showTemp = !showTemp;
     }
 
     content: RowLayout {
@@ -42,7 +47,7 @@ BarBlock {
 
                 ctx.beginPath();
                 ctx.arc(cx, cy, r, 0, Math.PI * 2);
-                ctx.strokeStyle = "#2a2a3a";
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.06)";
                 ctx.lineWidth = lw;
                 ctx.stroke();
 
@@ -66,7 +71,15 @@ BarBlock {
         BarText {
             id: percentText
             visible: cpu.showPercent
-            symbolText: `${cpu.cpuPercent}`
+            symbolText: `${cpu.cpuPercent}%`
+            baseColor: cpu.cpuColor
+            pointSize: 11
+        }
+
+        BarText {
+            id: tempText
+            visible: cpu.showTemp
+            symbolText: `${cpu.cpuTemp}°`
             baseColor: cpu.cpuColor
             pointSize: 11
         }

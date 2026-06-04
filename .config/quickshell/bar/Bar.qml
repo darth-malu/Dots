@@ -51,9 +51,9 @@ ShellRoot {
                     anchors.fill: parent
                     onWheel: wheel => {
                         if (wheel.angleDelta.y > 0) {
-                            Hyprland.dispatch("workspace m-1");
+                            Hyprland.dispatch('workspace "m-1"');
                         } else if (wheel.angleDelta.y < 0) {
-                            Hyprland.dispatch("workspace m+1");
+                            Hyprland.dispatch('workspace "m+1"');
                         }
                     }
                 }
@@ -86,9 +86,7 @@ ShellRoot {
                         host: barr
                     }
                     Git {}
-                    Battery {}
-                    NetworkBlock { host: barr }
-                    SystemMenu { host: barr }
+                    QuickSettings { host: barr }
                     SystemTray {}
                 }
             }

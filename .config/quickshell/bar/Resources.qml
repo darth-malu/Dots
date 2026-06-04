@@ -19,5 +19,6 @@ Loader {
         DiskBlock { host: resourceLoader.host }
         MemoryBlock {}
         CpuBlock {}
+        GpuBlock {}
     }
 }

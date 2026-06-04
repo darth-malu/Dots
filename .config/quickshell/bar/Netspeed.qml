@@ -12,14 +12,13 @@ Loader {
     sourceComponent: BarBlock {
         id: root
         implicitHeight: childrenRect.height
-        implicitWidth: childrenRect.width // Wraps rectangle around contents
+        implicitWidth: childrenRect.width
 
         color: 'transparent'
 
         property int refreshInterval: 1000
         property string iface
 
-        // DARTH props
         property real rxRate
         property real txRate
         property real rxPrev: 0
@@ -53,12 +52,10 @@ Loader {
                     if (data.startsWith(root.iface + ":")) {
                         const parts = data.split(/\s+/);
 
-                        // current values
                         let rx = parseInt(parts[1]);
                         let tx = parseInt(parts[9]);
 
                         if (root.rxPrev > 0) {
-                            // Calculate Mbps: (bytes * 8 bits) / 1,000,000 bits per Mb
                             root.rxRate = ((rx - root.rxPrev) * 8) / 1000000;
                             root.txRate = ((tx - root.txPrev) * 8) / 1000000;
                         }
@@ -81,20 +78,20 @@ Loader {
         }
 
         content: RowLayout {
-            // spacing: 5
+            spacing: 6
+
             BarText {
                 textFormat: Text.RichText
-                text: root.rxRate === 0 ? "-" : root.rxRate.toFixed(2)
-                // font.pixelSize: 11
-                // font.family: 'ZedMono Nerd Font'
-                color: "#57C4E5"
-                paddingg: 0
+                text: root.rxRate === 0 ? " -" : ` ${root.rxRate.toFixed(1)}`
+                color: "#89b4fa"
+                font { pixelSize: 10; family: "ZedMono Nerd Font" }
             }
+
             BarText {
                 textFormat: Text.RichText
-                text: root.txRate === 0 ? "-" : root.txRate.toFixed(2)
-                // font.pixelSize: 11
-                // font.family: 'ZedMono Nerd Font'
+                text: root.txRate === 0 ? " -" : ` ${root.txRate.toFixed(1)}`
+                color: "#f5a0d6"
+                font { pixelSize: 10; family: "ZedMono Nerd Font" }
             }
         }
     }
