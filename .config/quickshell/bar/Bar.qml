@@ -64,9 +64,7 @@ ShellRoot {
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignLeft
                     // Workspaces {}
-                    ActiveWindow {
-                        // leftPadding: 15
-                    }
+                    ActiveWindow {}
                 }
 
                 Mpris {
@@ -81,12 +79,16 @@ ShellRoot {
                     spacing: 7 //10, 0.4::
 
                     Netspeed {}
-                    Resources { host: barr }
+                    Resources {
+                        host: barr
+                    }
                     ClockWidget {
                         host: barr
                     }
-                    Git {}
-                    QuickSettings { host: barr }
+                    // Git {}
+                    QuickSettings {
+                        host: barr
+                    }
                     SystemTray {}
                 }
             }
