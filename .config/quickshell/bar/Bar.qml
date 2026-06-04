@@ -8,6 +8,7 @@ import Quickshell.Wayland
 import "./systemTray"
 import qs.themes
 import qs.services
+import qs.customItems
 
 ShellRoot {
     id: root
@@ -30,7 +31,7 @@ ShellRoot {
             aboveWindows: false // true::
             color: Themes.barBg
             // color: Qt.rgba(171 / 255, 141 / 255, 237 / 255, 0.15)
-            implicitHeight: 22//20
+            implicitHeight: 22
             margins {
                 right: 10
                 left: 6
@@ -86,6 +87,8 @@ ShellRoot {
                     }
                     Git {}
                     Battery {}
+                    NetworkBlock { host: barr }
+                    SystemMenu { host: barr }
                     SystemTray {}
                 }
             }

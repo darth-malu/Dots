@@ -8,6 +8,8 @@ BarBlock {
 
     required property var host
 
+    property bool showAllDisksPopup: false
+
     readonly property string diskUsage: ResourcesState.btrfsDevice
     readonly property color diskColor: {
         const match = diskUsage.match(/(\d+\.?\d*)/);
@@ -22,6 +24,12 @@ BarBlock {
         }
         return "grey";
     }
+
+    onClicked: mouse => {
+        if (mouse.button === Qt.LeftButton)
+            showAllDisksPopup = !showAllDisksPopup;
+    }
+
     content: BarText {
         id: textRow
         renderNative: true
@@ -41,12 +49,12 @@ BarBlock {
 
         anchor.window: disk.host
         anchor.rect.x: {
-            let globalPos = disk.mapToGlobal(0, 0);
-            return globalPos.x + (disk.width / 2) - (width / 2);
+            let g = disk.mapToGlobal(0, 0);
+            return g.x + (disk.width / 2) - (width / 2);
         }
         anchor.rect.y: {
-            let globalPos = disk.mapToGlobal(0, 0);
-            return globalPos.y - implicitHeight - 4;
+            let g = disk.mapToGlobal(0, 0);
+            return g.y - implicitHeight - 4;
         }
 
         implicitWidth: tooltipText.implicitWidth + 16
@@ -62,6 +70,41 @@ BarBlock {
                 id: tooltipText
                 anchors.centerIn: parent
                 text: ResourcesState.mediaDisks
+                color: "#cdd6f4"
+                font.pixelSize: 11
+                font.family: "ZedMono Nerd Font"
+            }
+        }
+    }
+
+    PopupWindow {
+        id: allDisksPopup
+        visible: disk.showAllDisksPopup
+        grabFocus: true
+
+        anchor.window: disk.host
+        anchor.rect.x: {
+            let g = disk.mapToGlobal(0, 0);
+            return g.x + (disk.width / 2) - (width / 2);
+        }
+        anchor.rect.y: {
+            let g = disk.mapToGlobal(0, 0);
+            return g.y - implicitHeight - 4;
+        }
+
+        implicitWidth: 320
+        implicitHeight: allDisksText.implicitHeight + 24
+
+        Rectangle {
+            anchors.fill: parent
+            radius: 6
+            color: "#1e1e2e"
+            border.color: "#45475a"
+
+            Text {
+                id: allDisksText
+                anchors.centerIn: parent
+                text: ResourcesState.allDisks
                 color: "#cdd6f4"
                 font.pixelSize: 11
                 font.family: "ZedMono Nerd Font"

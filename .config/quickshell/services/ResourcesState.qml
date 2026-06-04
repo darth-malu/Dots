@@ -23,10 +23,12 @@ Singleton {
     property real gpuTemp
 
     property int memPercent
-    property string memUsed
+    property real memTotal: 0
+    property real memUsed: 0
     // property string darth_pool
     property string btrfsDevice
     property string mediaDisks: ""
+    property string allDisks: ""
     property bool resourcesVisible: false
 
     FileView {
@@ -75,6 +77,8 @@ Singleton {
         let used = memTotalKB - memAvailableKB;
         let percent = (used / memTotalKB) * 100;
         root.memPercent = Math.round(percent);
+        root.memTotal = +(memTotalKB / 1024 / 1024).toFixed(1);
+        root.memUsed = +(used / 1024 / 1024).toFixed(1);
     }
 
     function processCpuData(rawText) {
@@ -153,6 +157,15 @@ Singleton {
         }
     }
 
+    Process {
+        id: allDisksProcess
+        running: false
+        command: ["sh", "-c", "df -h -x tmpfs -x devtmpfs -x squashfs -x overlay --output=target,size,used,avail 2>/dev/null | tail -n +2"]
+        stdout: SplitParser {
+            onRead: data => allDisks += data + "\n"
+        }
+    }
+
     Timer {
         id: diskTimer
         interval: 10000
@@ -161,7 +174,9 @@ Singleton {
         triggeredOnStart: true
         onTriggered: () => {
             mediaDisks = "";
+            allDisks = "";
             mediaCheck.running = true;
+            allDisksProcess.running = true;
             disk_usage.running = true;
         }
     }

@@ -1,76 +1,71 @@
 import QtQuick
+import QtQuick.Layouts
 import Quickshell.Services.Pipewire
 import qs.customItems
-import qs.themes
-import QtQuick.Layouts
 import qs.services
 
 BarBlock {
     id: root
     visible: PipewireState.pipewireReady
 
-    readonly property color volumeColor: "#ccccccff"
+    property bool showPercent: false
+
+    readonly property color volumeColor: "#82aaff"
 
     readonly property real volumePercent: parseFloat(PipewireState.outputVolume) || 0
 
     onClicked: mouse => {
         if (mouse.button == Qt.LeftButton)
-            NetworkState.netspeedVisible = !NetworkState.netspeedVisible;
+            showPercent = !showPercent;
         else if (mouse.button == Qt.RightButton)
             Pipewire.defaultAudioSink.audio.muted = !Pipewire.defaultAudioSink.audio.muted;
     }
 
     content: RowLayout {
-        spacing: 0
+        spacing: 4
 
-        Item {
-            Text {
-                id: sizeHelper
-                visible: false
-                text: ` ${PipewireState.outputVolume}`
-                font: Themes.zedMono
-            }
+        Canvas {
+            id: volGauge
 
-            implicitWidth: sizeHelper.implicitWidth + sizeHelper.implicitHeight + 4
-            implicitHeight: sizeHelper.implicitHeight
+            readonly property real progress: root.volumePercent / 100
+            readonly property bool isMuted: PipewireState.outputSink?.audio?.muted ?? false
 
-            Canvas {
-                anchors.fill: parent
+            implicitWidth: 22
+            implicitHeight: 22
 
-                readonly property real progress: root.volumePercent / 100
-                onProgressChanged: requestPaint()
+            onProgressChanged: requestPaint()
+            onIsMutedChanged: requestPaint()
 
-                onPaint: {
-                    var ctx = getContext("2d");
-                    ctx.clearRect(0, 0, width, height);
+            onPaint: {
+                var ctx = getContext("2d");
+                ctx.clearRect(0, 0, width, height);
 
-                    var ringSize = height;
-                    var cx = ringSize / 2;
-                    var cy = ringSize / 2;
-                    var r = ringSize / 2 - 1.5;
-                    var lw = 2;
+                var cx = width / 2;
+                var cy = height / 2;
+                var r = cx - 2;
+                var lw = 3;
+                var startAngle = -Math.PI / 2;
 
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                ctx.strokeStyle = "#2a2a3a";
+                ctx.lineWidth = lw;
+                ctx.stroke();
+
+                if (progress > 0) {
                     ctx.beginPath();
-                    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-                    ctx.strokeStyle = "#333";
+                    ctx.arc(cx, cy, r, startAngle, startAngle + Math.PI * 2 * Math.min(progress, 0.999));
+                    ctx.strokeStyle = isMuted ? "#54546b" : root.volumeColor;
                     ctx.lineWidth = lw;
+                    ctx.lineCap = "round";
                     ctx.stroke();
-
-                    if (progress > 0) {
-                        ctx.beginPath();
-                        ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(progress, 1));
-                        ctx.strokeStyle = root.volumeColor;
-                        ctx.lineWidth = lw;
-                        ctx.lineCap = "round";
-                        ctx.stroke();
-                    }
-
-                    ctx.fillStyle = root.volumeColor;
-                    ctx.font = `bold 12px "${Themes.zedMono.family}", "Symbols Nerd Font Mono"`;
-                    ctx.textAlign = "left";
-                    ctx.textBaseline = "middle";
-                    ctx.fillText(` ${PipewireState.outputVolume}`, ringSize + 3, height / 2);
                 }
+
+                ctx.fillStyle = isMuted ? "#54546b" : root.volumeColor;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.font = `11px "Symbols Nerd Font Mono"`;
+                ctx.fillText(isMuted ? "" : "", cx, cy + 0.5);
             }
 
             MouseArea {
@@ -90,12 +85,19 @@ BarBlock {
         }
 
         BarText {
+            id: volumeText
+            visible: root.showPercent
+            symbolText: `${PipewireState.outputVolume}`
+            baseColor: root.volumeColor
+            pointSize: 11
+        }
+
+        BarText {
             id: inputSink
             symbolText: `🎙️ ${PipewireState.inputVolume} `
-            color: root.volumeColor
+            baseColor: root.volumeColor
             visible: PipewireState.isCrusherWireless
             renderNative: true
-            font: Themes.quicksand
 
             MouseArea {
                 anchors.fill: parent
@@ -113,7 +115,7 @@ BarBlock {
 
                 onClicked: mouse => {
                     if (mouse.button == Qt.LeftButton)
-                        NetworkState.netspeedVisible = !NetworkState.netspeedVisible;
+                        root.showPercent = !root.showPercent;
                     else if (mouse.button == Qt.RightButton)
                         Pipewire.defaultAudioSource.audio.muted = !Pipewire.defaultAudioSource.audio.muted;
                 }
