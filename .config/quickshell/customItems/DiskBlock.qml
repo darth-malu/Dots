@@ -5,7 +5,7 @@ BarBlock {
     id: disk
     underline: false
 
-    readonly property string diskUsage: ResourcesState.darth_pool
+    readonly property string diskUsage: ResourcesState.btrfsDevice
     readonly property color diskColor: {
         const match = diskUsage.match(/(\d+\.?\d*)/); // returns list...get first match...number only eg 37.8
         if (match) {

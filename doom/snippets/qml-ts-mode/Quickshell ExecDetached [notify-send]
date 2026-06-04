@@ -1,6 +1,0 @@
-# -*- mode: snippet -*-
-# name: Quickshell ExecDetached Notify Send
-# key: -qen          
-# --
-
-Quickshell.execDetached(["notify-send", "$0"]);

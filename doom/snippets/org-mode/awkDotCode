@@ -1,8 +1,0 @@
-# -*- mode: snippet -*-
-# name: awkDotCode
-# key: awk-
-# --
-
-#+begin_src awk :tangle ~/.code/awk/$1
-$0
-#+end_src

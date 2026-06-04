@@ -24,7 +24,8 @@ Singleton {
 
     property int memPercent
     property string memUsed
-    property string darth_pool
+    // property string darth_pool
+    property string btrfsDevice
     property bool resourcesVisible: false
 
     FileView {
@@ -133,9 +134,9 @@ Singleton {
         id: disk_usage
         // TODO: notification on lowIdsk - persistent properties
         running: false
-        command: ["sh", "-c", "(zfs get -H -o value avail darthPool 2>/dev/null) || (zfs get -H -o value avail darth-pool 2>/dev/null)"]
+        command: ["sh", "-c", "findmnt -n -o AVAIL /"]
         stdout: SplitParser {
-            onRead: data => darth_pool = data
+            onRead: data => btrfsDevice = data
         }
     }
 

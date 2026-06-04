@@ -1,6 +1,0 @@
-# -*- mode: snippet -*-
-# name: systemctlIns
-# key: <sys
-# --
-
-systemctl ${1: stuff here} ${0}
