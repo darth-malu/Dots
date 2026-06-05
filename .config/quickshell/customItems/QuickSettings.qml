@@ -115,17 +115,17 @@ BarBlock {
     }
 
     content: Rectangle {
-        implicitWidth: 20
-        implicitHeight: 20
-        radius: 4
-        color: mouseArea.containsMouse ? Qt.lighter("#7cba7c", 1.2) : "#7cba7c"
+        implicitWidth: 24
+        implicitHeight: 24
+        radius: 6
+        color: mouseArea.containsMouse ? Qt.lighter("#cba6f7", 1.3) : Qt.rgba(0.78, 0.60, 0.86, 0.25)
 
         Text {
             anchors.centerIn: parent
-            text: ""
-            color: "#1e1e2e"
+            text: ""
+            color: "#cba6f7"
             font {
-                pixelSize: 12
+                pixelSize: 14
                 family: "Symbols Nerd Font Mono"
             }
         }
@@ -169,8 +169,8 @@ BarBlock {
                 // ═══ HEADER ═══
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 48
-                    color: Qt.rgba(0.49, 0.73, 0.44, 0.08)
+                    implicitHeight: 52
+                    color: Qt.rgba(0.78, 0.60, 0.86, 0.07)
 
                     RowLayout {
                         anchors {
@@ -181,19 +181,14 @@ BarBlock {
                         spacing: 10
 
                         Rectangle {
-                            implicitWidth: 28
-                            implicitHeight: 28
-                            radius: 6
-                            color: "#7cba7c"
+                            implicitWidth: 30; implicitHeight: 30; radius: 8
+                            color: Qt.rgba(0.78, 0.60, 0.86, 0.18)
 
                             Text {
                                 anchors.centerIn: parent
-                                text: ""
-                                color: "#1e1e2e"
-                                font {
-                                    pixelSize: 16
-                                    family: "Symbols Nerd Font Mono"
-                                }
+                                text: ""
+                                color: "#cba6f7"
+                                font { pixelSize: 16; family: "Symbols Nerd Font Mono" }
                             }
                         }
 
@@ -202,19 +197,12 @@ BarBlock {
                             Text {
                                 text: root.hostName
                                 color: "#cdd6f4"
-                                font {
-                                    pixelSize: 13
-                                    bold: true
-                                    family: "Quicksand"
-                                }
+                                font { pixelSize: 13; bold: true; family: "Quicksand" }
                             }
                             Text {
                                 text: root.ipAddr.length > 0 ? root.ipAddr : (root.isOnline ? "connected" : "offline")
-                                color: root.isOnline ? Themes.toxicGreen : "#585b70"
-                                font {
-                                    pixelSize: 10
-                                    family: "ZedMono Nerd Font"
-                                }
+                                color: root.isOnline ? "#89b4fa" : "#585b70"
+                                font { pixelSize: 10; family: "ZedMono Nerd Font" }
                             }
                         }
                     }
@@ -226,11 +214,8 @@ BarBlock {
                             rightMargin: 14
                         }
                         text: root.isOnline ? "" : ""
-                        color: root.isOnline ? Themes.toxicGreen : "#585b70"
-                        font {
-                            pixelSize: 16
-                            family: "Symbols Nerd Font Mono"
-                        }
+                        color: root.isOnline ? "#89b4fa" : "#585b70"
+                        font { pixelSize: 16; family: "Symbols Nerd Font Mono" }
                     }
                 }
 
@@ -257,7 +242,7 @@ BarBlock {
                         Card {
                             title: "Now Playing"
                             icon: ""
-                            accent: Themes.mprisVolumeColor
+                            accent: "#f5c2e7"
                             visible: MprisState.player !== null
 
                             RowLayout {
@@ -265,9 +250,7 @@ BarBlock {
                                 Layout.fillWidth: true
 
                                 Rectangle {
-                                    implicitWidth: 44
-                                    implicitHeight: 44
-                                    radius: 8
+                                    implicitWidth: 44; implicitHeight: 44; radius: 10
                                     color: "#313244"
 
                                     Image {
@@ -277,6 +260,12 @@ BarBlock {
                                         fillMode: Image.PreserveAspectCrop
                                         asynchronous: true
                                         visible: status === Image.Ready
+                                    }
+
+                                    Rectangle {
+                                        anchors.fill: parent; radius: 10
+                                        color: "transparent"
+                                        border { width: 2; color: Qt.rgba(0.96, 0.76, 0.91, 0.4) }
                                     }
 
                                     Text {
@@ -295,7 +284,7 @@ BarBlock {
                                     Text {
                                         Layout.fillWidth: true
                                         text: MprisState.player?.trackTitle || "No track"
-                                        color: Themes.mprisTextColor
+                                        color: "#f5c2e7"
                                         font { pixelSize: 12; bold: true; family: "Quicksand" }
                                         elide: Text.ElideRight
                                     }
@@ -312,20 +301,20 @@ BarBlock {
                                 RowLayout {
                                     spacing: 4
 
-                                    TrackButton { text: ""; onClicked: MprisState.player?.previous() }
+                                    TrackButton { text: ""; bgColor: "#45475a"; textColor: "#f5c2e7"; onClicked: MprisState.player?.previous() }
                                     TrackButton {
                                         text: MprisState.player?.isPlaying ? "" : ""
-                                        bgColor: Themes.toxicGreen
+                                        bgColor: "#f5c2e7"
                                         textColor: "#1e1e2e"
                                         onClicked: MprisState.player?.togglePlaying()
                                     }
-                                    TrackButton { text: ""; onClicked: MprisState.player?.next() }
+                                    TrackButton { text: ""; bgColor: "#45475a"; textColor: "#f5c2e7"; onClicked: MprisState.player?.next() }
                                 }
                             }
 
                             Flow {
                                 Layout.fillWidth: true
-                                Layout.topMargin: 4
+                                Layout.topMargin: 6
                                 spacing: 4
 
                                 Repeater {
@@ -333,10 +322,10 @@ BarBlock {
 
                                     Rectangle {
                                         required property var modelData
-                                        implicitWidth: chipText.implicitWidth + 12
-                                        implicitHeight: 18
+                                        implicitWidth: chipText.implicitWidth + 14
+                                        implicitHeight: 20
                                         radius: height / 2
-                                        color: modelData === MprisState.player ? Themes.mprisIndicatorColor : "#313244"
+                                        color: modelData === MprisState.player ? "#f5c2e7" : "#313244"
 
                                         Text {
                                             id: chipText
@@ -526,12 +515,6 @@ BarBlock {
                                     Layout.fillWidth: true
 
                                     Text {
-                                        text: Pipewire.defaultAudioSink?.audio?.muted ? "" : ""
-                                        color: Pipewire.defaultAudioSink?.audio?.muted ? "#585b70" : "#c6a0f6"
-                                        font { pixelSize: 18; family: "Symbols Nerd Font Mono" }
-                                    }
-
-                                    Text {
                                         text: Pipewire.ready ? Math.floor((Pipewire.defaultAudioSink?.audio?.volume ?? 0) * 100) + "%" : ""
                                         color: "#cdd6f4"
                                         font { pixelSize: 14; bold: true; family: "ZedMono Nerd Font" }
@@ -544,18 +527,21 @@ BarBlock {
                                         color: "#585b70"
                                         font { pixelSize: 9; family: "ZedMono Nerd Font" }
                                         elide: Text.ElideRight
+                                        Layout.maximumWidth: 120
                                     }
                                 }
 
                                 Item {
                                     Layout.fillWidth: true
+                                    Layout.leftMargin: 12
+                                    Layout.rightMargin: 12
                                     implicitHeight: 20
 
                                     Slider {
                                         id: volSlider
                                         anchors.fill: parent
-                                        anchors.leftMargin: 2
-                                        anchors.rightMargin: 2
+                                        leftPadding: 4
+                                        rightPadding: 4
                                         from: 0; to: 1; stepSize: 0.01
                                         value: Pipewire.defaultAudioSink?.audio?.volume ?? 0
                                         live: true
