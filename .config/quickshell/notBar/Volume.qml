@@ -12,6 +12,15 @@ Scope {
     property var ifAudioNode: defaultSink?.audio
     property bool isMuted: ifAudioNode?.muted ?? false
 
+    readonly property color volColor: {
+        if (root.isMuted) return "#585b70";
+        var v = ifAudioNode?.volume ?? 0;
+        if (v > 0.8) return "#f5a0d6";
+        if (v > 0.5) return "#c6a0f6";
+        if (v > 0.2) return "#89b4fa";
+        return "#b4befe";
+    }
+
     PwObjectTracker {
         objects: [root.defaultSink, root.defaultSource]
     }
@@ -62,24 +71,39 @@ Scope {
                 border.color: Qt.rgba(1, 1, 1, 0.06)
                 border.width: 1
 
+                Item {
+                    id: bottomDeck
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: 34
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: root.isMuted ? "" : Math.floor((ifAudioNode?.volume ?? 0) * 100)
+                        color: root.volColor
+                        font {
+                            pixelSize: root.isMuted ? 16 : 15
+                            family: root.isMuted ? "Symbols Nerd Font Mono" : "Quicksand"
+                            bold: true
+                            letterSpacing: root.isMuted ? 0 : 1
+                        }
+                        style: Text.Raised
+                        styleColor: Qt.rgba(0, 0, 0, 0.4)
+                    }
+                }
+
                 Rectangle {
                     id: bar
                     anchors {
                         left: parent.left
                         right: parent.right
-                        bottom: parent.bottom
+                        bottom: bottomDeck.top
                         margins: 6
                     }
-                    height: (parent.height - 12) * (ifAudioNode?.volume ?? 0)
+                    height: (parent.height - bottomDeck.height - 12) * (ifAudioNode?.volume ?? 0)
                     radius: 5
-                    color: {
-                        if (root.isMuted) return "#585b70";
-                        var v = ifAudioNode?.volume ?? 0;
-                        if (v > 0.8) return "#f5a0d6";
-                        if (v > 0.5) return "#c6a0f6";
-                        if (v > 0.2) return "#89b4fa";
-                        return "#b4befe";
-                    }
+                    color: root.volColor
 
                     Behavior on height {
                         NumberAnimation { duration: 100 }
@@ -93,21 +117,6 @@ Scope {
                         radius: 5
                         color: Qt.rgba(1, 1, 1, 0.06)
                     }
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    text: root.isMuted ? "" : Math.floor((ifAudioNode?.volume ?? 0) * 100) + "%"
-                    color: root.isMuted ? "#585b70" : "#f5e0dc"
-                    font {
-                        pixelSize: root.isMuted ? 20 : 24
-                        family: root.isMuted ? "Symbols Nerd Font Mono" : "Quicksand"
-                        bold: true
-                        letterSpacing: root.isMuted ? 0 : 1
-                    }
-                    style: Text.Raised
-                    styleColor: Qt.rgba(0, 0, 0, 0.5)
-                    opacity: 0.95
                 }
             }
         }

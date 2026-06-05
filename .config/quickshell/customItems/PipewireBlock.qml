@@ -75,7 +75,7 @@ BarBlock {
         BarText {
             symbolText: `🖊 ${PipewireState.inputVolume} `
             baseColor: root.volColor
-            // visible: PipewireState.isCrusherWireless
+            visible: PipewireState.isCrusherWireless
             renderNative: true
 
             MouseArea {
