@@ -71,7 +71,7 @@ Variants {
                         Layout.bottomMargin: 8
                     }
 
-                    GridLayout {
+                    Grid {
                         columns: Math.min(buttons.length, 3)
                         columnSpacing: 16
                         rowSpacing: 16
@@ -81,8 +81,8 @@ Variants {
                             delegate: Rectangle {
                                 required property LogoutButton modelData
 
-                                Layout.preferredWidth: 120
-                                Layout.preferredHeight: 100
+                                width: 120
+                                height: 100
 
                                 radius: 12
                                 color: ma.containsMouse ? buttonHoverColor : buttonColor

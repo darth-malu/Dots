@@ -84,12 +84,12 @@ Loader {
                 spacing: 4
                 Text {
                     text: ""
-                    color: "#89dceb"
+                    color: "#89b4fa"
                     font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
                 }
                 BarText {
                     text: root.rxRate === 0 ? "-" : root.rxRate.toFixed(1)
-                    color: "#89dceb"
+                    color: "#89b4fa"
                     font { pixelSize: 10; family: "ZedMono Nerd Font" }
                 }
             }
@@ -103,12 +103,12 @@ Loader {
                 spacing: 4
                 Text {
                     text: ""
-                    color: "#f5c2e7"
+                    color: "#f5a0d6"
                     font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
                 }
                 BarText {
                     text: root.txRate === 0 ? "-" : root.txRate.toFixed(1)
-                    color: "#f5c2e7"
+                    color: "#f5a0d6"
                     font { pixelSize: 10; family: "ZedMono Nerd Font" }
                 }
             }

@@ -118,7 +118,7 @@ BarBlock {
         implicitWidth: 24
         implicitHeight: 24
         radius: 6
-        color: mouseArea.containsMouse ? Qt.rgba(0.78, 0.60, 0.86, 0.12) : "transparent"
+        color: "transparent"
 
         Text {
             anchors.centerIn: parent
@@ -521,6 +521,16 @@ BarBlock {
                                         font { pixelSize: 9; family: "ZedMono Nerd Font" }
                                         elide: Text.ElideRight
                                         Layout.maximumWidth: 120
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: Quickshell.execDetached(["sh", "-c",
+                                                "cur=$(pactl get-default-sink); " +
+                                                "next=$(pactl list short sinks | awk 'NR>1{print $2;exit}'); " +
+                                                "[ -n \"$next\" ] && pactl set-default-sink \"$next\""
+                                            ])
+                                        }
                                     }
                                 }
 
