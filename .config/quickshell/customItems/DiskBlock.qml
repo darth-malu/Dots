@@ -43,14 +43,9 @@ BarBlock {
         return raw.length > 0 ? raw.split("\n") : [];
     }
 
-    onClicked: mouse => {
-        if (mouse.button === Qt.LeftButton)
-            showUsage = !showUsage;
-        else if (mouse.button === Qt.RightButton)
-            showPercent = !showPercent;
-        else if (mouse.button === Qt.MiddleButton)
-            showAllDisksPopup = !showAllDisksPopup;
-    }
+    onLeftClicked: showUsage = !showUsage
+    onRightClicked: showPercent = !showPercent
+    onMiddleClicked: showAllDisksPopup = !showAllDisksPopup
 
     content: RowLayout {
         spacing: 4

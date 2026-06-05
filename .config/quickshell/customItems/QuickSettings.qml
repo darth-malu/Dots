@@ -105,9 +105,9 @@ BarBlock {
         }
     }
 
-    onClicked: {
-        showQs = !showQs;
-    }
+    onLeftClicked: showQs = !showQs
+    onRightClicked: MiscState.toggleSysTray = !MiscState.toggleSysTray
+    onMiddleClicked: MiscState.toggleSysTray = !MiscState.toggleSysTray
 
     Shortcut {
         sequence: "Escape"

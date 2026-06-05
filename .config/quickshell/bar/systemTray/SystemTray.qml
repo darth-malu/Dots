@@ -118,25 +118,5 @@ RowLayout {
 
     QuickSettings {
         host: barr
-        visible: MiscState.toggleSysTray
-    }
-
-    BarBlock {
-        id: toggleSystemTray
-        implicitHeight: 10
-        implicitWidth: 10
-        anchors.verticalCenter: parent.verticalCenter
-        content: BarText {
-            paddingg: 0
-            pointSize: 12
-            // Logic to Toggle to in or out
-            text: if (MiscState.toggleSysTray)
-                ''
-            else
-                ''
-            color: !MiscState.toggleSysTray ? Themes.mprisIndicatorColor : Qt.rgba(1, 1, 1, 0.35)
-        }
-        hoveredBg: false
-        onClicked: MiscState.toggleSysTray = !MiscState.toggleSysTray
     }
 }
