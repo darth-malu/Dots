@@ -24,5 +24,5 @@ hl.config({
 })
 
 
-hl.env("LIBVA_DRIVER_NAME,nvidia")         --hw acceleration
-hl.env("__GLX_VENDOR_LIBRARY_NAME,nvidia") -- force GBM as backend
+hl.env("LIBVA_DRIVER_NAME", "nvidia")         --hw acceleration
+hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia") -- force GBM as backend
