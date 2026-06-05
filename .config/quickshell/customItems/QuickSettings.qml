@@ -118,16 +118,13 @@ BarBlock {
         implicitWidth: 24
         implicitHeight: 24
         radius: 6
-        color: mouseArea.containsMouse ? Qt.lighter("#cba6f7", 1.3) : Qt.rgba(0.78, 0.60, 0.86, 0.25)
+        color: mouseArea.containsMouse ? Qt.rgba(0.78, 0.60, 0.86, 0.12) : "transparent"
 
         Text {
             anchors.centerIn: parent
             text: ""
             color: "#cba6f7"
-            font {
-                pixelSize: 14
-                family: "Symbols Nerd Font Mono"
-            }
+            font { pixelSize: 16; family: "Symbols Nerd Font Mono" }
         }
     }
 
@@ -170,7 +167,7 @@ BarBlock {
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: 52
-                    color: Qt.rgba(0.78, 0.60, 0.86, 0.07)
+                    color: "transparent"
 
                     RowLayout {
                         anchors {
@@ -219,10 +216,6 @@ BarBlock {
                     }
                 }
 
-                Separator {
-                    Layout.fillWidth: true
-                }
-
                 // ═══ SCROLLABLE CONTENT ═══
                 Flickable {
                     Layout.fillWidth: true
@@ -242,7 +235,7 @@ BarBlock {
                         Card {
                             title: "Now Playing"
                             icon: ""
-                            accent: "#f5c2e7"
+                            accent: "#cba6f7"
                             visible: MprisState.player !== null
 
                             RowLayout {
@@ -250,7 +243,7 @@ BarBlock {
                                 Layout.fillWidth: true
 
                                 Rectangle {
-                                    implicitWidth: 44; implicitHeight: 44; radius: 10
+                                    implicitWidth: 56; implicitHeight: 56; radius: 12
                                     color: "#313244"
 
                                     Image {
@@ -263,16 +256,16 @@ BarBlock {
                                     }
 
                                     Rectangle {
-                                        anchors.fill: parent; radius: 10
+                                        anchors.fill: parent; radius: 12
                                         color: "transparent"
-                                        border { width: 2; color: Qt.rgba(0.96, 0.76, 0.91, 0.4) }
+                                        border { width: 2; color: Qt.rgba(0.80, 0.65, 0.97, 0.4) }
                                     }
 
                                     Text {
                                         anchors.centerIn: parent
                                         text: ""
                                         color: "#585b70"
-                                        font { pixelSize: 20; family: "Symbols Nerd Font Mono" }
+                                        font { pixelSize: 24; family: "Symbols Nerd Font Mono" }
                                         visible: albumArt.status !== Image.Ready
                                     }
                                 }
@@ -284,7 +277,7 @@ BarBlock {
                                     Text {
                                         Layout.fillWidth: true
                                         text: MprisState.player?.trackTitle || "No track"
-                                        color: "#f5c2e7"
+                                        color: "#cba6f7"
                                         font { pixelSize: 12; bold: true; family: "Quicksand" }
                                         elide: Text.ElideRight
                                     }
@@ -301,14 +294,14 @@ BarBlock {
                                 RowLayout {
                                     spacing: 4
 
-                                    TrackButton { text: ""; bgColor: "#45475a"; textColor: "#f5c2e7"; onClicked: MprisState.player?.previous() }
+                                    TrackButton { text: ""; bgColor: "#45475a"; textColor: "#cba6f7"; onClicked: MprisState.player?.previous() }
                                     TrackButton {
                                         text: MprisState.player?.isPlaying ? "" : ""
-                                        bgColor: "#f5c2e7"
+                                        bgColor: "#cba6f7"
                                         textColor: "#1e1e2e"
                                         onClicked: MprisState.player?.togglePlaying()
                                     }
-                                    TrackButton { text: ""; bgColor: "#45475a"; textColor: "#f5c2e7"; onClicked: MprisState.player?.next() }
+                                    TrackButton { text: ""; bgColor: "#45475a"; textColor: "#cba6f7"; onClicked: MprisState.player?.next() }
                                 }
                             }
 
@@ -325,7 +318,7 @@ BarBlock {
                                         implicitWidth: chipText.implicitWidth + 14
                                         implicitHeight: 20
                                         radius: height / 2
-                                        color: modelData === MprisState.player ? "#f5c2e7" : "#313244"
+                                        color: modelData === MprisState.player ? "#cba6f7" : "#313244"
 
                                         Text {
                                             id: chipText
