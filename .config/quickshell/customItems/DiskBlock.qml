@@ -22,8 +22,6 @@ BarBlock {
     property color colorDanger: "#f38ba8"
     property int dangerThreshold: 90
 
-    property bool showAllDisksPopup: false
-
     readonly property int diskUsageValue: ResourcesState.diskUsagePercent
     readonly property string diskFigures: `${ResourcesState.diskUsed}/${ResourcesState.diskTotal}`
 
@@ -45,7 +43,7 @@ BarBlock {
 
     onLeftClicked: showUsage = !showUsage
     onRightClicked: showPercent = !showPercent
-    onMiddleClicked: showAllDisksPopup = !showAllDisksPopup
+    onMiddleClicked: allDisksPopup.visible = !allDisksPopup.visible
 
     content: RowLayout {
         spacing: 4
@@ -112,7 +110,7 @@ BarBlock {
 
     PopupWindow {
         id: allDisksPopup
-        visible: disk.showAllDisksPopup
+        visible: false
         grabFocus: true
 
         anchor.window: disk.host

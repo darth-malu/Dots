@@ -15,8 +15,6 @@ BarBlock {
 
     required property var host
 
-    property bool showQs: false
-
     property string activeInterface: ""
     property string ipAddr: ""
     property string diskData: ""
@@ -105,13 +103,13 @@ BarBlock {
         }
     }
 
-    onLeftClicked: showQs = !showQs
+    onLeftClicked: qsPopup.visible = !qsPopup.visible
     onRightClicked: MiscState.toggleSysTray = !MiscState.toggleSysTray
     onMiddleClicked: MiscState.toggleSysTray = !MiscState.toggleSysTray
 
     Shortcut {
         sequence: "Escape"
-        onActivated: root.showQs = false
+        onActivated: qsPopup.visible = false
     }
 
     content: Rectangle {
@@ -122,7 +120,7 @@ BarBlock {
 
         Text {
             anchors.centerIn: parent
-            text: ""
+            text: ""
             color: "#cba6f7"
             font { pixelSize: 16; family: "Symbols Nerd Font Mono" }
         }
@@ -130,7 +128,7 @@ BarBlock {
 
     PopupWindow {
         id: qsPopup
-        visible: root.showQs
+        visible: false
         grabFocus: true
 
         anchor.window: root.host
@@ -183,7 +181,7 @@ BarBlock {
 
                             Text {
                                 anchors.centerIn: parent
-                                text: ""
+                                text: ""
                                 color: "#cba6f7"
                                 font { pixelSize: 16; family: "Symbols Nerd Font Mono" }
                             }
@@ -765,7 +763,7 @@ BarBlock {
             onPressed: parent.scaleVal = 0.9
             onReleased: parent.scaleVal = 1
             onClicked: {
-                root.showQs = false;
+                qsPopup.visible = false;
                 Quickshell.execDetached(["sh", "-c", parent.parent.cmd]);
             }
         }
