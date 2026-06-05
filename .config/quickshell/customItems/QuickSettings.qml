@@ -249,12 +249,9 @@ BarBlock {
 
                     ColumnLayout {
                         id: contentCol
-                        width: parent.width
+                        x: 8
+                        width: parent.width - 16
                         spacing: 0
-                        Layout.leftMargin: 12
-                        Layout.rightMargin: 12
-                        Layout.topMargin: 8
-                        Layout.bottomMargin: 8
 
                         // ═══ NOW PLAYING ═══
                         Card {
@@ -537,7 +534,7 @@ BarBlock {
                                     Text {
                                         text: Pipewire.ready ? Math.floor((Pipewire.defaultAudioSink?.audio?.volume ?? 0) * 100) + "%" : ""
                                         color: "#cdd6f4"
-                                        font { pixelSize: 16; bold: true; family: "ZedMono Nerd Font" }
+                                        font { pixelSize: 14; bold: true; family: "ZedMono Nerd Font" }
                                     }
 
                                     Item { Layout.fillWidth: true }
@@ -550,48 +547,55 @@ BarBlock {
                                     }
                                 }
 
-                                Slider {
-                                    id: volSlider
+                                Item {
                                     Layout.fillWidth: true
-                                    from: 0; to: 1; stepSize: 0.01
-                                    value: Pipewire.defaultAudioSink?.audio?.volume ?? 0
-                                    live: true
-                                    onValueChanged: {
-                                        if (pressed && Pipewire.defaultAudioSink?.audio)
-                                            Pipewire.defaultAudioSink.audio.volume = value;
-                                    }
+                                    implicitHeight: 20
 
-                                    background: Rectangle {
-                                        x: volSlider.leftPadding
-                                        y: volSlider.topPadding + volSlider.availableHeight / 2 - height / 2
-                                        width: volSlider.availableWidth
-                                        height: 6; radius: 3
-                                        color: "#313244"
+                                    Slider {
+                                        id: volSlider
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 2
+                                        anchors.rightMargin: 2
+                                        from: 0; to: 1; stepSize: 0.01
+                                        value: Pipewire.defaultAudioSink?.audio?.volume ?? 0
+                                        live: true
+                                        onValueChanged: {
+                                            if (pressed && Pipewire.defaultAudioSink?.audio)
+                                                Pipewire.defaultAudioSink.audio.volume = value;
+                                        }
 
-                                        Rectangle {
-                                            width: volSlider.visualPosition * parent.width
-                                            height: parent.height; radius: 3
+                                        background: Rectangle {
+                                            x: volSlider.leftPadding
+                                            y: volSlider.topPadding + volSlider.availableHeight / 2 - height / 2
+                                            width: volSlider.availableWidth
+                                            height: 3; radius: 1.5
+                                            color: "#313244"
+
+                                            Rectangle {
+                                                width: volSlider.visualPosition * parent.width
+                                                height: parent.height; radius: 1.5
+                                                color: Pipewire.defaultAudioSink?.audio?.muted ? "#585b70" : "#c6a0f6"
+                                            }
+                                        }
+
+                                        handle: Rectangle {
+                                            x: volSlider.leftPadding + volSlider.visualPosition * (volSlider.availableWidth - width)
+                                            y: volSlider.topPadding + volSlider.availableHeight / 2 - height / 2
+                                            width: 10; height: 10; radius: 5
                                             color: Pipewire.defaultAudioSink?.audio?.muted ? "#585b70" : "#c6a0f6"
+                                            border.color: "#1e1e2e"; border.width: 2
                                         }
                                     }
 
-                                    handle: Rectangle {
-                                        x: volSlider.leftPadding + volSlider.visualPosition * (volSlider.availableWidth - width)
-                                        y: volSlider.topPadding + volSlider.availableHeight / 2 - height / 2
-                                        width: 16; height: 16; radius: 8
-                                        color: Pipewire.defaultAudioSink?.audio?.muted ? "#585b70" : "#c6a0f6"
-                                        border.color: "#1e1e2e"; border.width: 2
-                                    }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    acceptedButtons: Qt.NoButton
-                                    onWheel: event => {
-                                        if (Pipewire.defaultAudioSink?.audio) {
-                                            let vol = Pipewire.defaultAudioSink.audio.volume;
-                                            vol += event.angleDelta.y > 0 ? 0.05 : -0.05;
-                                            Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(vol, 1));
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        acceptedButtons: Qt.NoButton
+                                        onWheel: event => {
+                                            if (Pipewire.defaultAudioSink?.audio) {
+                                                let vol = Pipewire.defaultAudioSink.audio.volume;
+                                                vol += event.angleDelta.y > 0 ? 0.05 : -0.05;
+                                                Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(vol, 1));
+                                            }
                                         }
                                     }
                                 }
@@ -602,7 +606,10 @@ BarBlock {
                         Card {
                             title: "Caffeine"
                             icon: CaffeineService.enabled ? "" : "暈"
-                            accent: CaffeineService.enabled ? "#f9e2af" : "#585b70"
+                            accent: CaffeineService.enabled ? "#fab387" : "#585b70"
+                            cardColor: CaffeineService.enabled ? Qt.rgba(0.98, 0.70, 0.53, 0.06) : "#181825"
+
+                            Behavior on cardColor { ColorAnimation { duration: 200 } }
 
                             RowLayout {
                                 spacing: 10
@@ -610,19 +617,24 @@ BarBlock {
 
                                 Text {
                                     text: CaffeineService.enabled ? "Prevent idle suspend" : "Allow idle suspend"
-                                    color: "#a6adc8"
+                                    color: CaffeineService.enabled ? "#fab387" : "#a6adc8"
                                     font { pixelSize: 10; family: "Quicksand" }
                                     elide: Text.ElideRight
                                     Layout.fillWidth: true
+
+                                    Behavior on color { ColorAnimation { duration: 200 } }
                                 }
 
                                 Item { Layout.fillWidth: true }
 
                                 Rectangle {
                                     width: 44; height: 24; radius: 12
-                                    color: CaffeineService.enabled ? "#f9e2af" : "#45475a"
-                                    border.color: CaffeineService.enabled ? "#f9e2af" : "#585b70"
+                                    color: CaffeineService.enabled ? "#fab387" : "#45475a"
+                                    border.color: CaffeineService.enabled ? "#fab387" : "#585b70"
                                     border.width: 1
+
+                                    Behavior on color { ColorAnimation { duration: 200 } }
+                                    Behavior on border.color { ColorAnimation { duration: 200 } }
 
                                     Rectangle {
                                         x: CaffeineService.enabled ? parent.width - width - 2 : 2
