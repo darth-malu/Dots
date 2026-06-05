@@ -391,7 +391,7 @@ BarBlock {
                                                 width: parent.width * Math.min(parent.parent.pct / 100, 1)
                                                 height: parent.height
                                                 radius: 4
-                                                color: parent.parent.pct > 90 ? "#f38ba8" : parent.parent.pct > 70 ? "#f9e2af" : Themes.toxicGreen
+                                                color: parent.parent.pct > 90 ? "#f38ba8" : parent.parent.pct > 70 ? "#f5c2e7" : "#cba6f7"
 
                                                 Behavior on width {
                                                     NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
