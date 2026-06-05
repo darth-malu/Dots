@@ -178,6 +178,7 @@ BarBlock {
 
                     RowLayout {
                         spacing: 8
+
                         Text {
                             text: Pipewire.defaultAudioSink?.audio?.muted ? "" : ""
                             color: Pipewire.defaultAudioSink?.audio?.muted ? "#585b70" : "#cdd6f4"
@@ -236,6 +237,18 @@ BarBlock {
                             color: Pipewire.defaultAudioSink?.audio?.muted ? "#585b70" : "#89b4fa"
                             border.color: "#1e1e2e"
                             border.width: 2
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            acceptedButtons: Qt.NoButton
+                            onWheel: event => {
+                                if (Pipewire.defaultAudioSink?.audio) {
+                                    let vol = Pipewire.defaultAudioSink.audio.volume;
+                                    vol += event.angleDelta.y > 0 ? 0.05 : -0.05;
+                                    Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(vol, 1));
+                                }
+                            }
                         }
                     }
 
@@ -343,44 +356,70 @@ BarBlock {
         }
     }
 
-    component PowerBtn: ColumnLayout {
+    component PowerBtn: Item {
         required property string iconText
         required property string label
         required property color color
         required property string cmd
 
         Layout.fillWidth: true
-        spacing: 4
+        Layout.preferredHeight: 42
+
+        property real scaleVal: 1
 
         Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 36
+            anchors.fill: parent
             radius: 8
-            color: "#313244"
+            color: mouseArea.containsMouse ? Qt.rgba(parent.color.r, parent.color.g, parent.color.b, 0.12) : "transparent"
+            scale: parent.scaleVal
+
+            Behavior on color {
+                ColorAnimation { duration: 120 }
+            }
+        }
+
+        ColumnLayout {
+            anchors.centerIn: parent
+            spacing: 2
 
             Text {
-                anchors.centerIn: parent
-                text: parent.parent.parent.iconText
-                color: parent.parent.parent.color
-                font { pixelSize: 16; family: "Symbols Nerd Font Mono" }
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: parent.parent.iconText
+                color: mouseArea.containsMouse ? parent.parent.color : Qt.rgba(parent.parent.color.r, parent.parent.color.g, parent.parent.color.b, 0.5)
+                font { pixelSize: 18; family: "Symbols Nerd Font Mono" }
+
+                Behavior on color {
+                    ColorAnimation { duration: 120 }
+                }
             }
 
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    root.showMenu = false;
-                    Quickshell.execDetached(["sh", "-c", parent.parent.parent.cmd]);
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: parent.parent.label
+                color: mouseArea.containsMouse ? parent.parent.color : "#585b70"
+                font { pixelSize: 10; family: "Quicksand"; bold: true }
+
+                Behavior on color {
+                    ColorAnimation { duration: 120 }
                 }
             }
         }
 
-        Text {
-            text: parent.label
-            color: "#a6adc8"
-            font { pixelSize: 10; family: "Quicksand" }
-            horizontalAlignment: Text.AlignHCenter
-            Layout.fillWidth: true
+        MouseArea {
+            id: mouseArea
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onPressed: parent.scaleVal = 0.9
+            onReleased: parent.scaleVal = 1
+            onClicked: {
+                root.showMenu = false;
+                Quickshell.execDetached(["sh", "-c", parent.parent.cmd]);
+            }
+        }
+
+        Behavior on scaleVal {
+            NumberAnimation { duration: 80; easing.type: Easing.OutCubic }
         }
     }
 }

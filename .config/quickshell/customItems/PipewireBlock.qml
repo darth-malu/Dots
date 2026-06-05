@@ -16,11 +16,9 @@ BarBlock {
     onWheel: event => {
         if (!Pipewire.defaultAudioSink?.audio)
             return;
-        const step = 4;
-        let v = Pipewire.defaultAudioSink.audio.volume * 100;
-        v += event.angleDelta.y > 0 ? step : -step;
-        v = Math.max(0, Math.min(v, 100));
-        Pipewire.defaultAudioSink.audio.volume = v / 100;
+        let v = Pipewire.defaultAudioSink.audio.volume;
+        v += event.angleDelta.y > 0 ? 0.05 : -0.05;
+        Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(v, 1));
     }
 
     onClicked: mouse => {
@@ -54,17 +52,10 @@ BarBlock {
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
+                acceptedButtons: Qt.LeftButton | Qt.NoButton
                 onClicked: mouse => {
                     if (Pipewire.defaultAudioSink?.audio)
                         Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(mouse.x / width, 1));
-                }
-                onWheel: event => {
-                    // event.accepted = false; // NOTE added as fix...does not work lol
-                    if (!Pipewire.defaultAudioSink?.audio)
-                        return;
-                    let v = Pipewire.defaultAudioSink.audio.volume;
-                    v += event.angleDelta.y > 0 ? 0.05 : -0.05;
-                    Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(v, 1));
                 }
             }
         }

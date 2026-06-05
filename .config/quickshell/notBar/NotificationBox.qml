@@ -11,24 +11,20 @@ import qs.services
 WrapperMouseArea {
     id: rootMouseArea
 
-    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton //Qt.AllButtons
+    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
     hoverEnabled: true
 
     property Notification n
     property real timestamp
     property real elapsed: Date.now()
 
-    /*
-    IMAGE: icon associated with the notification eg. a profile picture in a messaging app
-    appIcon: sending app's icon, if none provided .. the icon form an associated desktop entry will be retrieved. if none found = ""
-     */
     readonly property bool ifMusic: (n.appName == 'mzichi' || n.appName == 'ncmpcpp' || n.appName == 'spotifY')
 
     readonly property bool isImageIcon: n.image == "" && n.appIcon != ""
 
-    readonly property string image: ifMusic ? (MprisState.player?.trackArtUrl) : isImageIcon ? n.appIcon : n.image // Return appIcon of application or image if image present.
+    readonly property string image: ifMusic ? (MprisState.player?.trackArtUrl) : isImageIcon ? n.appIcon : n.image
 
-    property bool hasAppIcon: !(n.image == "" && n.appIcon != "") // negate ... no image + appIcon present = image + appIcon absent
+    property bool hasAppIcon: !(n.image == "" && n.appIcon != "")
 
     property int indexPopup: -1
 
@@ -36,14 +32,13 @@ WrapperMouseArea {
 
     property real iconSize: ifMusic ? 90 : 50
 
-    property real iconRadius: iconSize / 5 // 12??
+    property real iconRadius: iconSize / 5
 
     property bool showTime: false
 
     property bool expanded: false
 
     onClicked: mouse => {
-        // actions: list <NotificationAction>
         if (mouse.button == Qt.LeftButton && rootMouseArea.n.actions != []) {
             rootMouseArea.n.actions[0].invoke();
         } else if (mouse.button == Qt.RightButton) {
@@ -69,35 +64,33 @@ WrapperMouseArea {
 
     Rectangle {
         id: outerBox
-        implicitWidth: Math.max(120, mainLayout.implicitWidth + 10)
+        implicitWidth: Math.max(120, mainLayout.implicitWidth + 16)
         implicitHeight: mainLayout.implicitHeight
         radius: rootMouseArea.ifMusic ? 12 : 8
         color: Themes.bgBlur
         border {
             width: rootMouseArea.ifMusic ? 0 : 1
-            color: Qt.rgba(0.627, 0.125, 0.941, 0.78) // Qt.rgba(0.63, 0.13, 0.94, 0.5) //"#A020F0" Qt.rgba(0.63, 0.13, 0.94, 0.3)
+            color: Qt.rgba(0.627, 0.125, 0.941, 0.78)
         }
 
         RowLayout {
             id: mainLayout
-            spacing: 8 // picture and text space
+            spacing: 10
 
             Item {
                 id: songArtContainer
                 visible: rootMouseArea.image != ""
                 implicitWidth: rootMouseArea.iconSize
                 implicitHeight: rootMouseArea.iconSize
-                Layout.topMargin: 2
-                Layout.bottomMargin: 2
-                Layout.leftMargin: 2
-                Layout.rightMargin: 4
+                Layout.topMargin: 6
+                Layout.bottomMargin: 6
+                Layout.leftMargin: 6
 
                 ClippingWrapperRectangle {
                     id: songArt
                     visible: rootMouseArea.image != ""
-                    radius: outerBox.radius - 2 // TODO make only TopLeft/bottom radius
+                    radius: outerBox.radius - 2
                     color: "transparent"
-                    // anchors.fill: parent
                     IconImage {
                         implicitSize: songArtContainer.height
                         source: NotificationState.getImage(rootMouseArea.image)
@@ -107,7 +100,6 @@ WrapperMouseArea {
 
                 ClippingWrapperRectangle {
                     id: appIconRect
-                    // visible: rootMouseArea.hasAppIcon
                     visible: false
                     radius: 2
                     color: "transparent"
@@ -127,7 +119,11 @@ WrapperMouseArea {
 
             ColumnLayout {
                 id: contentLayout
-                spacing: 4
+                spacing: 6
+                Layout.topMargin: 8
+                Layout.bottomMargin: 8
+                Layout.rightMargin: 8
+
                 RowLayout {
                     Text {
                         id: summary
@@ -152,10 +148,9 @@ WrapperMouseArea {
 
                 Text {
                     id: body
-                    Layout.maximumWidth: 500 // For absurdly long stuff
+                    Layout.maximumWidth: 500
                     Layout.preferredWidth: implicitWidth
                     elide: Text.ElideRight
-                    // visible: text ? true : false
                     wrapMode: Text.Wrap
                     font.weight: Font.Medium
                     maximumLineCount: rootMouseArea.expanded ? 20 : (rootMouseArea.n.actions.length > 1 ? 1 : 2)
@@ -165,36 +160,43 @@ WrapperMouseArea {
 
                 RowLayout {
                     visible: rootMouseArea.n.actions.length > 1
-
                     Layout.fillWidth: true
                     implicitHeight: actionRepeater.implicitHeight
+                    spacing: 4
 
                     Repeater {
                         id: actionRepeater
-                        model: rootMouseArea.n.actions.slice(1) // This returns array of all elements in root.n.actions after index [0] to end
+                        model: rootMouseArea.n.actions.slice(1)
 
-                        WrapperMouseArea {
-                            id: actionButtonMA
+                        Rectangle {
+                            id: actionBtn
                             required property NotificationAction modelData
-                            hoverEnabled: true
-                            implicitHeight: actionButton.implicitHeight
+                            implicitHeight: 24
                             Layout.fillWidth: true
+                            radius: 6
+                            color: actionMA.containsMouse ? Qt.lighter("#313244", 1.2) : "#313244"
 
-                            onPressed: () => {
-                                modelData.invoke();
+                            Behavior on color { ColorAnimation { duration: 100 } }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: actionBtn.modelData.text
+                                color: actionMA.containsMouse ? "#cdd6f4" : "#a6adc8"
+                                font {
+                                    pixelSize: 10
+                                    bold: true
+                                    family: "Quicksand"
+                                }
+
+                                Behavior on color { ColorAnimation { duration: 100 } }
                             }
 
-                            Rectangle {
-                                id: actionButton
-                                radius: 16
-                                color: actionButtonMA.containsMouse ? Themes.buttonDisabledHover : Themes.buttonDisabled
-                                implicitHeight: buttonText.implicitHeight
-                                Layout.fillWidth: true
-                                Text {
-                                    id: buttonText
-                                    anchors.centerIn: parent
-                                    text: actionButtonMA.modelData.text
-                                }
+                            MouseArea {
+                                id: actionMA
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onPressed: actionBtn.modelData.invoke()
                             }
                         }
                     }
@@ -205,69 +207,71 @@ WrapperMouseArea {
         RowLayout {
             id: buttonLayout
             visible: rootMouseArea.containsMouse
-            implicitHeight: 16
+            implicitHeight: 20
 
             anchors {
                 top: parent.top
                 right: parent.right
-                topMargin: 8
-                rightMargin: 8
+                topMargin: 6
+                rightMargin: 6
             }
+            spacing: 2
 
-            WrapperMouseArea {
+            Rectangle {
                 id: expandButton
-
                 visible: body.text.length > (rootMouseArea.n.actions.length > 1 ? 50 : 100)
 
                 property string sourceIcon: rootMouseArea.expanded ? "go-up-symbolic" : "go-down-symbolic"
 
-                hoverEnabled: true
-                Layout.fillHeight: true
-                implicitWidth: 16
+                implicitWidth: 20
+                implicitHeight: 20
+                radius: 4
+                color: expandMA.containsMouse ? Qt.lighter("#313244", 1.3) : "#313244"
 
-                onPressed: () => rootMouseArea.expanded = !rootMouseArea.expanded
+                Behavior on color { ColorAnimation { duration: 100 } }
 
-                Rectangle {
-                    radius: implicitHeight / 2
-                    color: expandButton.containsMouse ? Themes.buttonDisabledHover : Themes.buttonDisabled
-                    implicitWidth: 16
-                    implicitHeight: 16
+                IconImage {
+                    source: Quickshell.iconPath(expandButton.sourceIcon)
+                    anchors.centerIn: parent
+                    implicitHeight: 12
+                    implicitWidth: 12
+                }
 
-                    IconImage {
-                        source: Quickshell.iconPath(expandButton.sourceIcon)
-                        anchors.centerIn: parent
-                        implicitHeight: parent.implicitHeight - 4
-                        implicitWidth: parent.implicitWidth - 4
-                        // asynchronous: true
-                    }
+                MouseArea {
+                    id: expandMA
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onPressed: rootMouseArea.expanded = !rootMouseArea.expanded
                 }
             }
 
-            WrapperMouseArea {
+            Rectangle {
                 id: closeButton
-                hoverEnabled: true
-                Layout.fillHeight: true
-                implicitWidth: 16
+                implicitWidth: 20
+                implicitHeight: 20
+                radius: 4
+                color: closeMA.containsMouse ? Qt.lighter("#f38ba8", 1.3) : "#313244"
 
-                onPressed: () => {
-                    if (rootMouseArea.indexAll != -1)
-                        NotificationState.notifCloseByAll(rootMouseArea.indexAll);
-                    else if (rootMouseArea.indexPopup != -1)
-                        NotificationState.notifCloseByPopup(rootMouseArea.indexPopup);
+                Behavior on color { ColorAnimation { duration: 100 } }
+
+                IconImage {
+                    source: Quickshell.iconPath("process-stop-symbolic")
+                    anchors.centerIn: parent
+                    implicitHeight: 12
+                    implicitWidth: 12
                 }
 
-                Rectangle {
-                    radius: 16
-                    color: closeButton.containsMouse ? Themes.buttonDisabledHover : Themes.buttonDisabled
-                    implicitWidth: 16
-                    implicitHeight: 16
-
-                    IconImage {
-                        source: Quickshell.iconPath("process-stop-symbolic")
-                        anchors.centerIn: parent
-                        implicitHeight: parent.implicitHeight - 4
-                        implicitWidth: parent.implicitHeight - 4
-                        asynchronous: true
+                MouseArea {
+                    id: closeMA
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onPressed: {
+                        if (rootMouseArea.indexAll != -1)
+                            NotificationState.notifCloseByAll(rootMouseArea.indexAll);
+                        else if (rootMouseArea.indexPopup != -1)
+                            NotificationState.notifCloseByPopup(rootMouseArea.indexPopup);
                     }
                 }
             }

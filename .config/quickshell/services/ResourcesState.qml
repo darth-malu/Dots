@@ -29,6 +29,8 @@ Singleton {
     property real swapTotal: 0
     property real swapUsed: 0
     property int diskUsagePercent: 0
+    property string diskUsed: ""
+    property string diskTotal: ""
     property string diskMountPoint: "/"
     property string mediaDisks: ""
     property string allDisks: ""
@@ -158,11 +160,16 @@ Singleton {
         id: disk_usage
         // TODO: notification on lowDisk - persistent properties
         running: false
-        command: ["sh", "-c", "df / --output=pcent 2>/dev/null | tail -n1 | tr -d ' %'"]
+        command: ["sh", "-c", "df -h / --output=size,used,pcent 2>/dev/null | tail -n1"]
         stdout: SplitParser {
             onRead: data => {
-                const val = parseInt(data);
-                if (!isNaN(val)) root.diskUsagePercent = val;
+                const parts = data.trim().split(/\s+/);
+                if (parts.length >= 3) {
+                    root.diskTotal = parts[0] || "";
+                    root.diskUsed = parts[1] || "";
+                    const pct = parseInt(parts[2]);
+                    if (!isNaN(pct)) root.diskUsagePercent = pct;
+                }
             }
         }
     }

@@ -116,11 +116,6 @@ RowLayout {
         }
     }
 
-    Caffeine {
-        visible: MiscState.toggleSysTray
-        pointSize: icon.implicitSize
-    }
-
     QuickSettings {
         host: barr
         visible: MiscState.toggleSysTray

@@ -3,48 +3,74 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Services.Pipewire
+import qs.themes
 
 ShellRoot {
-	FloatingWindow {
-		// match the system theme background color
-		color: contentItem.palette.active.window
+    FloatingWindow {
+        color: contentItem.palette.active.window
 
-		ScrollView {
-			anchors.fill: parent
-			contentWidth: availableWidth
+        implicitWidth: 320
+        implicitHeight: Math.min(mixerCol.implicitHeight + 24, 500)
 
-			ColumnLayout {
-				anchors.fill: parent
-				anchors.margins: 10
+        Rectangle {
+            anchors.fill: parent
+            radius: 12
+            color: "#1e1e2e"
+            border.color: "#45475a"
 
-				// get a list of nodes that output to the default sink
-          // NOTE: defunct output meter stuff...TODO invetigate
-				PwNodeLinkTracker {
-					id: linkTracker
-					node: Pipewire.defaultAudioSink
-				}
+            ScrollView {
+                anchors.fill: parent
+                anchors.margins: 12
+                contentWidth: availableWidth
 
-				MixerEntry {
-					node: Pipewire.defaultAudioSink
-				}
+                ColumnLayout {
+                    id: mixerCol
+                    width: parent.width
+                    spacing: 8
 
-				Rectangle {
-					Layout.fillWidth: true
-					color: palette.active.text
-					implicitHeight: 1
-				}
+                    Text {
+                        text: "  Audio Mixer"
+                        color: "#c6a0f6"
+                        font {
+                            pixelSize: 12
+                            bold: true
+                            family: "Quicksand"
+                            letterSpacing: 1
+                        }
+                    }
 
-				Repeater {
-					model: linkTracker.linkGroups
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: "#313244"
+                    }
 
-					MixerEntry {
-						required property PwLinkGroup modelData
-						// Each link group contains a source and a target.
-						// Since the target is the default sink, we want the source.
-						node: modelData.source
-					}
-				}
-			}
-		}
-	}
+                    PwNodeLinkTracker {
+                        id: linkTracker
+                        node: Pipewire.defaultAudioSink
+                    }
+
+                    MixerEntry {
+                        node: Pipewire.defaultAudioSink
+                        Layout.bottomMargin: 4
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        color: "#313244"
+                        implicitHeight: 1
+                    }
+
+                    Repeater {
+                        model: linkTracker.linkGroups
+
+                        MixerEntry {
+                            required property PwLinkGroup modelData
+                            node: modelData.source
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

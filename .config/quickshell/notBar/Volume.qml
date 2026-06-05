@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Services.Pipewire
+import qs.themes
 
 Scope {
     id: root
@@ -56,17 +57,18 @@ Scope {
 
             Rectangle {
                 anchors.fill: parent
-                radius: 12
-                color: Qt.rgba(0.06, 0.02, 0.12, 0.75)
+                radius: 14
+                color: Qt.rgba(0.06, 0.02, 0.12, 0.8)
                 border.color: root.isMuted ? "#45475a" : "#c6a0f6"
                 border.width: 1
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: 12
+                    radius: 14
                     gradient: Gradient {
                         orientation: Gradient.Vertical
-                        GradientStop { position: 0; color: Qt.rgba(0.7, 0.4, 0.9, 0.12) }
+                        GradientStop { position: 0; color: Qt.rgba(0.7, 0.4, 0.9, 0.15) }
+                        GradientStop { position: 0.5; color: Qt.rgba(0.7, 0.4, 0.9, 0.05) }
                         GradientStop { position: 1; color: Qt.rgba(0.7, 0.4, 0.9, 0) }
                     }
                 }
@@ -77,9 +79,9 @@ Scope {
                         left: parent.left
                         right: parent.right
                         bottom: parent.bottom
-                        margins: 6
+                        margins: 8
                     }
-                    height: (parent.height - 12) * (ifAudioNode?.volume ?? 0)
+                    height: (parent.height - 16) * (ifAudioNode?.volume ?? 0)
                     radius: 6
                     color: {
                         if (root.isMuted) return "#585b70";

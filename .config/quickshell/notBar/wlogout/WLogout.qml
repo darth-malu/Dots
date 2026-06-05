@@ -6,9 +6,10 @@ import Quickshell.Wayland
 Variants {
     id: root
     property color backgroundColor: "#e60c0c0c"
-    property color buttonColor: "#1e1e1e"
-    property color buttonHoverColor: "#3700b3"
-    default property list<LogoutButton> buttons //list of LogoutButtons
+    property color buttonColor: "#1e1e2e"
+    property color buttonHoverColor: "#cba6f7"
+    property color buttonTextColor: "#cdd6f4"
+    default property list<LogoutButton> buttons
 
     model: Quickshell.screens
 
@@ -29,7 +30,6 @@ Variants {
             Keys.onPressed: event => {
                 if (event.key == Qt.Key_Escape)
                     Qt.quit();
-                    // TODO incorporate this into mixer and app launcher
                 else {
                     for (let i = 0; i < buttons.length; i++) {
                         let button = buttons[i];
@@ -55,53 +55,76 @@ Variants {
                 anchors.fill: parent
                 onClicked: Qt.quit()
 
-                GridLayout {
+                ColumnLayout {
                     anchors.centerIn: parent
+                    spacing: 12
 
-                    width: parent.width * 0.75
-                    height: parent.height * 0.75
+                    Text {
+                        text: ""
+                        color: "#f38ba8"
+                        font {
+                            pixelSize: 32
+                            family: "Symbols Nerd Font Mono"
+                        }
+                        horizontalAlignment: Text.AlignHCenter
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.bottomMargin: 8
+                    }
 
-                    columns: 3
-                    columnSpacing: 0
-                    rowSpacing: 0
+                    GridLayout {
+                        columns: Math.min(buttons.length, 3)
+                        columnSpacing: 16
+                        rowSpacing: 16
 
-                    Repeater {
-                        model: buttons
-                        delegate: Rectangle {
-                            required property LogoutButton modelData
+                        Repeater {
+                            model: buttons
+                            delegate: Rectangle {
+                                required property LogoutButton modelData
 
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
+                                Layout.preferredWidth: 120
+                                Layout.preferredHeight: 100
 
-                            color: ma.containsMouse ? buttonHoverColor : buttonColor
-                            border.color: "black"
-                            border.width: ma.containsMouse ? 0 : 1
+                                radius: 12
+                                color: ma.containsMouse ? buttonHoverColor : buttonColor
+                                border.color: ma.containsMouse ? Qt.lighter(buttonHoverColor, 1.2) : "#313244"
+                                border.width: 1
 
-                            MouseArea {
-                                id: ma
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                onClicked: modelData.exec()
-                            }
+                                Behavior on color { ColorAnimation { duration: 120 } }
+                                Behavior on border.color { ColorAnimation { duration: 120 } }
 
-                            Image {
-                                id: icon
-                                anchors.centerIn: parent
-                                source: `icons/${modelData.icon}.png`
-                                width: parent.width * 0.25
-                                height: parent.width * 0.25
-                            }
+                                ColumnLayout {
+                                    anchors.centerIn: parent
+                                    spacing: 8
 
-                            Text {
-                                anchors {
-                                    top: icon.bottom
-                                    topMargin: 20
-                                    horizontalCenter: parent.horizontalCenter
+                                    Image {
+                                        id: icon
+                                        Layout.alignment: Qt.AlignHCenter
+                                        source: `icons/${modelData.icon}.png`
+                                        width: 36
+                                        height: 36
+                                    }
+
+                                    Text {
+                                        Layout.alignment: Qt.AlignHCenter
+                                        text: modelData.text
+                                        color: ma.containsMouse ? "#1e1e2e" : buttonTextColor
+                                        font {
+                                            pointSize: 12
+                                            bold: true
+                                            family: "Quicksand"
+                                        }
+
+                                        Behavior on color { ColorAnimation { duration: 120 } }
+                                    }
                                 }
 
-                                text: modelData.text
-                                font.pointSize: 20
-                                color: "white"
+                                MouseArea {
+                                    id: ma
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: modelData.exec()
+                                }
                             }
                         }
                     }

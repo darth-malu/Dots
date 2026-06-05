@@ -25,12 +25,16 @@ BarBlock {
     property bool showAllDisksPopup: false
 
     readonly property int diskUsageValue: ResourcesState.diskUsagePercent
+    readonly property string diskFigures: `${ResourcesState.diskUsed}/${ResourcesState.diskTotal}`
 
     readonly property color diskColor: {
         const v = diskUsageValue;
-        if (v >= dangerThreshold) return colorDanger;
-        if (v >= 60) return colorHigh;
-        if (v >= 30) return colorMid;
+        if (v >= dangerThreshold)
+            return colorDanger;
+        if (v >= 60)
+            return colorHigh;
+        if (v >= 30)
+            return colorMid;
         return colorLow;
     }
 
@@ -41,11 +45,11 @@ BarBlock {
 
     onClicked: mouse => {
         if (mouse.button === Qt.LeftButton)
-            showAllDisksPopup = !showAllDisksPopup;
+            showUsage = !showUsage;
         else if (mouse.button === Qt.RightButton)
             showPercent = !showPercent;
         else if (mouse.button === Qt.MiddleButton)
-            showUsage = !showUsage;
+            showAllDisksPopup = !showAllDisksPopup;
     }
 
     content: RowLayout {
@@ -105,7 +109,7 @@ BarBlock {
         BarText {
             id: usageText
             visible: disk.showUsage
-            symbolText: disk.diskLabel
+            symbolText: disk.diskLabel.length > 0 ? disk.diskLabel : disk.diskFigures
             baseColor: disk.diskColor
             pointSize: 11
         }
@@ -132,7 +136,8 @@ BarBlock {
         Rectangle {
             anchors.fill: parent
             radius: 10
-            clip: true
+            layer.enabled: true
+            layer.samples: 8
             color: "#1e1e2e"
             border.color: "#45475a"
 

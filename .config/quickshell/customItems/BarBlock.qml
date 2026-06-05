@@ -64,7 +64,7 @@ Rectangle {
         id: mouseArea
         anchors.fill: root
         hoverEnabled: true
-        acceptedButtons: Qt.RightButton | Qt.LeftButton | Qt.MiddleButton | Qt.ForwardButton | Qt.BackButton
+        acceptedButtons: Qt.RightButton | Qt.LeftButton | Qt.MiddleButton | Qt.ForwardButton | Qt.BackButton | Qt.NoButton
         onClicked: mouse => root.clicked(mouse)
         onWheel: event => root.wheel(event)
         // propagateComposedEvents: true
