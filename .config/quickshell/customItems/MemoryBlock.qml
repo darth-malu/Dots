@@ -7,22 +7,24 @@ BarBlock {
     id: memory
 
     property bool showPercent: false
+    property bool showUsage: false
     property bool showSwap: false
 
     readonly property int memoryPercent: ResourcesState.memPercent
+    readonly property real memoryUsed: ResourcesState.memUsed
     readonly property string memoryDetail: `${ResourcesState.memUsed.toFixed(1)}G / ${ResourcesState.memTotal.toFixed(1)}G`
-    readonly property string swapInfo: ResourcesState.swapTotal > 0
-        ? `嗢${ResourcesState.swapUsed.toFixed(1)}G`
-        : ""
+    readonly property string swapInfo: ResourcesState.swapTotal > 0 ? ` ${ResourcesState.swapUsed.toFixed(1)}Gi` : ""
 
     readonly property color memoryColor: memoryPercent > 90 ? "#f38ba8" : memoryPercent > 80 ? "#f9e2af" : "#cba6f7"
     readonly property color swapColor: ResourcesState.swapPercent > 80 ? "#f38ba8" : "#89dceb"
 
     onClicked: mouse => {
-        if (mouse.button === Qt.LeftButton)
-            showPercent = !showPercent;
-        else if (mouse.button === Qt.RightButton)
+        if (mouse.button === Qt.LeftButton) {
+            showUsage = !showUsage;
+        } else if (mouse.button === Qt.RightButton)
             showSwap = !showSwap;
+        else if (mouse.button === Qt.MiddleButton)
+            showPercent = !showPercent;
     }
 
     content: RowLayout {
@@ -69,6 +71,14 @@ BarBlock {
                 ctx.font = `11px "Symbols Nerd Font Mono"`;
                 ctx.fillText("", cx, cy + 0.5);
             }
+        }
+
+        BarText {
+            id: usageText
+            visible: memory.showUsage
+            symbolText: `${memory.memoryUsed} Gi`
+            baseColor: memory.memoryColor
+            pointSize: 11
         }
 
         BarText {

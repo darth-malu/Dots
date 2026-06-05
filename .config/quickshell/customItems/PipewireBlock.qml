@@ -11,12 +11,11 @@ BarBlock {
     readonly property real vol: Pipewire.defaultAudioSink?.audio?.volume ?? 0
     readonly property bool muted: Pipewire.defaultAudioSink?.audio?.muted ?? false
 
-    readonly property color volColor: muted ? "#585b70" :
-        vol > 0.7 ? "#f5a0d6" :
-        vol > 0.4 ? "#c6a0f6" : "#89b4fa"
+    readonly property color volColor: muted ? "#585b70" : vol > 0.7 ? "#f5a0d6" : vol > 0.4 ? "#c6a0f6" : "#89b4fa"
 
     onWheel: event => {
-        if (!Pipewire.defaultAudioSink?.audio) return;
+        if (!Pipewire.defaultAudioSink?.audio)
+            return;
         const step = 4;
         let v = Pipewire.defaultAudioSink.audio.volume * 100;
         v += event.angleDelta.y > 0 ? step : -step;
@@ -60,7 +59,9 @@ BarBlock {
                         Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(mouse.x / width, 1));
                 }
                 onWheel: event => {
-                    if (!Pipewire.defaultAudioSink?.audio) return;
+                    // event.accepted = false; // NOTE added as fix...does not work lol
+                    if (!Pipewire.defaultAudioSink?.audio)
+                        return;
                     let v = Pipewire.defaultAudioSink.audio.volume;
                     v += event.angleDelta.y > 0 ? 0.05 : -0.05;
                     Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(v, 1));
@@ -79,7 +80,8 @@ BarBlock {
                 acceptedButtons: Qt.LeftButton | Qt.RightButton
 
                 onWheel: event => {
-                    if (!PipewireState.inputSink?.audio) return;
+                    if (!PipewireState.inputSink?.audio)
+                        return;
                     let v = PipewireState.inputSink.audio.volume;
                     v += event.angleDelta.y > 0 ? 0.05 : -0.05;
                     v = Math.max(0, Math.min(v, 1));

@@ -14,6 +14,12 @@ RowLayout {
 
     anchors.verticalCenter: parent.verticalCenter
 
+    required property var host
+
+    PipewireBlock {
+        visible: MiscState.toggleSysTray
+    }
+
     Loader {
         visible: active
         asynchronous: true
@@ -113,6 +119,11 @@ RowLayout {
     Caffeine {
         visible: MiscState.toggleSysTray
         pointSize: icon.implicitSize
+    }
+
+    QuickSettings {
+        host: barr
+        visible: MiscState.toggleSysTray
     }
 
     BarBlock {

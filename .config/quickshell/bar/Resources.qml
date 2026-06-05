@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.customItems
@@ -15,8 +16,9 @@ Loader {
     sourceComponent: RowLayout {
         id: resourcesRow
 
-        PipewireBlock {}
-        DiskBlock { host: resourceLoader.host }
+        DiskBlock {
+            host: resourceLoader.host
+        }
         MemoryBlock {}
         CpuBlock {}
         GpuBlock {}

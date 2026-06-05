@@ -86,10 +86,9 @@ ShellRoot {
                         host: barr
                     }
                     // Git {}
-                    QuickSettings {
+                    SystemTray {
                         host: barr
                     }
-                    SystemTray {}
                 }
             }
         }

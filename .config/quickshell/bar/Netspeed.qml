@@ -78,26 +78,24 @@ Loader {
         }
 
         content: RowLayout {
-            spacing: 5
+            spacing: 6
 
             BarText {
                 textFormat: Text.RichText
-                // text: root.rxRate === 0 ? " -" : ` ${root.rxRate.toFixed(1)}`
-                text: root.rxRate === 0 ? "-" : `${root.rxRate.toFixed(1)}`
+                text: root.rxRate === 0 ? " -" : ` ${root.rxRate.toFixed(1)}`
                 color: "#89b4fa"
                 font {
-                    pixelSize: 12
+                    pixelSize: 10
                     family: "ZedMono Nerd Font"
                 }
             }
 
             BarText {
                 textFormat: Text.RichText
-                // text: root.txRate === 0 ? " -" : ` ${root.txRate.toFixed(1)}`
-                text: root.txRate === 0 ? "-" : `${root.txRate.toFixed(1)}`
+                text: root.txRate === 0 ? " -" : ` ${root.txRate.toFixed(1)}`
                 color: "#f5a0d6"
                 font {
-                    pixelSize: 12
+                    pixelSize: 10
                     family: "ZedMono Nerd Font"
                 }
             }

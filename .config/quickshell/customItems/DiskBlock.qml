@@ -10,17 +10,28 @@ BarBlock {
 
     required property var host
 
+    property string mountPoint: "/"
+    property string diskIcon: ""
+    property string diskLabel: ""
+    property bool showPercent: false
+    property bool showUsage: false
+
+    property color colorLow: "#a6e3a1"
+    property color colorMid: "#f5c2e7"
+    property color colorHigh: "#89dceb"
+    property color colorDanger: "#f38ba8"
+    property int dangerThreshold: 90
+
     property bool showAllDisksPopup: false
 
-    readonly property string diskUsage: ResourcesState.btrfsDevice
+    readonly property int diskUsageValue: ResourcesState.diskUsagePercent
+
     readonly property color diskColor: {
-        const match = diskUsage.match(/(\d+\.?\d*)/);
-        if (match) {
-            if (match[0] < 10) return "#a6e3a1";
-            if (match[0] < 20) return "#f5c2e7";
-            return "#89dceb";
-        }
-        return "#585b70";
+        const v = diskUsageValue;
+        if (v >= dangerThreshold) return colorDanger;
+        if (v >= 60) return colorHigh;
+        if (v >= 30) return colorMid;
+        return colorLow;
     }
 
     readonly property var allDisksList: {
@@ -31,18 +42,73 @@ BarBlock {
     onClicked: mouse => {
         if (mouse.button === Qt.LeftButton)
             showAllDisksPopup = !showAllDisksPopup;
+        else if (mouse.button === Qt.RightButton)
+            showPercent = !showPercent;
+        else if (mouse.button === Qt.MiddleButton)
+            showUsage = !showUsage;
     }
 
-    content: BarText {
-        id: textRow
-        renderNative: true
-        font {
-            pixelSize: 12
-            bold: true
-            family: "ZedMono Nerd Font"
+    content: RowLayout {
+        spacing: 4
+
+        Canvas {
+            id: gauge
+
+            readonly property real progress: Math.min(disk.diskUsageValue / 100, 1)
+
+            implicitWidth: 22
+            implicitHeight: 22
+
+            onProgressChanged: requestPaint()
+
+            onPaint: {
+                var ctx = getContext("2d");
+                ctx.clearRect(0, 0, width, height);
+
+                var cx = width / 2;
+                var cy = height / 2;
+                var r = cx - 2;
+                var lw = 3;
+                var startAngle = -Math.PI / 2;
+
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.06)";
+                ctx.lineWidth = lw;
+                ctx.stroke();
+
+                if (progress > 0) {
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, r, startAngle, startAngle + Math.PI * 2 * Math.min(progress, 0.999));
+                    ctx.strokeStyle = disk.diskColor;
+                    ctx.lineWidth = lw;
+                    ctx.lineCap = "round";
+                    ctx.stroke();
+                }
+
+                ctx.fillStyle = disk.diskColor;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.font = `11px "Symbols Nerd Font Mono"`;
+                ctx.fillText(disk.diskIcon, cx, cy + 0.5);
+            }
         }
-        baseColor: disk.diskColor
-        symbolText: ` ${disk.diskUsage}`
+
+        BarText {
+            id: percentText
+            visible: disk.showPercent
+            symbolText: `${disk.diskUsageValue}%`
+            baseColor: disk.diskColor
+            pointSize: 11
+        }
+
+        BarText {
+            id: usageText
+            visible: disk.showUsage
+            symbolText: disk.diskLabel
+            baseColor: disk.diskColor
+            pointSize: 11
+        }
     }
 
     PopupWindow {
@@ -71,38 +137,69 @@ BarBlock {
             border.color: "#45475a"
 
             Rectangle {
-                anchors { top: parent.top; left: parent.left; right: parent.right }
+                anchors {
+                    top: parent.top
+                    left: parent.left
+                    right: parent.right
+                }
                 height: 34
                 radius: 10
                 color: Qt.rgba(0.49, 0.73, 0.44, 0.06)
 
                 Text {
-                    anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 14 }
+                    anchors {
+                        left: parent.left
+                        verticalCenter: parent.verticalCenter
+                        leftMargin: 14
+                    }
                     text: "  All Mounts"
                     color: Themes.mprisTextColor
-                    font { pixelSize: 12; bold: true; family: "Quicksand" }
+                    font {
+                        pixelSize: 12
+                        bold: true
+                        family: "Quicksand"
+                    }
                 }
 
                 Text {
-                    anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 14 }
+                    anchors {
+                        right: parent.right
+                        verticalCenter: parent.verticalCenter
+                        rightMargin: 14
+                    }
                     text: "size  used   %"
                     color: Themes.mprisVolumeColor
-                    font { pixelSize: 9; family: "ZedMono Nerd Font"; letterSpacing: 1 }
+                    font {
+                        pixelSize: 9
+                        family: "ZedMono Nerd Font"
+                        letterSpacing: 1
+                    }
                 }
             }
 
             Rectangle {
-                anchors { top: parent.top; topMargin: 34; left: parent.left; leftMargin: 14; right: parent.right; rightMargin: 14 }
+                anchors {
+                    top: parent.top
+                    topMargin: 34
+                    left: parent.left
+                    leftMargin: 14
+                    right: parent.right
+                    rightMargin: 14
+                }
                 height: 1
                 color: "#313244"
             }
 
             Flickable {
                 anchors {
-                    top: parent.top; topMargin: 42
-                    left: parent.left; leftMargin: 14
-                    right: parent.right; rightMargin: 14
-                    bottom: parent.bottom; bottomMargin: 10
+                    top: parent.top
+                    topMargin: 42
+                    left: parent.left
+                    leftMargin: 14
+                    right: parent.right
+                    rightMargin: 14
+                    bottom: parent.bottom
+                    bottomMargin: 10
                 }
                 contentHeight: allDisksCol.implicitHeight
                 clip: true
@@ -128,7 +225,10 @@ BarBlock {
                                 Layout.preferredWidth: 140
                                 text: parent.parts[0] || ""
                                 color: Themes.mprisTextColor
-                                font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                font {
+                                    pixelSize: 10
+                                    family: "ZedMono Nerd Font"
+                                }
                                 elide: Text.ElideRight
                                 clip: true
                             }
@@ -138,7 +238,10 @@ BarBlock {
                                 horizontalAlignment: Text.AlignRight
                                 text: parent.parts[1] || ""
                                 color: "#585b70"
-                                font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                font {
+                                    pixelSize: 9
+                                    family: "ZedMono Nerd Font"
+                                }
                             }
 
                             Text {
@@ -146,7 +249,10 @@ BarBlock {
                                 horizontalAlignment: Text.AlignRight
                                 text: parent.parts[2] || ""
                                 color: "#a6adc8"
-                                font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                font {
+                                    pixelSize: 9
+                                    family: "ZedMono Nerd Font"
+                                }
                             }
 
                             Rectangle {
@@ -162,7 +268,10 @@ BarBlock {
                                     color: parent.parent.pct > 90 ? "#f38ba8" : parent.parent.pct > 70 ? "#f9e2af" : Themes.toxicGreen
 
                                     Behavior on width {
-                                        NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                                        NumberAnimation {
+                                            duration: 300
+                                            easing.type: Easing.OutCubic
+                                        }
                                     }
                                 }
                             }
@@ -172,7 +281,11 @@ BarBlock {
                                 horizontalAlignment: Text.AlignRight
                                 text: `${parent.pct}%`
                                 color: parent.parent.pct > 90 ? "#f38ba8" : "#a6adc8"
-                                font { pixelSize: 9; family: "ZedMono Nerd Font"; bold: parent.pct > 90 }
+                                font {
+                                    pixelSize: 9
+                                    family: "ZedMono Nerd Font"
+                                    bold: parent.pct > 90
+                                }
                             }
                         }
                     }
@@ -180,7 +293,10 @@ BarBlock {
                     Text {
                         text: "No mounts found"
                         color: "#585b70"
-                        font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                        font {
+                            pixelSize: 10
+                            family: "ZedMono Nerd Font"
+                        }
                         visible: disk.allDisksList.length === 0
                     }
                 }

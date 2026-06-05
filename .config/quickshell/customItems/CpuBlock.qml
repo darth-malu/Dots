@@ -8,6 +8,7 @@ BarBlock {
     border.width: 0
 
     property bool showPercent: false
+
     property bool showTemp: false
 
     readonly property int cpuPercent: ResourcesState.cpuUsageString
@@ -20,6 +21,8 @@ BarBlock {
             showPercent = !showPercent;
         else if (mouse.button === Qt.RightButton)
             showTemp = !showTemp;
+        else if (mouse.button === Qt.MiddleButton)
+            MiscState.showGpu = !MiscState.showGpu;
     }
 
     content: RowLayout {

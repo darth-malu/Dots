@@ -404,8 +404,11 @@ BarBlock {
                             icon: ""
                             text: "Disks"
                             color: Themes.mprisTextColor
+                            visible: diskPlace.visible
                         }
                         Rectangle {
+                            id: diskPlace
+                            visible: false
                             Layout.fillWidth: true
                             Layout.preferredHeight: disksCol.implicitHeight + 12
                             Layout.bottomMargin: 6

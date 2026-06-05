@@ -28,8 +28,8 @@ Singleton {
     property int swapPercent
     property real swapTotal: 0
     property real swapUsed: 0
-    // property string darth_pool
-    property string btrfsDevice
+    property int diskUsagePercent: 0
+    property string diskMountPoint: "/"
     property string mediaDisks: ""
     property string allDisks: ""
     property string allDisksPending: ""
@@ -156,11 +156,14 @@ Singleton {
 
     Process {
         id: disk_usage
-        // TODO: notification on lowIdsk - persistent properties
+        // TODO: notification on lowDisk - persistent properties
         running: false
-        command: ["sh", "-c", "findmnt -n -o AVAIL /"]
+        command: ["sh", "-c", "df / --output=pcent 2>/dev/null | tail -n1 | tr -d ' %'"]
         stdout: SplitParser {
-            onRead: data => btrfsDevice = data
+            onRead: data => {
+                const val = parseInt(data);
+                if (!isNaN(val)) root.diskUsagePercent = val;
+            }
         }
     }
 

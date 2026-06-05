@@ -6,6 +6,7 @@ import qs.customItems
 BarBlock {
     id: gpu
     border.width: 0
+    visible: MiscState.showGpu
 
     property bool showPercent: false
     property bool showTemp: false

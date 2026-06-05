@@ -22,5 +22,7 @@ Singleton {
 
     property bool showPopup: false
 
+    property bool showGpu: false
+
     readonly property var currentToplevels: Hyprland.toplevels
 }
