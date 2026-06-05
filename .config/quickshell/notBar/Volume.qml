@@ -45,33 +45,22 @@ Scope {
         margins.right: screen.width / 95
         exclusiveZone: 0
 
-        implicitWidth: 56
-        implicitHeight: 220
+        implicitWidth: 40
+        implicitHeight: 200
         color: "transparent"
         mask: Region {}
 
         Item {
             anchors.fill: parent
             opacity: root.shouldShowOsd ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: 200 } }
+            Behavior on opacity { NumberAnimation { duration: 150 } }
 
             Rectangle {
                 anchors.fill: parent
-                radius: 14
-                color: Qt.rgba(0.06, 0.02, 0.12, 0.8)
-                border.color: root.isMuted ? "#45475a" : "#c6a0f6"
+                radius: 10
+                color: Qt.rgba(0.04, 0.01, 0.1, 0.75)
+                border.color: Qt.rgba(1, 1, 1, 0.06)
                 border.width: 1
-
-                Rectangle {
-                    anchors.fill: parent
-                    radius: 14
-                    gradient: Gradient {
-                        orientation: Gradient.Vertical
-                        GradientStop { position: 0; color: Qt.rgba(0.7, 0.4, 0.9, 0.15) }
-                        GradientStop { position: 0.5; color: Qt.rgba(0.7, 0.4, 0.9, 0.05) }
-                        GradientStop { position: 1; color: Qt.rgba(0.7, 0.4, 0.9, 0) }
-                    }
-                }
 
                 Rectangle {
                     id: bar
@@ -79,10 +68,10 @@ Scope {
                         left: parent.left
                         right: parent.right
                         bottom: parent.bottom
-                        margins: 8
+                        margins: 6
                     }
-                    height: (parent.height - 16) * (ifAudioNode?.volume ?? 0)
-                    radius: 6
+                    height: (parent.height - 12) * (ifAudioNode?.volume ?? 0)
+                    radius: 5
                     color: {
                         if (root.isMuted) return "#585b70";
                         var v = ifAudioNode?.volume ?? 0;
@@ -100,23 +89,25 @@ Scope {
                         anchors {
                             left: parent.left; right: parent.right; top: parent.top
                         }
-                        height: parent.height * 0.5
-                        radius: 6
-                        color: Qt.rgba(1, 1, 1, 0.08)
+                        height: parent.height * 0.4
+                        radius: 5
+                        color: Qt.rgba(1, 1, 1, 0.06)
                     }
                 }
 
                 Text {
                     anchors.centerIn: parent
                     text: root.isMuted ? "" : Math.floor((ifAudioNode?.volume ?? 0) * 100) + "%"
-                    color: root.isMuted ? "#6c7086" : "#f5e0dc"
+                    color: root.isMuted ? "#585b70" : "#f5e0dc"
                     font {
-                        pixelSize: root.isMuted ? 22 : 18
+                        pixelSize: root.isMuted ? 20 : 24
                         family: root.isMuted ? "Symbols Nerd Font Mono" : "Quicksand"
                         bold: true
+                        letterSpacing: root.isMuted ? 0 : 1
                     }
                     style: Text.Raised
-                    styleColor: Qt.rgba(0, 0, 0, 0.3)
+                    styleColor: Qt.rgba(0, 0, 0, 0.5)
+                    opacity: 0.95
                 }
             }
         }

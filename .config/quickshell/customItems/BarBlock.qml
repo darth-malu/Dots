@@ -8,6 +8,8 @@ Rectangle {
 
     Layout.preferredHeight: contentContainer.implicitHeight // 30::
 
+    Layout.alignment: Qt.AlignVCenter
+
     radius: height / 2
 
     property Item content

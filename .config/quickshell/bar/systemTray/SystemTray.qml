@@ -17,7 +17,7 @@ RowLayout {
     required property var host
 
     PipewireBlock {
-        visible: MiscState.toggleSysTray
+        visible: MiscState.toggleVolume
     }
 
     Loader {

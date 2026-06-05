@@ -104,7 +104,7 @@ BarBlock {
     }
 
     onLeftClicked: qsPopup.visible = !qsPopup.visible
-    onRightClicked: MiscState.toggleSysTray = !MiscState.toggleSysTray
+    onRightClicked: MiscState.toggleVolume = !MiscState.toggleVolume
     onMiddleClicked: MiscState.toggleSysTray = !MiscState.toggleSysTray
 
     Shortcut {

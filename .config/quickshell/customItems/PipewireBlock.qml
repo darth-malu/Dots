@@ -29,6 +29,12 @@ BarBlock {
     content: RowLayout {
         spacing: 6
 
+        BarText {
+            symbolText: root.muted ? "婢" : root.vol > 0.7 ? "" : root.vol > 0.05 ? "" : ""
+            baseColor: root.volColor
+            pointSize: 11
+        }
+
         Item {
             id: volBar
             implicitWidth: 48
