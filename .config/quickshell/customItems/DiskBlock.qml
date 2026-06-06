@@ -112,6 +112,7 @@ BarBlock {
         id: allDisksPopup
         visible: false
         grabFocus: true
+        color: 'transparent'
 
         anchor.window: disk.host
         anchor.rect.x: {

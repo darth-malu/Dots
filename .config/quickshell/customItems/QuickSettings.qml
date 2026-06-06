@@ -103,9 +103,9 @@ BarBlock {
         }
     }
 
-    onLeftClicked: qsPopup.visible = !qsPopup.visible
-    onRightClicked: MiscState.toggleVolume = !MiscState.toggleVolume
-    onMiddleClicked: MiscState.toggleSysTray = !MiscState.toggleSysTray
+    onMiddleClicked: qsPopup.visible = !qsPopup.visible
+    onLeftClicked: MiscState.toggleVolume = !MiscState.toggleVolume
+    onRightClicked: MiscState.toggleSysTray = !MiscState.toggleSysTray
 
     Shortcut {
         sequence: "Escape"
@@ -122,7 +122,10 @@ BarBlock {
             anchors.centerIn: parent
             text: ""
             color: "#cba6f7"
-            font { pixelSize: 16; family: "Symbols Nerd Font Mono" }
+            font {
+                pixelSize: 16
+                family: "Symbols Nerd Font Mono"
+            }
         }
     }
 
@@ -130,6 +133,7 @@ BarBlock {
         id: qsPopup
         visible: false
         grabFocus: true
+        color: 'transparent'
 
         anchor.window: root.host
         anchor.rect.x: {
@@ -176,14 +180,19 @@ BarBlock {
                         spacing: 10
 
                         Rectangle {
-                            implicitWidth: 30; implicitHeight: 30; radius: 8
+                            implicitWidth: 30
+                            implicitHeight: 30
+                            radius: 8
                             color: Qt.rgba(0.78, 0.60, 0.86, 0.18)
 
                             Text {
                                 anchors.centerIn: parent
                                 text: ""
                                 color: "#cba6f7"
-                                font { pixelSize: 16; family: "Symbols Nerd Font Mono" }
+                                font {
+                                    pixelSize: 16
+                                    family: "Symbols Nerd Font Mono"
+                                }
                             }
                         }
 
@@ -192,12 +201,19 @@ BarBlock {
                             Text {
                                 text: root.hostName
                                 color: "#cdd6f4"
-                                font { pixelSize: 13; bold: true; family: "Quicksand" }
+                                font {
+                                    pixelSize: 13
+                                    bold: true
+                                    family: "Quicksand"
+                                }
                             }
                             Text {
                                 text: root.ipAddr.length > 0 ? root.ipAddr : (root.isOnline ? "connected" : "offline")
                                 color: root.isOnline ? "#89b4fa" : "#585b70"
-                                font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                font {
+                                    pixelSize: 10
+                                    family: "ZedMono Nerd Font"
+                                }
                             }
                         }
                     }
@@ -210,7 +226,10 @@ BarBlock {
                         }
                         text: root.isOnline ? "" : ""
                         color: root.isOnline ? "#89b4fa" : "#585b70"
-                        font { pixelSize: 16; family: "Symbols Nerd Font Mono" }
+                        font {
+                            pixelSize: 16
+                            family: "Symbols Nerd Font Mono"
+                        }
                     }
                 }
 
@@ -241,7 +260,9 @@ BarBlock {
                                 Layout.fillWidth: true
 
                                 Rectangle {
-                                    implicitWidth: 56; implicitHeight: 56; radius: 12
+                                    implicitWidth: 56
+                                    implicitHeight: 56
+                                    radius: 12
                                     color: "#313244"
 
                                     Image {
@@ -254,16 +275,23 @@ BarBlock {
                                     }
 
                                     Rectangle {
-                                        anchors.fill: parent; radius: 12
+                                        anchors.fill: parent
+                                        radius: 12
                                         color: "transparent"
-                                        border { width: 2; color: Qt.rgba(0.80, 0.65, 0.97, 0.4) }
+                                        border {
+                                            width: 2
+                                            color: Qt.rgba(0.80, 0.65, 0.97, 0.4)
+                                        }
                                     }
 
                                     Text {
                                         anchors.centerIn: parent
                                         text: ""
                                         color: "#585b70"
-                                        font { pixelSize: 24; family: "Symbols Nerd Font Mono" }
+                                        font {
+                                            pixelSize: 24
+                                            family: "Symbols Nerd Font Mono"
+                                        }
                                         visible: albumArt.status !== Image.Ready
                                     }
                                 }
@@ -276,7 +304,11 @@ BarBlock {
                                         Layout.fillWidth: true
                                         text: MprisState.player?.trackTitle || "No track"
                                         color: "#cba6f7"
-                                        font { pixelSize: 12; bold: true; family: "Quicksand" }
+                                        font {
+                                            pixelSize: 12
+                                            bold: true
+                                            family: "Quicksand"
+                                        }
                                         elide: Text.ElideRight
                                     }
 
@@ -284,7 +316,10 @@ BarBlock {
                                         Layout.fillWidth: true
                                         text: MprisState.player?.trackArtist || MprisState.player?.identity || ""
                                         color: "#a6adc8"
-                                        font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                        font {
+                                            pixelSize: 10
+                                            family: "ZedMono Nerd Font"
+                                        }
                                         elide: Text.ElideRight
                                     }
                                 }
@@ -292,14 +327,24 @@ BarBlock {
                                 RowLayout {
                                     spacing: 4
 
-                                    TrackButton { text: ""; bgColor: "#45475a"; textColor: "#cba6f7"; onClicked: MprisState.player?.previous() }
+                                    TrackButton {
+                                        text: ""
+                                        bgColor: "#45475a"
+                                        textColor: "#cba6f7"
+                                        onClicked: MprisState.player?.previous()
+                                    }
                                     TrackButton {
                                         text: MprisState.player?.isPlaying ? "" : ""
                                         bgColor: "#cba6f7"
                                         textColor: "#1e1e2e"
                                         onClicked: MprisState.player?.togglePlaying()
                                     }
-                                    TrackButton { text: ""; bgColor: "#45475a"; textColor: "#cba6f7"; onClicked: MprisState.player?.next() }
+                                    TrackButton {
+                                        text: ""
+                                        bgColor: "#45475a"
+                                        textColor: "#cba6f7"
+                                        onClicked: MprisState.player?.next()
+                                    }
                                 }
                             }
 
@@ -323,7 +368,11 @@ BarBlock {
                                             anchors.centerIn: parent
                                             text: modelData.identity
                                             color: modelData === MprisState.player ? "#1e1e2e" : "#a6adc8"
-                                            font { pixelSize: 11; family: "Quicksand"; bold: true }
+                                            font {
+                                                pixelSize: 11
+                                                family: "Quicksand"
+                                                bold: true
+                                            }
                                         }
 
                                         MouseArea {
@@ -367,7 +416,10 @@ BarBlock {
                                             Layout.preferredWidth: 130
                                             text: parent.parts[0] || ""
                                             color: "#cdd6f4"
-                                            font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                            font {
+                                                pixelSize: 10
+                                                family: "ZedMono Nerd Font"
+                                            }
                                             elide: Text.ElideRight
                                         }
 
@@ -376,7 +428,10 @@ BarBlock {
                                             horizontalAlignment: Text.AlignRight
                                             text: parent.parts[1] || ""
                                             color: "#585b70"
-                                            font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                            font {
+                                                pixelSize: 9
+                                                family: "ZedMono Nerd Font"
+                                            }
                                         }
 
                                         Rectangle {
@@ -392,7 +447,10 @@ BarBlock {
                                                 color: parent.parent.pct > 90 ? "#f38ba8" : parent.parent.pct > 70 ? "#f5c2e7" : "#89dceb"
 
                                                 Behavior on width {
-                                                    NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                                                    NumberAnimation {
+                                                        duration: 300
+                                                        easing.type: Easing.OutCubic
+                                                    }
                                                 }
                                             }
                                         }
@@ -402,7 +460,11 @@ BarBlock {
                                             horizontalAlignment: Text.AlignRight
                                             text: `${parent.pct}%`
                                             color: parent.pct > 90 ? "#f38ba8" : "#a6adc8"
-                                            font { pixelSize: 9; family: "ZedMono Nerd Font"; bold: parent.pct > 90 }
+                                            font {
+                                                pixelSize: 9
+                                                family: "ZedMono Nerd Font"
+                                                bold: parent.pct > 90
+                                            }
                                         }
                                     }
                                 }
@@ -410,7 +472,10 @@ BarBlock {
                                 Text {
                                     text: "No disks found"
                                     color: "#585b70"
-                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                    font {
+                                        pixelSize: 10
+                                        family: "ZedMono Nerd Font"
+                                    }
                                     visible: root.diskData.trim().length === 0
                                 }
                             }
@@ -434,7 +499,11 @@ BarBlock {
                                     Text {
                                         text: Math.floor(root.batPct * 100) + "%"
                                         color: root.batPct < 0.2 ? "#f38ba8" : root.batPct < 0.5 ? "#f9e2af" : "#a6e3a1"
-                                        font { pixelSize: 20; bold: true; family: "ZedMono Nerd Font" }
+                                        font {
+                                            pixelSize: 20
+                                            bold: true
+                                            family: "ZedMono Nerd Font"
+                                        }
                                     }
 
                                     ColumnLayout {
@@ -442,12 +511,18 @@ BarBlock {
                                         Text {
                                             text: bat.state == UPowerDeviceState.Charging ? "Charging" : "Discharging"
                                             color: bat.state == UPowerDeviceState.Charging ? "#a6e3a1" : "#cdd6f4"
-                                            font { pixelSize: 11; family: "Quicksand" }
+                                            font {
+                                                pixelSize: 11
+                                                family: "Quicksand"
+                                            }
                                         }
                                         Text {
                                             text: PowerProfiles.profile == PowerProfile.Performance ? "⚡ Performance" : PowerProfiles.profile == PowerProfile.PowerSaver ? "🍀 Power Saver" : "☯ Balanced"
                                             color: "#a6adc8"
-                                            font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                            font {
+                                                pixelSize: 9
+                                                family: "ZedMono Nerd Font"
+                                            }
                                             MouseArea {
                                                 anchors.fill: parent
                                                 cursorShape: Qt.PointingHandCursor
@@ -461,12 +536,17 @@ BarBlock {
                                         }
                                     }
 
-                                    Item { Layout.fillWidth: true }
+                                    Item {
+                                        Layout.fillWidth: true
+                                    }
 
                                     Text {
                                         text: bat.state == UPowerDeviceState.Charging ? "" : ""
                                         color: bat.state == UPowerDeviceState.Charging ? "#a6e3a1" : "#cdd6f4"
-                                        font { pixelSize: 20; family: "Symbols Nerd Font Mono" }
+                                        font {
+                                            pixelSize: 20
+                                            family: "Symbols Nerd Font Mono"
+                                        }
                                     }
                                 }
 
@@ -485,7 +565,11 @@ BarBlock {
                                     contentItem: Rectangle {
                                         radius: 3
                                         color: root.batPct < 0.2 ? "#f38ba8" : root.batPct < 0.5 ? "#f9e2af" : "#a6e3a1"
-                                        Behavior on color { ColorAnimation { duration: 200 } }
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: 200
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -508,26 +592,31 @@ BarBlock {
                                     Text {
                                         text: Pipewire.ready ? Math.floor((Pipewire.defaultAudioSink?.audio?.volume ?? 0) * 100) + "%" : ""
                                         color: "#cdd6f4"
-                                        font { pixelSize: 14; bold: true; family: "ZedMono Nerd Font" }
+                                        font {
+                                            pixelSize: 14
+                                            bold: true
+                                            family: "ZedMono Nerd Font"
+                                        }
                                     }
 
-                                    Item { Layout.fillWidth: true }
+                                    Item {
+                                        Layout.fillWidth: true
+                                    }
 
                                     Text {
                                         text: Pipewire.defaultAudioSink?.description || ""
                                         color: "#585b70"
-                                        font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                        font {
+                                            pixelSize: 9
+                                            family: "ZedMono Nerd Font"
+                                        }
                                         elide: Text.ElideRight
                                         Layout.maximumWidth: 120
 
                                         MouseArea {
                                             anchors.fill: parent
                                             cursorShape: Qt.PointingHandCursor
-                                            onClicked: Quickshell.execDetached(["sh", "-c",
-                                                "cur=$(pactl get-default-sink); " +
-                                                "next=$(pactl list short sinks | awk 'NR>1{print $2;exit}'); " +
-                                                "[ -n \"$next\" ] && pactl set-default-sink \"$next\""
-                                            ])
+                                            onClicked: Quickshell.execDetached(["sh", "-c", "cur=$(pactl get-default-sink); " + "next=$(pactl list short sinks | awk 'NR>1{print $2;exit}'); " + "[ -n \"$next\" ] && pactl set-default-sink \"$next\""])
                                         }
                                     }
                                 }
@@ -543,7 +632,9 @@ BarBlock {
                                         anchors.fill: parent
                                         leftPadding: 4
                                         rightPadding: 4
-                                        from: 0; to: 1; stepSize: 0.01
+                                        from: 0
+                                        to: 1
+                                        stepSize: 0.01
                                         value: Pipewire.defaultAudioSink?.audio?.volume ?? 0
                                         live: true
                                         onValueChanged: {
@@ -555,12 +646,14 @@ BarBlock {
                                             x: volSlider.leftPadding
                                             y: volSlider.topPadding + volSlider.availableHeight / 2 - height / 2
                                             width: volSlider.availableWidth
-                                            height: 3; radius: 1.5
+                                            height: 3
+                                            radius: 1.5
                                             color: "#313244"
 
                                             Rectangle {
                                                 width: volSlider.visualPosition * parent.width
-                                                height: parent.height; radius: 1.5
+                                                height: parent.height
+                                                radius: 1.5
                                                 color: Pipewire.defaultAudioSink?.audio?.muted ? "#585b70" : "#c6a0f6"
                                             }
                                         }
@@ -568,9 +661,12 @@ BarBlock {
                                         handle: Rectangle {
                                             x: volSlider.leftPadding + volSlider.visualPosition * (volSlider.availableWidth - width)
                                             y: volSlider.topPadding + volSlider.availableHeight / 2 - height / 2
-                                            width: 10; height: 10; radius: 5
+                                            width: 10
+                                            height: 10
+                                            radius: 5
                                             color: Pipewire.defaultAudioSink?.audio?.muted ? "#585b70" : "#c6a0f6"
-                                            border.color: "#1e1e2e"; border.width: 2
+                                            border.color: "#1e1e2e"
+                                            border.width: 2
                                         }
                                     }
 
@@ -592,11 +688,15 @@ BarBlock {
                         // ═══ CAFFEINE ═══
                         Card {
                             title: "Caffeine"
-                            icon: CaffeineService.enabled ? "" : "暈"
+                            icon: CaffeineService.enabled ? "" : "󰾪"
                             accent: CaffeineService.enabled ? "#fab387" : "#585b70"
                             cardColor: CaffeineService.enabled ? Qt.rgba(0.98, 0.70, 0.53, 0.06) : "#181825"
 
-                            Behavior on cardColor { ColorAnimation { duration: 200 } }
+                            Behavior on cardColor {
+                                ColorAnimation {
+                                    duration: 200
+                                }
+                            }
 
                             RowLayout {
                                 spacing: 10
@@ -605,30 +705,61 @@ BarBlock {
                                 Text {
                                     text: CaffeineService.enabled ? "Prevent idle suspend" : "Allow idle suspend"
                                     color: CaffeineService.enabled ? "#fab387" : "#a6adc8"
-                                    font { pixelSize: 10; family: "Quicksand" }
+                                    font {
+                                        pixelSize: 10
+                                        family: "Quicksand"
+                                    }
                                     elide: Text.ElideRight
                                     Layout.fillWidth: true
 
-                                    Behavior on color { ColorAnimation { duration: 200 } }
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: 200
+                                        }
+                                    }
                                 }
 
-                                Item { Layout.fillWidth: true }
+                                Item {
+                                    Layout.fillWidth: true
+                                }
 
                                 Rectangle {
-                                    width: 44; height: 24; radius: 12
+                                    width: 44
+                                    height: 24
+                                    radius: 12
                                     color: CaffeineService.enabled ? "#fab387" : "#45475a"
                                     border.color: CaffeineService.enabled ? "#fab387" : "#585b70"
                                     border.width: 1
 
-                                    Behavior on color { ColorAnimation { duration: 200 } }
-                                    Behavior on border.color { ColorAnimation { duration: 200 } }
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: 200
+                                        }
+                                    }
+                                    Behavior on border.color {
+                                        ColorAnimation {
+                                            duration: 200
+                                        }
+                                    }
 
                                     Rectangle {
                                         x: CaffeineService.enabled ? parent.width - width - 2 : 2
-                                        y: 2; width: 18; height: 18; radius: 9
+                                        y: 2
+                                        width: 18
+                                        height: 18
+                                        radius: 9
                                         color: CaffeineService.enabled ? "#1e1e2e" : "#cdd6f4"
-                                        Behavior on x { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
-                                        Behavior on color { ColorAnimation { duration: 150 } }
+                                        Behavior on x {
+                                            NumberAnimation {
+                                                duration: 150
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: 150
+                                            }
+                                        }
                                     }
 
                                     MouseArea {
@@ -651,11 +782,36 @@ BarBlock {
                                 spacing: 4
                                 Layout.fillWidth: true
 
-                                QsPower { icon: ""; color: "#89b4fa"; label: "Lock"; cmd: "loginctl lock-session" }
-                                QsPower { icon: ""; color: "#a6e3a1"; label: "Sleep"; cmd: "systemctl suspend" }
-                                QsPower { icon: ""; color: "#f9e2af"; label: "Reboot"; cmd: "systemctl reboot" }
-                                QsPower { icon: ""; color: "#f38ba8"; label: "Off"; cmd: "systemctl poweroff" }
-                                QsPower { icon: ""; color: "#cba6f7"; label: "Exit"; cmd: "loginctl terminate-user $USER" }
+                                QsPower {
+                                    icon: ""
+                                    color: "#89b4fa"
+                                    label: "Lock"
+                                    cmd: "loginctl lock-session"
+                                }
+                                QsPower {
+                                    icon: ""
+                                    color: "#a6e3a1"
+                                    label: "Sleep"
+                                    cmd: "systemctl suspend"
+                                }
+                                QsPower {
+                                    icon: ""
+                                    color: "#f9e2af"
+                                    label: "Reboot"
+                                    cmd: "systemctl reboot"
+                                }
+                                QsPower {
+                                    icon: ""
+                                    color: "#f38ba8"
+                                    label: "Off"
+                                    cmd: "systemctl poweroff"
+                                }
+                                QsPower {
+                                    icon: ""
+                                    color: "#cba6f7"
+                                    label: "Exit"
+                                    cmd: "loginctl terminate-user $USER"
+                                }
                             }
                         }
                     }
@@ -676,9 +832,16 @@ BarBlock {
         Text {
             text: `${parent.icon}  ${parent.text}`
             color: parent.color
-            font { pixelSize: 10; bold: true; family: "Quicksand"; letterSpacing: 1 }
+            font {
+                pixelSize: 10
+                bold: true
+                family: "Quicksand"
+                letterSpacing: 1
+            }
         }
-        Item { Layout.fillWidth: true }
+        Item {
+            Layout.fillWidth: true
+        }
     }
 
     component Separator: Rectangle {
@@ -694,14 +857,19 @@ BarBlock {
         property color textColor: "#cdd6f4"
         signal clicked
 
-        implicitWidth: 28; implicitHeight: 28; radius: 6
+        implicitWidth: 28
+        implicitHeight: 28
+        radius: 6
         color: mouseArea.containsMouse ? Qt.lighter(bgColor, 1.3) : bgColor
 
         Text {
             anchors.centerIn: parent
             text: parent.text
             color: parent.textColor
-            font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
+            font {
+                pixelSize: 12
+                family: "Symbols Nerd Font Mono"
+            }
         }
 
         MouseArea {
@@ -730,7 +898,11 @@ BarBlock {
             color: mouseArea.containsMouse ? Qt.rgba(parent.color.r, parent.color.g, parent.color.b, 0.12) : "transparent"
             scale: parent.scaleVal
 
-            Behavior on color { ColorAnimation { duration: 120 } }
+            Behavior on color {
+                ColorAnimation {
+                    duration: 120
+                }
+            }
         }
 
         ColumnLayout {
@@ -741,17 +913,32 @@ BarBlock {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: parent.parent.icon
                 color: mouseArea.containsMouse ? parent.parent.color : Qt.rgba(parent.parent.color.r, parent.parent.color.g, parent.parent.color.b, 0.6)
-                font { pixelSize: 16; family: "Symbols Nerd Font Mono" }
-                Behavior on color { ColorAnimation { duration: 120 } }
+                font {
+                    pixelSize: 16
+                    family: "Symbols Nerd Font Mono"
+                }
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 120
+                    }
+                }
             }
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: parent.parent.label
                 color: mouseArea.containsMouse ? parent.parent.color : "#585b70"
-                font { pixelSize: 8; family: "Quicksand"; bold: true }
+                font {
+                    pixelSize: 8
+                    family: "Quicksand"
+                    bold: true
+                }
                 visible: parent.parent.label.length > 0
-                Behavior on color { ColorAnimation { duration: 120 } }
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 120
+                    }
+                }
             }
         }
 
@@ -769,7 +956,10 @@ BarBlock {
         }
 
         Behavior on scaleVal {
-            NumberAnimation { duration: 80; easing.type: Easing.OutCubic }
+            NumberAnimation {
+                duration: 80
+                easing.type: Easing.OutCubic
+            }
         }
     }
 }

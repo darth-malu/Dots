@@ -20,12 +20,12 @@ if hostname == "carthage" then
 elseif hostname == "tangier" then
   require("tangier")
 end
--- programs?? SEE IF CONFLICTS
 
 
 hl.on("hyprland.start", function()
   hl.exec_cmd("app2unit -s a kitty")
   hl.exec_cmd("[workspace special:easy silent] app2unit -s a easyeffects")
   -- hl.exec_cmd("dbus-update-activation-environment --systemd --all")
+  -- hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
   -- hl.exec_cmd("systemctl --user import-environment QT_QPA_PLATFORMTHEME")
 end)

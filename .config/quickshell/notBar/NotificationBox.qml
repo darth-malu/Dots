@@ -82,9 +82,9 @@ WrapperMouseArea {
                 visible: rootMouseArea.image != ""
                 implicitWidth: rootMouseArea.iconSize
                 implicitHeight: rootMouseArea.iconSize
-                Layout.topMargin: 6
-                Layout.bottomMargin: 6
-                Layout.leftMargin: 6
+                Layout.topMargin: 2
+                Layout.bottomMargin: 2
+                Layout.leftMargin: 2
 
                 ClippingWrapperRectangle {
                     id: songArt
@@ -120,9 +120,9 @@ WrapperMouseArea {
             ColumnLayout {
                 id: contentLayout
                 spacing: 6
-                Layout.topMargin: 8
-                Layout.bottomMargin: 8
-                Layout.rightMargin: 8
+                // Layout.topMargin: 8
+                // Layout.bottomMargin: 8
+                // Layout.rightMargin: 8
 
                 RowLayout {
                     Text {
@@ -176,7 +176,11 @@ WrapperMouseArea {
                             radius: 6
                             color: actionMA.containsMouse ? Qt.lighter("#313244", 1.2) : "#313244"
 
-                            Behavior on color { ColorAnimation { duration: 100 } }
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: 100
+                                }
+                            }
 
                             Text {
                                 anchors.centerIn: parent
@@ -188,7 +192,11 @@ WrapperMouseArea {
                                     family: "Quicksand"
                                 }
 
-                                Behavior on color { ColorAnimation { duration: 100 } }
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: 100
+                                    }
+                                }
                             }
 
                             MouseArea {
@@ -228,7 +236,11 @@ WrapperMouseArea {
                 radius: 4
                 color: expandMA.containsMouse ? Qt.lighter("#313244", 1.3) : "#313244"
 
-                Behavior on color { ColorAnimation { duration: 100 } }
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 100
+                    }
+                }
 
                 IconImage {
                     source: Quickshell.iconPath(expandButton.sourceIcon)
@@ -253,7 +265,11 @@ WrapperMouseArea {
                 radius: 4
                 color: closeMA.containsMouse ? Qt.lighter("#f38ba8", 1.3) : "#313244"
 
-                Behavior on color { ColorAnimation { duration: 100 } }
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 100
+                    }
+                }
 
                 IconImage {
                     source: Quickshell.iconPath("process-stop-symbolic")
