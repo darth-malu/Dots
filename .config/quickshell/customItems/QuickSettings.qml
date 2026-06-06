@@ -140,10 +140,11 @@ BarBlock {
             let g = root.mapToGlobal(0, 0);
             return g.x + (root.width / 2) - (width / 2);
         }
-        anchor.rect.y: {
-            let g = root.mapToGlobal(0, 0);
-            return g.y + root.height + 4;
-        }
+        anchor.rect.y: 33
+        // anchor.rect.y: {
+        //     let g = root.mapToGlobal(0, 0);
+        //     return g.y + root.height + 4;
+        // }
 
         implicitWidth: 340
         implicitHeight: Math.min(qsContent.implicitHeight + 24, 600)

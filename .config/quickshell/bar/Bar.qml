@@ -85,6 +85,7 @@ ShellRoot {
                     ClockWidget {
                         host: barr
                     }
+                    Battery {}
                     // Git {}
                     SystemTray {
                         host: barr
