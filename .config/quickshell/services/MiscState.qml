@@ -23,6 +23,24 @@ Singleton {
 
     property bool showPopup: false
 
+    property var trackedDates: ({})
+    property int trackedDatesRev: 0
+
+    function toggleTrackedDate(year, month, day) {
+        var key = year + '-' + (month < 10 ? '0' : '') + month + '-' + (day < 10 ? '0' : '') + day;
+        if (trackedDates[key]) {
+            delete trackedDates[key];
+        } else {
+            trackedDates[key] = true;
+        }
+        trackedDatesRev++;
+    }
+
+    function isTrackedDate(year, month, day) {
+        var key = year + '-' + (month < 10 ? '0' : '') + month + '-' + (day < 10 ? '0' : '') + day;
+        return trackedDates[key] === true;
+    }
+
     property bool showGpu: false
 
     readonly property var currentToplevels: Hyprland.toplevels

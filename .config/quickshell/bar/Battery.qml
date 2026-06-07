@@ -13,6 +13,8 @@ RowLayout {
 
     required property var host
 
+    property bool showPopup: false
+
     readonly property UPowerDevice bat: UPower.displayDevice
 
     function fmtTime(secs) {
@@ -39,12 +41,11 @@ RowLayout {
         implicitWidth: batteryBody.width
         implicitHeight: batteryBody.height
 
-        acceptedButtons: Qt.MiddleButton
+        acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 
         onClicked: mouse => {
-            mouse.accepted = true;
             if (mouse.button == Qt.MiddleButton)
-                batteryPopup.visible = !batteryPopup.visible;
+                batteryBlock.showPopup = !batteryBlock.showPopup;
         }
 
         Rectangle {
@@ -197,7 +198,7 @@ RowLayout {
 
     PopupWindow {
         id: batteryPopup
-        visible: false
+        visible: batteryBlock.showPopup
         grabFocus: true
         color: "transparent"
 
@@ -221,7 +222,7 @@ RowLayout {
 
             Shortcut {
                 sequence: "Escape"
-                onActivated: batteryPopup.visible = false
+                onActivated: batteryBlock.showPopup = false
             }
 
             ColumnLayout {

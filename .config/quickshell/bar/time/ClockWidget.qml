@@ -88,7 +88,21 @@ BarBlock {
                 ClockPopup {
                     anchors.fill: parent
                     anchors.margins: 8
-                    onDayClicked: MiscState.showPopup = false
+                    onDayClicked: (day, month, year) => {
+                        MiscState.showPopup = false;
+                        MiscState.toggleTrackedDate(year, month, day);
+
+                        var m = month < 10 ? '0' + month : '' + month;
+                        var d = day < 10 ? '0' + day : '' + day;
+                        var key = year + '-' + m + '-' + d;
+                        var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                        var dt = new Date(year, month - 1, day);
+                        var dayName = days[dt.getDay()];
+                        Quickshell.execDetached([
+                            'emacsclient', '-c', '-n', '-e',
+                            '(org-capture :time "<' + key + ' ' + dayName + '>")'
+                        ]);
+                    }
                 }
             }
         }

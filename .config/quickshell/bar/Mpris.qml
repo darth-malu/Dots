@@ -108,43 +108,80 @@ Loader {
             }
         }
 
-        RowLayout {
+        Rectangle {
+            id: pill
             visible: mprisRoot.showPlaying
+            height: mprisLoader.host.height
+            width: pillRow.implicitWidth + 10
+            radius: height / 2
+            color: Qt.rgba(0.1, 0.04, 0.18, 0.4)
 
-            ClippingWrapperRectangle {
-                id: albumArt
-                visible: MprisState.mprisArtVisible
-                radius: height / 2
-                implicitWidth: mprisLoader.host.height
-                implicitHeight: mprisLoader.host.height
-                color: 'transparent'
-                Image {
-                    id: albumArtImage
-                    anchors.fill: parent
-                    source: MprisState.player.trackArtUrl
-                    fillMode: Image.PreserveAspectFit
-                    asynchronous: true
+            RowLayout {
+                id: pillRow
+                anchors.fill: parent
+                anchors.leftMargin: 4
+                anchors.rightMargin: 4
+                spacing: 4
+
+                ClippingWrapperRectangle {
+                    id: albumArt
+                    visible: MprisState.mprisArtVisible
+                    radius: height / 2
+                    implicitWidth: parent.parent.height - 4
+                    implicitHeight: parent.parent.height - 4
+                    color: 'transparent'
+                    Image {
+                        id: albumArtImage
+                        anchors.fill: parent
+                        source: MprisState.player.trackArtUrl
+                        fillMode: Image.PreserveAspectFit
+                        asynchronous: true
+                    }
                 }
-            }
 
-            BarText {
-                id: title
-                renderNative: true
-                text: {
-                    let strLength = 50;
-                    var str = MprisState.player?.trackTitle;
-                    return str.length > strLength ? str.slice(0, strLength) + '..' : str;
+                BarText {
+                    id: title
+                    renderNative: true
+                    text: {
+                        let strLength = 40;
+                        var str = MprisState.player?.trackTitle;
+                        return str.length > strLength ? str.slice(0, strLength) + '..' : str;
+                    }
+                    color: Themes.mprisTextColor
+                    font: Themes.quicksand_medium
                 }
-                color: Themes.mprisTextColor
-                font: Themes.quicksand_medium
-            }
 
-            BarText {
-                id: volumePlayer
-                visible: mprisRoot.showVolume
-                text: Math.round(MprisState.player?.volume * 100) ?? ""
-                font: title.font
-                color: Themes.mprisVolumeColor
+                BarText {
+                    id: playerId
+                    text: "· " + (MprisState.player?.identity || "")
+                    color: Themes.toxicGreen
+                    font: Themes.quicksand_medium
+                    visible: Mpris.players.length > 1
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            var players = [];
+                            for (let p of Mpris.players.values) players.push(p);
+                            if (players.length > 1) {
+                                var idx = players.indexOf(MprisState.player);
+                                if (idx >= 0)
+                                    MprisState.player = players[(idx + 1) % players.length];
+                                else
+                                    MprisState.player = players[0];
+                            }
+                        }
+                    }
+                }
+
+                BarText {
+                    id: volumePlayer
+                    visible: mprisRoot.showVolume
+                    text: Math.round(MprisState.player?.volume * 100) ?? ""
+                    font: title.font
+                    color: Themes.mprisVolumeColor
+                }
             }
         }
     }

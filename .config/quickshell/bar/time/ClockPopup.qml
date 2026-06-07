@@ -9,7 +9,7 @@ ColumnLayout {
     id: root
     spacing: 6
 
-    signal dayClicked(int day)
+    signal dayClicked(int day, int month, int year)
 
     property int displayMonth: TimeService.currentDate.getMonth()
     property int displayYear: TimeService.currentDate.getFullYear()
@@ -96,9 +96,14 @@ ColumnLayout {
 
             property bool hovered: false
 
+            readonly property bool isTracked: {
+                MiscState.trackedDatesRev;
+                return MiscState.isTrackedDate(model.year, model.month, model.day);
+            }
+
             Rectangle {
                 anchors.fill: parent
-                radius: 15
+                radius: height / 2
                 color: model.today ? Themes.calendarToday : parent.hovered ? "#313244" : "transparent"
                 opacity: model.today ? 0.3 : parent.hovered ? 1 : 0
             }
@@ -114,13 +119,24 @@ ColumnLayout {
                 }
             }
 
+            Rectangle {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 3
+                width: 5
+                height: 5
+                radius: width / 2
+                color: Themes.calendarActiveMonth
+                visible: parent.isTracked
+            }
+
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onEntered: parent.hovered = true
                 onExited: parent.hovered = false
-                onClicked: root.dayClicked(model.day)
+                onClicked: root.dayClicked(model.day, model.month, model.year)
             }
         }
     }

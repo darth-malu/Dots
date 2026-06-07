@@ -177,7 +177,7 @@ BarBlock {
         // }
 
         implicitWidth: 340
-        implicitHeight: Math.min(qsContent.implicitHeight + 24, 600)
+        implicitHeight: qsContent.implicitHeight + 16
 
         Rectangle {
             anchors.fill: parent
@@ -193,6 +193,8 @@ BarBlock {
                     top: parent.top
                     left: parent.left
                     right: parent.right
+                    leftMargin: 8
+                    rightMargin: 8
                 }
                 spacing: 0
 
@@ -206,7 +208,7 @@ BarBlock {
                         anchors {
                             left: parent.left
                             verticalCenter: parent.verticalCenter
-                            leftMargin: 14
+                            leftMargin: 6
                         }
                         spacing: 10
 
@@ -253,7 +255,7 @@ BarBlock {
                         anchors {
                             right: parent.right
                             verticalCenter: parent.verticalCenter
-                            rightMargin: 14
+                            rightMargin: 6
                         }
                         text: root.isOnline ? "" : ""
                         color: root.isOnline ? "#89b4fa" : "#585b70"
@@ -264,20 +266,11 @@ BarBlock {
                     }
                 }
 
-                // ═══ SCROLLABLE CONTENT ═══
-                Flickable {
+                // ═══ CONTENT ═══
+                ColumnLayout {
+                    id: contentCol
                     Layout.fillWidth: true
-                    Layout.preferredHeight: Math.min(contentHeight, 480)
-                    contentHeight: contentCol.implicitHeight
-                    clip: true
-                    interactive: contentHeight > height
-                    boundsBehavior: Flickable.StopAtBounds
-
-                    ColumnLayout {
-                        id: contentCol
-                        x: 8
-                        width: parent.width - 16
-                        spacing: 0
+                    spacing: 0
 
                         // ═══ NOW PLAYING ═══
                         Card {
@@ -285,8 +278,6 @@ BarBlock {
                             icon: ""
                             accent: "#cba6f7"
                             visible: MprisState.player !== null
-
-                            property bool showAllPlayers: false
 
                             RowLayout {
                                 spacing: 10
@@ -391,91 +382,53 @@ BarBlock {
                                     spacing: 4
 
                                     Rectangle {
-                                        implicitWidth: activeChipText.implicitWidth + 14
-                                        implicitHeight: 20
+                                        implicitHeight: 22
+                                        implicitWidth: playerPillText.implicitWidth + 28
                                         radius: height / 2
                                         color: "#cba6f7"
 
-                                        Text {
-                                            id: activeChipText
-                                            anchors.centerIn: parent
-                                            text: MprisState.player?.identity || ""
-                                            color: "#1e1e2e"
-                                            font { pixelSize: 11; family: "Quicksand"; bold: true }
+                                        RowLayout {
+                                            anchors.fill: parent
+                                            anchors.leftMargin: 8
+                                            anchors.rightMargin: 6
+                                            spacing: 4
+
+                                            Text {
+                                                id: playerPillText
+                                                text: MprisState.player?.identity || ""
+                                                color: "#1e1e2e"
+                                                font { pixelSize: 11; family: "Quicksand"; bold: true }
+                                                elide: Text.ElideRight
+                                            }
+
+                                            Text {
+                                                text: ""
+                                                color: "#1e1e2e"
+                                                font { pixelSize: 7; family: "Symbols Nerd Font Mono" }
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                var players = [];
+                                                for (let p of Mpris.players.values) players.push(p);
+                                                if (players.length > 1) {
+                                                    var idx = players.indexOf(MprisState.player);
+                                                    MprisState.player = players[(idx + 1) % players.length];
+                                                }
+                                            }
                                         }
                                     }
 
                                     Item { Layout.fillWidth: true }
 
                                     Text {
-                                        text: parent.parent.showAllPlayers ? "" : ""
-                                        color: "#a6adc8"
-                                        font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                        text: Mpris.players.length + " player(s)"
+                                        color: "#585b70"
+                                        font { pixelSize: 9; family: "ZedMono Nerd Font" }
                                         visible: Mpris.players.length > 1
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: parent.parent.showAllPlayers = !parent.parent.showAllPlayers
-                                        }
-                                    }
-                                }
-
-                                Flow {
-                                    Layout.fillWidth: true
-                                    visible: parent.showAllPlayers
-                                    spacing: 4
-
-                                    Repeater {
-                                        model: Mpris.players
-
-                                        Rectangle {
-                                            required property var modelData
-                                            visible: modelData !== MprisState.player
-
-                                            readonly property bool chipHovered: chipMA.containsMouse
-                                            readonly property bool closeHovered: closeMA.containsMouse
-
-                                            implicitWidth: otherChipText.implicitWidth + 14 + (chipHovered || closeHovered ? 16 : 0)
-                                            implicitHeight: 20
-                                            radius: height / 2
-                                            color: "#313244"
-
-                                            Behavior on implicitWidth { NumberAnimation { duration: 100 } }
-
-                                            Text {
-                                                id: otherChipText
-                                                anchors.centerIn: parent
-                                                text: modelData.identity
-                                                color: "#a6adc8"
-                                                font { pixelSize: 11; family: "Quicksand"; bold: true }
-                                            }
-
-                                            MouseArea {
-                                                id: chipMA
-                                                anchors.fill: parent
-                                                hoverEnabled: true
-                                                cursorShape: Qt.PointingHandCursor
-                                                onClicked: MprisState.player = modelData
-                                            }
-
-                                            Text {
-                                                id: closeBtn
-                                                anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 4 }
-                                                text: "×"
-                                                color: "#f38ba8"
-                                                font { pixelSize: 14; bold: true; family: "Quicksand" }
-                                                visible: parent.chipHovered || parent.closeHovered
-
-                                                MouseArea {
-                                                    id: closeMA
-                                                    anchors.fill: parent
-                                                    hoverEnabled: true
-                                                    cursorShape: Qt.PointingHandCursor
-                                                    onClicked: MprisState.ignorePlayer(modelData.identity)
-                                                }
-                                            }
-                                        }
                                     }
                                 }
                             }
@@ -1051,7 +1004,6 @@ BarBlock {
                                 }
                             }
                         }
-                    }
                 }
             }
         }
