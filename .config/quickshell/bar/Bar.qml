@@ -80,6 +80,7 @@ ShellRoot {
             }
 
             MouseArea {
+                acceptedButtons: Qt.NoButton
                 anchors.fill: parent
                 onWheel: wheel => {
                     if (wheel.angleDelta.y > 0) {

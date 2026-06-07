@@ -35,8 +35,6 @@ BarBlock {
     property bool wifiEnabled: false
     property bool bluetoothEnabled: false
     property bool ethernetConnected: false
-    property bool playerListOpen: false
-
     FileView {
         id: hostFile
         path: "file:///proc/sys/kernel/hostname"
@@ -104,6 +102,25 @@ BarBlock {
         }
     }
 
+    Process {
+        id: sinkProcess
+        running: false
+        command: ["sh", "-c", "pactl list sinks 2>/dev/null | awk '/^[[:space:]]*Name:/{n=$2} /^[[:space:]]*Description:/{d=$0; sub(/^[[:space:]]*Description: /,\"\"); print n \"|\" $0}'"]
+        stdout: SplitParser {
+            onRead: data => {
+                var parts = data.trim().split("|");
+                if (parts.length >= 2) {
+                    root.sinkList = root.sinkList.concat([{ name: parts[0], description: parts[1] }]);
+                }
+            }
+        }
+    }
+
+    function refreshSinks() {
+        root.sinkList = [];
+        sinkProcess.running = true;
+    }
+
     Timer {
         id: dataTimer
         interval: 10000
@@ -120,6 +137,7 @@ BarBlock {
             wifiProcess.running = true;
             btProcess.running = true;
             ethProcess.running = true;
+            root.refreshSinks();
         }
     }
 
@@ -832,50 +850,157 @@ BarBlock {
 
                     // ═══ VOLUME ═══
                     Card {
-                        title: "Volume"
-                        icon: ""
+                        title: "Audio"
+                        icon: ""
                         accent: "#c6a0f6"
 
                         ColumnLayout {
                             spacing: 6
                             Layout.fillWidth: true
 
+                            property bool sinkListOpen: false
+
+                            // ── top row: mute icon + percentage + sink pill ──
                             RowLayout {
                                 spacing: 8
                                 Layout.fillWidth: true
 
                                 Text {
-                                    text: Pipewire.ready ? Math.floor((Pipewire.defaultAudioSink?.audio?.volume ?? 0) * 100) + "%" : ""
-                                    color: "#cdd6f4"
-                                    font {
-                                        pixelSize: 14
-                                        bold: true
-                                        family: "ZedMono Nerd Font"
-                                    }
-                                }
+                                    text: Pipewire.defaultAudioSink?.audio?.muted ? "" : ""
+                                    color: Pipewire.defaultAudioSink?.audio?.muted ? "#585b70" : "#c6a0f6"
+                                    font { pixelSize: 16; family: "Symbols Nerd Font Mono" }
 
-                                Item {
-                                    Layout.fillWidth: true
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        acceptedButtons: Qt.RightButton
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            if (Pipewire.defaultAudioSink?.audio)
+                                                Pipewire.defaultAudioSink.audio.muted = !Pipewire.defaultAudioSink.audio.muted;
+                                        }
+                                    }
                                 }
 
                                 Text {
-                                    text: Pipewire.defaultAudioSink?.description || ""
-                                    color: "#585b70"
+                                    text: Pipewire.ready
+                                        ? Math.floor((Pipewire.defaultAudioSink?.audio?.volume ?? 0) * 100) + "%"
+                                        : ""
+                                    color: Pipewire.defaultAudioSink?.audio?.muted ? "#585b70" : "#cdd6f4"
                                     font {
-                                        pixelSize: 9
-                                        family: "ZedMono Nerd Font"
+                                        pixelSize: 13; bold: true; family: "ZedMono Nerd Font"
                                     }
-                                    elide: Text.ElideRight
-                                    Layout.maximumWidth: 120
+                                }
+
+                                Item { Layout.fillWidth: true }
+
+                                // ── sink pill ──
+                                Rectangle {
+                                    implicitHeight: 22
+                                    implicitWidth: sinkPillText.implicitWidth + 28
+                                    radius: height / 2
+                                    color: Qt.rgba(0.1, 0.04, 0.18, 0.5)
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 8
+                                        anchors.rightMargin: 6
+                                        spacing: 4
+
+                                        Text {
+                                            id: sinkPillText
+                                            text: {
+                                                var d = Pipewire.defaultAudioSink?.description;
+                                                if (!d) return "No sink";
+                                                var parts = d.split(".");
+                                                return parts[parts.length - 1] || d;
+                                            }
+                                            color: "#c6a0f6"
+                                            font { pixelSize: 10; family: "Quicksand"; bold: true }
+                                            elide: Text.ElideRight
+                                        }
+
+                                        Text {
+                                            text: ""
+                                            color: "#c6a0f6"
+                                            font { pixelSize: 7; family: "Symbols Nerd Font Mono" }
+                                        }
+                                    }
 
                                     MouseArea {
                                         anchors.fill: parent
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: Quickshell.execDetached(["sh", "-c", "cur=$(pactl get-default-sink); " + "next=$(pactl list short sinks | awk 'NR>1{print $2;exit}'); " + "[ -n \"$next\" ] && pactl set-default-sink \"$next\""])
+                                        onClicked: {
+                                            parent.parent.sinkListOpen = !parent.parent.sinkListOpen;
+                                            if (parent.parent.sinkListOpen)
+                                                root.refreshSinks();
+                                        }
                                     }
                                 }
                             }
 
+                            // ── sink dropdown ──
+                            ColumnLayout {
+                                id: sinkDropdownLayout
+                                Layout.fillWidth: true
+                                visible: parent.sinkListOpen
+                                spacing: 2
+
+                                Instantiator {
+                                    active: parent.visible
+                                    model: root.sinkList
+
+                                    Rectangle {
+                                        required property var modelData
+                                        Layout.fillWidth: true
+                                        implicitHeight: 22
+                                        radius: 4
+                                        color: sinkMA.containsMouse ? "#313244" : "transparent"
+
+                                        Behavior on color {
+                                            ColorAnimation { duration: 80 }
+                                        }
+
+                                        RowLayout {
+                                            anchors.fill: parent
+                                            anchors.leftMargin: 8
+                                            spacing: 6
+
+                                            Text {
+                                                text: "●"
+                                                color: modelData.name === Pipewire.defaultAudioSink?.name ? "#c6a0f6" : "transparent"
+                                                font { pixelSize: 8 }
+                                            }
+
+                                            Text {
+                                                text: modelData.description || modelData.name
+                                                color: modelData.name === Pipewire.defaultAudioSink?.name ? "#cdd6f4" : "#585b70"
+                                                font { pixelSize: 10; family: "Quicksand"; bold: true }
+                                                elide: Text.ElideRight
+                                                Layout.fillWidth: true
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            id: sinkMA
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                if (modelData.name !== Pipewire.defaultAudioSink?.name) {
+                                                    Quickshell.execDetached(["sh", "-c",
+                                                        "pactl set-default-sink \"" + modelData.name + "\""
+                                                    ]);
+                                                }
+                                                parent.parent.parent.sinkListOpen = false;
+                                            }
+                                        }
+                                    }
+
+                                    onObjectAdded: (index, object) => object.parent = sinkDropdownLayout
+                                }
+                            }
+
+                            // ── volume slider ──
                             Item {
                                 Layout.fillWidth: true
                                 Layout.leftMargin: 12
@@ -938,6 +1063,7 @@ BarBlock {
                                 }
                             }
 
+                            // ── MPRIS per-player volume ──
                             Repeater {
                                 model: {
                                     let players = [];
@@ -957,10 +1083,7 @@ BarBlock {
                                     Text {
                                         text: modelData.identity
                                         color: "#585b70"
-                                        font {
-                                            pixelSize: 9
-                                            family: "ZedMono Nerd Font"
-                                        }
+                                        font { pixelSize: 9; family: "ZedMono Nerd Font" }
                                         elide: Text.ElideRight
                                         Layout.maximumWidth: 60
                                     }
@@ -982,8 +1105,7 @@ BarBlock {
                                             value: modelData.volume
                                             live: true
                                             onValueChanged: {
-                                                if (pressed)
-                                                    modelData.volume = value;
+                                                if (pressed) modelData.volume = value;
                                             }
 
                                             background: Rectangle {

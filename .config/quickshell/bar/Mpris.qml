@@ -16,19 +16,15 @@ Loader {
 
     required property var host
 
-    // FIX 1: Force the Loader to take on the dimensions of whatever it loads
-    // width: item ? item.width : 0
-    // height: item ? item.height : 0
-
-    width: 20
-    height: 20
-
     sourceComponent: WrapperMouseArea {
         id: mprisRoot
 
-        // FIX 2: Define size cleanly from the inside visual element
-        width: pill.visible ? pill.width : 0
-        height: pill.visible ? pill.height : 0
+        // Size driven by the pill's visual extent, so the Loader
+        // (and therefore anchors.centerIn) sees the correct dimensions
+        width: pill.width
+        height: pill.height
+        implicitWidth: width
+        implicitHeight: height
 
         hoverEnabled: true
         acceptedButtons: Qt.RightButton | Qt.LeftButton | Qt.MiddleButton | Qt.ForwardButton | Qt.BackButton
@@ -78,11 +74,13 @@ Loader {
             }
         }
 
+        // ── popup (first child of the wrapper for MarginWrapperManager) ──
         LazyLoader {
             loading: true
 
             PopupWindow {
                 id: popup
+
                 anchor.window: mprisLoader.host
                 anchor.rect.x: mprisLoader.host.width / 2 - width / 2
                 anchor.rect.y: 35
@@ -95,6 +93,7 @@ Loader {
                     id: mprisPopupRectangle
                     radius: 6
                     anchors.fill: parent
+
                     color: Qt.rgba(0.1, 0.04, 0.18, 0.7)
                     border.width: 1
                     border.color: '#A020F0'
@@ -104,13 +103,12 @@ Loader {
             }
         }
 
+        // ── pill ──
         Rectangle {
             id: pill
             visible: mprisRoot.showPlaying
-
-            // FIX 3: Ensure explicit height comes safely from the panel host
             height: mprisLoader.host ? mprisLoader.host.height : 30
-            width: pillRow.implicitWidth + 12 // Added slight padding safety
+            width: pillRow.implicitWidth + 12
             radius: height / 2
             color: Qt.rgba(0.1, 0.04, 0.18, 0.4)
 
@@ -121,17 +119,34 @@ Loader {
                 anchors.rightMargin: 6
                 spacing: 6
 
+                // ── play/pause button ──
                 Item {
                     id: playButtonBox
+                    visible: false
                     implicitWidth: 22
                     implicitHeight: 22
                     Layout.preferredWidth: 22
                     Layout.preferredHeight: 22
 
+                    BarText {
+                        anchors.centerIn: parent
+                        text: MprisState.player?.isPlaying ? "⏸" : "▶"
+                        baseColor: "#FF7EB3"
+                        color: "#FF7EB3"
+                        pointSize: 9
+                        paddingg: 0
+                    }
+                }
+
+                // ── album art with progress ring ──
+                Item {
+                    Layout.preferredWidth: pill.height - 6
+                    Layout.preferredHeight: pill.height - 6
+
                     Canvas {
                         id: progressRing
                         anchors.fill: parent
-                        anchors.margins: 2
+                        anchors.margins: 1
                         antialiasing: true
 
                         property real progress: 0
@@ -142,12 +157,12 @@ Loader {
 
                             var cx = width / 2;
                             var cy = height / 2;
-                            var r = Math.min(cx, cy) - 1;
+                            var r = Math.min(cx, cy) - 1.5;
 
                             ctx.beginPath();
                             ctx.arc(cx, cy, r, 0, Math.PI * 2);
-                            ctx.strokeStyle = Qt.rgba(1, 1, 1, 0.15);
-                            ctx.lineWidth = 2;
+                            ctx.strokeStyle = Qt.rgba(1, 0.71, 0.76, 0.25);
+                            ctx.lineWidth = 2.5;
                             ctx.stroke();
 
                             if (progressRing.progress > 0.005) {
@@ -155,64 +170,62 @@ Loader {
                                 var startAngle = -Math.PI / 2;
                                 var endAngle = startAngle + Math.PI * 2 * Math.min(progressRing.progress, 1);
                                 ctx.arc(cx, cy, r, startAngle, endAngle);
-                                ctx.strokeStyle = "#88FF00";
-                                ctx.lineWidth = 2;
+                                ctx.strokeStyle = "#FF7EB3";
+                                ctx.lineWidth = 2.5;
                                 ctx.stroke();
                             }
                         }
-                    }
 
-                    BarText {
-                        anchors.centerIn: parent
-                        text: MprisState.player?.isPlaying ? "⏸" : "▶"
-                        baseColor: "#88FF00"
-                        color: "#88FF00"
-                        pointSize: 9
-                        paddingg: 0
-                    }
-
-                    Timer {
-                        id: progressTimer
-                        interval: 200
-                        repeat: true
-                        running: MprisState.player?.isPlaying ?? false
-                        onTriggered: {
-                            var p = MprisState.player;
-                            if (p && p.length > 0) {
-                                progressRing.progress = p.position / p.length;
-                            } else {
-                                progressRing.progress = 0;
+                        Timer {
+                            id: progressTimer
+                            interval: 200
+                            repeat: true
+                            running: MprisState.player?.isPlaying ?? false
+                            onTriggered: {
+                                var p = MprisState.player;
+                                if (p && p.length > 0) {
+                                    progressRing.progress = p.position / p.length;
+                                } else {
+                                    progressRing.progress = 0;
+                                }
+                                progressRing.requestPaint();
                             }
-                            progressRing.requestPaint();
                         }
                     }
-                }
 
-                ClippingWrapperRectangle {
-                    id: albumArt
-                    visible: MprisState.mprisArtVisible
-                    radius: height / 2
-
-                    // FIX 4: Use clear, hard structural layout properties instead of parent.parent chains
-                    Layout.preferredWidth: pill.height - 6
-                    Layout.preferredHeight: pill.height - 6
-                    color: 'transparent'
-
-                    Image {
-                        id: albumArtImage
+                    ClippingWrapperRectangle {
+                        id: albumArt
+                        visible: MprisState.mprisArtVisible
                         anchors.fill: parent
-                        source: MprisState.player?.trackArtUrl ?? ""
-                        fillMode: Image.PreserveAspectCrop // Crop looks better in circular frames than Fit
-                        asynchronous: true
+                        anchors.margins: 4
+                        radius: height / 2
+                        color: 'transparent'
+
+                        Image {
+                            id: albumArtImage
+                            anchors.fill: parent
+                            source: MprisState.player?.trackArtUrl ?? ""
+                            fillMode: Image.PreserveAspectCrop
+                            asynchronous: true
+                        }
+                    }
+
+                    // fallback when no art
+                    BarText {
+                        anchors.centerIn: parent
+                        visible: !albumArt.visible
+                        text: "🎵"
+                        pointSize: 10
                     }
                 }
 
+                // ── track title ──
                 BarText {
                     id: title
                     renderNative: true
                     Layout.alignment: Qt.AlignVCenter
                     text: {
-                        let strLength = 30; // Dropped to 30 to prevent bar overflowing on smaller layouts
+                        let strLength = 30;
                         var str = MprisState.player?.trackTitle || "Unknown Track";
                         return str.length > strLength ? str.slice(0, strLength) + '..' : str;
                     }
@@ -220,6 +233,7 @@ Loader {
                     font: Themes.quicksand_medium
                 }
 
+                // ── active player name ──
                 BarText {
                     id: playerId
                     text: "· " + (MprisState.player?.identity || "")
@@ -246,6 +260,7 @@ Loader {
                     }
                 }
 
+                // ── volume readout ──
                 BarText {
                     id: volumePlayer
                     visible: mprisRoot.showVolume

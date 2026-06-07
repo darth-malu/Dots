@@ -26,75 +26,65 @@ BarBlock {
             Pipewire.defaultAudioSink.audio.muted = !Pipewire.defaultAudioSink.audio.muted;
     }
 
-    content: RowLayout {
-        spacing: 6
+    content: Rectangle {
+        id: pill
+        implicitWidth: volBar.implicitWidth + 36
+        implicitHeight: 20
+        radius: height / 2
+        color: Qt.rgba(0.1, 0.04, 0.18, 0.4)
 
-        BarText {
-            symbolText: root.muted ? "婢" : root.vol > 0.7 ? "" : root.vol > 0.05 ? "" : ""
-            baseColor: root.volColor
-            pointSize: 11
-        }
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 6
+            anchors.rightMargin: 6
+            spacing: 4
 
-        Item {
-            id: volBar
-            implicitWidth: 48
-            Layout.fillHeight: true
-
-            Rectangle {
-                anchors.centerIn: parent
-                width: parent.width
-                height: 5
-                radius: 3
-                color: "#313244"
-
-                Rectangle {
-                    width: parent.width * Math.min(root.vol, 1)
-                    height: parent.height
-                    radius: 3
-                    color: root.volColor
-                }
+            BarText {
+                symbolText: root.muted ? "婢" : root.vol > 0.7 ? "" : root.vol > 0.05 ? "" : ""
+                baseColor: root.volColor
+                pointSize: 10
             }
 
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: mouse => {
-                    if (mouse.button == Qt.LeftButton && Pipewire.defaultAudioSink?.audio)
-                        Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(mouse.x / width, 1));
+            Item {
+                id: volBar
+                implicitWidth: 40
+                implicitHeight: 4
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 2
+                    color: "#313244"
+
+                    Rectangle {
+                        width: parent.width * Math.min(root.vol, 1)
+                        height: parent.height
+                        radius: 2
+                        color: root.volColor
+                    }
                 }
-                onWheel: event => {
-                    if (Pipewire.defaultAudioSink?.audio) {
-                        let v = Pipewire.defaultAudioSink.audio.volume;
-                        v += event.angleDelta.y > 0 ? 0.05 : -0.05;
-                        Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(v, 1));
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: mouse => {
+                        if (mouse.button == Qt.LeftButton && Pipewire.defaultAudioSink?.audio)
+                            Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(mouse.x / width, 1));
+                    }
+                    onWheel: event => {
+                        if (Pipewire.defaultAudioSink?.audio) {
+                            let v = Pipewire.defaultAudioSink.audio.volume;
+                            v += event.angleDelta.y > 0 ? 0.05 : -0.05;
+                            Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(v, 1));
+                        }
                     }
                 }
             }
-        }
 
-        BarText {
-            symbolText: `🖊 ${PipewireState.inputVolume} `
-            baseColor: root.volColor
-            visible: PipewireState.isCrusherWireless
-            renderNative: true
-
-            MouseArea {
-                anchors.fill: parent
-                acceptedButtons: Qt.LeftButton | Qt.RightButton
-
-                onWheel: event => {
-                    if (!PipewireState.inputSink?.audio)
-                        return;
-                    let v = PipewireState.inputSink.audio.volume;
-                    v += event.angleDelta.y > 0 ? 0.05 : -0.05;
-                    v = Math.max(0, Math.min(v, 1));
-                    Pipewire.defaultAudioSource.audio.volume = v;
-                }
-
-                onClicked: mouse => {
-                    if (mouse.button == Qt.RightButton)
-                        Pipewire.defaultAudioSource.audio.muted = !Pipewire.defaultAudioSource.audio.muted;
-                }
+            BarText {
+                text: Math.floor(root.vol * 100)
+                baseColor: root.volColor
+                pointSize: 9
+                renderNative: true
             }
         }
     }
