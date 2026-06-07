@@ -34,25 +34,16 @@ RowLayout {
         readonly property real percentage: BatteryState.batPercentage
         readonly property bool isFull: BatteryState.isFullyCharged
 
-        property bool togglePerformanceMode: false
-
-        property var powerProfile: BatteryState.powerProfile
-        property bool balancedMode: BatteryState.balMode
-        property bool performanceMode: BatteryState.perfMode
-        property bool powerSaverMode: BatteryState.saverMode
-
         readonly property color fillColor: isCharging ? "#a6e3a1" : isLow ? "#f38ba8" : Themes.mprisTextColor
 
         implicitWidth: batteryBody.width
         implicitHeight: batteryBody.height
 
-        acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+        acceptedButtons: Qt.MiddleButton
 
         onClicked: mouse => {
             mouse.accepted = true;
-            if (mouse.button == Qt.LeftButton)
-                togglePerformanceMode = !togglePerformanceMode;
-            else if (mouse.button == Qt.MiddleButton)
+            if (mouse.button == Qt.MiddleButton)
                 batteryPopup.visible = !batteryPopup.visible;
         }
 
@@ -204,35 +195,6 @@ RowLayout {
         }
     }
 
-    BarBlock {
-        id: perfomanceBlock
-        visible: root.togglePerformanceMode
-        hoveredBg: true
-        content: BarText {
-            id: perfs
-            paddingg: 0
-            text: {
-                if (root.balancedMode) return "☯";
-                if (root.performanceMode) return "⚡";
-                if (root.powerSaverMode) return "🍀";
-                return "";
-            }
-        }
-        onClicked: {
-            const profiles = ["power-saver", "performance", "balanced"];
-            let currentIndex = profiles.indexOf(root.powerProfile);
-            let nextIndex = (currentIndex + 1) % profiles.length;
-            let nextProfile = profiles[nextIndex];
-
-            const icons = { "power-saver": "🍀", "performance": "⚡", "balanced": "☯" };
-            Quickshell.execDetached(["sh", "-c",
-                `powerprofilesctl set ${nextProfile} && notify-send "Power Profile" "${icons[nextProfile]} ${nextProfile}" -u low -a Shell`
-            ]);
-
-            root.powerProfile = nextProfile;
-        }
-    }
-
     PopupWindow {
         id: batteryPopup
         visible: false
@@ -244,10 +206,7 @@ RowLayout {
             let g = root.mapToGlobal(0, 0);
             return g.x + (root.width / 2) - (width / 2);
         }
-        anchor.rect.y: {
-            let g = root.mapToGlobal(0, 0);
-            return g.y + root.height + 4;
-        }
+        anchor.rect.y: 33
 
         implicitWidth: 260
         implicitHeight: popupCol.implicitHeight + 28

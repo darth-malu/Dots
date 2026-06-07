@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Pipewire
 import Quickshell.Services.Mpris
-import Quickshell.Services.UPower
+
 import qs.customItems
 import qs.services
 import qs.themes
@@ -32,9 +32,9 @@ BarBlock {
 
     readonly property bool isOnline: root.netState === "up"
 
-    readonly property UPowerDevice bat: UPower.displayDevice
-    readonly property bool batAvailable: bat.isLaptopBattery
-    readonly property real batPct: bat.percentage
+    property bool wifiEnabled: false
+    property bool bluetoothEnabled: false
+    property bool ethernetConnected: false
 
     FileView {
         id: hostFile
@@ -76,6 +76,33 @@ BarBlock {
         }
     }
 
+    Process {
+        id: wifiProcess
+        running: false
+        command: ["sh", "-c", "nmcli radio wifi 2>/dev/null"]
+        stdout: SplitParser {
+            onRead: data => root.wifiEnabled = data.trim() === "enabled"
+        }
+    }
+
+    Process {
+        id: btProcess
+        running: false
+        command: ["sh", "-c", "bluetoothctl show 2>/dev/null | grep Powered | awk '{print $2}'"]
+        stdout: SplitParser {
+            onRead: data => root.bluetoothEnabled = data.trim() === "yes"
+        }
+    }
+
+    Process {
+        id: ethProcess
+        running: false
+        command: ["sh", "-c", "ip -o link show 2>/dev/null | grep -E '^[0-9]+: en' | grep -q 'state UP' && echo up || echo down"]
+        stdout: SplitParser {
+            onRead: data => root.ethernetConnected = data.trim() === "up"
+        }
+    }
+
     Timer {
         id: dataTimer
         interval: 10000
@@ -89,6 +116,9 @@ BarBlock {
             root.diskDataPending = "";
             diskProcess.running = true;
             diskSwapTimer.restart();
+            wifiProcess.running = true;
+            btProcess.running = true;
+            ethProcess.running = true;
         }
     }
 
@@ -482,12 +512,11 @@ BarBlock {
                             }
                         }
 
-                        // ═══ BATTERY ═══
+                        // ═══ CONNECTIONS ═══
                         Card {
-                            title: "Battery"
-                            icon: ""
-                            accent: "#a6e3a1"
-                            visible: root.batAvailable
+                            title: "Connections"
+                            icon: ""
+                            accent: "#89b4fa"
 
                             ColumnLayout {
                                 spacing: 6
@@ -498,79 +527,147 @@ BarBlock {
                                     Layout.fillWidth: true
 
                                     Text {
-                                        text: Math.floor(root.batPct * 100) + "%"
-                                        color: root.batPct < 0.2 ? "#f38ba8" : root.batPct < 0.5 ? "#f9e2af" : "#a6e3a1"
-                                        font {
-                                            pixelSize: 20
-                                            bold: true
-                                            family: "ZedMono Nerd Font"
-                                        }
-                                    }
-
-                                    ColumnLayout {
-                                        spacing: 1
-                                        Text {
-                                            text: bat.state == UPowerDeviceState.Charging ? "Charging" : "Discharging"
-                                            color: bat.state == UPowerDeviceState.Charging ? "#a6e3a1" : "#cdd6f4"
-                                            font {
-                                                pixelSize: 11
-                                                family: "Quicksand"
-                                            }
-                                        }
-                                        Text {
-                                            text: PowerProfiles.profile == PowerProfile.Performance ? "⚡ Performance" : PowerProfiles.profile == PowerProfile.PowerSaver ? "🍀 Power Saver" : "☯ Balanced"
-                                            color: "#a6adc8"
-                                            font {
-                                                pixelSize: 9
-                                                family: "ZedMono Nerd Font"
-                                            }
-                                            MouseArea {
-                                                anchors.fill: parent
-                                                cursorShape: Qt.PointingHandCursor
-                                                onClicked: {
-                                                    const profiles = ['power-saver', 'performance', 'balanced'];
-                                                    let idx = profiles.indexOf(PowerProfiles.profile);
-                                                    let next = profiles[(idx + 1) % profiles.length];
-                                                    Quickshell.execDetached(["sh", "-c", `powerprofilesctl set ${next}`]);
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    Item {
-                                        Layout.fillWidth: true
+                                        text: ""
+                                        color: root.wifiEnabled ? "#89b4fa" : "#585b70"
+                                        font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
                                     }
 
                                     Text {
-                                        text: bat.state == UPowerDeviceState.Charging ? "" : ""
-                                        color: bat.state == UPowerDeviceState.Charging ? "#a6e3a1" : "#cdd6f4"
-                                        font {
-                                            pixelSize: 20
-                                            family: "Symbols Nerd Font Mono"
+                                        text: "Wi-Fi"
+                                        color: "#cdd6f4"
+                                        font { pixelSize: 11; family: "Quicksand" }
+                                    }
+
+                                    Item { Layout.fillWidth: true }
+
+                                    Text {
+                                        text: root.wifiEnabled ? "On" : "Off"
+                                        color: root.wifiEnabled ? "#a6e3a1" : "#585b70"
+                                        font { pixelSize: 10; family: "ZedMono Nerd Font"; bold: true }
+                                    }
+
+                                    Rectangle {
+                                        width: 36
+                                        height: 20
+                                        radius: 10
+                                        color: root.wifiEnabled ? "#89b4fa" : "#45475a"
+                                        border.color: root.wifiEnabled ? "#89b4fa" : "#585b70"
+                                        border.width: 1
+
+                                        Behavior on color { ColorAnimation { duration: 120 } }
+
+                                        Rectangle {
+                                            x: root.wifiEnabled ? parent.width - width - 2 : 2
+                                            y: 2
+                                            width: 14
+                                            height: 14
+                                            radius: 7
+                                            color: "#1e1e2e"
+                                            Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: Quickshell.execDetached(["sh", "-c",
+                                                root.wifiEnabled
+                                                    ? "nmcli radio wifi off"
+                                                    : "nmcli radio wifi on"
+                                            ])
                                         }
                                     }
                                 }
 
-                                ProgressBar {
+                                Rectangle {
                                     Layout.fillWidth: true
-                                    value: root.batPct
-                                    from: 0
-                                    to: 1
+                                    height: 1
+                                    color: "#313244"
+                                }
 
-                                    background: Rectangle {
-                                        implicitHeight: 6
-                                        radius: 3
-                                        color: "#313244"
+                                RowLayout {
+                                    spacing: 8
+                                    Layout.fillWidth: true
+
+                                    Text {
+                                        text: ""
+                                        color: root.bluetoothEnabled ? "#89b4fa" : "#585b70"
+                                        font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
                                     }
 
-                                    contentItem: Rectangle {
-                                        radius: 3
-                                        color: root.batPct < 0.2 ? "#f38ba8" : root.batPct < 0.5 ? "#f9e2af" : "#a6e3a1"
-                                        Behavior on color {
-                                            ColorAnimation {
-                                                duration: 200
-                                            }
+                                    Text {
+                                        text: "Bluetooth"
+                                        color: "#cdd6f4"
+                                        font { pixelSize: 11; family: "Quicksand" }
+                                    }
+
+                                    Item { Layout.fillWidth: true }
+
+                                    Text {
+                                        text: root.bluetoothEnabled ? "On" : "Off"
+                                        color: root.bluetoothEnabled ? "#a6e3a1" : "#585b70"
+                                        font { pixelSize: 10; family: "ZedMono Nerd Font"; bold: true }
+                                    }
+
+                                    Rectangle {
+                                        width: 36
+                                        height: 20
+                                        radius: 10
+                                        color: root.bluetoothEnabled ? "#89b4fa" : "#45475a"
+                                        border.color: root.bluetoothEnabled ? "#89b4fa" : "#585b70"
+                                        border.width: 1
+
+                                        Behavior on color { ColorAnimation { duration: 120 } }
+
+                                        Rectangle {
+                                            x: root.bluetoothEnabled ? parent.width - width - 2 : 2
+                                            y: 2
+                                            width: 14
+                                            height: 14
+                                            radius: 7
+                                            color: "#1e1e2e"
+                                            Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
                                         }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: Quickshell.execDetached(["sh", "-c",
+                                                root.bluetoothEnabled
+                                                    ? "bluetoothctl power off"
+                                                    : "bluetoothctl power on"
+                                            ])
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    height: 1
+                                    color: "#313244"
+                                }
+
+                                RowLayout {
+                                    spacing: 8
+                                    Layout.fillWidth: true
+
+                                    Text {
+                                        text: ""
+                                        color: root.ethernetConnected ? "#a6e3a1" : "#585b70"
+                                        font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                    }
+
+                                    Text {
+                                        text: "Ethernet"
+                                        color: "#cdd6f4"
+                                        font { pixelSize: 11; family: "Quicksand" }
+                                    }
+
+                                    Item { Layout.fillWidth: true }
+
+                                    Text {
+                                        text: root.ethernetConnected ? "Connected" : "Disconnected"
+                                        color: root.ethernetConnected ? "#a6e3a1" : "#585b70"
+                                        font { pixelSize: 10; family: "ZedMono Nerd Font"; bold: true }
                                     }
                                 }
                             }
