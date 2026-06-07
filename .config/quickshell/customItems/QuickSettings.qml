@@ -35,6 +35,7 @@ BarBlock {
     property bool wifiEnabled: false
     property bool bluetoothEnabled: false
     property bool ethernetConnected: false
+    property bool playerListOpen: false
 
     FileView {
         id: hostFile
@@ -133,7 +134,16 @@ BarBlock {
         }
     }
 
-    onMiddleClicked: qsPopup.visible = !qsPopup.visible
+    function refreshConnections() {
+        wifiProcess.running = true;
+        btProcess.running = true;
+        ethProcess.running = true;
+    }
+
+    onMiddleClicked: {
+        qsPopup.visible = !qsPopup.visible;
+        if (qsPopup.visible) refreshConnections();
+    }
     onLeftClicked: MiscState.toggleVolume = !MiscState.toggleVolume
     onRightClicked: MiscState.toggleSysTray = !MiscState.toggleSysTray
 
@@ -376,8 +386,6 @@ BarBlock {
                                 Layout.fillWidth: true
                                 Layout.topMargin: 6
                                 spacing: 4
-
-                                property bool playerListOpen: false
 
                                 RowLayout {
                                     Layout.fillWidth: true
@@ -647,11 +655,14 @@ BarBlock {
                                         MouseArea {
                                             anchors.fill: parent
                                             cursorShape: Qt.PointingHandCursor
-                                            onClicked: Quickshell.execDetached(["sh", "-c",
-                                                root.wifiEnabled
-                                                    ? "nmcli radio wifi off"
-                                                    : "nmcli radio wifi on"
-                                            ])
+                                            onClicked: {
+                                                Quickshell.execDetached(["sh", "-c",
+                                                    root.wifiEnabled
+                                                        ? "nmcli radio wifi off"
+                                                        : "nmcli radio wifi on"
+                                                ]);
+                                                root.refreshConnections();
+                                            }
                                         }
                                     }
                                 }
@@ -709,11 +720,14 @@ BarBlock {
                                         MouseArea {
                                             anchors.fill: parent
                                             cursorShape: Qt.PointingHandCursor
-                                            onClicked: Quickshell.execDetached(["sh", "-c",
-                                                root.bluetoothEnabled
-                                                    ? "bluetoothctl power off"
-                                                    : "bluetoothctl power on"
-                                            ])
+                                            onClicked: {
+                                                Quickshell.execDetached(["sh", "-c",
+                                                    root.bluetoothEnabled
+                                                        ? "bluetoothctl power off"
+                                                        : "bluetoothctl power on"
+                                                ]);
+                                                root.refreshConnections();
+                                            }
                                         }
                                     }
                                 }

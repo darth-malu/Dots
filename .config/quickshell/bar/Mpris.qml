@@ -59,6 +59,9 @@ Loader {
         }
 
         onWheel: event => {
+            if (!MprisState.player?.isPlaying)
+                return;
+
             if (MprisState.player?.volumeSupported) {
                 let vol = MprisState.player.volume * 100;
 
@@ -72,13 +75,43 @@ Loader {
             }
         }
 
+        //
+        // LazyLoader must be the first child so MarginWrapperManager uses
+        // the PopupWindow content for implicit sizing (matching old working config).
+        //
+        LazyLoader {
+            loading: true
+
+            PopupWindow {
+                id: popup
+
+                anchor.window: mprisLoader.host
+                anchor.rect.x: mprisLoader.host.width / 2 - width / 2
+                anchor.rect.y: 35
+                visible: mprisRoot.showPopup
+                color: 'transparent'
+                implicitWidth: Math.min(600, mprisPopupRectangle.implicitWidth + 10)
+                implicitHeight: mprisPopupRectangle.implicitHeight + 20
+
+                WrapperRectangle {
+                    id: mprisPopupRectangle
+                    radius: 6
+                    anchors.fill: parent
+
+                    color: Qt.rgba(0.1, 0.04, 0.18, 0.7)
+                    border.width: 1
+                    border.color: '#A020F0'
+
+                    MprisPopup {}
+                }
+            }
+        }
+
         Rectangle {
             id: pill
             visible: mprisRoot.showPlaying
             height: mprisLoader.host.height
             width: pillRow.implicitWidth + 10
-            implicitWidth: width
-            implicitHeight: height
             radius: height / 2
             color: Qt.rgba(0.1, 0.04, 0.18, 0.4)
 
@@ -95,7 +128,6 @@ Loader {
                     implicitHeight: 22
                     Layout.preferredWidth: 22
                     Layout.preferredHeight: 22
-
 
                     Canvas {
                         id: progressRing
@@ -216,34 +248,6 @@ Loader {
                     text: Math.round(MprisState.player?.volume * 100) ?? ""
                     font: title.font
                     color: Themes.mprisVolumeColor
-                }
-            }
-        }
-
-        LazyLoader {
-            loading: true
-
-            PopupWindow {
-                id: popup
-
-                anchor.window: mprisLoader.host
-                anchor.rect.x: mprisLoader.host.width / 2 - width / 2
-                anchor.rect.y: 35
-                visible: mprisRoot.showPopup
-                color: 'transparent'
-                implicitWidth: Math.min(600, mprisPopupRectangle.implicitWidth + 10)
-                implicitHeight: mprisPopupRectangle.implicitHeight + 20
-
-                WrapperRectangle {
-                    id: mprisPopupRectangle
-                    radius: 6
-                    anchors.fill: parent
-
-                    color: Qt.rgba(0.1, 0.04, 0.18, 0.7)
-                    border.width: 1
-                    border.color: '#A020F0'
-
-                    MprisPopup {}
                 }
             }
         }

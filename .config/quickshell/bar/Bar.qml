@@ -79,7 +79,9 @@ ShellRoot {
                     ClockWidget {
                         host: barr
                     }
-                    Battery { host: barr }
+                    Battery {
+                        host: barr
+                    }
                     SystemTray {
                         host: barr
                     }
