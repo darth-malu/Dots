@@ -5,10 +5,6 @@ import qs.customItems
 import Quickshell
 import qs.themes
 
-/* TODO
-   + Alternative modes on click eg. time to full, empty, charge rate
- * */
-
 RowLayout {
     id: batteryBlock
     spacing: 6
@@ -17,35 +13,23 @@ RowLayout {
     MouseArea {
         id: root
 
-        implicitWidth: batteryProgress.implicitWidth
-
-        implicitHeight: batteryProgress.implicitHeight
-
         readonly property bool isCharging: BatteryState.isCharging
-
-        readonly property int capRadius: 999
-
         readonly property bool isLow: BatteryState.isLow
-
         readonly property bool isPluggedIn: BatteryState.isPluggedIn
-
         readonly property bool isPendingCharge: BatteryState.isPendingCharge
-
         readonly property bool isPendingDischarge: BatteryState.isPendingDischarge
-
         readonly property real percentage: BatteryState.batPercentage
-
         readonly property bool isFull: BatteryState.isFullyCharged
 
         property bool togglePerformanceMode: false
-
         property string currentPerfProfile
-
         property var powerProfile: BatteryState.powerProfile
-
         property bool balancedMode: BatteryState.balMode
         property bool performanceMode: BatteryState.perfMode
         property bool powerSaverMode: BatteryState.saverMode
+
+        implicitWidth: batteryBody.width
+        implicitHeight: batteryBody.height
 
         onClicked: mouse => {
             mouse.accepted = true;
@@ -53,15 +37,34 @@ RowLayout {
                 togglePerformanceMode = !togglePerformanceMode;
         }
 
-        ClippedProgressBar {
-            id: batteryProgress
-            value: root.percentage
-            highlightColor: root.isCharging ? "#a6e3a1" : root.isLow ? "#f38ba8" : Themes.mprisTextColor
-            trackColor: "#313244"
+        Rectangle {
+            id: batteryBody
+            width: 26
+            height: 14
+            radius: 3
+            color: "#313244"
+            border.color: "#585b70"
+            border.width: 1
+
+            Rectangle {
+                id: batteryFill
+                anchors {
+                    top: parent.top
+                    left: parent.left
+                    bottom: parent.bottom
+                    margins: 1
+                }
+                width: Math.max(0, (parent.width - 2) * root.percentage)
+                radius: 2
+                color: root.isCharging ? "#a6e3a1" : root.isLow ? "#f38ba8" : Themes.mprisTextColor
+
+                Behavior on width {
+                    NumberAnimation { duration: 150 }
+                }
+            }
 
             Item {
-                width: batteryProgress.valueBarWidth
-                height: batteryProgress.valueBarHeight
+                anchors.fill: parent
 
                 RowLayout {
                     anchors.centerIn: parent
@@ -86,8 +89,12 @@ RowLayout {
                     }
 
                     StyledText {
-                        font: batteryProgress.font
-                        text: root.isFull ? '⚡' : batteryProgress.text
+                        font {
+                            pixelSize: 11
+                            family: "VictorMono Nerd Font"
+                            weight: Font.Bold
+                        }
+                        text: root.isFull ? '⚡' : Math.round(root.percentage * 100)
                     }
                 }
             }
@@ -97,12 +104,12 @@ RowLayout {
             id: cap
             implicitHeight: 6
             implicitWidth: 2
-            color: batteryProgress.highlightColor
-            topRightRadius: root.capRadius
-            bottomRightRadius: root.capRadius
+            color: batteryFill.color
+            topRightRadius: 999
+            bottomRightRadius: 999
             anchors {
                 verticalCenter: parent.verticalCenter
-                left: parent.right
+                left: batteryBody.right
                 leftMargin: 1
             }
         }
@@ -126,13 +133,18 @@ RowLayout {
         }
         onClicked: {
             const profiles = ['power-saver', 'performance', 'balanced'];
-
             let currentIndex = profiles.indexOf(root.powerProfile);
-
             let nextIndex = (currentIndex + 1) % profiles.length;
             let nextProfile = profiles[nextIndex];
 
-            Quickshell.execDetached(["sh", "-c", `powerprofilesctl set ${nextProfile} && notify-send -u low -i ${this.content.text} ${nextProfile}`]);
+            const icons = {
+                'power-saver': '🍀',
+                'performance': '⚡',
+                'balanced': '☯'
+            };
+            Quickshell.execDetached(["sh", "-c",
+                `powerprofilesctl set ${nextProfile} && notify-send "Power Profile" "${icons[nextProfile]} ${nextProfile}" -u low -a Shell`
+            ]);
 
             root.powerProfile = nextProfile;
         }
