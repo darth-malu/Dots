@@ -12,11 +12,9 @@ Singleton {
 
     property MprisPlayer lastPlayer: null
 
-    property bool mprisVisible: true
+    property bool mprisVisible: false
 
     property bool mprisArtVisible: true
-
-    property var players: new Set()
 
     property var ignored: ["mpv", "whatsapp", "Chrome", "chromium", "firefox", "Mozilla zen", "undefined"]
 
@@ -27,6 +25,30 @@ Singleton {
 
     function unignorePlayer(identity) {
         root.ignored = root.ignored.filter(id => id !== identity);
+    }
+
+    function isIgnored(p) {
+        if (!p) return true;
+        return root.ignored.some(app => p.identity.includes(app) || p.desktopEntry.includes(app));
+    }
+
+    function refresh() {
+        let playing = [];
+        for (let p of Mpris.players.values) {
+            if (root.isIgnored(p)) continue;
+            if (p.isPlaying) playing.push(p);
+        }
+
+        root.mprisVisible = playing.length > 0;
+
+        let best = null;
+        let fallback = null;
+        for (let p of playing) {
+            fallback = p;
+            if (p.trackArtist !== "") best = p;
+        }
+        if (best) root.player = best;
+        else if (fallback) root.player = fallback;
     }
 
     function sendNotify() {
@@ -51,7 +73,6 @@ Singleton {
     Connections {
         target: root.player
         function onPostTrackChanged() {
-            // console.log(`Your current player: ${root.player?.identity}`);
             const isIgnored = root.ignored.some(app => root.player.identity.includes(app) || root.player.desktopEntry.includes(app));
 
             if (!isIgnored && root.player)
@@ -59,59 +80,24 @@ Singleton {
         }
     }
 
-    function updatePlayer() {
-        let backup, leader = null;
-
-        for (let player of Mpris.players.values) {
-            const isIgnored = root.ignored.some(app => player.identity.includes(app) || player.desktopEntry.includes(app));
-            // console.log(`Your current player: ${root.player?.identity}`);
-
-            if (isIgnored)
-                continue;
-            else if (player.isPlaying) {
-                backup = player;
-                if (player?.trackArtist !== "")
-                    leader = player;
-            }
-        }
-        player = leader != null ? leader : backup;
-    }
-
-    function handlePlayerChanged(player: MprisPlayer) {
-        if (!player.isPlaying)
-            return;
-
-        players.delete(player);
-        players.add(player);
-        lastPlayer = player ?? null;
-
-        updatePlayer();
-    }
-
-    function playerDestroyed(player: MprisPlayer) {
-        players.delete(player);
-        lastPlayer = players[players.size] ?? null;
-
-        updatePlayer();
-    }
-
     Instantiator {
-        model: Mpris.players    // ObjectModel: <MprisPlayer>
+        model: Mpris.players
 
         Connections {
             required property MprisPlayer modelData
             target: modelData
 
-            Component.onCompleted: root.handlePlayerChanged(modelData)
-            Component.onDestruction: root.playerDestroyed(modelData)
+            Component.onCompleted: root.refresh()
+            Component.onDestruction: root.refresh()
 
             function onPlaybackStateChanged() {
-                root.handlePlayerChanged(modelData);
-                if (modelData.isPlaying) {
-                    root.mprisVisible = true;
-                } else {
-                    root.mprisVisible = false;
-                }
+                root.refresh();
+            }
+            function onIsPlayingChanged() {
+                root.refresh();
+            }
+            function onTrackArtistChanged() {
+                root.refresh();
             }
         }
     }

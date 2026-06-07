@@ -1,6 +1,7 @@
 import qs.services
 import QtQuick
 import Quickshell.Io
+import Quickshell.Services.Mpris
 import qs.notBar.rofi.openWindows
 
 Item {
@@ -10,7 +11,7 @@ Item {
         target: 'mpris'
 
         function pauseAll(): void {
-            for (const player of MprisState.players.values) {
+            for (const player of Mpris.players.values) {
                 if (player.canPause)
                     player.pause();
             }

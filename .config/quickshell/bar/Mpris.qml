@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
+import Quickshell.Services.Mpris
 import qs.services
 import qs.customItems
 import qs.themes
@@ -13,10 +14,6 @@ Loader {
     active: MprisState.mprisVisible
 
     visible: active
-
-    // onVisibleChanged: {
-    //     MprisState.mprisVisible = !MprisState.mprisVisible;
-    // }
 
     required property var host
 
@@ -33,36 +30,6 @@ Loader {
 
         property bool showPopup: false
 
-        LazyLoader {
-            loading: true
-
-            PopupWindow {
-                id: popup
-
-                anchor.window: mprisLoader.host
-                anchor.rect.x: mprisLoader.host.width / 2 - width / 2
-                anchor.rect.y: 35
-                visible: mprisRoot.showPopup
-                color: 'transparent'
-                implicitWidth: Math.min(600, mprisPopupRectangle.implicitWidth + 10)
-                implicitHeight: mprisPopupRectangle.implicitHeight + 20
-
-                WrapperRectangle {
-                    id: mprisPopupRectangle
-                    radius: 6
-                    anchors.fill: parent
-                    // implicitWidth: playersContainer.implicitWidth
-                    // implicitWidth: 150
-
-                    color: Qt.rgba(0.1, 0.04, 0.18, 0.7) // The "Glass" Color - Dark with a purple tint and transparency
-                    border.width: 1
-                    border.color: '#A020F0'
-
-                    MprisPopup {}
-                }
-            }
-        }
-
         Timer {
             id: hideVolumeTimer
             interval: 1000
@@ -76,7 +43,7 @@ Loader {
         }
 
         onClicked: mouse => {
-            mouse.accepted = true; // Prevent background click
+            mouse.accepted = true;
             if (mouse.button == Qt.LeftButton)
                 MprisState.player?.togglePlaying();
             else if (mouse.button == Qt.RightButton)
@@ -92,17 +59,14 @@ Loader {
         }
 
         onWheel: event => {
-            if (!MprisState.player?.isPlaying)
-                return;
-
             if (MprisState.player?.volumeSupported) {
-                let vol = MprisState.player.volume * 100; // Convert current volume (0.0–1.0) to percent
+                let vol = MprisState.player.volume * 100;
 
-                vol += event.angleDelta.y > 0 ? 4 : -4; // Scroll up increases, down decreases
+                vol += event.angleDelta.y > 0 ? 4 : -4;
 
-                vol = Math.max(0, Math.min(vol, 100)); // Clamp between 0% and 100%
+                vol = Math.max(0, Math.min(vol, 100));
 
-                MprisState.player.volume = vol / 100; // Apply back to player
+                MprisState.player.volume = vol / 100;
 
                 mprisRoot.showVolume = true;
             }
@@ -113,6 +77,8 @@ Loader {
             visible: mprisRoot.showPlaying
             height: mprisLoader.host.height
             width: pillRow.implicitWidth + 10
+            implicitWidth: width
+            implicitHeight: height
             radius: height / 2
             color: Qt.rgba(0.1, 0.04, 0.18, 0.4)
 
@@ -122,6 +88,74 @@ Loader {
                 anchors.leftMargin: 4
                 anchors.rightMargin: 4
                 spacing: 4
+
+                Item {
+                    id: playButtonBox
+                    implicitWidth: 22
+                    implicitHeight: 22
+                    Layout.preferredWidth: 22
+                    Layout.preferredHeight: 22
+
+
+                    Canvas {
+                        id: progressRing
+                        anchors.fill: parent
+                        anchors.margins: 2
+                        antialiasing: true
+
+                        property real progress: 0
+
+                        onPaint: {
+                            var ctx = getContext("2d");
+                            ctx.clearRect(0, 0, width, height);
+
+                            var cx = width / 2;
+                            var cy = height / 2;
+                            var r = Math.min(cx, cy) - 1;
+
+                            ctx.beginPath();
+                            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                            ctx.strokeStyle = Qt.rgba(1, 1, 1, 0.15);
+                            ctx.lineWidth = 2;
+                            ctx.stroke();
+
+                            if (progressRing.progress > 0.005) {
+                                ctx.beginPath();
+                                var startAngle = -Math.PI / 2;
+                                var endAngle = startAngle + Math.PI * 2 * Math.min(progressRing.progress, 1);
+                                ctx.arc(cx, cy, r, startAngle, endAngle);
+                                ctx.strokeStyle = "#88FF00";
+                                ctx.lineWidth = 2;
+                                ctx.stroke();
+                            }
+                        }
+                    }
+
+                    BarText {
+                        anchors.centerIn: parent
+                        text: MprisState.player?.isPlaying ? "⏸" : "▶"
+                        baseColor: "#88FF00"
+                        color: "#88FF00"
+                        pointSize: 9
+                        paddingg: 0
+                    }
+
+                    Timer {
+                        id: progressTimer
+                        interval: 200
+                        repeat: true
+                        running: MprisState.player?.isPlaying ?? false
+                        onTriggered: {
+                            var p = MprisState.player;
+                            if (p && p.length > 0) {
+                                progressRing.progress = p.position / p.length;
+                            } else {
+                                progressRing.progress = 0;
+                            }
+                            progressRing.requestPaint();
+                        }
+                    }
+                }
 
                 ClippingWrapperRectangle {
                     id: albumArt
@@ -163,7 +197,8 @@ Loader {
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
                             var players = [];
-                            for (let p of Mpris.players.values) players.push(p);
+                            for (let p of Mpris.players.values)
+                                players.push(p);
                             if (players.length > 1) {
                                 var idx = players.indexOf(MprisState.player);
                                 if (idx >= 0)
@@ -181,6 +216,34 @@ Loader {
                     text: Math.round(MprisState.player?.volume * 100) ?? ""
                     font: title.font
                     color: Themes.mprisVolumeColor
+                }
+            }
+        }
+
+        LazyLoader {
+            loading: true
+
+            PopupWindow {
+                id: popup
+
+                anchor.window: mprisLoader.host
+                anchor.rect.x: mprisLoader.host.width / 2 - width / 2
+                anchor.rect.y: 35
+                visible: mprisRoot.showPopup
+                color: 'transparent'
+                implicitWidth: Math.min(600, mprisPopupRectangle.implicitWidth + 10)
+                implicitHeight: mprisPopupRectangle.implicitHeight + 20
+
+                WrapperRectangle {
+                    id: mprisPopupRectangle
+                    radius: 6
+                    anchors.fill: parent
+
+                    color: Qt.rgba(0.1, 0.04, 0.18, 0.7)
+                    border.width: 1
+                    border.color: '#A020F0'
+
+                    MprisPopup {}
                 }
             }
         }

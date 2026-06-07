@@ -47,36 +47,30 @@ ShellRoot {
                 id: panel
                 anchors.fill: parent
 
-                MouseArea {
-                    anchors.fill: parent
-                    onWheel: wheel => {
-                        if (wheel.angleDelta.y > 0) {
-                            Hyprland.dispatch('workspace "m-1"');
-                        } else if (wheel.angleDelta.y < 0) {
-                            Hyprland.dispatch('workspace "m+1"');
-                        }
-                    }
-                }
-
                 RowLayout {
                     id: leftBlock
                     spacing: 0.4
-                    Layout.fillWidth: true
                     Layout.alignment: Qt.AlignLeft
-                    // Workspaces {}
                     ActiveWindow {}
+                }
+
+                Item {
+                    Layout.fillWidth: true
                 }
 
                 Mpris {
                     id: centerBlock
-                    anchors.centerIn: parent
                     host: barr
+                }
+
+                Item {
+                    Layout.fillWidth: true
                 }
 
                 RowLayout {
                     id: rightBlock
                     Layout.alignment: Qt.AlignRight
-                    spacing: 7 //10, 0.4::
+                    spacing: 7
 
                     Netspeed {}
                     Resources {
@@ -86,9 +80,19 @@ ShellRoot {
                         host: barr
                     }
                     Battery { host: barr }
-                    // Git {}
                     SystemTray {
                         host: barr
+                    }
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onWheel: wheel => {
+                    if (wheel.angleDelta.y > 0) {
+                        Hyprland.dispatch('workspace "m-1"');
+                    } else if (wheel.angleDelta.y < 0) {
+                        Hyprland.dispatch('workspace "m+1"');
                     }
                 }
             }

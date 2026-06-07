@@ -377,33 +377,42 @@ BarBlock {
                                 Layout.topMargin: 6
                                 spacing: 4
 
+                                property bool playerListOpen: false
+
                                 RowLayout {
                                     Layout.fillWidth: true
                                     spacing: 4
 
                                     Rectangle {
                                         implicitHeight: 22
-                                        implicitWidth: playerPillText.implicitWidth + 28
+                                        implicitWidth: playerPillText.implicitWidth + 32
                                         radius: height / 2
-                                        color: "#cba6f7"
+                                        color: Qt.rgba(0.1, 0.04, 0.18, 0.5)
 
                                         RowLayout {
                                             anchors.fill: parent
-                                            anchors.leftMargin: 8
-                                            anchors.rightMargin: 6
-                                            spacing: 4
+                                            anchors.leftMargin: 10
+                                            anchors.rightMargin: 8
+                                            spacing: 6
+
+                                            Rectangle {
+                                                implicitWidth: 6
+                                                implicitHeight: 6
+                                                radius: 3
+                                                color: MprisState.player?.isPlaying ? "#88FF00" : "#585b70"
+                                            }
 
                                             Text {
                                                 id: playerPillText
                                                 text: MprisState.player?.identity || ""
-                                                color: "#1e1e2e"
+                                                color: Themes.mprisTextColor
                                                 font { pixelSize: 11; family: "Quicksand"; bold: true }
                                                 elide: Text.ElideRight
                                             }
 
                                             Text {
                                                 text: ""
-                                                color: "#1e1e2e"
+                                                color: Themes.toxicGreen
                                                 font { pixelSize: 7; family: "Symbols Nerd Font Mono" }
                                             }
                                         }
@@ -411,14 +420,7 @@ BarBlock {
                                         MouseArea {
                                             anchors.fill: parent
                                             cursorShape: Qt.PointingHandCursor
-                                            onClicked: {
-                                                var players = [];
-                                                for (let p of Mpris.players.values) players.push(p);
-                                                if (players.length > 1) {
-                                                    var idx = players.indexOf(MprisState.player);
-                                                    MprisState.player = players[(idx + 1) % players.length];
-                                                }
-                                            }
+                                            onClicked: playerListOpen = !playerListOpen
                                         }
                                     }
 
@@ -429,6 +431,64 @@ BarBlock {
                                         color: "#585b70"
                                         font { pixelSize: 9; family: "ZedMono Nerd Font" }
                                         visible: Mpris.players.length > 1
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    id: playerListLayout
+                                    Layout.fillWidth: true
+                                    visible: playerListOpen
+                                    spacing: 2
+
+                                    Instantiator {
+                                        active: playerListOpen
+                                        model: Mpris.players
+
+                                        Rectangle {
+                                            required property var modelData
+                                            Layout.fillWidth: true
+                                            implicitHeight: 20
+                                            radius: 4
+                                            color: mouseArea.containsMouse ? "#313244" : "transparent"
+
+                                            Behavior on color {
+                                                ColorAnimation { duration: 80 }
+                                            }
+
+                                            RowLayout {
+                                                anchors.fill: parent
+                                                anchors.leftMargin: 8
+                                                spacing: 6
+
+                                                Rectangle {
+                                                    implicitWidth: 6
+                                                    implicitHeight: 6
+                                                    radius: 3
+                                                    color: modelData.playbackState === MprisPlaybackState.Playing ? "#88FF00" : "#585b70"
+                                                }
+
+                                                Text {
+                                                    text: modelData.identity
+                                                    color: modelData.playbackState === MprisPlaybackState.Playing ? "#cdd6f4" : "#585b70"
+                                                    font { pixelSize: 10; family: "Quicksand"; bold: true }
+                                                    elide: Text.ElideRight
+                                                    Layout.fillWidth: true
+                                                }
+                                            }
+
+                                            MouseArea {
+                                                id: mouseArea
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: {
+                                                    MprisState.player = modelData;
+                                                    playerListOpen = false;
+                                                }
+                                            }
+                                        }
+
+                                        onObjectAdded: (index, object) => object.parent = playerListLayout
                                     }
                                 }
                             }
@@ -867,6 +927,16 @@ BarBlock {
                                                     color: "#cba6f7"
                                                     border.color: "#1e1e2e"
                                                     border.width: 2
+                                                }
+                                            }
+
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                acceptedButtons: Qt.NoButton
+                                                onWheel: event => {
+                                                    let vol = modelData.volume;
+                                                    vol += event.angleDelta.y > 0 ? 0.05 : -0.05;
+                                                    modelData.volume = Math.max(0, Math.min(vol, 1));
                                                 }
                                             }
                                         }
