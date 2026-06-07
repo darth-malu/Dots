@@ -75,6 +75,7 @@ Variants {
                         columns: Math.min(buttons.length, 3)
                         columnSpacing: 16
                         rowSpacing: 16
+                        Layout.alignment: Qt.AlignHCenter
 
                         Repeater {
                             model: buttons
