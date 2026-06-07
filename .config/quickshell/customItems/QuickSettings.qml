@@ -142,7 +142,8 @@ BarBlock {
 
     onMiddleClicked: {
         qsPopup.visible = !qsPopup.visible;
-        if (qsPopup.visible) refreshConnections();
+        if (qsPopup.visible)
+            refreshConnections();
     }
     onLeftClicked: MiscState.toggleVolume = !MiscState.toggleVolume
     onRightClicked: MiscState.toggleSysTray = !MiscState.toggleSysTray
@@ -267,7 +268,7 @@ BarBlock {
                             verticalCenter: parent.verticalCenter
                             rightMargin: 6
                         }
-                        text: root.isOnline ? "" : ""
+                        text: root.isOnline ? "" : ""
                         color: root.isOnline ? "#89b4fa" : "#585b70"
                         font {
                             pixelSize: 16
@@ -282,756 +283,152 @@ BarBlock {
                     Layout.fillWidth: true
                     spacing: 0
 
-                        // ═══ NOW PLAYING ═══
-                        Card {
-                            title: "Now Playing"
-                            icon: ""
-                            accent: "#cba6f7"
-                            visible: MprisState.player !== null
+                    // ═══ NOW PLAYING ═══
+                    Card {
+                        title: "Now Playing"
+                        icon: ""
+                        accent: "#cba6f7"
+                        visible: MprisState.player !== null
 
-                            RowLayout {
-                                spacing: 10
-                                Layout.fillWidth: true
+                        RowLayout {
+                            spacing: 10
+                            Layout.fillWidth: true
+
+                            Rectangle {
+                                implicitWidth: 56
+                                implicitHeight: 56
+                                radius: 12
+                                color: "#313244"
+
+                                Image {
+                                    id: albumArt
+                                    anchors.fill: parent
+                                    source: MprisState.player?.trackArtUrl || ""
+                                    fillMode: Image.PreserveAspectCrop
+                                    asynchronous: true
+                                    visible: status === Image.Ready
+                                }
 
                                 Rectangle {
-                                    implicitWidth: 56
-                                    implicitHeight: 56
+                                    anchors.fill: parent
                                     radius: 12
-                                    color: "#313244"
-
-                                    Image {
-                                        id: albumArt
-                                        anchors.fill: parent
-                                        source: MprisState.player?.trackArtUrl || ""
-                                        fillMode: Image.PreserveAspectCrop
-                                        asynchronous: true
-                                        visible: status === Image.Ready
-                                    }
-
-                                    Rectangle {
-                                        anchors.fill: parent
-                                        radius: 12
-                                        color: "transparent"
-                                        border {
-                                            width: 2
-                                            color: Qt.rgba(0.80, 0.65, 0.97, 0.4)
-                                        }
-                                    }
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: ""
-                                        color: "#585b70"
-                                        font {
-                                            pixelSize: 24
-                                            family: "Symbols Nerd Font Mono"
-                                        }
-                                        visible: albumArt.status !== Image.Ready
-                                    }
-                                }
-
-                                ColumnLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 2
-
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: MprisState.player?.trackTitle || "No track"
-                                        color: "#cba6f7"
-                                        font {
-                                            pixelSize: 12
-                                            bold: true
-                                            family: "Quicksand"
-                                        }
-                                        elide: Text.ElideRight
-                                    }
-
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: MprisState.player?.trackArtist || MprisState.player?.identity || ""
-                                        color: "#a6adc8"
-                                        font {
-                                            pixelSize: 10
-                                            family: "ZedMono Nerd Font"
-                                        }
-                                        elide: Text.ElideRight
-                                    }
-                                }
-
-                                RowLayout {
-                                    spacing: 4
-
-                                    TrackButton {
-                                        text: ""
-                                        bgColor: "#45475a"
-                                        textColor: "#cba6f7"
-                                        onClicked: MprisState.player?.previous()
-                                    }
-                                    TrackButton {
-                                        text: MprisState.player?.isPlaying ? "" : ""
-                                        bgColor: "#cba6f7"
-                                        textColor: "#1e1e2e"
-                                        onClicked: MprisState.player?.togglePlaying()
-                                    }
-                                    TrackButton {
-                                        text: ""
-                                        bgColor: "#45475a"
-                                        textColor: "#cba6f7"
-                                        onClicked: MprisState.player?.next()
-                                    }
-                                }
-                            }
-
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                Layout.topMargin: 6
-                                spacing: 4
-
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 4
-
-                                    Rectangle {
-                                        implicitHeight: 22
-                                        implicitWidth: playerPillText.implicitWidth + 32
-                                        radius: height / 2
-                                        color: Qt.rgba(0.1, 0.04, 0.18, 0.5)
-
-                                        RowLayout {
-                                            anchors.fill: parent
-                                            anchors.leftMargin: 10
-                                            anchors.rightMargin: 8
-                                            spacing: 6
-
-                                            Rectangle {
-                                                implicitWidth: 6
-                                                implicitHeight: 6
-                                                radius: 3
-                                                color: MprisState.player?.isPlaying ? "#88FF00" : "#585b70"
-                                            }
-
-                                            Text {
-                                                id: playerPillText
-                                                text: MprisState.player?.identity || ""
-                                                color: Themes.mprisTextColor
-                                                font { pixelSize: 11; family: "Quicksand"; bold: true }
-                                                elide: Text.ElideRight
-                                            }
-
-                                            Text {
-                                                text: ""
-                                                color: Themes.toxicGreen
-                                                font { pixelSize: 7; family: "Symbols Nerd Font Mono" }
-                                            }
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: playerListOpen = !playerListOpen
-                                        }
-                                    }
-
-                                    Item { Layout.fillWidth: true }
-
-                                    Text {
-                                        text: Mpris.players.length + " player(s)"
-                                        color: "#585b70"
-                                        font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                                        visible: Mpris.players.length > 1
-                                    }
-                                }
-
-                                ColumnLayout {
-                                    id: playerListLayout
-                                    Layout.fillWidth: true
-                                    visible: playerListOpen
-                                    spacing: 2
-
-                                    Instantiator {
-                                        active: playerListOpen
-                                        model: Mpris.players
-
-                                        Rectangle {
-                                            required property var modelData
-                                            Layout.fillWidth: true
-                                            implicitHeight: 20
-                                            radius: 4
-                                            color: mouseArea.containsMouse ? "#313244" : "transparent"
-
-                                            Behavior on color {
-                                                ColorAnimation { duration: 80 }
-                                            }
-
-                                            RowLayout {
-                                                anchors.fill: parent
-                                                anchors.leftMargin: 8
-                                                spacing: 6
-
-                                                Rectangle {
-                                                    implicitWidth: 6
-                                                    implicitHeight: 6
-                                                    radius: 3
-                                                    color: modelData.playbackState === MprisPlaybackState.Playing ? "#88FF00" : "#585b70"
-                                                }
-
-                                                Text {
-                                                    text: modelData.identity
-                                                    color: modelData.playbackState === MprisPlaybackState.Playing ? "#cdd6f4" : "#585b70"
-                                                    font { pixelSize: 10; family: "Quicksand"; bold: true }
-                                                    elide: Text.ElideRight
-                                                    Layout.fillWidth: true
-                                                }
-                                            }
-
-                                            MouseArea {
-                                                id: mouseArea
-                                                anchors.fill: parent
-                                                hoverEnabled: true
-                                                cursorShape: Qt.PointingHandCursor
-                                                onClicked: {
-                                                    MprisState.player = modelData;
-                                                    playerListOpen = false;
-                                                }
-                                            }
-                                        }
-
-                                        onObjectAdded: (index, object) => object.parent = playerListLayout
-                                    }
-                                }
-                            }
-                        }
-
-                        // ═══ DISKS ═══
-                        Card {
-                            id: diskPlace
-                            visible: false
-                            title: "Disks"
-                            icon: ""
-                            accent: Themes.mprisTextColor
-
-                            ColumnLayout {
-                                id: disksCol
-                                spacing: 6
-                                Layout.fillWidth: true
-
-                                Repeater {
-                                    model: {
-                                        var raw = root.diskData.trim();
-                                        return raw.length > 0 ? raw.split("\n") : [];
-                                    }
-
-                                    RowLayout {
-                                        required property string modelData
-                                        spacing: 8
-                                        Layout.fillWidth: true
-
-                                        readonly property var parts: modelData.trim().split(/\s+/)
-                                        readonly property int pct: parts.length >= 5 ? parseInt(parts[4]) || 0 : 0
-
-                                        Text {
-                                            Layout.preferredWidth: 130
-                                            text: parent.parts[0] || ""
-                                            color: "#cdd6f4"
-                                            font {
-                                                pixelSize: 10
-                                                family: "ZedMono Nerd Font"
-                                            }
-                                            elide: Text.ElideRight
-                                        }
-
-                                        Text {
-                                            Layout.preferredWidth: 50
-                                            horizontalAlignment: Text.AlignRight
-                                            text: parent.parts[1] || ""
-                                            color: "#585b70"
-                                            font {
-                                                pixelSize: 9
-                                                family: "ZedMono Nerd Font"
-                                            }
-                                        }
-
-                                        Rectangle {
-                                            Layout.fillWidth: true
-                                            Layout.preferredHeight: 8
-                                            radius: 4
-                                            color: "#313244"
-
-                                            Rectangle {
-                                                width: parent.width * Math.min(parent.parent.pct / 100, 1)
-                                                height: parent.height
-                                                radius: 4
-                                                color: parent.parent.pct > 90 ? "#f38ba8" : parent.parent.pct > 70 ? "#f5c2e7" : "#89dceb"
-
-                                                Behavior on width {
-                                                    NumberAnimation {
-                                                        duration: 300
-                                                        easing.type: Easing.OutCubic
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        Text {
-                                            Layout.preferredWidth: 36
-                                            horizontalAlignment: Text.AlignRight
-                                            text: `${parent.pct}%`
-                                            color: parent.pct > 90 ? "#f38ba8" : "#a6adc8"
-                                            font {
-                                                pixelSize: 9
-                                                family: "ZedMono Nerd Font"
-                                                bold: parent.pct > 90
-                                            }
-                                        }
+                                    color: "transparent"
+                                    border {
+                                        width: 2
+                                        color: Qt.rgba(0.80, 0.65, 0.97, 0.4)
                                     }
                                 }
 
                                 Text {
-                                    text: "No disks found"
+                                    anchors.centerIn: parent
+                                    text: ""
                                     color: "#585b70"
+                                    font {
+                                        pixelSize: 24
+                                        family: "Symbols Nerd Font Mono"
+                                    }
+                                    visible: albumArt.status !== Image.Ready
+                                }
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 2
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: MprisState.player?.trackTitle || "No track"
+                                    color: "#cba6f7"
+                                    font {
+                                        pixelSize: 12
+                                        bold: true
+                                        family: "Quicksand"
+                                    }
+                                    elide: Text.ElideRight
+                                }
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: MprisState.player?.trackArtist || MprisState.player?.identity || ""
+                                    color: "#a6adc8"
                                     font {
                                         pixelSize: 10
                                         family: "ZedMono Nerd Font"
                                     }
-                                    visible: root.diskData.trim().length === 0
-                                }
-                            }
-                        }
-
-                        // ═══ CONNECTIONS ═══
-                        Card {
-                            title: "Connections"
-                            icon: ""
-                            accent: "#89b4fa"
-
-                            ColumnLayout {
-                                spacing: 6
-                                Layout.fillWidth: true
-
-                                RowLayout {
-                                    spacing: 8
-                                    Layout.fillWidth: true
-
-                                    Text {
-                                        text: ""
-                                        color: root.wifiEnabled ? "#89b4fa" : "#585b70"
-                                        font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                                    }
-
-                                    Text {
-                                        text: "Wi-Fi"
-                                        color: "#cdd6f4"
-                                        font { pixelSize: 11; family: "Quicksand" }
-                                    }
-
-                                    Item { Layout.fillWidth: true }
-
-                                    Text {
-                                        text: root.wifiEnabled ? "On" : "Off"
-                                        color: root.wifiEnabled ? "#a6e3a1" : "#585b70"
-                                        font { pixelSize: 10; family: "ZedMono Nerd Font"; bold: true }
-                                    }
-
-                                    Rectangle {
-                                        width: 36
-                                        height: 20
-                                        radius: 10
-                                        color: root.wifiEnabled ? "#89b4fa" : "#45475a"
-                                        border.color: root.wifiEnabled ? "#89b4fa" : "#585b70"
-                                        border.width: 1
-
-                                        Behavior on color { ColorAnimation { duration: 120 } }
-
-                                        Rectangle {
-                                            x: root.wifiEnabled ? parent.width - width - 2 : 2
-                                            y: 2
-                                            width: 14
-                                            height: 14
-                                            radius: 7
-                                            color: "#1e1e2e"
-                                            Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: {
-                                                Quickshell.execDetached(["sh", "-c",
-                                                    root.wifiEnabled
-                                                        ? "nmcli radio wifi off"
-                                                        : "nmcli radio wifi on"
-                                                ]);
-                                                root.refreshConnections();
-                                            }
-                                        }
-                                    }
-                                }
-
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    height: 1
-                                    color: "#313244"
-                                }
-
-                                RowLayout {
-                                    spacing: 8
-                                    Layout.fillWidth: true
-
-                                    Text {
-                                        text: ""
-                                        color: root.bluetoothEnabled ? "#89b4fa" : "#585b70"
-                                        font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                                    }
-
-                                    Text {
-                                        text: "Bluetooth"
-                                        color: "#cdd6f4"
-                                        font { pixelSize: 11; family: "Quicksand" }
-                                    }
-
-                                    Item { Layout.fillWidth: true }
-
-                                    Text {
-                                        text: root.bluetoothEnabled ? "On" : "Off"
-                                        color: root.bluetoothEnabled ? "#a6e3a1" : "#585b70"
-                                        font { pixelSize: 10; family: "ZedMono Nerd Font"; bold: true }
-                                    }
-
-                                    Rectangle {
-                                        width: 36
-                                        height: 20
-                                        radius: 10
-                                        color: root.bluetoothEnabled ? "#89b4fa" : "#45475a"
-                                        border.color: root.bluetoothEnabled ? "#89b4fa" : "#585b70"
-                                        border.width: 1
-
-                                        Behavior on color { ColorAnimation { duration: 120 } }
-
-                                        Rectangle {
-                                            x: root.bluetoothEnabled ? parent.width - width - 2 : 2
-                                            y: 2
-                                            width: 14
-                                            height: 14
-                                            radius: 7
-                                            color: "#1e1e2e"
-                                            Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: {
-                                                Quickshell.execDetached(["sh", "-c",
-                                                    root.bluetoothEnabled
-                                                        ? "bluetoothctl power off"
-                                                        : "bluetoothctl power on"
-                                                ]);
-                                                root.refreshConnections();
-                                            }
-                                        }
-                                    }
-                                }
-
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    height: 1
-                                    color: "#313244"
-                                }
-
-                                RowLayout {
-                                    spacing: 8
-                                    Layout.fillWidth: true
-
-                                    Text {
-                                        text: ""
-                                        color: root.ethernetConnected ? "#a6e3a1" : "#585b70"
-                                        font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                                    }
-
-                                    Text {
-                                        text: "Ethernet"
-                                        color: "#cdd6f4"
-                                        font { pixelSize: 11; family: "Quicksand" }
-                                    }
-
-                                    Item { Layout.fillWidth: true }
-
-                                    Text {
-                                        text: root.ethernetConnected ? "Connected" : "Disconnected"
-                                        color: root.ethernetConnected ? "#a6e3a1" : "#585b70"
-                                        font { pixelSize: 10; family: "ZedMono Nerd Font"; bold: true }
-                                    }
-                                }
-                            }
-                        }
-
-                        // ═══ VOLUME ═══
-                        Card {
-                            title: "Volume"
-                            icon: ""
-                            accent: "#c6a0f6"
-
-                            ColumnLayout {
-                                spacing: 6
-                                Layout.fillWidth: true
-
-                                RowLayout {
-                                    spacing: 8
-                                    Layout.fillWidth: true
-
-                                    Text {
-                                        text: Pipewire.ready ? Math.floor((Pipewire.defaultAudioSink?.audio?.volume ?? 0) * 100) + "%" : ""
-                                        color: "#cdd6f4"
-                                        font {
-                                            pixelSize: 14
-                                            bold: true
-                                            family: "ZedMono Nerd Font"
-                                        }
-                                    }
-
-                                    Item {
-                                        Layout.fillWidth: true
-                                    }
-
-                                    Text {
-                                        text: Pipewire.defaultAudioSink?.description || ""
-                                        color: "#585b70"
-                                        font {
-                                            pixelSize: 9
-                                            family: "ZedMono Nerd Font"
-                                        }
-                                        elide: Text.ElideRight
-                                        Layout.maximumWidth: 120
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: Quickshell.execDetached(["sh", "-c", "cur=$(pactl get-default-sink); " + "next=$(pactl list short sinks | awk 'NR>1{print $2;exit}'); " + "[ -n \"$next\" ] && pactl set-default-sink \"$next\""])
-                                        }
-                                    }
-                                }
-
-                                Item {
-                                    Layout.fillWidth: true
-                                    Layout.leftMargin: 12
-                                    Layout.rightMargin: 12
-                                    implicitHeight: 20
-
-                                    Slider {
-                                        id: volSlider
-                                        anchors.fill: parent
-                                        leftPadding: 4
-                                        rightPadding: 4
-                                        from: 0
-                                        to: 1
-                                        stepSize: 0.01
-                                        value: Pipewire.defaultAudioSink?.audio?.volume ?? 0
-                                        live: true
-                                        onValueChanged: {
-                                            if (pressed && Pipewire.defaultAudioSink?.audio)
-                                                Pipewire.defaultAudioSink.audio.volume = value;
-                                        }
-
-                                        background: Rectangle {
-                                            x: volSlider.leftPadding
-                                            y: volSlider.topPadding + volSlider.availableHeight / 2 - height / 2
-                                            width: volSlider.availableWidth
-                                            height: 3
-                                            radius: 1.5
-                                            color: "#313244"
-
-                                            Rectangle {
-                                                width: volSlider.visualPosition * parent.width
-                                                height: parent.height
-                                                radius: 1.5
-                                                color: Pipewire.defaultAudioSink?.audio?.muted ? "#585b70" : "#c6a0f6"
-                                            }
-                                        }
-
-                                        handle: Rectangle {
-                                            x: volSlider.leftPadding + volSlider.visualPosition * (volSlider.availableWidth - width)
-                                            y: volSlider.topPadding + volSlider.availableHeight / 2 - height / 2
-                                            width: 10
-                                            height: 10
-                                            radius: 5
-                                            color: Pipewire.defaultAudioSink?.audio?.muted ? "#585b70" : "#c6a0f6"
-                                            border.color: "#1e1e2e"
-                                            border.width: 2
-                                        }
-                                    }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        acceptedButtons: Qt.NoButton
-                                        onWheel: event => {
-                                            if (Pipewire.defaultAudioSink?.audio) {
-                                                let vol = Pipewire.defaultAudioSink.audio.volume;
-                                                vol += event.angleDelta.y > 0 ? 0.05 : -0.05;
-                                                Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(vol, 1));
-                                            }
-                                        }
-                                    }
-                                }
-
-                                Repeater {
-                                    model: {
-                                        let players = [];
-                                        for (let p of Mpris.players.values) {
-                                            if (p.volumeSupported) players.push(p);
-                                        }
-                                        return players;
-                                    }
-
-                                    RowLayout {
-                                        required property var modelData
-                                        spacing: 8
-                                        Layout.fillWidth: true
-                                        Layout.topMargin: 2
-
-                                        Text {
-                                            text: modelData.identity
-                                            color: "#585b70"
-                                            font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                                            elide: Text.ElideRight
-                                            Layout.maximumWidth: 60
-                                        }
-
-                                        Item {
-                                            Layout.fillWidth: true
-                                            Layout.leftMargin: 8
-                                            Layout.rightMargin: 8
-                                            implicitHeight: 14
-
-                                            Slider {
-                                                id: playerVolSlider
-                                                anchors.fill: parent
-                                                leftPadding: 2
-                                                rightPadding: 2
-                                                from: 0
-                                                to: 1
-                                                stepSize: 0.01
-                                                value: modelData.volume
-                                                live: true
-                                                onValueChanged: {
-                                                    if (pressed) modelData.volume = value;
-                                                }
-
-                                                background: Rectangle {
-                                                    x: playerVolSlider.leftPadding
-                                                    y: playerVolSlider.topPadding + playerVolSlider.availableHeight / 2 - height / 2
-                                                    width: playerVolSlider.availableWidth
-                                                    height: 3
-                                                    radius: 1.5
-                                                    color: "#313244"
-
-                                                    Rectangle {
-                                                        width: playerVolSlider.visualPosition * parent.width
-                                                        height: parent.height
-                                                        radius: 1.5
-                                                        color: "#cba6f7"
-                                                    }
-                                                }
-
-                                                handle: Rectangle {
-                                                    x: playerVolSlider.leftPadding + playerVolSlider.visualPosition * (playerVolSlider.availableWidth - width)
-                                                    y: playerVolSlider.topPadding + playerVolSlider.availableHeight / 2 - height / 2
-                                                    width: 8
-                                                    height: 8
-                                                    radius: 4
-                                                    color: "#cba6f7"
-                                                    border.color: "#1e1e2e"
-                                                    border.width: 2
-                                                }
-                                            }
-
-                                            MouseArea {
-                                                anchors.fill: parent
-                                                acceptedButtons: Qt.NoButton
-                                                onWheel: event => {
-                                                    let vol = modelData.volume;
-                                                    vol += event.angleDelta.y > 0 ? 0.05 : -0.05;
-                                                    modelData.volume = Math.max(0, Math.min(vol, 1));
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        // ═══ CAFFEINE ═══
-                        Card {
-                            title: "Caffeine"
-                            icon: CaffeineService.enabled ? "" : "󰾪"
-                            accent: CaffeineService.enabled ? "#fab387" : "#585b70"
-                            cardColor: CaffeineService.enabled ? Qt.rgba(0.98, 0.70, 0.53, 0.06) : "#181825"
-
-                            Behavior on cardColor {
-                                ColorAnimation {
-                                    duration: 200
+                                    elide: Text.ElideRight
                                 }
                             }
 
                             RowLayout {
-                                spacing: 10
+                                spacing: 4
+
+                                TrackButton {
+                                    text: ""
+                                    bgColor: "#45475a"
+                                    textColor: "#cba6f7"
+                                    onClicked: MprisState.player?.previous()
+                                }
+                                TrackButton {
+                                    text: MprisState.player?.isPlaying ? "" : ""
+                                    bgColor: "#cba6f7"
+                                    textColor: "#1e1e2e"
+                                    onClicked: MprisState.player?.togglePlaying()
+                                }
+                                TrackButton {
+                                    text: ""
+                                    bgColor: "#45475a"
+                                    textColor: "#cba6f7"
+                                    onClicked: MprisState.player?.next()
+                                }
+                            }
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            Layout.topMargin: 6
+                            spacing: 4
+
+                            RowLayout {
                                 Layout.fillWidth: true
-
-                                Text {
-                                    text: CaffeineService.enabled ? "Prevent idle suspend" : "Allow idle suspend"
-                                    color: CaffeineService.enabled ? "#fab387" : "#a6adc8"
-                                    font {
-                                        pixelSize: 10
-                                        family: "Quicksand"
-                                    }
-                                    elide: Text.ElideRight
-                                    Layout.fillWidth: true
-
-                                    Behavior on color {
-                                        ColorAnimation {
-                                            duration: 200
-                                        }
-                                    }
-                                }
-
-                                Item {
-                                    Layout.fillWidth: true
-                                }
+                                spacing: 4
 
                                 Rectangle {
-                                    width: 44
-                                    height: 24
-                                    radius: 12
-                                    color: CaffeineService.enabled ? "#fab387" : "#45475a"
-                                    border.color: CaffeineService.enabled ? "#fab387" : "#585b70"
-                                    border.width: 1
+                                    implicitHeight: 22
+                                    implicitWidth: playerPillText.implicitWidth + 32
+                                    radius: height / 2
+                                    color: Qt.rgba(0.1, 0.04, 0.18, 0.5)
 
-                                    Behavior on color {
-                                        ColorAnimation {
-                                            duration: 200
-                                        }
-                                    }
-                                    Behavior on border.color {
-                                        ColorAnimation {
-                                            duration: 200
-                                        }
-                                    }
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 10
+                                        anchors.rightMargin: 8
+                                        spacing: 6
 
-                                    Rectangle {
-                                        x: CaffeineService.enabled ? parent.width - width - 2 : 2
-                                        y: 2
-                                        width: 18
-                                        height: 18
-                                        radius: 9
-                                        color: CaffeineService.enabled ? "#1e1e2e" : "#cdd6f4"
-                                        Behavior on x {
-                                            NumberAnimation {
-                                                duration: 150
-                                                easing.type: Easing.OutCubic
+                                        Rectangle {
+                                            implicitWidth: 6
+                                            implicitHeight: 6
+                                            radius: 3
+                                            color: MprisState.player?.isPlaying ? "#88FF00" : "#585b70"
+                                        }
+
+                                        Text {
+                                            id: playerPillText
+                                            text: MprisState.player?.identity || ""
+                                            color: Themes.mprisTextColor
+                                            font {
+                                                pixelSize: 11
+                                                family: "Quicksand"
+                                                bold: true
                                             }
+                                            elide: Text.ElideRight
                                         }
-                                        Behavior on color {
-                                            ColorAnimation {
-                                                duration: 150
+
+                                        Text {
+                                            text: ""
+                                            color: Themes.toxicGreen
+                                            font {
+                                                pixelSize: 7
+                                                family: "Symbols Nerd Font Mono"
                                             }
                                         }
                                     }
@@ -1039,55 +436,728 @@ BarBlock {
                                     MouseArea {
                                         anchors.fill: parent
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: CaffeineService.toggle()
+                                        onClicked: playerListOpen = !playerListOpen
+                                    }
+                                }
+
+                                Item {
+                                    Layout.fillWidth: true
+                                }
+
+                                Text {
+                                    text: Mpris.players.length + " player(s)"
+                                    color: "#585b70"
+                                    font {
+                                        pixelSize: 9
+                                        family: "ZedMono Nerd Font"
+                                    }
+                                    visible: Mpris.players.length > 1
+                                }
+                            }
+
+                            ColumnLayout {
+                                id: playerListLayout
+                                Layout.fillWidth: true
+                                visible: playerListOpen
+                                spacing: 2
+
+                                Instantiator {
+                                    active: playerListOpen
+                                    model: Mpris.players
+
+                                    Rectangle {
+                                        required property var modelData
+                                        Layout.fillWidth: true
+                                        implicitHeight: 20
+                                        radius: 4
+                                        color: mouseArea.containsMouse ? "#313244" : "transparent"
+
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: 80
+                                            }
+                                        }
+
+                                        RowLayout {
+                                            anchors.fill: parent
+                                            anchors.leftMargin: 8
+                                            spacing: 6
+
+                                            Rectangle {
+                                                implicitWidth: 6
+                                                implicitHeight: 6
+                                                radius: 3
+                                                color: modelData.playbackState === MprisPlaybackState.Playing ? "#88FF00" : "#585b70"
+                                            }
+
+                                            Text {
+                                                text: modelData.identity
+                                                color: modelData.playbackState === MprisPlaybackState.Playing ? "#cdd6f4" : "#585b70"
+                                                font {
+                                                    pixelSize: 10
+                                                    family: "Quicksand"
+                                                    bold: true
+                                                }
+                                                elide: Text.ElideRight
+                                                Layout.fillWidth: true
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            id: mouseArea
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                MprisState.player = modelData;
+                                                playerListOpen = false;
+                                            }
+                                        }
+                                    }
+
+                                    onObjectAdded: (index, object) => object.parent = playerListLayout
+                                }
+                            }
+                        }
+                    }
+
+                    // ═══ DISKS ═══
+                    Card {
+                        id: diskPlace
+                        visible: false
+                        title: "Disks"
+                        icon: ""
+                        accent: Themes.mprisTextColor
+
+                        ColumnLayout {
+                            id: disksCol
+                            spacing: 6
+                            Layout.fillWidth: true
+
+                            Repeater {
+                                model: {
+                                    var raw = root.diskData.trim();
+                                    return raw.length > 0 ? raw.split("\n") : [];
+                                }
+
+                                RowLayout {
+                                    required property string modelData
+                                    spacing: 8
+                                    Layout.fillWidth: true
+
+                                    readonly property var parts: modelData.trim().split(/\s+/)
+                                    readonly property int pct: parts.length >= 5 ? parseInt(parts[4]) || 0 : 0
+
+                                    Text {
+                                        Layout.preferredWidth: 130
+                                        text: parent.parts[0] || ""
+                                        color: "#cdd6f4"
+                                        font {
+                                            pixelSize: 10
+                                            family: "ZedMono Nerd Font"
+                                        }
+                                        elide: Text.ElideRight
+                                    }
+
+                                    Text {
+                                        Layout.preferredWidth: 50
+                                        horizontalAlignment: Text.AlignRight
+                                        text: parent.parts[1] || ""
+                                        color: "#585b70"
+                                        font {
+                                            pixelSize: 9
+                                            family: "ZedMono Nerd Font"
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        Layout.fillWidth: true
+                                        Layout.preferredHeight: 8
+                                        radius: 4
+                                        color: "#313244"
+
+                                        Rectangle {
+                                            width: parent.width * Math.min(parent.parent.pct / 100, 1)
+                                            height: parent.height
+                                            radius: 4
+                                            color: parent.parent.pct > 90 ? "#f38ba8" : parent.parent.pct > 70 ? "#f5c2e7" : "#89dceb"
+
+                                            Behavior on width {
+                                                NumberAnimation {
+                                                    duration: 300
+                                                    easing.type: Easing.OutCubic
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    Text {
+                                        Layout.preferredWidth: 36
+                                        horizontalAlignment: Text.AlignRight
+                                        text: `${parent.pct}%`
+                                        color: parent.pct > 90 ? "#f38ba8" : "#a6adc8"
+                                        font {
+                                            pixelSize: 9
+                                            family: "ZedMono Nerd Font"
+                                            bold: parent.pct > 90
+                                        }
+                                    }
+                                }
+                            }
+
+                            Text {
+                                text: "No disks found"
+                                color: "#585b70"
+                                font {
+                                    pixelSize: 10
+                                    family: "ZedMono Nerd Font"
+                                }
+                                visible: root.diskData.trim().length === 0
+                            }
+                        }
+                    }
+
+                    // ═══ CONNECTIONS ═══
+                    Card {
+                        title: "Connections"
+                        icon: ""
+                        accent: "#89b4fa"
+
+                        ColumnLayout {
+                            spacing: 6
+                            Layout.fillWidth: true
+
+                            RowLayout {
+                                spacing: 8
+                                Layout.fillWidth: true
+
+                                Text {
+                                    text: ""
+                                    color: root.wifiEnabled ? "#89b4fa" : "#585b70"
+                                    font {
+                                        pixelSize: 14
+                                        family: "Symbols Nerd Font Mono"
+                                    }
+                                }
+
+                                Text {
+                                    text: "Wi-Fi"
+                                    color: "#cdd6f4"
+                                    font {
+                                        pixelSize: 11
+                                        family: "Quicksand"
+                                    }
+                                }
+
+                                Item {
+                                    Layout.fillWidth: true
+                                }
+
+                                Text {
+                                    text: root.wifiEnabled ? "On" : "Off"
+                                    color: root.wifiEnabled ? "#a6e3a1" : "#585b70"
+                                    font {
+                                        pixelSize: 10
+                                        family: "ZedMono Nerd Font"
+                                        bold: true
+                                    }
+                                }
+
+                                Rectangle {
+                                    width: 36
+                                    height: 20
+                                    radius: 10
+                                    color: root.wifiEnabled ? "#89b4fa" : "#45475a"
+                                    border.color: root.wifiEnabled ? "#89b4fa" : "#585b70"
+                                    border.width: 1
+
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: 120
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        x: root.wifiEnabled ? parent.width - width - 2 : 2
+                                        y: 2
+                                        width: 14
+                                        height: 14
+                                        radius: 7
+                                        color: "#1e1e2e"
+                                        Behavior on x {
+                                            NumberAnimation {
+                                                duration: 120
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            Quickshell.execDetached(["sh", "-c", root.wifiEnabled ? "nmcli radio wifi off" : "nmcli radio wifi on"]);
+                                            root.refreshConnections();
+                                        }
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                height: 1
+                                color: "#313244"
+                            }
+
+                            RowLayout {
+                                spacing: 8
+                                Layout.fillWidth: true
+
+                                Text {
+                                    text: ""
+                                    color: root.bluetoothEnabled ? "#89b4fa" : "#585b70"
+                                    font {
+                                        pixelSize: 14
+                                        family: "Symbols Nerd Font Mono"
+                                    }
+                                }
+
+                                Text {
+                                    text: "Bluetooth"
+                                    color: "#cdd6f4"
+                                    font {
+                                        pixelSize: 11
+                                        family: "Quicksand"
+                                    }
+                                }
+
+                                Item {
+                                    Layout.fillWidth: true
+                                }
+
+                                Text {
+                                    text: root.bluetoothEnabled ? "On" : "Off"
+                                    color: root.bluetoothEnabled ? "#a6e3a1" : "#585b70"
+                                    font {
+                                        pixelSize: 10
+                                        family: "ZedMono Nerd Font"
+                                        bold: true
+                                    }
+                                }
+
+                                Rectangle {
+                                    width: 36
+                                    height: 20
+                                    radius: 10
+                                    color: root.bluetoothEnabled ? "#89b4fa" : "#45475a"
+                                    border.color: root.bluetoothEnabled ? "#89b4fa" : "#585b70"
+                                    border.width: 1
+
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: 120
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        x: root.bluetoothEnabled ? parent.width - width - 2 : 2
+                                        y: 2
+                                        width: 14
+                                        height: 14
+                                        radius: 7
+                                        color: "#1e1e2e"
+                                        Behavior on x {
+                                            NumberAnimation {
+                                                duration: 120
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            Quickshell.execDetached(["sh", "-c", root.bluetoothEnabled ? "bluetoothctl power off" : "bluetoothctl power on"]);
+                                            root.refreshConnections();
+                                        }
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                height: 1
+                                color: "#313244"
+                            }
+
+                            RowLayout {
+                                spacing: 8
+                                Layout.fillWidth: true
+
+                                Text {
+                                    text: ""
+                                    color: root.ethernetConnected ? "#a6e3a1" : "#585b70"
+                                    font {
+                                        pixelSize: 14
+                                        family: "Symbols Nerd Font Mono"
+                                    }
+                                }
+
+                                Text {
+                                    text: "Ethernet"
+                                    color: "#cdd6f4"
+                                    font {
+                                        pixelSize: 11
+                                        family: "Quicksand"
+                                    }
+                                }
+
+                                Item {
+                                    Layout.fillWidth: true
+                                }
+
+                                Text {
+                                    text: root.ethernetConnected ? "Connected" : "Disconnected"
+                                    color: root.ethernetConnected ? "#a6e3a1" : "#585b70"
+                                    font {
+                                        pixelSize: 10
+                                        family: "ZedMono Nerd Font"
+                                        bold: true
                                     }
                                 }
                             }
                         }
+                    }
 
-                        // ═══ POWER ═══
-                        Card {
-                            title: "Power"
-                            icon: ""
-                            accent: "#f38ba8"
-                            Layout.bottomMargin: 0
+                    // ═══ VOLUME ═══
+                    Card {
+                        title: "Volume"
+                        icon: ""
+                        accent: "#c6a0f6"
+
+                        ColumnLayout {
+                            spacing: 6
+                            Layout.fillWidth: true
 
                             RowLayout {
-                                spacing: 4
+                                spacing: 8
                                 Layout.fillWidth: true
 
-                                QsPower {
-                                    icon: ""
-                                    color: "#89b4fa"
-                                    label: "Lock"
-                                    cmd: "loginctl lock-session"
+                                Text {
+                                    text: Pipewire.ready ? Math.floor((Pipewire.defaultAudioSink?.audio?.volume ?? 0) * 100) + "%" : ""
+                                    color: "#cdd6f4"
+                                    font {
+                                        pixelSize: 14
+                                        bold: true
+                                        family: "ZedMono Nerd Font"
+                                    }
                                 }
-                                QsPower {
-                                    icon: ""
-                                    color: "#a6e3a1"
-                                    label: "Sleep"
-                                    cmd: "systemctl suspend"
+
+                                Item {
+                                    Layout.fillWidth: true
                                 }
-                                QsPower {
-                                    icon: ""
-                                    color: "#f9e2af"
-                                    label: "Reboot"
-                                    cmd: "systemctl reboot"
+
+                                Text {
+                                    text: Pipewire.defaultAudioSink?.description || ""
+                                    color: "#585b70"
+                                    font {
+                                        pixelSize: 9
+                                        family: "ZedMono Nerd Font"
+                                    }
+                                    elide: Text.ElideRight
+                                    Layout.maximumWidth: 120
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: Quickshell.execDetached(["sh", "-c", "cur=$(pactl get-default-sink); " + "next=$(pactl list short sinks | awk 'NR>1{print $2;exit}'); " + "[ -n \"$next\" ] && pactl set-default-sink \"$next\""])
+                                    }
                                 }
-                                QsPower {
-                                    icon: ""
-                                    color: "#f38ba8"
-                                    label: "Off"
-                                    cmd: "systemctl poweroff"
+                            }
+
+                            Item {
+                                Layout.fillWidth: true
+                                Layout.leftMargin: 12
+                                Layout.rightMargin: 12
+                                implicitHeight: 20
+
+                                Slider {
+                                    id: volSlider
+                                    anchors.fill: parent
+                                    leftPadding: 4
+                                    rightPadding: 4
+                                    from: 0
+                                    to: 1
+                                    stepSize: 0.01
+                                    value: Pipewire.defaultAudioSink?.audio?.volume ?? 0
+                                    live: true
+                                    onValueChanged: {
+                                        if (pressed && Pipewire.defaultAudioSink?.audio)
+                                            Pipewire.defaultAudioSink.audio.volume = value;
+                                    }
+
+                                    background: Rectangle {
+                                        x: volSlider.leftPadding
+                                        y: volSlider.topPadding + volSlider.availableHeight / 2 - height / 2
+                                        width: volSlider.availableWidth
+                                        height: 3
+                                        radius: 1.5
+                                        color: "#313244"
+
+                                        Rectangle {
+                                            width: volSlider.visualPosition * parent.width
+                                            height: parent.height
+                                            radius: 1.5
+                                            color: Pipewire.defaultAudioSink?.audio?.muted ? "#585b70" : "#c6a0f6"
+                                        }
+                                    }
+
+                                    handle: Rectangle {
+                                        x: volSlider.leftPadding + volSlider.visualPosition * (volSlider.availableWidth - width)
+                                        y: volSlider.topPadding + volSlider.availableHeight / 2 - height / 2
+                                        width: 10
+                                        height: 10
+                                        radius: 5
+                                        color: Pipewire.defaultAudioSink?.audio?.muted ? "#585b70" : "#c6a0f6"
+                                        border.color: "#1e1e2e"
+                                        border.width: 2
+                                    }
                                 }
-                                QsPower {
-                                    icon: ""
-                                    color: "#cba6f7"
-                                    label: "Exit"
-                                    cmd: "loginctl terminate-user $USER"
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    acceptedButtons: Qt.NoButton
+                                    onWheel: event => {
+                                        if (Pipewire.defaultAudioSink?.audio) {
+                                            let vol = Pipewire.defaultAudioSink.audio.volume;
+                                            vol += event.angleDelta.y > 0 ? 0.05 : -0.05;
+                                            Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(vol, 1));
+                                        }
+                                    }
+                                }
+                            }
+
+                            Repeater {
+                                model: {
+                                    let players = [];
+                                    for (let p of Mpris.players.values) {
+                                        if (p.volumeSupported)
+                                            players.push(p);
+                                    }
+                                    return players;
+                                }
+
+                                RowLayout {
+                                    required property var modelData
+                                    spacing: 8
+                                    Layout.fillWidth: true
+                                    Layout.topMargin: 2
+
+                                    Text {
+                                        text: modelData.identity
+                                        color: "#585b70"
+                                        font {
+                                            pixelSize: 9
+                                            family: "ZedMono Nerd Font"
+                                        }
+                                        elide: Text.ElideRight
+                                        Layout.maximumWidth: 60
+                                    }
+
+                                    Item {
+                                        Layout.fillWidth: true
+                                        Layout.leftMargin: 8
+                                        Layout.rightMargin: 8
+                                        implicitHeight: 14
+
+                                        Slider {
+                                            id: playerVolSlider
+                                            anchors.fill: parent
+                                            leftPadding: 2
+                                            rightPadding: 2
+                                            from: 0
+                                            to: 1
+                                            stepSize: 0.01
+                                            value: modelData.volume
+                                            live: true
+                                            onValueChanged: {
+                                                if (pressed)
+                                                    modelData.volume = value;
+                                            }
+
+                                            background: Rectangle {
+                                                x: playerVolSlider.leftPadding
+                                                y: playerVolSlider.topPadding + playerVolSlider.availableHeight / 2 - height / 2
+                                                width: playerVolSlider.availableWidth
+                                                height: 3
+                                                radius: 1.5
+                                                color: "#313244"
+
+                                                Rectangle {
+                                                    width: playerVolSlider.visualPosition * parent.width
+                                                    height: parent.height
+                                                    radius: 1.5
+                                                    color: "#cba6f7"
+                                                }
+                                            }
+
+                                            handle: Rectangle {
+                                                x: playerVolSlider.leftPadding + playerVolSlider.visualPosition * (playerVolSlider.availableWidth - width)
+                                                y: playerVolSlider.topPadding + playerVolSlider.availableHeight / 2 - height / 2
+                                                width: 8
+                                                height: 8
+                                                radius: 4
+                                                color: "#cba6f7"
+                                                border.color: "#1e1e2e"
+                                                border.width: 2
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            acceptedButtons: Qt.NoButton
+                                            onWheel: event => {
+                                                let vol = modelData.volume;
+                                                vol += event.angleDelta.y > 0 ? 0.05 : -0.05;
+                                                modelData.volume = Math.max(0, Math.min(vol, 1));
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
+                    }
+
+                    // ═══ CAFFEINE ═══
+                    Card {
+                        title: "Caffeine"
+                        icon: CaffeineService.enabled ? "" : "󰾪"
+                        accent: CaffeineService.enabled ? "#fab387" : "#585b70"
+                        cardColor: CaffeineService.enabled ? Qt.rgba(0.98, 0.70, 0.53, 0.06) : "#181825"
+
+                        Behavior on cardColor {
+                            ColorAnimation {
+                                duration: 200
+                            }
+                        }
+
+                        RowLayout {
+                            spacing: 10
+                            Layout.fillWidth: true
+
+                            Text {
+                                text: CaffeineService.enabled ? "Prevent idle suspend" : "Allow idle suspend"
+                                color: CaffeineService.enabled ? "#fab387" : "#a6adc8"
+                                font {
+                                    pixelSize: 10
+                                    family: "Quicksand"
+                                }
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: 200
+                                    }
+                                }
+                            }
+
+                            Item {
+                                Layout.fillWidth: true
+                            }
+
+                            Rectangle {
+                                width: 44
+                                height: 24
+                                radius: 12
+                                color: CaffeineService.enabled ? "#fab387" : "#45475a"
+                                border.color: CaffeineService.enabled ? "#fab387" : "#585b70"
+                                border.width: 1
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: 200
+                                    }
+                                }
+                                Behavior on border.color {
+                                    ColorAnimation {
+                                        duration: 200
+                                    }
+                                }
+
+                                Rectangle {
+                                    x: CaffeineService.enabled ? parent.width - width - 2 : 2
+                                    y: 2
+                                    width: 18
+                                    height: 18
+                                    radius: 9
+                                    color: CaffeineService.enabled ? "#1e1e2e" : "#cdd6f4"
+                                    Behavior on x {
+                                        NumberAnimation {
+                                            duration: 150
+                                            easing.type: Easing.OutCubic
+                                        }
+                                    }
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: 150
+                                        }
+                                    }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: CaffeineService.toggle()
+                                }
+                            }
+                        }
+                    }
+
+                    // ═══ POWER ═══
+                    Card {
+                        title: "Power"
+                        icon: ""
+                        accent: "#f38ba8"
+                        Layout.bottomMargin: 0
+
+                        RowLayout {
+                            spacing: 4
+                            Layout.fillWidth: true
+
+                            QsPower {
+                                icon: ""
+                                color: "#89b4fa"
+                                label: "Lock"
+                                cmd: "loginctl lock-session"
+                            }
+                            QsPower {
+                                icon: ""
+                                color: "#a6e3a1"
+                                label: "Sleep"
+                                cmd: "systemctl suspend"
+                            }
+                            QsPower {
+                                icon: ""
+                                color: "#f9e2af"
+                                label: "Reboot"
+                                cmd: "systemctl reboot"
+                            }
+                            QsPower {
+                                icon: ""
+                                color: "#f38ba8"
+                                label: "Off"
+                                cmd: "systemctl poweroff"
+                            }
+                            QsPower {
+                                icon: ""
+                                color: "#cba6f7"
+                                label: "Exit"
+                                cmd: "loginctl terminate-user $USER"
+                            }
+                        }
+                    }
                 }
             }
         }

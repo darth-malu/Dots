@@ -58,15 +58,6 @@ ShellRoot {
                     Layout.fillWidth: true
                 }
 
-                Mpris {
-                    id: centerBlock
-                    host: barr
-                }
-
-                Item {
-                    Layout.fillWidth: true
-                }
-
                 RowLayout {
                     id: rightBlock
                     Layout.alignment: Qt.AlignRight
@@ -97,6 +88,11 @@ ShellRoot {
                         Hyprland.dispatch('workspace "m+1"');
                     }
                 }
+            }
+
+            Mpris {
+                host: barr
+                anchors.centerIn: parent
             }
         }
     }
