@@ -98,7 +98,7 @@ ColumnLayout {
 
             Rectangle {
                 anchors.fill: parent
-                radius: 6
+                radius: 15
                 color: model.today ? Themes.calendarToday : parent.hovered ? "#313244" : "transparent"
                 opacity: model.today ? 0.3 : parent.hovered ? 1 : 0
             }

@@ -286,6 +286,8 @@ BarBlock {
                             accent: "#cba6f7"
                             visible: MprisState.player !== null
 
+                            property bool showAllPlayers: false
+
                             RowLayout {
                                 spacing: 10
                                 Layout.fillWidth: true
@@ -379,37 +381,100 @@ BarBlock {
                                 }
                             }
 
-                            Flow {
+                            ColumnLayout {
                                 Layout.fillWidth: true
                                 Layout.topMargin: 6
                                 spacing: 4
 
-                                Repeater {
-                                    model: Mpris.players
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 4
 
                                     Rectangle {
-                                        required property var modelData
-                                        implicitWidth: chipText.implicitWidth + 14
+                                        implicitWidth: activeChipText.implicitWidth + 14
                                         implicitHeight: 20
                                         radius: height / 2
-                                        color: modelData === MprisState.player ? "#cba6f7" : "#313244"
+                                        color: "#cba6f7"
 
                                         Text {
-                                            id: chipText
+                                            id: activeChipText
                                             anchors.centerIn: parent
-                                            text: modelData.identity
-                                            color: modelData === MprisState.player ? "#1e1e2e" : "#a6adc8"
-                                            font {
-                                                pixelSize: 11
-                                                family: "Quicksand"
-                                                bold: true
-                                            }
+                                            text: MprisState.player?.identity || ""
+                                            color: "#1e1e2e"
+                                            font { pixelSize: 11; family: "Quicksand"; bold: true }
                                         }
+                                    }
+
+                                    Item { Layout.fillWidth: true }
+
+                                    Text {
+                                        text: parent.parent.showAllPlayers ? "" : ""
+                                        color: "#a6adc8"
+                                        font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                        visible: Mpris.players.length > 1
 
                                         MouseArea {
                                             anchors.fill: parent
                                             cursorShape: Qt.PointingHandCursor
-                                            onClicked: MprisState.player = modelData
+                                            onClicked: parent.parent.showAllPlayers = !parent.parent.showAllPlayers
+                                        }
+                                    }
+                                }
+
+                                Flow {
+                                    Layout.fillWidth: true
+                                    visible: parent.showAllPlayers
+                                    spacing: 4
+
+                                    Repeater {
+                                        model: Mpris.players
+
+                                        Rectangle {
+                                            required property var modelData
+                                            visible: modelData !== MprisState.player
+
+                                            readonly property bool chipHovered: chipMA.containsMouse
+                                            readonly property bool closeHovered: closeMA.containsMouse
+
+                                            implicitWidth: otherChipText.implicitWidth + 14 + (chipHovered || closeHovered ? 16 : 0)
+                                            implicitHeight: 20
+                                            radius: height / 2
+                                            color: "#313244"
+
+                                            Behavior on implicitWidth { NumberAnimation { duration: 100 } }
+
+                                            Text {
+                                                id: otherChipText
+                                                anchors.centerIn: parent
+                                                text: modelData.identity
+                                                color: "#a6adc8"
+                                                font { pixelSize: 11; family: "Quicksand"; bold: true }
+                                            }
+
+                                            MouseArea {
+                                                id: chipMA
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: MprisState.player = modelData
+                                            }
+
+                                            Text {
+                                                id: closeBtn
+                                                anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 4 }
+                                                text: "×"
+                                                color: "#f38ba8"
+                                                font { pixelSize: 14; bold: true; family: "Quicksand" }
+                                                visible: parent.chipHovered || parent.closeHovered
+
+                                                MouseArea {
+                                                    id: closeMA
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: MprisState.ignorePlayer(modelData.identity)
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -776,6 +841,80 @@ BarBlock {
                                                 let vol = Pipewire.defaultAudioSink.audio.volume;
                                                 vol += event.angleDelta.y > 0 ? 0.05 : -0.05;
                                                 Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(vol, 1));
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Repeater {
+                                    model: {
+                                        let players = [];
+                                        for (let p of Mpris.players.values) {
+                                            if (p.volumeSupported) players.push(p);
+                                        }
+                                        return players;
+                                    }
+
+                                    RowLayout {
+                                        required property var modelData
+                                        spacing: 8
+                                        Layout.fillWidth: true
+                                        Layout.topMargin: 2
+
+                                        Text {
+                                            text: modelData.identity
+                                            color: "#585b70"
+                                            font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                            elide: Text.ElideRight
+                                            Layout.maximumWidth: 60
+                                        }
+
+                                        Item {
+                                            Layout.fillWidth: true
+                                            Layout.leftMargin: 8
+                                            Layout.rightMargin: 8
+                                            implicitHeight: 14
+
+                                            Slider {
+                                                id: playerVolSlider
+                                                anchors.fill: parent
+                                                leftPadding: 2
+                                                rightPadding: 2
+                                                from: 0
+                                                to: 1
+                                                stepSize: 0.01
+                                                value: modelData.volume
+                                                live: true
+                                                onValueChanged: {
+                                                    if (pressed) modelData.volume = value;
+                                                }
+
+                                                background: Rectangle {
+                                                    x: playerVolSlider.leftPadding
+                                                    y: playerVolSlider.topPadding + playerVolSlider.availableHeight / 2 - height / 2
+                                                    width: playerVolSlider.availableWidth
+                                                    height: 3
+                                                    radius: 1.5
+                                                    color: "#313244"
+
+                                                    Rectangle {
+                                                        width: playerVolSlider.visualPosition * parent.width
+                                                        height: parent.height
+                                                        radius: 1.5
+                                                        color: "#cba6f7"
+                                                    }
+                                                }
+
+                                                handle: Rectangle {
+                                                    x: playerVolSlider.leftPadding + playerVolSlider.visualPosition * (playerVolSlider.availableWidth - width)
+                                                    y: playerVolSlider.topPadding + playerVolSlider.availableHeight / 2 - height / 2
+                                                    width: 8
+                                                    height: 8
+                                                    radius: 4
+                                                    color: "#cba6f7"
+                                                    border.color: "#1e1e2e"
+                                                    border.width: 2
+                                                }
                                             }
                                         }
                                     }

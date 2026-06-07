@@ -18,7 +18,16 @@ Singleton {
 
     property var players: new Set()
 
-    property list<string> ignored: ["mpv", "whatsapp", "Chrome", "chromium", "firefox", "Mozilla zen", "undefined"]
+    property var ignored: ["mpv", "whatsapp", "Chrome", "chromium", "firefox", "Mozilla zen", "undefined"]
+
+    function ignorePlayer(identity) {
+        if (!root.ignored.includes(identity))
+            root.ignored = [...root.ignored, identity];
+    }
+
+    function unignorePlayer(identity) {
+        root.ignored = root.ignored.filter(id => id !== identity);
+    }
 
     function sendNotify() {
         let title = root.player.trackTitle || "Unknown Title";
