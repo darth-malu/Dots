@@ -166,7 +166,7 @@ BarBlock {
                         verticalCenter: parent.verticalCenter
                         rightMargin: 14
                     }
-                    text: "size  used   %"
+                    text: "size  free   %"
                     color: Themes.mprisVolumeColor
                     font {
                         pixelSize: 9
@@ -246,7 +246,7 @@ BarBlock {
                             Text {
                                 Layout.preferredWidth: 44
                                 horizontalAlignment: Text.AlignRight
-                                text: parent.parts[2] || ""
+                                text: parent.parts[3] || ""
                                 color: "#a6adc8"
                                 font {
                                     pixelSize: 9

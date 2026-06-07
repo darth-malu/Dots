@@ -64,18 +64,13 @@ BarBlock {
                 }
 
                 MouseArea {
+                    id: volSeeker
                     anchors.fill: parent
+                    acceptedButtons: Qt.LeftButton
                     cursorShape: Qt.PointingHandCursor
                     onClicked: mouse => {
-                        if (mouse.button == Qt.LeftButton && Pipewire.defaultAudioSink?.audio)
+                        if (Pipewire.defaultAudioSink?.audio)
                             Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(mouse.x / width, 1));
-                    }
-                    onWheel: event => {
-                        if (Pipewire.defaultAudioSink?.audio) {
-                            let v = Pipewire.defaultAudioSink.audio.volume;
-                            v += event.angleDelta.y > 0 ? 0.05 : -0.05;
-                            Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(v, 1));
-                        }
                     }
                 }
             }

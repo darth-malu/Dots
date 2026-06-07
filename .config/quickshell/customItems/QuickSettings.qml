@@ -35,6 +35,7 @@ BarBlock {
     property bool wifiEnabled: false
     property bool bluetoothEnabled: false
     property bool ethernetConnected: false
+    property bool playerListOpen: false
     FileView {
         id: hostFile
         path: "file:///proc/sys/kernel/hostname"
@@ -855,19 +856,34 @@ BarBlock {
                         accent: "#c6a0f6"
 
                         ColumnLayout {
+                            id: volCol
                             spacing: 6
                             Layout.fillWidth: true
 
                             property bool sinkListOpen: false
 
-                            // ── top row: mute icon + percentage + sink pill ──
+                            // ── helper: OSD-inspired volume color ──
+                            readonly property color volColor: {
+                                var a = Pipewire.defaultAudioSink?.audio;
+                                if (!a || a.muted) return "#585b70";
+                                var v = a.volume;
+                                if (v > 0.8) return "#f5a0d6";
+                                if (v > 0.5) return "#c6a0f6";
+                                if (v > 0.2) return "#89b4fa";
+                                return "#b4befe";
+                            }
+
+                            readonly property bool isMuted: Pipewire.defaultAudioSink?.audio?.muted ?? false
+
+                            // ── row 1: icon + percentage + custom slider ──
                             RowLayout {
                                 spacing: 8
                                 Layout.fillWidth: true
 
+                                // mute/volume icon
                                 Text {
-                                    text: Pipewire.defaultAudioSink?.audio?.muted ? "" : ""
-                                    color: Pipewire.defaultAudioSink?.audio?.muted ? "#585b70" : "#c6a0f6"
+                                    text: volCol.isMuted ? "" : ""
+                                    color: volCol.volColor
                                     font { pixelSize: 16; family: "Symbols Nerd Font Mono" }
 
                                     MouseArea {
@@ -875,26 +891,199 @@ BarBlock {
                                         acceptedButtons: Qt.RightButton
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: {
-                                            if (Pipewire.defaultAudioSink?.audio)
-                                                Pipewire.defaultAudioSink.audio.muted = !Pipewire.defaultAudioSink.audio.muted;
+                                            var a = Pipewire.defaultAudioSink?.audio;
+                                            if (a) a.muted = !a.muted;
                                         }
                                     }
                                 }
 
+                                // percentage
                                 Text {
                                     text: Pipewire.ready
                                         ? Math.floor((Pipewire.defaultAudioSink?.audio?.volume ?? 0) * 100) + "%"
                                         : ""
-                                    color: Pipewire.defaultAudioSink?.audio?.muted ? "#585b70" : "#cdd6f4"
-                                    font {
-                                        pixelSize: 13; bold: true; family: "ZedMono Nerd Font"
-                                    }
+                                    color: volCol.isMuted ? "#585b70" : "#cdd6f4"
+                                    font { pixelSize: 13; bold: true; family: "ZedMono Nerd Font" }
                                 }
 
-                                Item { Layout.fillWidth: true }
+                                // OSD-inspired horizontal slider
+                                Item {
+                                    Layout.fillWidth: true
+                                    Layout.leftMargin: 4
+                                    Layout.rightMargin: 4
+                                    implicitHeight: 24
 
-                                // ── sink pill ──
+                                    readonly property real normVol: Pipewire.defaultAudioSink?.audio?.volume ?? 0
+
+                                    // track
+                                    Rectangle {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: parent.width
+                                        height: 6
+                                        radius: 3
+                                        color: "#313244"
+
+                                        // fill
+                                        Rectangle {
+                                            width: parent.width * Math.min(parent.parent.normVol, 1)
+                                            height: parent.height
+                                            radius: 3
+                                            color: volCol.volColor
+
+                                            // shine (OSD-inspired highlight)
+                                            Rectangle {
+                                                anchors { left: parent.left; right: parent.right; top: parent.top }
+                                                height: parent.height * 0.45
+                                                radius: 3
+                                                color: Qt.rgba(1, 1, 1, 0.07)
+                                            }
+
+                                            Behavior on width {
+                                                NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                                            }
+                                        }
+                                    }
+
+                                    // interaction area (wider than bar for easier grabbing)
+                                    MouseArea {
+                                        id: volSliderArea
+                                        anchors.fill: parent
+                                        anchors.margins: -4
+                                        cursorShape: Qt.PointingHandCursor
+
+                                        property bool dragging: false
+
+                                        function setVolFromMouse(mx) {
+                                            var v = Math.max(0, Math.min(mx / width, 1));
+                                            var a = Pipewire.defaultAudioSink?.audio;
+                                            if (a) a.volume = v;
+                                        }
+
+                                        onPressed: mouse => {
+                                            dragging = true;
+                                            setVolFromMouse(mouse.x);
+                                        }
+                                        onPositionChanged: mouse => {
+                                            if (dragging) setVolFromMouse(mouse.x);
+                                        }
+                                        onReleased: { dragging = false; }
+                                        onClicked: mouse => setVolFromMouse(mouse.x)
+
+                                        onWheel: event => {
+                                            var a = Pipewire.defaultAudioSink?.audio;
+                                            if (a) {
+                                                var v = a.volume;
+                                                v += event.angleDelta.y > 0 ? 0.05 : -0.05;
+                                                a.volume = Math.max(0, Math.min(v, 1));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // ── MPRIS per-player volume ──
+                            Repeater {
+                                model: {
+                                    let players = [];
+                                    for (let p of Mpris.players.values) {
+                                        if (p.volumeSupported)
+                                            players.push(p);
+                                    }
+                                    return players;
+                                }
+
+                                RowLayout {
+                                    required property var modelData
+                                    spacing: 8
+                                    Layout.fillWidth: true
+                                    Layout.topMargin: 2
+
+                                    Text {
+                                        text: modelData.identity
+                                        color: "#585b70"
+                                        font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                        elide: Text.ElideRight
+                                        Layout.maximumWidth: 60
+                                    }
+
+                                    // small OSD-inspired slider
+                                    Item {
+                                        Layout.fillWidth: true
+                                        Layout.leftMargin: 8
+                                        Layout.rightMargin: 8
+                                        implicitHeight: 16
+
+                                        Rectangle {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: parent.width
+                                            height: 4
+                                            radius: 2
+                                            color: "#313244"
+
+                                            Rectangle {
+                                                width: parent.width * Math.min(modelData.volume, 1)
+                                                height: parent.height
+                                                radius: 2
+                                                color: "#cba6f7"
+
+                                                Rectangle {
+                                                    anchors { left: parent.left; right: parent.right; top: parent.top }
+                                                    height: parent.height * 0.4
+                                                    radius: 2
+                                                    color: Qt.rgba(1, 1, 1, 0.07)
+                                                }
+
+                                                Behavior on width {
+                                                    NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                                                }
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            anchors.margins: -4
+                                            cursorShape: Qt.PointingHandCursor
+
+                                            property bool dragging: false
+
+                                            function setVolFromMouse(mx) {
+                                                modelData.volume = Math.max(0, Math.min(mx / width, 1));
+                                            }
+
+                                            onPressed: mouse => {
+                                                dragging = true;
+                                                setVolFromMouse(mouse.x);
+                                            }
+                                            onPositionChanged: mouse => {
+                                                if (dragging) setVolFromMouse(mouse.x);
+                                            }
+                                            onReleased: { dragging = false; }
+                                            onClicked: mouse => setVolFromMouse(mouse.x)
+
+                                            onWheel: event => {
+                                                var v = modelData.volume;
+                                                v += event.angleDelta.y > 0 ? 0.05 : -0.05;
+                                                modelData.volume = Math.max(0, Math.min(v, 1));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // ── separator ──
+                            Rectangle {
+                                Layout.fillWidth: true
+                                height: 1
+                                color: "#313244"
+                                Layout.topMargin: 2
+                            }
+
+                            // ── row: sink switcher at bottom ──
+                            RowLayout {
+                                Layout.fillWidth: true
+
                                 Rectangle {
+                                    id: sinkPill
                                     implicitHeight: 22
                                     implicitWidth: sinkPillText.implicitWidth + 28
                                     radius: height / 2
@@ -930,23 +1119,24 @@ BarBlock {
                                         anchors.fill: parent
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: {
-                                            parent.parent.sinkListOpen = !parent.parent.sinkListOpen;
-                                            if (parent.parent.sinkListOpen)
+                                            volCol.sinkListOpen = !volCol.sinkListOpen;
+                                            if (volCol.sinkListOpen)
                                                 root.refreshSinks();
                                         }
                                     }
                                 }
+
+                                Item { Layout.fillWidth: true }
                             }
 
                             // ── sink dropdown ──
                             ColumnLayout {
                                 id: sinkDropdownLayout
                                 Layout.fillWidth: true
-                                visible: parent.sinkListOpen
+                                visible: volCol.sinkListOpen
                                 spacing: 2
 
-                                Instantiator {
-                                    active: parent.visible
+                                Repeater {
                                     model: root.sinkList
 
                                     Rectangle {
@@ -991,158 +1181,7 @@ BarBlock {
                                                         "pactl set-default-sink \"" + modelData.name + "\""
                                                     ]);
                                                 }
-                                                parent.parent.parent.sinkListOpen = false;
-                                            }
-                                        }
-                                    }
-
-                                    onObjectAdded: (index, object) => object.parent = sinkDropdownLayout
-                                }
-                            }
-
-                            // ── volume slider ──
-                            Item {
-                                Layout.fillWidth: true
-                                Layout.leftMargin: 12
-                                Layout.rightMargin: 12
-                                implicitHeight: 20
-
-                                Slider {
-                                    id: volSlider
-                                    anchors.fill: parent
-                                    leftPadding: 4
-                                    rightPadding: 4
-                                    from: 0
-                                    to: 1
-                                    stepSize: 0.01
-                                    value: Pipewire.defaultAudioSink?.audio?.volume ?? 0
-                                    live: true
-                                    onValueChanged: {
-                                        if (pressed && Pipewire.defaultAudioSink?.audio)
-                                            Pipewire.defaultAudioSink.audio.volume = value;
-                                    }
-
-                                    background: Rectangle {
-                                        x: volSlider.leftPadding
-                                        y: volSlider.topPadding + volSlider.availableHeight / 2 - height / 2
-                                        width: volSlider.availableWidth
-                                        height: 3
-                                        radius: 1.5
-                                        color: "#313244"
-
-                                        Rectangle {
-                                            width: volSlider.visualPosition * parent.width
-                                            height: parent.height
-                                            radius: 1.5
-                                            color: Pipewire.defaultAudioSink?.audio?.muted ? "#585b70" : "#c6a0f6"
-                                        }
-                                    }
-
-                                    handle: Rectangle {
-                                        x: volSlider.leftPadding + volSlider.visualPosition * (volSlider.availableWidth - width)
-                                        y: volSlider.topPadding + volSlider.availableHeight / 2 - height / 2
-                                        width: 10
-                                        height: 10
-                                        radius: 5
-                                        color: Pipewire.defaultAudioSink?.audio?.muted ? "#585b70" : "#c6a0f6"
-                                        border.color: "#1e1e2e"
-                                        border.width: 2
-                                    }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    acceptedButtons: Qt.NoButton
-                                    onWheel: event => {
-                                        if (Pipewire.defaultAudioSink?.audio) {
-                                            let vol = Pipewire.defaultAudioSink.audio.volume;
-                                            vol += event.angleDelta.y > 0 ? 0.05 : -0.05;
-                                            Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(vol, 1));
-                                        }
-                                    }
-                                }
-                            }
-
-                            // ── MPRIS per-player volume ──
-                            Repeater {
-                                model: {
-                                    let players = [];
-                                    for (let p of Mpris.players.values) {
-                                        if (p.volumeSupported)
-                                            players.push(p);
-                                    }
-                                    return players;
-                                }
-
-                                RowLayout {
-                                    required property var modelData
-                                    spacing: 8
-                                    Layout.fillWidth: true
-                                    Layout.topMargin: 2
-
-                                    Text {
-                                        text: modelData.identity
-                                        color: "#585b70"
-                                        font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                                        elide: Text.ElideRight
-                                        Layout.maximumWidth: 60
-                                    }
-
-                                    Item {
-                                        Layout.fillWidth: true
-                                        Layout.leftMargin: 8
-                                        Layout.rightMargin: 8
-                                        implicitHeight: 14
-
-                                        Slider {
-                                            id: playerVolSlider
-                                            anchors.fill: parent
-                                            leftPadding: 2
-                                            rightPadding: 2
-                                            from: 0
-                                            to: 1
-                                            stepSize: 0.01
-                                            value: modelData.volume
-                                            live: true
-                                            onValueChanged: {
-                                                if (pressed) modelData.volume = value;
-                                            }
-
-                                            background: Rectangle {
-                                                x: playerVolSlider.leftPadding
-                                                y: playerVolSlider.topPadding + playerVolSlider.availableHeight / 2 - height / 2
-                                                width: playerVolSlider.availableWidth
-                                                height: 3
-                                                radius: 1.5
-                                                color: "#313244"
-
-                                                Rectangle {
-                                                    width: playerVolSlider.visualPosition * parent.width
-                                                    height: parent.height
-                                                    radius: 1.5
-                                                    color: "#cba6f7"
-                                                }
-                                            }
-
-                                            handle: Rectangle {
-                                                x: playerVolSlider.leftPadding + playerVolSlider.visualPosition * (playerVolSlider.availableWidth - width)
-                                                y: playerVolSlider.topPadding + playerVolSlider.availableHeight / 2 - height / 2
-                                                width: 8
-                                                height: 8
-                                                radius: 4
-                                                color: "#cba6f7"
-                                                border.color: "#1e1e2e"
-                                                border.width: 2
-                                            }
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            acceptedButtons: Qt.NoButton
-                                            onWheel: event => {
-                                                let vol = modelData.volume;
-                                                vol += event.angleDelta.y > 0 ? 0.05 : -0.05;
-                                                modelData.volume = Math.max(0, Math.min(vol, 1));
+                                                volCol.sinkListOpen = false;
                                             }
                                         }
                                     }

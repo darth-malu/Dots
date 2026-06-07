@@ -19,10 +19,11 @@ Loader {
     sourceComponent: WrapperMouseArea {
         id: mprisRoot
 
-        // Size driven by the pill's visual extent, so the Loader
-        // (and therefore anchors.centerIn) sees the correct dimensions
-        width: pill.width
-        height: pill.height
+        // Size tracks the pill so the Loader gets the correct extent
+        // width: pill.visible ? pill.width : 0
+        // height: pill.visible ? pill.height : 0
+        width: 50
+        height: 50
         implicitWidth: width
         implicitHeight: height
 
@@ -119,85 +120,15 @@ Loader {
                 anchors.rightMargin: 6
                 spacing: 6
 
-                // ── play/pause button ──
-                Item {
-                    id: playButtonBox
-                    visible: false
-                    implicitWidth: 22
-                    implicitHeight: 22
-                    Layout.preferredWidth: 22
-                    Layout.preferredHeight: 22
-
-                    BarText {
-                        anchors.centerIn: parent
-                        text: MprisState.player?.isPlaying ? "⏸" : "▶"
-                        baseColor: "#FF7EB3"
-                        color: "#FF7EB3"
-                        pointSize: 9
-                        paddingg: 0
-                    }
-                }
-
-                // ── album art with progress ring ──
+                // ── album art + fallback ──
                 Item {
                     Layout.preferredWidth: pill.height - 6
                     Layout.preferredHeight: pill.height - 6
-
-                    Canvas {
-                        id: progressRing
-                        anchors.fill: parent
-                        anchors.margins: 1
-                        antialiasing: true
-
-                        property real progress: 0
-
-                        onPaint: {
-                            var ctx = getContext("2d");
-                            ctx.clearRect(0, 0, width, height);
-
-                            var cx = width / 2;
-                            var cy = height / 2;
-                            var r = Math.min(cx, cy) - 1.5;
-
-                            ctx.beginPath();
-                            ctx.arc(cx, cy, r, 0, Math.PI * 2);
-                            ctx.strokeStyle = Qt.rgba(1, 0.71, 0.76, 0.25);
-                            ctx.lineWidth = 2.5;
-                            ctx.stroke();
-
-                            if (progressRing.progress > 0.005) {
-                                ctx.beginPath();
-                                var startAngle = -Math.PI / 2;
-                                var endAngle = startAngle + Math.PI * 2 * Math.min(progressRing.progress, 1);
-                                ctx.arc(cx, cy, r, startAngle, endAngle);
-                                ctx.strokeStyle = "#FF7EB3";
-                                ctx.lineWidth = 2.5;
-                                ctx.stroke();
-                            }
-                        }
-
-                        Timer {
-                            id: progressTimer
-                            interval: 200
-                            repeat: true
-                            running: MprisState.player?.isPlaying ?? false
-                            onTriggered: {
-                                var p = MprisState.player;
-                                if (p && p.length > 0) {
-                                    progressRing.progress = p.position / p.length;
-                                } else {
-                                    progressRing.progress = 0;
-                                }
-                                progressRing.requestPaint();
-                            }
-                        }
-                    }
 
                     ClippingWrapperRectangle {
                         id: albumArt
                         visible: MprisState.mprisArtVisible
                         anchors.fill: parent
-                        anchors.margins: 4
                         radius: height / 2
                         color: 'transparent'
 
@@ -268,6 +199,78 @@ Loader {
                     font: title.font
                     color: Themes.mprisVolumeColor
                     Layout.alignment: Qt.AlignVCenter
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                }
+
+                // ── play/pause button with progress ring ──
+                Item {
+                    id: playButtonBox
+                    implicitWidth: 22
+                    implicitHeight: 22
+                    Layout.preferredWidth: 22
+                    Layout.preferredHeight: 22
+
+                    Canvas {
+                        id: progressRing
+                        anchors.fill: parent
+                        anchors.margins: 1.5
+                        antialiasing: true
+
+                        property real progress: 0
+
+                        onPaint: {
+                            var ctx = getContext("2d");
+                            ctx.clearRect(0, 0, width, height);
+
+                            var cx = width / 2;
+                            var cy = height / 2;
+                            var r = Math.min(cx, cy) - 1.5;
+
+                            ctx.beginPath();
+                            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                            ctx.strokeStyle = Qt.rgba(1, 0.71, 0.76, 0.25);
+                            ctx.lineWidth = 2.5;
+                            ctx.stroke();
+
+                            if (progressRing.progress > 0.005) {
+                                ctx.beginPath();
+                                var startAngle = -Math.PI / 2;
+                                var endAngle = startAngle + Math.PI * 2 * Math.min(progressRing.progress, 1);
+                                ctx.arc(cx, cy, r, startAngle, endAngle);
+                                ctx.strokeStyle = "#FF7EB3";
+                                ctx.lineWidth = 2.5;
+                                ctx.stroke();
+                            }
+                        }
+
+                        Timer {
+                            id: progressTimer
+                            interval: 200
+                            repeat: true
+                            running: MprisState.player?.isPlaying ?? false
+                            onTriggered: {
+                                var p = MprisState.player;
+                                if (p && p.length > 0) {
+                                    progressRing.progress = p.position / p.length;
+                                } else {
+                                    progressRing.progress = 0;
+                                }
+                                progressRing.requestPaint();
+                            }
+                        }
+                    }
+
+                    BarText {
+                        anchors.centerIn: parent
+                        text: MprisState.player?.isPlaying ? "⏸" : "▶"
+                        baseColor: "#FF7EB3"
+                        color: "#FF7EB3"
+                        pointSize: 9
+                        paddingg: 0
+                    }
                 }
             }
         }
