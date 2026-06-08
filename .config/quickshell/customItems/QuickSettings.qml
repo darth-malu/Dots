@@ -435,6 +435,7 @@ BarBlock {
                                 MouseArea {
                                     anchors.fill: parent
                                     cursorShape: Qt.PointingHandCursor
+                                    acceptedButtons: Qt.LeftButton | Qt.RightButton
 
                                     property bool dragging: false
 
@@ -751,32 +752,22 @@ BarBlock {
                                 }
 
                                 Rectangle {
-                                    width: 36
-                                    height: 20
-                                    radius: 10
+                                    implicitWidth: 40
+                                    implicitHeight: 22
+                                    radius: 11
                                     color: root.wifiEnabled ? "#89b4fa" : "#45475a"
-                                    border.color: root.wifiEnabled ? "#89b4fa" : "#585b70"
-                                    border.width: 1
 
-                                    Behavior on color {
-                                        ColorAnimation {
-                                            duration: 120
-                                        }
-                                    }
+                                    Behavior on color { ColorAnimation { duration: 120 } }
 
                                     Rectangle {
-                                        x: root.wifiEnabled ? parent.width - width - 2 : 2
-                                        y: 2
-                                        width: 14
-                                        height: 14
-                                        radius: 7
+                                        width: 18
+                                        height: 18
+                                        radius: 9
                                         color: "#1e1e2e"
-                                        Behavior on x {
-                                            NumberAnimation {
-                                                duration: 120
-                                                easing.type: Easing.OutCubic
-                                            }
-                                        }
+                                        x: root.wifiEnabled ? parent.width - width - 2 : 2
+                                        y: (parent.height - height) / 2
+
+                                        Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
                                     }
 
                                     MouseArea {
@@ -833,32 +824,22 @@ BarBlock {
                                 }
 
                                 Rectangle {
-                                    width: 36
-                                    height: 20
-                                    radius: 10
+                                    implicitWidth: 40
+                                    implicitHeight: 22
+                                    radius: 11
                                     color: root.bluetoothEnabled ? "#89b4fa" : "#45475a"
-                                    border.color: root.bluetoothEnabled ? "#89b4fa" : "#585b70"
-                                    border.width: 1
 
-                                    Behavior on color {
-                                        ColorAnimation {
-                                            duration: 120
-                                        }
-                                    }
+                                    Behavior on color { ColorAnimation { duration: 120 } }
 
                                     Rectangle {
-                                        x: root.bluetoothEnabled ? parent.width - width - 2 : 2
-                                        y: 2
-                                        width: 14
-                                        height: 14
-                                        radius: 7
+                                        width: 18
+                                        height: 18
+                                        radius: 9
                                         color: "#1e1e2e"
-                                        Behavior on x {
-                                            NumberAnimation {
-                                                duration: 120
-                                                easing.type: Easing.OutCubic
-                                            }
-                                        }
+                                        x: root.bluetoothEnabled ? parent.width - width - 2 : 2
+                                        y: (parent.height - height) / 2
+
+                                        Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
                                     }
 
                                     MouseArea {
@@ -1008,6 +989,7 @@ BarBlock {
                                         id: volSliderArea
                                         anchors.fill: parent
                                         cursorShape: Qt.PointingHandCursor
+                                        acceptedButtons: Qt.LeftButton | Qt.RightButton
 
                                         property bool dragging: false
 
@@ -1074,7 +1056,7 @@ BarBlock {
                                     // small OSD-inspired slider
                                     Item {
                                         Layout.fillWidth: true
-                                        Layout.preferredWidth: 40
+                                        Layout.preferredWidth: 80
                                         Layout.fillHeight: true
 
                                         Rectangle {
@@ -1099,6 +1081,7 @@ BarBlock {
                                         MouseArea {
                                             anchors.fill: parent
                                             cursorShape: Qt.PointingHandCursor
+                                            acceptedButtons: Qt.LeftButton | Qt.RightButton
 
                                             property bool dragging: false
 
@@ -1293,42 +1276,22 @@ BarBlock {
                             }
 
                             Rectangle {
-                                width: 44
-                                height: 24
-                                radius: 12
+                                implicitWidth: 40
+                                implicitHeight: 22
+                                radius: 11
                                 color: CaffeineService.enabled ? "#fab387" : "#45475a"
-                                border.color: CaffeineService.enabled ? "#fab387" : "#585b70"
-                                border.width: 1
 
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: 200
-                                    }
-                                }
-                                Behavior on border.color {
-                                    ColorAnimation {
-                                        duration: 200
-                                    }
-                                }
+                                Behavior on color { ColorAnimation { duration: 120 } }
 
                                 Rectangle {
-                                    x: CaffeineService.enabled ? parent.width - width - 2 : 2
-                                    y: 2
                                     width: 18
                                     height: 18
                                     radius: 9
-                                    color: CaffeineService.enabled ? "#1e1e2e" : "#cdd6f4"
-                                    Behavior on x {
-                                        NumberAnimation {
-                                            duration: 150
-                                            easing.type: Easing.OutCubic
-                                        }
-                                    }
-                                    Behavior on color {
-                                        ColorAnimation {
-                                            duration: 150
-                                        }
-                                    }
+                                    color: "#1e1e2e"
+                                    x: CaffeineService.enabled ? parent.width - width - 2 : 2
+                                    y: (parent.height - height) / 2
+
+                                    Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
                                 }
 
                                 MouseArea {
