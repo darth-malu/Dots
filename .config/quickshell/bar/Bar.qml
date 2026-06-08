@@ -28,13 +28,39 @@ ShellRoot {
             // required property var modelData
             screen: modelData   // ALl currently connected screens, updates as connected screens change. Reusing a window on every screen This creates an instance of your window once on every screen. As screens are added or removed your window will be created or destroyed on those screens.
 
-            aboveWindows: false // true::
-            color: Themes.barBg
-            // color: Qt.rgba(171 / 255, 141 / 255, 237 / 255, 0.15)
-            implicitHeight: 24
+            aboveWindows: false
+            color: 'transparent'
+            implicitHeight: BarState.modernBarStyle ? 28 : 24
+
             margins {
                 right: 10
-                left: 6
+                left: BarState.modernBarStyle ? 10 : 6
+            }
+
+            // Modern background with rounded bottom corners
+            Rectangle {
+                visible: BarState.modernBarStyle
+                anchors.fill: parent
+                color: Qt.rgba(24 / 255, 24 / 255, 37 / 255, 0.75)
+                bottomLeftRadius: 10
+                bottomRightRadius: 10
+                z: -1
+
+                Rectangle {
+                    anchors {
+                        left: parent.left
+                        right: parent.right
+                        bottom: parent.bottom
+                    }
+                    height: 1
+                    visible: parent.visible
+                    gradient: Gradient {
+                        orientation: Gradient.Horizontal
+                        GradientStop { position: 0.0; color: "transparent" }
+                        GradientStop { position: 0.5; color: Qt.rgba(203 / 255, 166 / 255, 247 / 255, 0.35) }
+                        GradientStop { position: 1.0; color: "transparent" }
+                    }
+                }
             }
 
             anchors {
@@ -83,8 +109,6 @@ ShellRoot {
                 acceptedButtons: Qt.NoButton
                 anchors.fill: parent
                 onWheel: wheel => {
-                    // Let events pass through to the right block
-                    // (PipewireBlock, etc., which handle their own scroll)
                     var pos = mapToItem(rightBlock, wheel.x, wheel.y);
                     if (rightBlock.contains(Qt.point(pos.x, pos.y))) {
                         wheel.accepted = false;

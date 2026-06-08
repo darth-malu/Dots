@@ -446,7 +446,14 @@ BarBlock {
                                     onPressed: mouse => { dragging = true; setVolFromMouse(mouse.x); }
                                     onPositionChanged: mouse => { if (dragging) setVolFromMouse(mouse.x); }
                                     onReleased: { dragging = false; }
-                                    onClicked: mouse => setVolFromMouse(mouse.x)
+                                    onClicked: mouse => {
+                                        if (mouse.button == Qt.RightButton) {
+                                            if (!MprisState.player) return;
+                                            MprisState.player.volume = MprisState.player.volume > 0 ? 0 : 0.5;
+                                        } else {
+                                            setVolFromMouse(mouse.x);
+                                        }
+                                    }
                                     onWheel: event => {
                                         if (!MprisState.player) return;
                                         var v = MprisState.player.volume;
@@ -1018,7 +1025,14 @@ BarBlock {
                                             if (dragging) setVolFromMouse(mouse.x);
                                         }
                                         onReleased: { dragging = false; }
-                                        onClicked: mouse => setVolFromMouse(mouse.x)
+                                        onClicked: mouse => {
+                                            if (mouse.button == Qt.RightButton) {
+                                                var a = Pipewire.defaultAudioSink?.audio;
+                                                if (a) a.muted = !a.muted;
+                                            } else {
+                                                setVolFromMouse(mouse.x);
+                                            }
+                                        }
 
                                         onWheel: event => {
                                             var a = Pipewire.defaultAudioSink?.audio;
@@ -1100,7 +1114,13 @@ BarBlock {
                                                 if (dragging) setVolFromMouse(mouse.x);
                                             }
                                             onReleased: { dragging = false; }
-                                            onClicked: mouse => setVolFromMouse(mouse.x)
+                                            onClicked: mouse => {
+                                                if (mouse.button == Qt.RightButton) {
+                                                    modelData.volume = modelData.volume > 0 ? 0 : 0.5;
+                                                } else {
+                                                    setVolFromMouse(mouse.x);
+                                                }
+                                            }
 
                                             onWheel: event => {
                                                 var v = modelData.volume;
@@ -1320,46 +1340,64 @@ BarBlock {
                         }
                     }
 
-                    // ═══ POWER ═══
+                    // ═══ BAR ═══
                     Card {
-                        title: "Power"
-                        icon: ""
-                        accent: "#f38ba8"
-                        Layout.bottomMargin: 0
+                        title: "Bar"
+                        icon: ""
+                        accent: "#89b4fa"
 
                         RowLayout {
-                            spacing: 4
                             Layout.fillWidth: true
+                            spacing: 8
 
-                            QsPower {
-                                icon: ""
-                                color: "#89b4fa"
-                                label: "Lock"
-                                cmd: "loginctl lock-session"
+                            Text {
+                                text: ""
+                                color: BarState.modernBarStyle ? "#89b4fa" : "#585b70"
+                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
                             }
-                            QsPower {
-                                icon: ""
-                                color: "#a6e3a1"
-                                label: "Sleep"
-                                cmd: "systemctl suspend"
+
+                            ColumnLayout {
+                                spacing: 1
+
+                                Text {
+                                    text: BarState.modernBarStyle ? "Modern Bar" : "Legacy Bar"
+                                    color: "#cdd6f4"
+                                    font { pixelSize: 11; family: "Quicksand"; bold: true }
+                                }
+
+                                Text {
+                                    text: BarState.modernBarStyle ? "Rounded · 28px" : "Flat · 24px"
+                                    color: "#585b70"
+                                    font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                }
                             }
-                            QsPower {
-                                icon: ""
-                                color: "#f9e2af"
-                                label: "Reboot"
-                                cmd: "systemctl reboot"
-                            }
-                            QsPower {
-                                icon: ""
-                                color: "#f38ba8"
-                                label: "Off"
-                                cmd: "systemctl poweroff"
-                            }
-                            QsPower {
-                                icon: ""
-                                color: "#cba6f7"
-                                label: "Exit"
-                                cmd: "loginctl terminate-user $USER"
+
+                            Item { Layout.fillWidth: true }
+
+                            Rectangle {
+                                implicitWidth: 40
+                                implicitHeight: 22
+                                radius: 11
+                                color: BarState.modernBarStyle ? "#89b4fa" : "#45475a"
+
+                                Behavior on color { ColorAnimation { duration: 120 } }
+
+                                Rectangle {
+                                    width: 18
+                                    height: 18
+                                    radius: 9
+                                    color: "#1e1e2e"
+                                    x: BarState.modernBarStyle ? parent.width - width - 2 : 2
+                                    y: (parent.height - height) / 2
+
+                                    Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: BarState.modernBarStyle = !BarState.modernBarStyle
+                                }
                             }
                         }
                     }
