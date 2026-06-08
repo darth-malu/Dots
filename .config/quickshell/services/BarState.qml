@@ -3,5 +3,5 @@ import Quickshell
 
 Singleton {
     property bool enableBar: true
-    property bool modernBarStyle: true
+    property bool modernBarStyle: false
 }

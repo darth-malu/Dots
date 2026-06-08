@@ -1401,6 +1401,50 @@ BarBlock {
                             }
                         }
                     }
+
+                    // ═══ POWER ═══
+                    Card {
+                        title: "Power"
+                        icon: ""
+                        accent: "#f38ba8"
+                        Layout.bottomMargin: 0
+
+                        RowLayout {
+                            spacing: 4
+                            Layout.fillWidth: true
+
+                            QsPower {
+                                icon: ""
+                                color: "#89b4fa"
+                                label: "Lock"
+                                cmd: "loginctl lock-session"
+                            }
+                            QsPower {
+                                icon: ""
+                                color: "#a6e3a1"
+                                label: "Sleep"
+                                cmd: "systemctl suspend"
+                            }
+                            QsPower {
+                                icon: ""
+                                color: "#f9e2af"
+                                label: "Reboot"
+                                cmd: "systemctl reboot"
+                            }
+                            QsPower {
+                                icon: ""
+                                color: "#f38ba8"
+                                label: "Off"
+                                cmd: "systemctl poweroff"
+                            }
+                            QsPower {
+                                icon: ""
+                                color: "#cba6f7"
+                                label: "Exit"
+                                cmd: "loginctl terminate-user $USER"
+                            }
+                        }
+                    }
                 }
             }
         }
