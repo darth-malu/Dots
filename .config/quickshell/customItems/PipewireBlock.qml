@@ -75,12 +75,6 @@ BarBlock {
                 }
             }
 
-            BarText {
-                text: Math.floor(root.vol * 100)
-                baseColor: root.volColor
-                pointSize: 9
-                renderNative: true
-            }
         }
     }
 }

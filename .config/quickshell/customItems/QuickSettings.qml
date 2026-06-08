@@ -909,9 +909,8 @@ BarBlock {
                                 // OSD-inspired horizontal slider
                                 Item {
                                     Layout.fillWidth: true
-                                    Layout.leftMargin: 4
-                                    Layout.rightMargin: 4
-                                    implicitHeight: 24
+                                    Layout.preferredWidth: 80
+                                    Layout.fillHeight: true
 
                                     readonly property real normVol: Pipewire.defaultAudioSink?.audio?.volume ?? 0
 
@@ -919,24 +918,16 @@ BarBlock {
                                     Rectangle {
                                         anchors.verticalCenter: parent.verticalCenter
                                         width: parent.width
-                                        height: 6
-                                        radius: 3
+                                        height: 5
+                                        radius: 2.5
                                         color: "#313244"
 
                                         // fill
                                         Rectangle {
                                             width: parent.width * Math.min(parent.parent.normVol, 1)
                                             height: parent.height
-                                            radius: 3
+                                            radius: 2.5
                                             color: volCol.volColor
-
-                                            // shine (OSD-inspired highlight)
-                                            Rectangle {
-                                                anchors { left: parent.left; right: parent.right; top: parent.top }
-                                                height: parent.height * 0.45
-                                                radius: 3
-                                                color: Qt.rgba(1, 1, 1, 0.07)
-                                            }
 
                                             Behavior on width {
                                                 NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
@@ -944,11 +935,10 @@ BarBlock {
                                         }
                                     }
 
-                                    // interaction area (wider than bar for easier grabbing)
+                                    // interaction area
                                     MouseArea {
                                         id: volSliderArea
                                         anchors.fill: parent
-                                        anchors.margins: -4
                                         cursorShape: Qt.PointingHandCursor
 
                                         property bool dragging: false
@@ -994,7 +984,7 @@ BarBlock {
 
                                 RowLayout {
                                     required property var modelData
-                                    spacing: 8
+                                    spacing: 6
                                     Layout.fillWidth: true
                                     Layout.topMargin: 2
 
@@ -1009,9 +999,8 @@ BarBlock {
                                     // small OSD-inspired slider
                                     Item {
                                         Layout.fillWidth: true
-                                        Layout.leftMargin: 8
-                                        Layout.rightMargin: 8
-                                        implicitHeight: 16
+                                        Layout.preferredWidth: 40
+                                        Layout.fillHeight: true
 
                                         Rectangle {
                                             anchors.verticalCenter: parent.verticalCenter
@@ -1026,13 +1015,6 @@ BarBlock {
                                                 radius: 2
                                                 color: "#cba6f7"
 
-                                                Rectangle {
-                                                    anchors { left: parent.left; right: parent.right; top: parent.top }
-                                                    height: parent.height * 0.4
-                                                    radius: 2
-                                                    color: Qt.rgba(1, 1, 1, 0.07)
-                                                }
-
                                                 Behavior on width {
                                                     NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
                                                 }
@@ -1041,7 +1023,6 @@ BarBlock {
 
                                         MouseArea {
                                             anchors.fill: parent
-                                            anchors.margins: -4
                                             cursorShape: Qt.PointingHandCursor
 
                                             property bool dragging: false
@@ -1085,7 +1066,8 @@ BarBlock {
                                 Rectangle {
                                     id: sinkPill
                                     implicitHeight: 22
-                                    implicitWidth: sinkPillText.implicitWidth + 28
+                                    implicitWidth: Math.min(sinkPillText.implicitWidth + 28, 180)
+                                    Layout.maximumWidth: 180
                                     radius: height / 2
                                     color: Qt.rgba(0.1, 0.04, 0.18, 0.5)
 
@@ -1106,6 +1088,7 @@ BarBlock {
                                             color: "#c6a0f6"
                                             font { pixelSize: 10; family: "Quicksand"; bold: true }
                                             elide: Text.ElideRight
+                                            Layout.fillWidth: true
                                         }
 
                                         Text {

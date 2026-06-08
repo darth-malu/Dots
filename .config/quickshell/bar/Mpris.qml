@@ -19,11 +19,11 @@ Loader {
     sourceComponent: WrapperMouseArea {
         id: mprisRoot
 
-        // Size tracks the pill so the Loader gets the correct extent
-        // width: pill.visible ? pill.width : 0
-        // height: pill.visible ? pill.height : 0
-        width: 50
-        height: 50
+        // Size tracks the pill so the whole area is interactable
+        // width: mprisRoot.showPlaying ? pill.width : 0
+        // height: mprisRoot.showPlaying ? pill.height : 0
+        width: mprisRoot.showPlaying ? pill.width : 0
+        height: 24
         implicitWidth: width
         implicitHeight: height
 
@@ -195,7 +195,7 @@ Loader {
                 BarText {
                     id: volumePlayer
                     visible: mprisRoot.showVolume
-                    text: MprisState.player ? " 🔊 " + Math.round(MprisState.player.volume * 100) : ""
+                    text: MprisState.player ? " " + Math.round(MprisState.player.volume * 100) : ""
                     font: title.font
                     color: Themes.mprisVolumeColor
                     Layout.alignment: Qt.AlignVCenter

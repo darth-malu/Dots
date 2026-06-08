@@ -83,6 +83,14 @@ ShellRoot {
                 acceptedButtons: Qt.NoButton
                 anchors.fill: parent
                 onWheel: wheel => {
+                    // Let events pass through to the right block
+                    // (PipewireBlock, etc., which handle their own scroll)
+                    var pos = mapToItem(rightBlock, wheel.x, wheel.y);
+                    if (rightBlock.contains(Qt.point(pos.x, pos.y))) {
+                        wheel.accepted = false;
+                        return;
+                    }
+
                     if (wheel.angleDelta.y > 0) {
                         Hyprland.dispatch('workspace "m-1"');
                     } else if (wheel.angleDelta.y < 0) {
