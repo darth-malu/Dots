@@ -19,11 +19,8 @@ Loader {
     sourceComponent: WrapperMouseArea {
         id: mprisRoot
 
-        // Size tracks the pill so the whole area is interactable
-        // width: mprisRoot.showPlaying ? pill.width : 0
-        // height: mprisRoot.showPlaying ? pill.height : 0
-        width: mprisRoot.showPlaying ? pill.width : 0
-        height: 24
+        width: mprisRoot.showPlaying ? pill.implicitWidth : 0
+        height: mprisRoot.showPlaying ? pill.implicitHeight : 0
         implicitWidth: width
         implicitHeight: height
 
@@ -108,8 +105,8 @@ Loader {
         Rectangle {
             id: pill
             visible: mprisRoot.showPlaying
-            height: mprisLoader.host ? mprisLoader.host.height : 30
-            width: pillRow.implicitWidth + 12
+            implicitHeight: mprisLoader.host ? mprisLoader.host.height : 30
+            implicitWidth: pillRow.implicitWidth + 12
             radius: height / 2
             color: Qt.rgba(0.1, 0.04, 0.18, 0.4)
 

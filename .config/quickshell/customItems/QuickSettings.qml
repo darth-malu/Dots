@@ -310,13 +310,13 @@ BarBlock {
                         visible: MprisState.player !== null
 
                         RowLayout {
-                            spacing: 10
+                            spacing: 12
                             Layout.fillWidth: true
 
                             Rectangle {
-                                implicitWidth: 56
-                                implicitHeight: 56
-                                radius: 12
+                                implicitWidth: 80
+                                implicitHeight: 80
+                                radius: 14
                                 color: "#313244"
 
                                 Image {
@@ -330,7 +330,7 @@ BarBlock {
 
                                 Rectangle {
                                     anchors.fill: parent
-                                    radius: 12
+                                    radius: 14
                                     color: "transparent"
                                     border {
                                         width: 2
@@ -343,7 +343,7 @@ BarBlock {
                                     text: ""
                                     color: "#585b70"
                                     font {
-                                        pixelSize: 24
+                                        pixelSize: 32
                                         family: "Symbols Nerd Font Mono"
                                     }
                                     visible: albumArt.status !== Image.Ready
@@ -352,14 +352,14 @@ BarBlock {
 
                             ColumnLayout {
                                 Layout.fillWidth: true
-                                spacing: 2
+                                spacing: 3
 
                                 Text {
                                     Layout.fillWidth: true
                                     text: MprisState.player?.trackTitle || "No track"
                                     color: "#cba6f7"
                                     font {
-                                        pixelSize: 12
+                                        pixelSize: 13
                                         bold: true
                                         family: "Quicksand"
                                     }
@@ -371,7 +371,7 @@ BarBlock {
                                     text: MprisState.player?.trackArtist || MprisState.player?.identity || ""
                                     color: "#a6adc8"
                                     font {
-                                        pixelSize: 10
+                                        pixelSize: 11
                                         family: "ZedMono Nerd Font"
                                     }
                                     elide: Text.ElideRight
@@ -379,7 +379,7 @@ BarBlock {
                             }
 
                             RowLayout {
-                                spacing: 4
+                                spacing: 5
 
                                 TrackButton {
                                     text: ""
@@ -399,6 +399,67 @@ BarBlock {
                                     textColor: "#cba6f7"
                                     onClicked: MprisState.player?.next()
                                 }
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.topMargin: 8
+                            Layout.fillWidth: true
+                            visible: MprisState.player?.volumeSupported ?? false
+                            spacing: 6
+
+                            Item {
+                                Layout.preferredWidth: 80
+                                Layout.preferredHeight: 4
+                                Layout.alignment: Qt.AlignVCenter
+
+                                Rectangle {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: parent.width
+                                    height: 4
+                                    radius: 2
+                                    color: "#313244"
+
+                                    Rectangle {
+                                        width: parent.width * Math.min((MprisState.player?.volume ?? 0), 1)
+                                        height: parent.height
+                                        radius: 2
+                                        color: "#cba6f7"
+
+                                        Behavior on width {
+                                            NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                                        }
+                                    }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+
+                                    property bool dragging: false
+
+                                    function setVolFromMouse(mx) {
+                                        var v = Math.max(0, Math.min(mx / width, 1));
+                                        if (MprisState.player) MprisState.player.volume = v;
+                                    }
+
+                                    onPressed: mouse => { dragging = true; setVolFromMouse(mouse.x); }
+                                    onPositionChanged: mouse => { if (dragging) setVolFromMouse(mouse.x); }
+                                    onReleased: { dragging = false; }
+                                    onClicked: mouse => setVolFromMouse(mouse.x)
+                                    onWheel: event => {
+                                        if (!MprisState.player) return;
+                                        var v = MprisState.player.volume;
+                                        v += event.angleDelta.y > 0 ? 0.05 : -0.05;
+                                        MprisState.player.volume = Math.max(0, Math.min(v, 1));
+                                    }
+                                }
+                            }
+
+                            Text {
+                                text: Math.round((MprisState.player?.volume ?? 0) * 100) + "%"
+                                color: "#585b70"
+                                font { pixelSize: 9; family: "ZedMono Nerd Font" }
                             }
                         }
 
