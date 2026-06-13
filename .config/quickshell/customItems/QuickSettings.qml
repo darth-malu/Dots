@@ -90,7 +90,7 @@ BarBlock {
     Process {
         id: avatarPickProcess
         running: false
-        command: ["sh", "-c", `mkdir -p ~/.config/quickshell/assets && file=$(/home/malu/.nix-profile/bin/zenity --file-selection --title="Choose Avatar" --file-filter="Images | *.png *.jpg *.jpeg *.webp" 2>/dev/null) && if [ -n "$file" ]; then cp "$file" ~/.config/quickshell/assets/avatar.png; fi`]
+        command: ["sh", "-c", `PATH="$HOME/.nix-profile/bin:$PATH" zenity --file-selection --title="Choose Avatar" --file-filter="Images | *.png *.jpg *.jpeg *.webp" 2>/dev/null | while read file; do mkdir -p ~/.config/quickshell/assets && cp "$file" ~/.config/quickshell/assets/avatar.png; done`]
     }
 
     Process {
