@@ -15,58 +15,19 @@ BarBlock {
 
     required property var host
 
-    property string activeInterface: ""
-    property string ipAddr: ""
     property string diskData: ""
     property string diskDataPending: ""
-
-    readonly property string hostName: {
-        var raw = hostFile.text().trim();
-        return raw.length > 0 ? raw : "unknown";
-    }
-
-    readonly property string netState: {
-        var raw = netFile.text().trim();
-        return raw.length > 0 ? raw : "down";
-    }
-
-    readonly property bool isOnline: root.netState === "up"
 
     property bool wifiEnabled: false
     property bool bluetoothEnabled: false
     property bool ethernetConnected: false
     property bool playerListOpen: false
     property bool showQsPopup: false
-    FileView {
-        id: hostFile
-        path: "file:///proc/sys/kernel/hostname"
-    }
-
-    FileView {
-        id: netFile
-        path: `file:///sys/class/net/${root.activeInterface}/operstate`
-    }
-
-    Process {
-        id: interfaceCheck
-        running: false
-        command: ["sh", "-c", "ip -o route show default 2>/dev/null | head -1 | awk '{print $5}'"]
-        stdout: SplitParser {
-            onRead: data => {
-                if (data.trim().length > 0)
-                    root.activeInterface = data.trim();
-            }
-        }
-    }
-
-    Process {
-        id: ipProcess
-        running: false
-        command: ["sh", "-c", `ip -4 -o addr show ${root.activeInterface} 2>/dev/null | awk '{print $4}' | head -1`]
-        stdout: SplitParser {
-            onRead: data => ipAddr = data
-        }
-    }
+    property string wifiSsid: ""
+    property real brightness: 0
+    property real maxBrightness: 100
+    property bool showWifiList: false
+    property string wifiNetworks: ""
 
     Process {
         id: diskProcess
@@ -89,7 +50,7 @@ BarBlock {
     Process {
         id: btProcess
         running: false
-        command: ["sh", "-c", "bluetoothctl show 2>/dev/null | grep Powered | awk '{print $2}'"]
+        command: ["sh", "-c", "busctl get-property org.bluez /org/bluez/hci0 org.bluez.Adapter1 Powered 2>/dev/null | grep -q true && echo yes || echo no"]
         stdout: SplitParser {
             onRead: data => root.bluetoothEnabled = data.trim() === "yes"
         }
@@ -101,6 +62,15 @@ BarBlock {
         command: ["sh", "-c", "ip -o link show 2>/dev/null | grep -E '^[0-9]+: en' | grep -q 'state UP' && echo up || echo down"]
         stdout: SplitParser {
             onRead: data => root.ethernetConnected = data.trim() === "up"
+        }
+    }
+
+    Process {
+        id: wifiSsidProcess
+        running: false
+        command: ["sh", "-c", "nmcli -t -f ACTIVE,SSID dev wifi 2>/dev/null | grep '^yes' | head -1 | cut -d: -f2"]
+        stdout: SplitParser {
+            onRead: data => root.wifiSsid = data.trim()
         }
     }
 
@@ -118,6 +88,27 @@ BarBlock {
         }
     }
 
+    Process {
+        id: brightnessProcess
+        running: false
+        command: ["sh", "-c", "val=$(brightnessctl get 2>/dev/null) && max=$(brightnessctl max 2>/dev/null) && echo $((val * 100 / max))"]
+        stdout: SplitParser {
+            onRead: data => {
+                var v = parseInt(data.trim());
+                if (!isNaN(v)) root.brightness = v;
+            }
+        }
+    }
+
+    Process {
+        id: wifiNetworksProcess
+        running: false
+        command: ["sh", "-c", "nmcli -t -f SSID,SECURITY,SIGNAL dev wifi list 2>/dev/null | head -20"]
+        stdout: SplitParser {
+            onRead: data => root.wifiNetworks += data + "\n"
+        }
+    }
+
     function refreshSinks() {
         root.sinkList = [];
         sinkProcess.running = true;
@@ -130,15 +121,14 @@ BarBlock {
         repeat: true
         triggeredOnStart: true
         onTriggered: {
-            interfaceCheck.running = true;
-            if (root.activeInterface.length > 0)
-                ipProcess.running = true;
             root.diskDataPending = "";
             diskProcess.running = true;
             diskSwapTimer.restart();
             wifiProcess.running = true;
             btProcess.running = true;
             ethProcess.running = true;
+            wifiSsidProcess.running = true;
+            if (BatteryState.available) brightnessProcess.running = true;
             root.refreshSinks();
         }
     }
@@ -154,10 +144,23 @@ BarBlock {
         }
     }
 
+    Timer {
+        id: toggleCheckTimer
+        interval: 600
+        running: false
+        repeat: false
+        onTriggered: () => {
+            wifiProcess.running = true;
+            btProcess.running = true;
+            wifiSsidProcess.running = true;
+        }
+    }
+
     function refreshConnections() {
         wifiProcess.running = true;
         btProcess.running = true;
         ethProcess.running = true;
+        wifiSsidProcess.running = true;
     }
 
     onMiddleClicked: {
@@ -229,108 +232,6 @@ BarBlock {
                     rightMargin: 8
                 }
                 spacing: 0
-
-                // ═══ HEADER ═══
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: 52
-                    color: "transparent"
-
-                    RowLayout {
-                        anchors {
-                            left: parent.left
-                            verticalCenter: parent.verticalCenter
-                            leftMargin: 6
-                        }
-                        spacing: 10
-
-                        Rectangle {
-                            implicitWidth: 30
-                            implicitHeight: 30
-                            radius: 8
-                            color: Qt.rgba(0.78, 0.60, 0.86, 0.18)
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: ""
-                                color: "#cba6f7"
-                                font {
-                                    pixelSize: 16
-                                    family: "Symbols Nerd Font Mono"
-                                }
-                            }
-                        }
-
-                        ColumnLayout {
-                            spacing: 1
-                            Text {
-                                text: root.hostName
-                                color: "#cdd6f4"
-                                font {
-                                    pixelSize: 13
-                                    bold: true
-                                    family: "Quicksand"
-                                }
-                            }
-                            Text {
-                                text: root.ipAddr.length > 0 ? root.ipAddr : (root.isOnline ? "connected" : "offline")
-                                color: root.isOnline ? "#89b4fa" : "#585b70"
-                                font {
-                                    pixelSize: 10
-                                    family: "ZedMono Nerd Font"
-                                }
-                            }
-                        }
-                    }
-
-                    RowLayout {
-                        anchors {
-                            right: parent.right
-                            verticalCenter: parent.verticalCenter
-                            rightMargin: 6
-                        }
-                        spacing: 6
-
-                        Text {
-                            text: root.isOnline ? "" : ""
-                            color: root.isOnline ? "#89b4fa" : "#585b70"
-                            font {
-                                pixelSize: 16
-                                family: "Symbols Nerd Font Mono"
-                            }
-                        }
-
-                        Rectangle {
-                            implicitWidth: 28
-                            implicitHeight: 28
-                            radius: 6
-                            color: gearMouse.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, 0.15) : "transparent"
-
-                            Behavior on color { ColorAnimation { duration: 100 } }
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: ""
-                                color: gearMouse.containsMouse ? "#89b4fa" : "#585b70"
-                                font {
-                                    pixelSize: 14
-                                    family: "Symbols Nerd Font Mono"
-                                }
-                            }
-
-                            MouseArea {
-                                id: gearMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    root.showQsPopup = false;
-                                    MiscState.toggleSettings = !MiscState.toggleSettings;
-                                }
-                            }
-                        }
-                    }
-                }
 
                 // ═══ CONTENT ═══
                 ColumnLayout {
@@ -554,7 +455,7 @@ BarBlock {
                             // ── Controls ──
                             RowLayout {
                                 Layout.alignment: Qt.AlignHCenter
-                                spacing: 14
+                                spacing: 10
 
                                 TrackButton {
                                     text: ""
@@ -582,7 +483,7 @@ BarBlock {
                             // ── Player pill + list ──
                             ColumnLayout {
                                 Layout.fillWidth: true
-                                Layout.topMargin: 4
+                                Layout.topMargin: 2
                                 spacing: 4
 
                                 RowLayout {
@@ -814,184 +715,331 @@ BarBlock {
                             spacing: 6
                             Layout.fillWidth: true
 
-                            RowLayout {
-                                spacing: 8
+                            // ── Wi‑Fi pill ──
+                            Rectangle {
                                 Layout.fillWidth: true
+                                implicitHeight: 42
+                                radius: 8
+                                color: wifiRowMouse.containsMouse
+                                    ? Qt.rgba(0.54, 0.57, 0.96, 0.15)
+                                    : Qt.rgba(0.54, 0.57, 0.96, root.wifiEnabled ? 0.08 : 0.03)
+                                border {
+                                    width: 1
+                                    color: root.wifiEnabled
+                                        ? Qt.rgba(0.54, 0.57, 0.96, 0.35)
+                                        : Qt.rgba(0.35, 0.35, 0.44, 0.2)
+                                }
 
-                                Text {
-                                    text: ""
-                                    color: root.wifiEnabled ? "#89b4fa" : "#585b70"
-                                    font {
-                                        pixelSize: 14
-                                        family: "Symbols Nerd Font Mono"
+                                Behavior on color { ColorAnimation { duration: 120 } }
+                                Behavior on border.color { ColorAnimation { duration: 120 } }
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 10
+                                    anchors.rightMargin: 8
+                                    spacing: 8
+
+                                    Text {
+                                        text: ""
+                                        color: root.wifiEnabled ? "#89b4fa" : "#585b70"
+                                        font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
                                     }
-                                }
 
-                                Text {
-                                    text: "Wi-Fi"
-                                    color: "#cdd6f4"
-                                    font {
-                                        pixelSize: 11
-                                        family: "Quicksand"
+                                    ColumnLayout {
+                                        spacing: 1
+                                        Text {
+                                            text: "Wi-Fi"
+                                            color: root.wifiEnabled ? "#cdd6f4" : "#6c7086"
+                                            font { pixelSize: 11; family: "Quicksand"; bold: true }
+                                        }
+                                        Text {
+                                            text: root.wifiEnabled
+                                                ? (root.wifiSsid.length > 0 ? "Connected to " + root.wifiSsid : "On")
+                                                : "Off"
+                                            color: root.wifiEnabled ? (root.wifiSsid.length > 0 ? "#a6e3a1" : "#a6adc8") : "#585b70"
+                                            font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                            elide: Text.ElideRight
+                                            Layout.fillWidth: true
+                                        }
                                     }
-                                }
 
-                                Item {
-                                    Layout.fillWidth: true
-                                }
-
-                                Text {
-                                    text: root.wifiEnabled ? "On" : "Off"
-                                    color: root.wifiEnabled ? "#a6e3a1" : "#585b70"
-                                    font {
-                                        pixelSize: 10
-                                        family: "ZedMono Nerd Font"
-                                        bold: true
-                                    }
-                                }
-
-                                Rectangle {
-                                    implicitWidth: 40
-                                    implicitHeight: 22
-                                    radius: 11
-                                    color: root.wifiEnabled ? "#89b4fa" : "#45475a"
-
-                                    Behavior on color { ColorAnimation { duration: 120 } }
+                                    Item { Layout.fillWidth: true }
 
                                     Rectangle {
-                                        width: 18
-                                        height: 18
-                                        radius: 9
-                                        color: "#1e1e2e"
-                                        x: root.wifiEnabled ? parent.width - width - 2 : 2
-                                        y: (parent.height - height) / 2
+                                        implicitWidth: 28
+                                        implicitHeight: 28
+                                        radius: 6
+                                        color: arrowMouse.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, 0.2) : "transparent"
+                                        visible: root.wifiEnabled
 
-                                        Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: root.showWifiList ? "" : ""
+                                            color: "#a6adc8"
+                                            font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                        }
+
+                                        MouseArea {
+                                            id: arrowMouse
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                root.showWifiList = !root.showWifiList;
+                                                if (root.showWifiList) {
+                                                    root.wifiNetworks = "";
+                                                    wifiNetworksProcess.running = true;
+                                                }
+                                            }
+                                        }
                                     }
+                                }
 
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            Quickshell.execDetached(["sh", "-c", root.wifiEnabled ? "nmcli radio wifi off" : "nmcli radio wifi on"]);
-                                            root.refreshConnections();
+                                MouseArea {
+                                    id: wifiRowMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        if (!arrowMouse.containsMouse) {
+                                            root.wifiEnabled = !root.wifiEnabled;
+                                            Quickshell.execDetached(["sh", "-c", "nmcli radio wifi " + (root.wifiEnabled ? "on" : "off")]);
+                                            if (!root.wifiEnabled) root.showWifiList = false;
+                                            toggleCheckTimer.restart();
                                         }
                                     }
                                 }
                             }
 
-                            Rectangle {
+                            // ── network list dropdown (inside Wi‑Fi pill area) ──
+                            ColumnLayout {
                                 Layout.fillWidth: true
-                                height: 1
-                                color: "#313244"
-                            }
+                                spacing: 2
+                                visible: root.showWifiList && root.wifiEnabled
 
-                            RowLayout {
-                                spacing: 8
-                                Layout.fillWidth: true
-
-                                Text {
-                                    text: ""
-                                    color: root.bluetoothEnabled ? "#89b4fa" : "#585b70"
-                                    font {
-                                        pixelSize: 14
-                                        family: "Symbols Nerd Font Mono"
+                                Repeater {
+                                    model: {
+                                        var raw = root.wifiNetworks.trim();
+                                        return raw.length > 0 ? raw.split("\n") : [];
                                     }
-                                }
-
-                                Text {
-                                    text: "Bluetooth"
-                                    color: "#cdd6f4"
-                                    font {
-                                        pixelSize: 11
-                                        family: "Quicksand"
-                                    }
-                                }
-
-                                Item {
-                                    Layout.fillWidth: true
-                                }
-
-                                Text {
-                                    text: root.bluetoothEnabled ? "On" : "Off"
-                                    color: root.bluetoothEnabled ? "#a6e3a1" : "#585b70"
-                                    font {
-                                        pixelSize: 10
-                                        family: "ZedMono Nerd Font"
-                                        bold: true
-                                    }
-                                }
-
-                                Rectangle {
-                                    implicitWidth: 40
-                                    implicitHeight: 22
-                                    radius: 11
-                                    color: root.bluetoothEnabled ? "#89b4fa" : "#45475a"
-
-                                    Behavior on color { ColorAnimation { duration: 120 } }
 
                                     Rectangle {
-                                        width: 18
-                                        height: 18
-                                        radius: 9
-                                        color: "#1e1e2e"
-                                        x: root.bluetoothEnabled ? parent.width - width - 2 : 2
-                                        y: (parent.height - height) / 2
+                                        required property string modelData
+                                        Layout.fillWidth: true
+                                        implicitHeight: 28
+                                        radius: 4
+                                        color: netMouse.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, 0.12) : "transparent"
 
-                                        Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                                    }
+                                        readonly property var parts: modelData.split(":")
+                                        readonly property string ssid: parts[0] || ""
+                                        readonly property bool hasSecurity: (parts[1] || "") !== ""
+                                        readonly property int signal: parseInt(parts[2]) || 0
+                                        readonly property bool isCurrent: ssid === root.wifiSsid
 
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            Quickshell.execDetached(["sh", "-c", root.bluetoothEnabled ? "bluetoothctl power off" : "bluetoothctl power on"]);
-                                            root.refreshConnections();
+                                        RowLayout {
+                                            anchors.fill: parent
+                                            anchors.leftMargin: 32
+                                            anchors.rightMargin: 8
+                                            spacing: 6
+
+                                            Text {
+                                                text: parent.parent.isCurrent ? "" : (parent.parent.hasSecurity ? "" : "")
+                                                color: parent.parent.isCurrent ? "#a6e3a1" : "#585b70"
+                                                font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                            }
+
+                                            Text {
+                                                text: parent.parent.ssid
+                                                color: parent.parent.isCurrent ? "#a6e3a1" : "#cdd6f4"
+                                                font { pixelSize: 10; family: "ZedMono Nerd Font"; bold: parent.parent.isCurrent }
+                                                elide: Text.ElideRight
+                                                Layout.fillWidth: true
+                                            }
+
+                                            Rectangle {
+                                                implicitWidth: 40
+                                                implicitHeight: 6
+                                                radius: 3
+                                                color: "#313244"
+
+                                                Rectangle {
+                                                    width: parent.width * Math.min(parent.parent.signal / 100, 1)
+                                                    height: parent.height
+                                                    radius: 3
+                                                    color: parent.parent.signal > 70 ? "#a6e3a1" : parent.parent.signal > 40 ? "#f9e2af" : "#f38ba8"
+                                                }
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            id: netMouse
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                if (parent.ssid.length > 0 && !parent.isCurrent) {
+                                                    Quickshell.execDetached(["sh", "-c", "nmcli dev wifi connect '" + parent.ssid.replace(/'/g, "'\\''") + "'"]);
+                                                    root.showWifiList = false;
+                                                    toggleCheckTimer.restart();
+                                                }
+                                            }
                                         }
                                     }
                                 }
+
+                                Text {
+                                    text: "No networks found"
+                                    color: "#585b70"
+                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                    visible: root.wifiNetworks.trim().length === 0
+                                    Layout.leftMargin: 32
+                                    Layout.topMargin: 2
+                                }
                             }
 
+                            // ── Bluetooth pill ──
                             Rectangle {
                                 Layout.fillWidth: true
-                                height: 1
-                                color: "#313244"
+                                implicitHeight: 42
+                                radius: 8
+                                color: btMouse.containsMouse
+                                    ? Qt.rgba(0.54, 0.57, 0.96, 0.15)
+                                    : Qt.rgba(0.54, 0.57, 0.96, root.bluetoothEnabled ? 0.08 : 0.03)
+                                border {
+                                    width: 1
+                                    color: root.bluetoothEnabled
+                                        ? Qt.rgba(0.54, 0.57, 0.96, 0.35)
+                                        : Qt.rgba(0.35, 0.35, 0.44, 0.2)
+                                }
+
+                                Behavior on color { ColorAnimation { duration: 120 } }
+                                Behavior on border.color { ColorAnimation { duration: 120 } }
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 10
+                                    anchors.rightMargin: 8
+                                    spacing: 8
+
+                                    Text {
+                                        text: ""
+                                        color: root.bluetoothEnabled ? "#89b4fa" : "#585b70"
+                                        font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                    }
+
+                                    ColumnLayout {
+                                        spacing: 1
+                                        Text {
+                                            text: "Bluetooth"
+                                            color: root.bluetoothEnabled ? "#cdd6f4" : "#6c7086"
+                                            font { pixelSize: 11; family: "Quicksand"; bold: true }
+                                        }
+                                        Text {
+                                            text: root.bluetoothEnabled ? "On" : "Off"
+                                            color: root.bluetoothEnabled ? "#a6adc8" : "#585b70"
+                                            font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                        }
+                                    }
+
+                                    Item { Layout.fillWidth: true }
+
+                                    Rectangle {
+                                        implicitWidth: 40
+                                        implicitHeight: 22
+                                        radius: 11
+                                        color: root.bluetoothEnabled ? "#89b4fa" : "#45475a"
+
+                                        Behavior on color { ColorAnimation { duration: 120 } }
+
+                                        Rectangle {
+                                            width: 18
+                                            height: 18
+                                            radius: 9
+                                            color: "#1e1e2e"
+                                            x: root.bluetoothEnabled ? parent.width - width - 2 : 2
+                                            y: (parent.height - height) / 2
+
+                                            Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                root.bluetoothEnabled = !root.bluetoothEnabled;
+                                                Quickshell.execDetached(["sh", "-c", "bluetoothctl power " + (root.bluetoothEnabled ? "on" : "off")]);
+                                                toggleCheckTimer.restart();
+                                            }
+                                        }
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: btMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                }
                             }
 
-                            RowLayout {
-                                spacing: 8
+                            // ── Ethernet pill ──
+                            Rectangle {
                                 Layout.fillWidth: true
+                                implicitHeight: 42
+                                radius: 8
+                                color: ethMouse.containsMouse
+                                    ? Qt.rgba(0.65, 0.89, 0.63, 0.15)
+                                    : Qt.rgba(0.65, 0.89, 0.63, root.ethernetConnected ? 0.08 : 0.03)
+                                border {
+                                    width: 1
+                                    color: root.ethernetConnected
+                                        ? Qt.rgba(0.65, 0.89, 0.63, 0.35)
+                                        : Qt.rgba(0.35, 0.35, 0.44, 0.2)
+                                }
 
-                                Text {
-                                    text: ""
-                                    color: root.ethernetConnected ? "#a6e3a1" : "#585b70"
-                                    font {
-                                        pixelSize: 14
-                                        family: "Symbols Nerd Font Mono"
+                                Behavior on color { ColorAnimation { duration: 120 } }
+                                Behavior on border.color { ColorAnimation { duration: 120 } }
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 10
+                                    anchors.rightMargin: 8
+                                    spacing: 8
+
+                                    Text {
+                                        text: ""
+                                        color: root.ethernetConnected ? "#a6e3a1" : "#585b70"
+                                        font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                    }
+
+                                    ColumnLayout {
+                                        spacing: 1
+                                        Text {
+                                            text: "Ethernet"
+                                            color: root.ethernetConnected ? "#cdd6f4" : "#6c7086"
+                                            font { pixelSize: 11; family: "Quicksand"; bold: true }
+                                        }
+                                        Text {
+                                            text: root.ethernetConnected ? "Connected" : "Disconnected"
+                                            color: root.ethernetConnected ? "#a6e3a1" : "#585b70"
+                                            font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                        }
+                                    }
+
+                                    Item { Layout.fillWidth: true }
+
+                                    Text {
+                                        text: root.ethernetConnected ? "" : ""
+                                        color: root.ethernetConnected ? "#a6e3a1" : "#585b70"
+                                        font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
                                     }
                                 }
 
-                                Text {
-                                    text: "Ethernet"
-                                    color: "#cdd6f4"
-                                    font {
-                                        pixelSize: 11
-                                        family: "Quicksand"
-                                    }
-                                }
-
-                                Item {
-                                    Layout.fillWidth: true
-                                }
-
-                                Text {
-                                    text: root.ethernetConnected ? "Connected" : "Disconnected"
-                                    color: root.ethernetConnected ? "#a6e3a1" : "#585b70"
-                                    font {
-                                        pixelSize: 10
-                                        family: "ZedMono Nerd Font"
-                                        bold: true
-                                    }
+                                MouseArea {
+                                    id: ethMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
                                 }
                             }
                         }
@@ -1005,7 +1053,7 @@ BarBlock {
 
                         ColumnLayout {
                             id: volCol
-                            spacing: 6
+                            spacing: 4
                             Layout.fillWidth: true
 
                             property bool sinkListOpen: false
@@ -1142,14 +1190,14 @@ BarBlock {
                                     required property var modelData
                                     spacing: 6
                                     Layout.fillWidth: true
-                                    Layout.topMargin: 2
 
                                     Text {
                                         text: modelData.identity
                                         color: "#585b70"
                                         font { pixelSize: 9; family: "ZedMono Nerd Font" }
                                         elide: Text.ElideRight
-                                        Layout.maximumWidth: 60
+                                        Layout.preferredWidth: 56
+                                        Layout.maximumWidth: 56
                                     }
 
                                     // small OSD-inspired slider
@@ -1402,6 +1450,66 @@ BarBlock {
                         }
                     }
 
+                    // ═══ BRIGHTNESS ═══
+                    Card {
+                        title: "Display"
+                        icon: ""
+                        accent: "#f9e2af"
+                        visible: BatteryState.available
+
+                        RowLayout {
+                            spacing: 10
+                            Layout.fillWidth: true
+
+                            Text {
+                                text: ""
+                                color: "#f9e2af"
+                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                            }
+
+                            Text {
+                                text: Math.round(root.brightness) + "%"
+                                color: "#cdd6f4"
+                                font { pixelSize: 10; family: "ZedMono Nerd Font"; bold: true }
+                                Layout.preferredWidth: 36
+                            }
+
+                            Item {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 5
+
+                                Rectangle {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: parent.width
+                                    height: 5
+                                    radius: 2.5
+                                    color: "#313244"
+
+                                    Rectangle {
+                                        width: parent.width * Math.min(root.brightness / 100, 1)
+                                        height: parent.height
+                                        radius: 2.5
+                                        color: "#f9e2af"
+
+                                        Behavior on width {
+                                            NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                                        }
+                                    }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: mouse => {
+                                        var pct = Math.max(0, Math.min(Math.round(mouse.x / width * 100), 100));
+                                        root.brightness = pct;
+                                        Quickshell.execDetached(["sh", "-c", "brightnessctl set " + pct + "%"]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     // ═══ POWER ═══
                     Card {
                         title: "Power"
@@ -1410,7 +1518,7 @@ BarBlock {
                         Layout.bottomMargin: 0
 
                         RowLayout {
-                            spacing: 4
+                            spacing: 3
                             Layout.fillWidth: true
 
                             QsPower {
@@ -1595,6 +1703,94 @@ BarBlock {
             NumberAnimation {
                 duration: 80
                 easing.type: Easing.OutCubic
+            }
+        }
+    }
+
+    component Rect: Rectangle {}
+
+    component ConnRow: RowLayout {
+        property string icon
+        property string label
+        property string subtitle
+        property bool active: false
+        property bool showToggle: true
+        signal toggled
+
+        spacing: 10
+        Layout.fillWidth: true
+        Layout.preferredHeight: 36
+
+        Text {
+            text: parent.icon
+            color: parent.active ? "#89b4fa" : "#585b70"
+            font {
+                pixelSize: 14
+                family: "Symbols Nerd Font Mono"
+            }
+        }
+
+        ColumnLayout {
+            spacing: 0
+
+            Text {
+                text: parent.parent.label
+                color: "#cdd6f4"
+                font {
+                    pixelSize: 11
+                    family: "Quicksand"
+                    bold: true
+                }
+            }
+
+            Text {
+                text: parent.parent.subtitle
+                color: parent.parent.active ? "#a6adc8" : "#585b70"
+                font {
+                    pixelSize: 9
+                    family: "ZedMono Nerd Font"
+                }
+                visible: parent.parent.showToggle
+            }
+        }
+
+        Item { Layout.fillWidth: true }
+
+        Rectangle {
+            visible: parent.showToggle
+            implicitWidth: 40
+            implicitHeight: 22
+            radius: 11
+            color: parent.active ? "#89b4fa" : "#45475a"
+
+            Behavior on color { ColorAnimation { duration: 120 } }
+
+            Rectangle {
+                width: 18
+                height: 18
+                radius: 9
+                color: "#1e1e2e"
+                x: parent.parent.active ? parent.width - width - 2 : 2
+                y: (parent.height - height) / 2
+
+                Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: parent.parent.toggled()
+            }
+        }
+
+        Text {
+            visible: !parent.showToggle
+            text: parent.subtitle
+            color: parent.active ? "#a6e3a1" : "#585b70"
+            font {
+                pixelSize: 10
+                family: "ZedMono Nerd Font"
+                bold: true
             }
         }
     }
