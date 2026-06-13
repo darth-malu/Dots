@@ -416,7 +416,7 @@ BarBlock {
             onReleased: parent.scaleVal = 1
             onClicked: {
                 root.showMenu = false;
-                Quickshell.execDetached(["sh", "-c", parent.parent.cmd]);
+                Quickshell.execDetached(["sh", "-c", parent.cmd]);
             }
         }
 

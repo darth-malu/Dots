@@ -36,6 +36,7 @@ BarBlock {
     property bool bluetoothEnabled: false
     property bool ethernetConnected: false
     property bool playerListOpen: false
+    property bool showQsPopup: false
     FileView {
         id: hostFile
         path: "file:///proc/sys/kernel/hostname"
@@ -160,8 +161,8 @@ BarBlock {
     }
 
     onMiddleClicked: {
-        qsPopup.visible = !qsPopup.visible;
-        if (qsPopup.visible)
+        root.showQsPopup = !root.showQsPopup;
+        if (root.showQsPopup)
             refreshConnections();
     }
     onLeftClicked: MiscState.toggleVolume = !MiscState.toggleVolume
@@ -169,7 +170,8 @@ BarBlock {
 
     Shortcut {
         sequence: "Escape"
-        onActivated: qsPopup.visible = false
+        enabled: root.showQsPopup
+        onActivated: root.showQsPopup = false
     }
 
     content: Rectangle {
@@ -191,7 +193,7 @@ BarBlock {
 
     PopupWindow {
         id: qsPopup
-        visible: false
+        visible: root.showQsPopup
         grabFocus: true
         color: 'transparent'
 
@@ -281,17 +283,51 @@ BarBlock {
                         }
                     }
 
-                    Text {
+                    RowLayout {
                         anchors {
                             right: parent.right
                             verticalCenter: parent.verticalCenter
                             rightMargin: 6
                         }
-                        text: root.isOnline ? "" : ""
-                        color: root.isOnline ? "#89b4fa" : "#585b70"
-                        font {
-                            pixelSize: 16
-                            family: "Symbols Nerd Font Mono"
+                        spacing: 6
+
+                        Text {
+                            text: root.isOnline ? "" : ""
+                            color: root.isOnline ? "#89b4fa" : "#585b70"
+                            font {
+                                pixelSize: 16
+                                family: "Symbols Nerd Font Mono"
+                            }
+                        }
+
+                        Rectangle {
+                            implicitWidth: 28
+                            implicitHeight: 28
+                            radius: 6
+                            color: gearMouse.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, 0.15) : "transparent"
+
+                            Behavior on color { ColorAnimation { duration: 100 } }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: ""
+                                color: gearMouse.containsMouse ? "#89b4fa" : "#585b70"
+                                font {
+                                    pixelSize: 14
+                                    family: "Symbols Nerd Font Mono"
+                                }
+                            }
+
+                            MouseArea {
+                                id: gearMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    root.showQsPopup = false;
+                                    MiscState.toggleSettings = !MiscState.toggleSettings;
+                                }
+                            }
                         }
                     }
                 }
@@ -1366,68 +1402,6 @@ BarBlock {
                         }
                     }
 
-                    // ═══ BAR ═══
-                    Card {
-                        title: "Bar"
-                        icon: ""
-                        accent: "#89b4fa"
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 8
-
-                            Text {
-                                text: ""
-                                color: BarState.modernBarStyle ? "#89b4fa" : "#585b70"
-                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                            }
-
-                            ColumnLayout {
-                                spacing: 1
-
-                                Text {
-                                    text: BarState.modernBarStyle ? "Modern Bar" : "Legacy Bar"
-                                    color: "#cdd6f4"
-                                    font { pixelSize: 11; family: "Quicksand"; bold: true }
-                                }
-
-                                Text {
-                                    text: BarState.modernBarStyle ? "Rounded · 28px" : "Flat · 24px"
-                                    color: "#585b70"
-                                    font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                                }
-                            }
-
-                            Item { Layout.fillWidth: true }
-
-                            Rectangle {
-                                implicitWidth: 40
-                                implicitHeight: 22
-                                radius: 11
-                                color: BarState.modernBarStyle ? "#89b4fa" : "#45475a"
-
-                                Behavior on color { ColorAnimation { duration: 120 } }
-
-                                Rectangle {
-                                    width: 18
-                                    height: 18
-                                    radius: 9
-                                    color: "#1e1e2e"
-                                    x: BarState.modernBarStyle ? parent.width - width - 2 : 2
-                                    y: (parent.height - height) / 2
-
-                                    Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: BarState.modernBarStyle = !BarState.modernBarStyle
-                                }
-                            }
-                        }
-                    }
-
                     // ═══ POWER ═══
                     Card {
                         title: "Power"
@@ -1612,8 +1586,8 @@ BarBlock {
             onPressed: parent.scaleVal = 0.9
             onReleased: parent.scaleVal = 1
             onClicked: {
-                qsPopup.visible = false;
-                Quickshell.execDetached(["sh", "-c", parent.parent.cmd]);
+                root.showQsPopup = false;
+                Quickshell.execDetached(["sh", "-c", parent.cmd]);
             }
         }
 
