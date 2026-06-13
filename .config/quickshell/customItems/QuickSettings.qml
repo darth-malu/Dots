@@ -18,6 +18,22 @@ BarBlock {
     property string diskData: ""
     property string diskDataPending: ""
 
+    property string activeInterface: ""
+    property string ipAddr: ""
+    readonly property string hostName: {
+        var raw = hostFile.text().trim();
+        return raw.length > 0 ? raw : "unknown";
+    }
+    readonly property string netState: {
+        var raw = netFile.text().trim();
+        return raw.length > 0 ? raw : "down";
+    }
+    readonly property bool isOnline: root.netState === "up"
+    property string avatarPath: {
+        var home = Quickshell.environment.HOME || "/home/" + root.hostName;
+        return home + "/.config/quickshell/assets/avatar.png";
+    }
+
     property bool wifiEnabled: false
     property bool bluetoothEnabled: false
     property bool ethernetConnected: false
@@ -28,6 +44,54 @@ BarBlock {
     property real maxBrightness: 100
     property bool showWifiList: false
     property string wifiNetworks: ""
+
+    FileView {
+        id: hostFile
+        path: "file:///proc/sys/kernel/hostname"
+    }
+
+    FileView {
+        id: netFile
+        path: `file:///sys/class/net/${root.activeInterface}/operstate`
+    }
+
+    Process {
+        id: interfaceCheck
+        running: false
+        command: ["sh", "-c", "ip -o route show default 2>/dev/null | head -1 | awk '{print $5}'"]
+        stdout: SplitParser {
+            onRead: data => {
+                if (data.trim().length > 0) {
+                    root.activeInterface = data.trim();
+                    ipProcess.running = true;
+                }
+            }
+        }
+    }
+
+    Process {
+        id: ipProcess
+        running: false
+        command: ["sh", "-c", `ip -4 -o addr show ${root.activeInterface} 2>/dev/null | awk '{print $4}' | head -1`]
+        stdout: SplitParser {
+            onRead: data => root.ipAddr = data
+        }
+    }
+
+    FileView {
+        id: avatarFileWatch
+        path: "file://" + root.avatarPath
+        onTextChanged: {
+            avatarImg.source = "";
+            avatarImg.source = "file://" + root.avatarPath;
+        }
+    }
+
+    Process {
+        id: avatarPickProcess
+        running: false
+        command: ["sh", "-c", `mkdir -p ~/.config/quickshell/assets && file=$(/home/malu/.nix-profile/bin/zenity --file-selection --title="Choose Avatar" --file-filter="Images | *.png *.jpg *.jpeg *.webp" 2>/dev/null) && if [ -n "$file" ]; then cp "$file" ~/.config/quickshell/assets/avatar.png; fi`]
+    }
 
     Process {
         id: diskProcess
@@ -124,6 +188,7 @@ BarBlock {
             root.diskDataPending = "";
             diskProcess.running = true;
             diskSwapTimer.restart();
+            interfaceCheck.running = true;
             wifiProcess.running = true;
             btProcess.running = true;
             ethProcess.running = true;
@@ -239,11 +304,124 @@ BarBlock {
                     Layout.fillWidth: true
                     spacing: 0
 
+                    // ═══ HEADER ═══
+                    Card {
+                        title: ""
+                        icon: ""
+                        accent: "transparent"
+                        cardColor: "transparent"
+                        cardPadding: 8
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 10
+
+                            Rectangle {
+                                implicitWidth: 42
+                                implicitHeight: 42
+                                radius: 21
+                                color: "#313244"
+
+                                Image {
+                                    id: avatarImg
+                                    anchors.fill: parent
+                                    source: "file://" + root.avatarPath
+                                    fillMode: Image.PreserveAspectCrop
+                                    asynchronous: true
+                                    visible: status === Image.Ready
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: ""
+                                    color: "#585b70"
+                                    font { pixelSize: 18; family: "Symbols Nerd Font Mono" }
+                                    visible: avatarImg.status !== Image.Ready
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: avatarPickProcess.running = true
+                                }
+                            }
+
+                            ColumnLayout {
+                                spacing: 2
+                                Layout.fillWidth: true
+
+                                Text {
+                                    text: root.hostName
+                                    color: "#cdd6f4"
+                                    font { pixelSize: 13; family: "Quicksand"; bold: true }
+                                    elide: Text.ElideRight
+                                    Layout.fillWidth: true
+                                }
+
+                                Text {
+                                    text: root.ipAddr.length > 0
+                                        ? root.ipAddr
+                                        : (root.isOnline ? "Connected" : "Offline")
+                                    color: root.isOnline ? "#a6e3a1" : "#f38ba8"
+                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                    elide: Text.ElideRight
+                                }
+                            }
+
+                            Rectangle {
+                                Layout.preferredWidth: 32
+                                Layout.preferredHeight: 32
+                                radius: 6
+                                color: caffeineMouse.containsMouse ? Qt.rgba(0.98, 0.70, 0.53, 0.15) : "transparent"
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: CaffeineService.enabled ? "" : "󰾪"
+                                    color: CaffeineService.enabled ? "#fab387" : "#585b70"
+                                    font { pixelSize: 16; family: "Symbols Nerd Font Mono" }
+                                }
+
+                                MouseArea {
+                                    id: caffeineMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: CaffeineService.toggle()
+                                }
+                            }
+
+                            Rectangle {
+                                Layout.preferredWidth: 32
+                                Layout.preferredHeight: 32
+                                radius: 6
+                                color: settingsBtnMouse.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, 0.15) : "transparent"
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: ""
+                                    color: "#89b4fa"
+                                    font { pixelSize: 16; family: "Symbols Nerd Font Mono" }
+                                }
+
+                                MouseArea {
+                                    id: settingsBtnMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        root.showQsPopup = false;
+                                        MiscState.toggleSettings = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     // ═══ NOW PLAYING ═══
                     Card {
                         id: nowPlayingCard
-                        title: ""
-                        icon: ""
+                        title: "Now Playing"
+                        icon: ""
                         accent: "#cba6f7"
                         visible: MprisState.player !== null
 
@@ -468,8 +646,9 @@ BarBlock {
                                     text: MprisState.player?.isPlaying ? "" : ""
                                     bgColor: "#cba6f7"
                                     textColor: "#1e1e2e"
-                                    implicitWidth: 36
-                                    implicitHeight: 36
+                                    accentColor: "#1e1e2e"
+                                    implicitWidth: 38
+                                    implicitHeight: 38
                                     onClicked: MprisState.player?.togglePlaying()
                                 }
                                 TrackButton {
@@ -747,6 +926,7 @@ BarBlock {
 
                                     ColumnLayout {
                                         spacing: 1
+                                        Layout.fillWidth: true
                                         Text {
                                             text: "Wi-Fi"
                                             color: root.wifiEnabled ? "#cdd6f4" : "#6c7086"
@@ -766,30 +946,33 @@ BarBlock {
                                     Item { Layout.fillWidth: true }
 
                                     Rectangle {
-                                        implicitWidth: 28
-                                        implicitHeight: 28
-                                        radius: 6
-                                        color: arrowMouse.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, 0.2) : "transparent"
-                                        visible: root.wifiEnabled
+                                        implicitWidth: 40
+                                        implicitHeight: 22
+                                        radius: 11
+                                        color: root.wifiEnabled ? "#89b4fa" : "#45475a"
 
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: root.showWifiList ? "" : ""
-                                            color: "#a6adc8"
-                                            font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                        Behavior on color { ColorAnimation { duration: 120 } }
+
+                                        Rectangle {
+                                            width: 18
+                                            height: 18
+                                            radius: 9
+                                            color: "#1e1e2e"
+                                            x: root.wifiEnabled ? parent.width - width - 2 : 2
+                                            y: (parent.height - height) / 2
+
+                                            Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
                                         }
 
                                         MouseArea {
-                                            id: arrowMouse
+                                            id: wifiToggleMouse
                                             anchors.fill: parent
-                                            hoverEnabled: true
                                             cursorShape: Qt.PointingHandCursor
                                             onClicked: {
-                                                root.showWifiList = !root.showWifiList;
-                                                if (root.showWifiList) {
-                                                    root.wifiNetworks = "";
-                                                    wifiNetworksProcess.running = true;
-                                                }
+                                                root.wifiEnabled = !root.wifiEnabled;
+                                                Quickshell.execDetached(["sh", "-c", "nmcli radio wifi " + (root.wifiEnabled ? "on" : "off")]);
+                                                if (!root.wifiEnabled) root.showWifiList = false;
+                                                toggleCheckTimer.restart();
                                             }
                                         }
                                     }
@@ -801,99 +984,113 @@ BarBlock {
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
-                                        if (!arrowMouse.containsMouse) {
-                                            root.wifiEnabled = !root.wifiEnabled;
-                                            Quickshell.execDetached(["sh", "-c", "nmcli radio wifi " + (root.wifiEnabled ? "on" : "off")]);
-                                            if (!root.wifiEnabled) root.showWifiList = false;
+                                        if (root.wifiEnabled) {
+                                            root.showWifiList = !root.showWifiList;
+                                            if (root.showWifiList) {
+                                                root.wifiNetworks = "";
+                                                wifiNetworksProcess.running = true;
+                                            }
+                                        } else {
+                                            root.wifiEnabled = true;
+                                            Quickshell.execDetached(["sh", "-c", "nmcli radio wifi on"]);
                                             toggleCheckTimer.restart();
                                         }
                                     }
                                 }
                             }
 
-                            // ── network list dropdown (inside Wi‑Fi pill area) ──
-                            ColumnLayout {
+                            // ── network list dropdown (scrollable) ──
+                            ScrollView {
                                 Layout.fillWidth: true
-                                spacing: 2
+                                Layout.preferredHeight: Math.min(netList.implicitHeight, 160)
                                 visible: root.showWifiList && root.wifiEnabled
+                                clip: true
+                                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                                ScrollBar.vertical.policy: ScrollBar.AsNeeded
 
-                                Repeater {
-                                    model: {
-                                        var raw = root.wifiNetworks.trim();
-                                        return raw.length > 0 ? raw.split("\n") : [];
-                                    }
+                                ColumnLayout {
+                                    id: netList
+                                    width: parent.width
+                                    spacing: 2
 
-                                    Rectangle {
-                                        required property string modelData
-                                        Layout.fillWidth: true
-                                        implicitHeight: 28
-                                        radius: 4
-                                        color: netMouse.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, 0.12) : "transparent"
+                                    Repeater {
+                                        model: {
+                                            var raw = root.wifiNetworks.trim();
+                                            return raw.length > 0 ? raw.split("\n") : [];
+                                        }
 
-                                        readonly property var parts: modelData.split(":")
-                                        readonly property string ssid: parts[0] || ""
-                                        readonly property bool hasSecurity: (parts[1] || "") !== ""
-                                        readonly property int signal: parseInt(parts[2]) || 0
-                                        readonly property bool isCurrent: ssid === root.wifiSsid
+                                        Rectangle {
+                                            required property string modelData
+                                            Layout.fillWidth: true
+                                            implicitHeight: 28
+                                            radius: 4
+                                            color: netMouse.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, 0.12) : "transparent"
 
-                                        RowLayout {
-                                            anchors.fill: parent
-                                            anchors.leftMargin: 32
-                                            anchors.rightMargin: 8
-                                            spacing: 6
+                                            readonly property var parts: modelData.split(":")
+                                            readonly property string ssid: parts[0] || ""
+                                            readonly property bool hasSecurity: (parts[1] || "") !== ""
+                                            readonly property int signal: parseInt(parts[2]) || 0
+                                            readonly property bool isCurrent: ssid === root.wifiSsid
 
-                                            Text {
-                                                text: parent.parent.isCurrent ? "" : (parent.parent.hasSecurity ? "" : "")
-                                                color: parent.parent.isCurrent ? "#a6e3a1" : "#585b70"
-                                                font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
-                                            }
+                                            RowLayout {
+                                                anchors.fill: parent
+                                                anchors.leftMargin: 32
+                                                anchors.rightMargin: 8
+                                                spacing: 6
 
-                                            Text {
-                                                text: parent.parent.ssid
-                                                color: parent.parent.isCurrent ? "#a6e3a1" : "#cdd6f4"
-                                                font { pixelSize: 10; family: "ZedMono Nerd Font"; bold: parent.parent.isCurrent }
-                                                elide: Text.ElideRight
-                                                Layout.fillWidth: true
-                                            }
+                                                Text {
+                                                    text: parent.parent.isCurrent ? "" : (parent.parent.hasSecurity ? "" : "")
+                                                    color: parent.parent.isCurrent ? "#a6e3a1" : "#585b70"
+                                                    font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                                }
 
-                                            Rectangle {
-                                                implicitWidth: 40
-                                                implicitHeight: 6
-                                                radius: 3
-                                                color: "#313244"
+                                                Text {
+                                                    text: parent.parent.ssid
+                                                    color: parent.parent.isCurrent ? "#a6e3a1" : "#cdd6f4"
+                                                    font { pixelSize: 10; family: "ZedMono Nerd Font"; bold: parent.parent.isCurrent }
+                                                    elide: Text.ElideRight
+                                                    Layout.fillWidth: true
+                                                }
 
                                                 Rectangle {
-                                                    width: parent.width * Math.min(parent.parent.signal / 100, 1)
-                                                    height: parent.height
+                                                    implicitWidth: 40
+                                                    implicitHeight: 6
                                                     radius: 3
-                                                    color: parent.parent.signal > 70 ? "#a6e3a1" : parent.parent.signal > 40 ? "#f9e2af" : "#f38ba8"
+                                                    color: "#313244"
+
+                                                    Rectangle {
+                                                        width: parent.width * Math.min(parent.parent.signal / 100, 1)
+                                                        height: parent.height
+                                                        radius: 3
+                                                        color: parent.parent.signal > 70 ? "#a6e3a1" : parent.parent.signal > 40 ? "#f9e2af" : "#f38ba8"
+                                                    }
                                                 }
                                             }
-                                        }
 
-                                        MouseArea {
-                                            id: netMouse
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: {
-                                                if (parent.ssid.length > 0 && !parent.isCurrent) {
-                                                    Quickshell.execDetached(["sh", "-c", "nmcli dev wifi connect '" + parent.ssid.replace(/'/g, "'\\''") + "'"]);
-                                                    root.showWifiList = false;
-                                                    toggleCheckTimer.restart();
+                                            MouseArea {
+                                                id: netMouse
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: {
+                                                    if (parent.ssid.length > 0 && !parent.isCurrent) {
+                                                        Quickshell.execDetached(["sh", "-c", "nmcli dev wifi connect '" + parent.ssid.replace(/'/g, "'\\''") + "'"]);
+                                                        root.showWifiList = false;
+                                                        toggleCheckTimer.restart();
+                                                    }
                                                 }
                                             }
                                         }
                                     }
-                                }
 
-                                Text {
-                                    text: "No networks found"
-                                    color: "#585b70"
-                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                                    visible: root.wifiNetworks.trim().length === 0
-                                    Layout.leftMargin: 32
-                                    Layout.topMargin: 2
+                                    Text {
+                                        text: "No networks found"
+                                        color: "#585b70"
+                                        font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                        visible: root.wifiNetworks.trim().length === 0
+                                        Layout.leftMargin: 32
+                                        Layout.topMargin: 2
+                                    }
                                 }
                             }
 
@@ -979,6 +1176,11 @@ BarBlock {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        root.bluetoothEnabled = !root.bluetoothEnabled;
+                                        Quickshell.execDetached(["sh", "-c", "bluetoothctl power " + (root.bluetoothEnabled ? "on" : "off")]);
+                                        toggleCheckTimer.restart();
+                                    }
                                 }
                             }
 
@@ -1076,30 +1278,37 @@ BarBlock {
                                 spacing: 8
                                 Layout.fillWidth: true
 
-                                // mute/volume icon
-                                Text {
-                                    text: volCol.isMuted ? "" : ""
-                                    color: volCol.volColor
-                                    font { pixelSize: 16; family: "Symbols Nerd Font Mono" }
+                                Row {
+                                    Layout.preferredWidth: 56
+                                    Layout.maximumWidth: 56
+                                    spacing: 6
+                                    Layout.alignment: Qt.AlignLeft
 
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        acceptedButtons: Qt.RightButton
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            var a = Pipewire.defaultAudioSink?.audio;
-                                            if (a) a.muted = !a.muted;
+                                    Text {
+                                        text: volCol.isMuted ? "" : ""
+                                        color: volCol.volColor
+                                        font { pixelSize: 16; family: "Symbols Nerd Font Mono" }
+                                        anchors.verticalCenter: parent.verticalCenter
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            acceptedButtons: Qt.RightButton
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                var a = Pipewire.defaultAudioSink?.audio;
+                                                if (a) a.muted = !a.muted;
+                                            }
                                         }
                                     }
-                                }
 
-                                // percentage
-                                Text {
-                                    text: Pipewire.ready
-                                        ? Math.floor((Pipewire.defaultAudioSink?.audio?.volume ?? 0) * 100) + "%"
-                                        : ""
-                                    color: volCol.isMuted ? "#585b70" : "#cdd6f4"
-                                    font { pixelSize: 13; bold: true; family: "ZedMono Nerd Font" }
+                                    Text {
+                                        text: Pipewire.ready
+                                            ? Math.floor((Pipewire.defaultAudioSink?.audio?.volume ?? 0) * 100) + "%"
+                                            : ""
+                                        color: volCol.isMuted ? "#585b70" : "#cdd6f4"
+                                        font { pixelSize: 13; bold: true; family: "ZedMono Nerd Font" }
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
                                 }
 
                                 // OSD-inspired horizontal slider
@@ -1384,71 +1593,7 @@ BarBlock {
                         }
                     }
 
-                    // ═══ CAFFEINE ═══
-                    Card {
-                        title: "Caffeine"
-                        icon: CaffeineService.enabled ? "" : "󰾪"
-                        accent: CaffeineService.enabled ? "#fab387" : "#585b70"
-                        cardColor: CaffeineService.enabled ? Qt.rgba(0.98, 0.70, 0.53, 0.06) : "#181825"
 
-                        Behavior on cardColor {
-                            ColorAnimation {
-                                duration: 200
-                            }
-                        }
-
-                        RowLayout {
-                            spacing: 10
-                            Layout.fillWidth: true
-
-                            Text {
-                                text: CaffeineService.enabled ? "Prevent idle suspend" : "Allow idle suspend"
-                                color: CaffeineService.enabled ? "#fab387" : "#a6adc8"
-                                font {
-                                    pixelSize: 10
-                                    family: "Quicksand"
-                                }
-                                elide: Text.ElideRight
-                                Layout.fillWidth: true
-
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: 200
-                                    }
-                                }
-                            }
-
-                            Item {
-                                Layout.fillWidth: true
-                            }
-
-                            Rectangle {
-                                implicitWidth: 40
-                                implicitHeight: 22
-                                radius: 11
-                                color: CaffeineService.enabled ? "#fab387" : "#45475a"
-
-                                Behavior on color { ColorAnimation { duration: 120 } }
-
-                                Rectangle {
-                                    width: 18
-                                    height: 18
-                                    radius: 9
-                                    color: "#1e1e2e"
-                                    x: CaffeineService.enabled ? parent.width - width - 2 : 2
-                                    y: (parent.height - height) / 2
-
-                                    Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: CaffeineService.toggle()
-                                }
-                            }
-                        }
-                    }
 
                     // ═══ BRIGHTNESS ═══
                     Card {
@@ -1599,21 +1744,36 @@ BarBlock {
         property string text
         property color bgColor: "#313244"
         property color textColor: "#cdd6f4"
+        property color accentColor: "#cba6f7"
         signal clicked
 
-        implicitWidth: 28
-        implicitHeight: 28
-        radius: 6
-        color: mouseArea.containsMouse ? "#cba6f7" : bgColor
+        implicitWidth: 32
+        implicitHeight: 32
+        radius: 8
+        color: mouseArea.containsMouse ? Qt.rgba(0.80, 0.65, 0.97, 0.15) : bgColor
+        border {
+            width: mouseArea.containsMouse ? 1 : 0
+            color: Qt.rgba(0.80, 0.65, 0.97, 0.4)
+        }
+        scale: pressScale
+
+        Behavior on color { ColorAnimation { duration: 120 } }
+        Behavior on border.width { NumberAnimation { duration: 80 } }
+
+        property real pressScale: 1.0
+        Behavior on pressScale {
+            NumberAnimation { duration: 80; easing.type: Easing.OutCubic }
+        }
 
         Text {
             anchors.centerIn: parent
             text: parent.text
-            color: parent.textColor
+            color: mouseArea.containsMouse ? parent.accentColor : parent.textColor
             font {
-                pixelSize: 12
+                pixelSize: 14
                 family: "Symbols Nerd Font Mono"
             }
+            Behavior on color { ColorAnimation { duration: 120 } }
         }
 
         MouseArea {
@@ -1621,6 +1781,8 @@ BarBlock {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
+            onPressed: parent.pressScale = 0.85
+            onReleased: parent.pressScale = 1.0
             onClicked: parent.clicked()
         }
     }
