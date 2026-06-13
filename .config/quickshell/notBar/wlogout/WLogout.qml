@@ -97,12 +97,15 @@ Variants {
                                     anchors.centerIn: parent
                                     spacing: 8
 
-                                    Image {
-                                        id: icon
+                                    Text {
                                         Layout.alignment: Qt.AlignHCenter
-                                        source: `icons/${modelData.icon}.png`
-                                        width: 36
-                                        height: 36
+                                        text: modelData.icon
+                                        color: ma.containsMouse ? "#1e1e2e" : buttonTextColor
+                                        font {
+                                            pixelSize: 28
+                                            family: "Symbols Nerd Font Mono"
+                                        }
+                                        Behavior on color { ColorAnimation { duration: 120 } }
                                     }
 
                                     Text {

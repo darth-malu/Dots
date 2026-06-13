@@ -56,9 +56,18 @@ ShellRoot {
                     visible: parent.visible
                     gradient: Gradient {
                         orientation: Gradient.Horizontal
-                        GradientStop { position: 0.0; color: "transparent" }
-                        GradientStop { position: 0.5; color: Qt.rgba(203 / 255, 166 / 255, 247 / 255, 0.35) }
-                        GradientStop { position: 1.0; color: "transparent" }
+                        GradientStop {
+                            position: 0.0
+                            color: "transparent"
+                        }
+                        GradientStop {
+                            position: 0.5
+                            color: Qt.rgba(203 / 255, 166 / 255, 247 / 255, 0.35)
+                        }
+                        GradientStop {
+                            position: 1.0
+                            color: "transparent"
+                        }
                     }
                 }
             }
@@ -77,12 +86,15 @@ ShellRoot {
                     id: leftBlock
                     spacing: 0.4
                     Layout.alignment: Qt.AlignLeft
+                    Layout.leftMargin: 6
+
+                    // WorkspacesIcons {}
                     ActiveWindow {}
                 }
 
-                Item {
-                    Layout.fillWidth: true
-                }
+                // Item {
+                //     Layout.fillWidth: true
+                // }
 
                 RowLayout {
                     id: rightBlock

@@ -7,42 +7,42 @@ ShellRoot {
 			command: "loginctl lock-session"
 			keybind: Qt.Key_L
 			text: "Lock"
-			icon: "lock"
+			icon: ""
 		}
 
 		LogoutButton {
 			command: "loginctl terminate-user $USER"
 			keybind: Qt.Key_E
 			text: "Logout"
-			icon: "logout"
+			icon: ""
 		}
 
 		LogoutButton {
 			command: "systemctl suspend"
 			keybind: Qt.Key_U
 			text: "Suspend"
-			icon: "suspend"
+			icon: ""
 		}
 
 		LogoutButton {
 			command: "systemctl hibernate"
 			keybind: Qt.Key_H
 			text: "Hibernate"
-			icon: "hibernate"
+			icon: ""
 		}
 
 		LogoutButton {
 			command: "systemctl poweroff"
 			keybind: Qt.Key_S
 			text: "Shutdown"
-			icon: "shutdown"
+			icon: ""
 		}
 
 		LogoutButton {
 			command: "systemctl reboot"
 			keybind: Qt.Key_R
 			text: "Reboot"
-			icon: "reboot"
+			icon: ""
 		}
 	}
 }

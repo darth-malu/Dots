@@ -298,8 +298,10 @@ BarBlock {
                     spacing: 6
 
                     PowerBtn { iconText: ""; label: "Lock";     color: "#89b4fa"; cmd: "loginctl lock-session" }
-                    PowerBtn { iconText: ""; label: "Power";   color: "#f38ba8"; cmd: "systemctl poweroff" }
+                    PowerBtn { iconText: ""; label: "Sleep";    color: "#a6e3a1"; cmd: "systemctl suspend" }
+                    PowerBtn { iconText: ""; label: "Hibernate"; color: "#f5c2e7"; cmd: "systemctl hibernate" }
                     PowerBtn { iconText: ""; label: "Reboot";  color: "#f9e2af"; cmd: "systemctl reboot" }
+                    PowerBtn { iconText: ""; label: "Power";   color: "#f38ba8"; cmd: "systemctl poweroff" }
                     PowerBtn { iconText: ""; label: "Logout";  color: "#cba6f7"; cmd: "loginctl terminate-user $USER" }
                 }
             }
