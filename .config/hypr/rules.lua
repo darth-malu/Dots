@@ -86,7 +86,7 @@ hl.workspace_rule({
   on_created_empty =
   "[workspace special:magic;float true;size (monitor_w*0.9) (monitor_h*0.8);center true] app2unit -s a kitty"
 })
-hl.workspace_rule({ workspace = "7", layout = "scrolling" })
+-- hl.workspace_rule({ workspace = "7", layout = "scrolling" })
 
 -- TODO: see if I need persistence on QUickshell windows (for testing)
 -- Ref https://wiki.hypr.land/Configuring/Basics/Workspace-Rules/

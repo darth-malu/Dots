@@ -1,5 +1,4 @@
 require("hyprland_environment_variables")
-require("devices")
 require("animations")
 require("decoration")
 require("general")
@@ -7,6 +6,7 @@ require("general")
 require("keybinds.keybinds") --Has other imports inside it
 require("layouts")
 require("rules")
+require("commonVariables")
 require("misc")
 -- require("keybinds.submaps")
 

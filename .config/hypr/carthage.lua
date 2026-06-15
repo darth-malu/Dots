@@ -21,3 +21,7 @@ hl.device({
   name = "razer-razer-viper-mini",
   sensitivity = -0.8,
 })
+
+hl.config({
+  input = {scroll_factor = 1.0,}
+})

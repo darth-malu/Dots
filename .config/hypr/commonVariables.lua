@@ -1,4 +1,12 @@
 hl.config({
+  binds = {
+    allow_workspace_cycles = true,           --false::
+    workspace_back_and_forth = true,         --false::
+    hide_special_on_workspace_change = true, --false::
+  }
+})
+
+hl.config({
   input = {
     kb_layout                   = "us",
     kb_variant                  = "",
