@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: mkIf
+# key: mkIf
+# --
+
+lib.mkIf (config.networking.hostname == "${1: tangier}") ${2: true};
+$0

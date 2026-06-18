@@ -1,0 +1,13 @@
+# -*- mode: snippet -*-
+# name: nonTangleUsePackage
+# key: T:
+# --
+
+#+begin_src elisp :tangle no
+(use-package ${1:MELPA package}
+  :ensure nil
+  :config
+  $2
+  :commands)
+#+end_src
+  $0

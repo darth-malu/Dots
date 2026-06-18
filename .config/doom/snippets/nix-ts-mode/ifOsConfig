@@ -1,0 +1,5 @@
+# key: <ifOs
+# name: ifOsConfig
+# --
+if osConfig.networking.hostName == "${1:carthage}" then $2 else $3;
+$0

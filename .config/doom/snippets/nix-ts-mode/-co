@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: config.networking.hostName
+# uuid: conf1
+# key: -co
+# condition: t
+# --
+
+if config.networking.hostName == "${1:carthage}" then $2 else $0

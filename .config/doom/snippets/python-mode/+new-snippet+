@@ -1,0 +1,28 @@
+# -*- mode: snippet -*-
+# name: pyside_import
+# key: +pyside
+# --
+
+import sys
+
+from PySide6.QtCore import ${1: Qt}
+from PySide6.QtWidgets import ${2: QApplication}, ${3: QMainWindow}
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+    super().__init__()
+
+    self.setWindowTitle("$5")
+    $0
+
+    self.show()
+
+
+def main():
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()

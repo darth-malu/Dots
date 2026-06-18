@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: Quickshell ExecDetached
+# key: -qe          
+# --
+
+Quickshell.execDetached(["$1", "$2"]);

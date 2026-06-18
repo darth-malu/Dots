@@ -1,0 +1,89 @@
+#+title: Darth
+
+Here I will write all doom related stuff...to be moved to main Doom org>
+
+* Init.el
++ loads early before anything else, after the Doom core is loaded
++ enabled in both interactive and non-interactive sessions
+This file controls what Doom modules are enabled and what order they load in. Remember to run 'doom sync' after modifying it!
+doom! block
+
+NOTE Press =SPC h d h= - Doom's documentation. There you'll find a link to Doom's Module Index where all of our modules are listed, including what flags they support.
+
+NOTE Move your cursor over a module's name (or its flags) and press =K= (or . This works on flags as well (those symbols that start with a plus).
+
+Alternatively, press =gd= on a module to browse its
+
+** :editor
+
+evil +everywhere - essential for minibuffer evil-collections, also jumping between headers. and adding new headers
+
+=parinfer=
+  Parinfer is a minor mode that aids the writing of Lisp code. It automatically infers parenthesis matching and indentation alignment, keeping your code balanced and beautiful.
+
+  Parinfer is a proof-of-concept editor mode for Lisp programming languages.
+  It simplifies the way we write Lisp by auto-adjusting parens when indentation changes and vice versa. The hope is to make basic Lisp-editing easier for newcomers and experts alike
+  
+  [[https://shaunlebron.github.io/parinfer/]]
+
+=objed=
+  This modules adds objed, a global minor-mode for navigating and manipulating text objects.
+  It combines the ideas of versor-mode and other editors like Vim or Kakoune and tries to align them with regular Emacs conventions.
+  =+manual=:
+  Do not activate objed automatically. The user is responsible for calling objed-activate (bound to M-SPC if using the default Emacs bindings).
+** :checkers
+=syntax=
+This module provides syntax checking and error highlighting, powered by flycheck.
+
+I think hunspell increases startup time
+
+=spell=
+Spellchecking powered by aaspell, hunspell or enchant
+
+Spellcheck is auto loaded in  many text-mode derivatives eg. org, md, git commit, mu4e compose etc
+
+Quirks:
++ Ignores codeblocks in org/md
++ Lazily spell checks recent changes only when idle
++ choosing suggestions use ivy/helm/vertico
+
+M-x: +spell/{add|remove}-word
+
+
+if not using +flyspell need aspell(and a dictionary)a whether or not you have +hunspell/+enchant
+  this is because spell-fu only supports aspell as of yet
+
+** :os
+- +osc ::
+  Instead of piping your kill ring through external programs, like =xclip= or
+  =pbcopy=, have Emacs emit OSC-52 escape codes instead, allowing Emacs to
+  communicate with your clipboard through your terminal, even across SSH
+  connections or Tmux. However, this requires [[https://github.com/spudlyo/clipetty#terminals-that-support-osc-clipboard-operations][a supported terminal]].
+
+** :lang
+*** org
+org-contacts: https://orgmode.org/worg/org-contrib/org-contacts.html
+org +roam2 +brain +dragndrop +present +pandoc +pomodoro +pretty
+**** pomodoro
+=Usage=
++ Move point to a task as you would do with =org-clock-in.= Call org-pomodoro the task will be clocked-in.
++ When there's time for break, the task will be =org-clock-out='ed
++ If you call =org-pomodoro= during a pomodoro, you'll be asked to reset a pomodoro.
+  + If you call =org-pomodoro= outside ==org-mode,== you'll be presented with list of recent tasks, as C-u org-clock-in would.
+
+=Customization=
+- Most aspects of org-pomodoro can be customized. Examples are the length of pomodoros and breaks (org-pomodoro-length, org-pomodoro-short-break-length, org-pomodoro-long-break-length), sounds, modeline display, if breaks should be clocked (org-pomodoro-clock-break) the behaviour when a pomodoro is reset (org-pomodoro-ask-upon-killing, org-pomodoro-keep-killed-time) etc. Have a look at the org-pomodoro customization group.
+
+- Some workflows benefit from the option to work a few minutes “overtime” to finish a task before taking a break (that is, a slightly dynamic pomodoro time). The option org-pomodoro-manual-break enables this workflow, where a break notification is sent at the end of the pomodoro time but the break is started first when manually calling org-pomodoro.
+
+** :config
+literate config -consists of a $DOOMDIR/config.org. All src blocks within are tangled $DOOMDIR/config.el, by default, when $ doom sync is executed.
+
+=Defaults= module is intended as a “reasonable-defaults” module, but also as a reference for your own private config.
+ + A Spacemacs-esque keybinding scheme.
+ + Extra Ex commands for evil-mode users.
+ + A yasnippet snippets library tailored to Doom emacs.
+ + A configuration for (almost) universally repeating searches with ; and ,.
+
+* Config.el/org
+* Packages.el

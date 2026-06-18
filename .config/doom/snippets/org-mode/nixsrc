@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: nixsrc
+# key: nix
+# --
+
+#+begin_src nix
+$0
+#+end_src

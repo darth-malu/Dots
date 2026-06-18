@@ -1,0 +1,11 @@
+.DS_Store
+.idea
+*.log
+tmp/
+*.html
+/config.el
+/init.el
+/.dir-locals.el
+/packages.el
+/custom.el
+/practice_agenda.el

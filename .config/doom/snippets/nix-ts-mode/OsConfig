@@ -1,0 +1,10 @@
+# -*- mode: snippet -*-
+# name: osConfig
+# key: <IfOs
+# --
+
+if osConfig.networking.hostName == "${1:carthage}"
+   then ${2: $1 action}
+   else if osConfig.networking.hostname == "${3:tangier}"
+   then ${4: $3 action}
+$0

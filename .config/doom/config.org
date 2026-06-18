@@ -1,0 +1,2298 @@
+#+title: My Emacs Configuration
+#+author: justin malu
+#+startup: content indent
+
+#+begin_src emacs-lisp :tangle yes
+;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
+#+end_src
+
+* language major modes
+NOTE: if treesitter available the mode has an appended -ts-mode eg python-ts-mode
+** emacs lsp booster
+#+begin_src emacs-lisp :tangle no
+(defun lsp-booster--advice-json-parse (old-fn &rest args)
+  "Try to parse bytecode instead of json."
+  (or
+   (when (equal (following-char) ?#)
+     (let ((bytecode (read (current-buffer))))
+       (when (byte-code-function-p bytecode)
+         (funcall bytecode))))
+   (apply old-fn args)))
+(advice-add (if (progn (require 'json)
+                       (fboundp 'json-parse-buffer))
+                'json-parse-buffer
+              'json-read)
+            :around
+            #'lsp-booster--advice-json-parse)
+
+(defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
+  "Prepend emacs-lsp-booster command to lsp CMD."
+  (let ((orig-result (funcall old-fn cmd test?)))
+    (if (and (not test?)                             ;; for check lsp-server-present?
+             (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
+             lsp-use-plists
+             (not (functionp 'json-rpc-connection))  ;; native json-rpc
+             (executable-find "emacs-lsp-booster"))
+        (progn
+          (when-let ((command-from-exec-path (executable-find (car orig-result))))  ;; resolve command from exec-path (in case not found in $PATH)
+            (setcar orig-result command-from-exec-path))
+          (message "Using emacs-lsp-booster for %s!" orig-result)
+          (cons "emacs-lsp-booster" orig-result))
+      orig-result)))
+(advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)
+#+end_src
+** python mode
+https://renzmann.github.io/posts/006_emacs_2_python/
+
+*** ipython + python-ts-mode
+#+begin_src elisp :tangle yes
+(use-package! python
+  :custom
+  (python-shell-interpreter "ipython")
+  ;; (python-shell-interpreter-args "-i --simple-prompt" ) ; --no-color-info
+  ;; (python-shell-prompt-detect-failure-warning nil)
+  ;; :config
+  ;; (setq +python-ipython-repl-args '("-i" "--simple-prompt" "--no-color-info"))
+  ;; (setq +python-jupyter-repl-args '("--simple-prompt"))
+  (lsp-pyright-langserver-command "basedpyright")
+  :hook
+  (python-ts-mode . (lambda ()
+                   (setq-local lsp-pyright-langserver-command "basedpyright") ;; pyright or basedpyright
+                   (setq-local +format-with 'black)
+                   ;; (lsp-deferred)
+                   (local-set-key (kbd "C-c r") 'python-shell-send-region))))
+#+end_src
+
+*** jupyter
+**** Jupyter as interpreter
+#+begin_src emacs-lisp :tangle no
+(use-package! python
+  :config
+  (setq python-shell-interpreter "jupyter"
+        python-shell-interpreter-args "console --simple-prompt"
+        python-shell-prompt-detect-failure-warning nil)
+  (add-to-list 'python-shell-completion-native-disabled-interpreters "jupyter")
+  :hook
+  (python-ts-mode . (lambda ()
+                   (setq-local lsp-pyright-langserver-command "basedpyright") ;; pyright or basedpyright
+                   (setq +format-with 'black)
+                   (lsp-deferred)
+                   (local-set-key (kbd "C-c r") 'python-shell-send-region))))
+#+end_src
+
+source: [[https://emacs-lsp.github.io/lsp-pyright/]]
+
+**** Machine Learning
+NOTE: No need to load babel plugins myself [[https://discourse.doomemacs.org/t/common-config-anti-patterns/119#loading-org-babel-plugins-yourself-6][because]]
+
+#+begin_src emacs-lisp :tangle yes
+;; (org-babel-do-load-languages 'org-babel-load-languages '((emacs-lisp . t)
+;;                                                           (julia . t)
+;;                                                           (python . t)
+;;                                                           (jupyter . t)))
+
+
+(setq org-babel-default-header-args:jupyter-python '((:async . "yes")
+                                                    (:session . "py")
+                                                    (:kernel . "python3")))
+#+end_src
+
+*** elpy
+#+begin_src emacs-lisp :tangle no
+(use-package! elpy
+  :defer t
+  :init
+  (advice-add 'python-ts-mode :before 'elpy-enable)
+  :custom
+  ;; (elpy-folding-fringe-indicators t)
+  (elpy-modules (delq 'elpy-module-flymake elpy-modules))
+  ;; (setq elpy-modules (cl-set-difference
+  ;;                     elpy-modules
+  ;;                     '(elpy-module-highlight-indentation
+  ;;                       elpy-module-flymake)))
+  :hook
+  (elpy-mode . flycheck-mode))
+#+end_src
+
+cl-set-difference: combines LIST1 + LIST2 such that the resulting list has all elements of LIST1 but not those in LIST2
+        TODO: check if (require 'cl-lib needed)
+
+** Lsp Mode
+*** lsp-mode
+#+begin_src emacs-lisp :tangle no
+(after! lsp
+  (setq lsp-enable-symbol-highlighting nil
+        lsp-enable-suggest-server-download nil))
+#+end_src
+*** lsp treemacs
+#+begin_src emacs-lisp :tangle no
+(use-package! lsp-treemacs
+  :after lsp-mode)                           ; TODO check if need lsp or lsp-mode
+#+end_src
+*** lsp ui
+UI integrations for lsp-mode
+
+https://github.com/emacs-lsp/lsp-ui
+
+By default, =lsp-mode= automatically activates =lsp-ui= unless =lsp-auto-configure= is set to nil.
+
+#+begin_src emacs-lisp :tangle no
+(after! lsp-ui
+  :custom
+  ;; (lsp-ui-doc-show 'bottom)
+  ;; (lsp-ui-doc-position 'top) ;; 'at-point
+  ;; (lsp-ui-doc-show-with-cursor t)
+  ;; (lsp-ui-doc-enable nil) ;NOTE use K
+  ;; (lsp-ui-doc-show-with-mouse t)
+
+  ;; (lsp-ui-peek-show-directory t) ; FIXME
+  ;; (lsp-ui-peek-enable t)
+
+  ;;;imenu
+  ;; (lsp-ui-imenu-auto-refresh) ; auto refresh when necessary
+  ;; (lsp-ui-imenu-refresh-delay) ;FIXME Does not exists?
+  ;; (lsp-ui-imenu-buffer-position 'left)
+
+  ;;;Sideline
+  ;; (lsp-ui-sideline-enable nil)
+
+  (lsp-ui-sideline-show-code-actions t) ;nil::
+  ;; (lsp-enable-symbol-highlighting nil) ; highlight references of symbol at point eg. print in python highlight
+  ;; (lsp-ui-sideline-show-hover nil) ; whether to show hover messages on sideline
+
+  ;; (lsp-ui-sideline-enable nil)     ;t:: TODO....try this
+  ;; (lsp-ui-sideline-show-diagnostics nil) ;hide only errors
+
+  ;;; eldoc
+  ;; (lsp-eldoc-enable-hover nil)
+
+  ;;;modeline
+  ;; (lsp-modeline-code-actions-enable nil)
+  ;; (lsp-modeline-diagnostics-enable nil)
+
+  ;;; lenses
+  ;; (lsp-lens-enable nil)
+
+  ;;;headerline
+  ;; (lsp-headerline-breadcrumb-enable t)
+
+  ;;;flycheck
+  ;; (lsp-diagnostics-provider :none) ; flycheck or flymake (if noflycheck is present); auto::
+
+  ;;;completion
+  ;; (lsp-completion-show-detail nil) ;t::
+  ;; (lsp-completion-show-kind nil)
+  ;; (lsp-completion-provider :none) ; (company mode)
+  )
+#+end_src
+
+https://emacs-lsp.github.io/lsp-ui/
+
+
+https://emacs-lsp.github.io/lsp-mode/tutorials/how-to-turn-off/
+** c
+*** ccls - ❄️
+#+begin_src elisp :tangle yes
+(after! ccls
+  (setq ccls-initialization-options '(:index (:comments 2) :completion (:detailedLabel t)))
+  (set-lsp-priority! 'ccls 1))
+#+end_src
+
+*** clang
+lsp mode with clangd
+#+begin_src elisp :tangle no
+(after! lsp-clangd
+  (setq lsp-clients-clangd-args
+        '("-j=3"
+          "--background-index"
+          "--clang-tidy"
+          "--completion-style=detailed"
+          "--header-insertion=never"
+          "--header-insertion-decorators=0"))
+  (set-lsp-priority! 'clangd 2))
+#+end_src
+
+** nix
+https://github.com/NixOS/nix-mode
+*** nil lsp
+nil: An incremental analysis assistant for writing in Nix.
+#+begin_src emacs-lisp :tangle no
+(use-package! lsp-nix
+  ;; :ensure lsp-mode
+  :after (lsp-mode)
+  :demand t
+  :custom
+  (lsp-disabled-clients '((nix-mode . nix-nixd))) ;; TODO test if nixdd is on or need disabling
+  (lsp-nix-nil-formatter ["nixfmt"]))
+#+end_src
+
+*** nixd
+=lsp-mode=
+#+begin_src emacs-lisp :tangle yes
+(use-package! nix-mode
+:after lsp-mode
+:hook
+(nix-mode . lsp-deferred) ;; So that envrc mode will work
+:custom
+(lsp-disabled-clients '((nix-mode . nix-nil))) ;; Disable nil so that nixd will be used as lsp-server
+:config
+(setq lsp-nix-nixd-server-path "nixd"
+      lsp-nix-nixd-formatting-command [ "nixfmt" ]
+      lsp-nix-nixd-server-arguments '("--inlay-hints=true" "--semantic-tokens=true")
+      ;; lsp-nix-nixd-nixpkgs-expr "import <nixpkgs> { }"
+      lsp-nix-nixd-nixos-options-expr "(builtins.getFlake (expand-file-name \"Shibuya\" (getenv \"HOME\"))).nixosConfigurations.carthage.options"
+      lsp-nix-nixd-home-manager-options-expr "(builtins.getFlake (expand-file-name \"Shibuya\" (getenv \"HOME\"))).nixosConfigurations.carthage.options.home-manager.users.type.getSubOptions []"))
+#+end_src
+
+A. home-manager switch --flake .#... (standalone Home Manager)
+B. nixos-rebuild switch --flake .#... (NixOS with integrated Home Manager)
+
+Configuration examples for both approaches are shown below.
+
+#+begin_src json :tangle no
+"home-manager": {
+  A:
+  "expr": "(builtins.getFlake (builtins.toString ./.)).homeConfigurations.<name>.options"
+
+  B:
+  "expr": "(builtins.getFlake (builtins.toString ./.)).nixosConfigurations.<name>.options.home-manager.users.type.getSubOptions []"
+}
+#+end_src
+
+** Astro
+*** Astro-ls
+#+begin_src emacs-lisp :tangle no
+;; Added when FIXME: treesit-ready-p - void function
+;; (when (featurep 'treesit)
+  (setq treesit-language-source-alist
+        '((astro-ts-mode "https://github.com/virchau13/tree-sitter-astro")
+          (css-ts-mode "https://github.com/tree-sitter/tree-sitter-css")
+          (tsx-ts-mode "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src"))
+        )
+
+  (dolist (lang '(astro-ts-mode css-ts-mode tsx-ts-mode))
+    (unless (treesit-language-available-p lang)
+      (treesit-install-language-grammar lang))))
+
+(use-package! astro-ts-mode
+  :mode "\\.astro\\'"
+  :hook
+  (astro-ts-mode . (lambda () (abbrev-mode) (diff-hl-mode -1) (spell-fu-mode -1)))
+  :init
+  (when (modulep! +lsp)
+    (add-hook 'astro-ts-mode-hook #'lsp! 'append))
+  :config
+  (after! lsp-mode
+    (add-to-list 'lsp-language-id-configuration '(astro-ts-mode . "astro-ts"))
+
+    (lsp-register-client
+     (make-lsp-client :new-connection (lsp-stdio-connection "astro-ls")
+                      :activation-fn (lsp-activate-on "astro-ts")
+                      :server-id 'astro-ls))))
+
+;; (setq prettier-js-command "prettierd"
+;;       prettier-js-args '("--no-editorconfig")))
+
+;; (use-package! prettier-js
+;;   :hook
+;;   (web-mode . prettier-js-mode)
+;;   ;; (astro-ts-mode . prettier-js-mode)
+;;   (js-mode . prettier-js-mode))
+#+end_src
+
+*** Astro-Eglot
+#+begin_src elisp :tangle no
+;; (define-derived-mode astro-ts-mode web-mode "Astro"
+;;   "Major Mode for astro files 😀")
+
+(use-package! astro-ts-mode
+  :defer t
+  :hook (astro-ts-mode . eglot-ensure)
+  :mode "\\.astro\\")
+
+(after! eglot
+  (add-to-list `eglot-server-programs
+               `(astro-ts-mode . ("astro-ls" "--stdio"
+                               :initializationOptions
+                               (:typescript (:tsdk "./node_modules/typescript/lib"))))))
+
+#+end_src
+
+*** Formatting with apeleia - prettier bunx
+#+begin_src emacs-lisp :tangle no
+(after! apheleia
+  (set-formatter! 'prettier-astro
+    '("bunx" "prettier" "--parser=astro" ;
+      (apheleia-formatters-indent "--use-tabs" "--tab-width" 'astro-ts-mode-indent-offset))
+    :modes '(astro-ts-mode))
+  (add-to-list 'apheleia-mode-alist '(astro-ts-mode . prettier-astro)
+               ))
+
+(when (featurep 'treesit)
+  (add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.css\\'" . css-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.astro\\'" . astro-ts-mode)))
+
+
+(mapc #'treesit-install-language-grammar '(astro-ts-mode css-ts-mode tsx-ts-mode))
+#+end_src
+
+https://git.isincredibly.gay/srxl/dotfiles/src/branch/main/config/dot_config/emacs/config.org#headline-58
+
+[[https://github.com/withastro/prettier-plugin-astro][astro prettier]]: 
+
+
+#+begin_src emacs-lisp :tangle no
+;; (use-package! lsp-tailwindcss :after lsp-mode)
+
+(use-package! lsp-tailwindcss
+  ;; :when (modulep! +lsp)
+  :after lsp-mode
+  :init
+  (setq lsp-tailwindcss-add-on-mode t)
+
+  :config
+  (add-to-list 'lsp-tailwindcss-major-modes 'astro-ts-mode))
+#+end_src
+
+Steps to get it working:
++
+** Tailwindcss
+#+begin_src emacs-lisp :tangle yes
+(use-package lsp-tailwindcss
+  :after lsp-mode
+  :init
+  (setq lsp-tailwindcss-add-on-mode t)) ;nil::
+(add-hook 'before-save-hook 'lsp-tailwindcss-rustywind-before-save)
+#+end_src
+** web mode
+#+begin_src emacs-lisp :tangle no
+(defun my/web-mode-hook ()
+  "my webmode hook"
+  (setq web-mode-markup-indent-offset 2
+        web-mode-css-indent-offset 2
+        ))
+
+(add-hook! web-mode-hook 'my/web-mode-hook)
+#+end_src
+
+** QML
+Quickshell site
+
+#+begin_src elisp :tangle yes
+(use-package! qml-ts-mode
+  :after lsp-mode
+  :config
+  (add-to-list 'lsp-language-id-configuration '(qml-ts-mode . "qml-ts"))
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-stdio-connection '("qmlls"))
+                    :activation-fn (lsp-activate-on "qml-ts")
+                    :server-id 'qmlls))
+  :hook
+  (qml-ts-mode . (lambda () 
+                   (setq-local electric-indent-chars '(?\n ?\( ?\) ?{ ?} ?\[ ?\] ?\; ?,))
+                   ;; (lsp-headerline-breadcrumb-mode 1)
+                   (lsp-deferred))))
+#+end_src
+
+** dotnet
+#+begin_src emacs-lisp :tangle no
+(use-package! sharper
+  :demand t
+  :bind
+  ("C-c n" . sharper-main-transient))
+#+end_src
+** direnv
+#+begin_src elisp :tangle yes
+(use-package! direnv
+ :config
+ (direnv-mode))
+#+end_src
+** yeetube
+#+begin_src emacs-lisp :tangle yes
+;; TODO: make this better bind
+(use-package! yeetube
+  :init (define-prefix-command 'my/yeetube-map)
+  :bind (("C-c y" . 'my/yeetube-map)
+          :map my/yeetube-map
+          ("RET" . 'yeetube-play)     
+          ("s" . 'yeetube-search)
+          ("b" . 'yeetube-play-saved-video)
+          ("d" . 'yeetube-download-videos)
+          ("p" . 'yeetube-mpv-toggle-pause)
+          ("v" . 'yeetube-mpv-toggle-video)
+          ("V" . 'yeetube-mpv-toggle-no-video-flag)
+          ("k" . 'yeetube-remove-saved-video)))
+#+end_src
+** org-babel
+#+begin_src emacs-lisp :tangle yes
+(after! org
+  (setq org-babel-js-cmd "bun"))
+#+end_src
+* DOOM functionality
+** Inbuilt stuff
+*** abbrev
+
+NOTE need to toggle abbrev mode
+
+abbrev mode is buffer-local
+
+#+begin_src emacs-lisp :tangle no
+(define-abbrev global-abbrev-table "meab" "This is my first abbrev")
+
+(defun my-current-time ()
+  (insert (format-time-string "%A,%B %e%t%T")))
+
+(define-abbrev org-mode-abbrev-table "mytime" "" 'my-current-time)
+#+end_src
+
+*** buffer location in window | display-buffer-alist | set-popup-rules
+**** Doom way 
+because ui: popup use set-popup-rules
+
+#+begin_src emacs-lisp :tangle yes
+(set-popup-rules!
+  '(("\\*Occur\\*" :select t :side bottom :actions (display-buffer-in-side-window) :ttl 5 :quit t)
+    ("\\*doom:scratch\\*" :quit t)
+    ("\\*info\\*" :quit t :side right :select t :width +popup-shrink-to-fit)
+    ("\\*ielm\\*" :quit t :side right :select t :width +popup-shrink-to-fit)
+    ("^\\*WoMan.*\\*" :quit t :side right :width +popup-shrink-to-fit)
+    ))
+#+end_src
+
+ttl - time to live
+**** vanilla emacs
+=Anatomy of an entry=
+( BUFFER-MATCHER
+LIST-OF-DISPLAY-FUNCTIONS
+&optional PARAMETERS)
+
+=Regex or derived-mode=
+((derived-mode . notmuch-hello-mode)
+  List of functions
+  Parameters)
+
+#+begin_src emacs-lisp :tangle no
+(defun darth-select-window (window)
+    "NOTE Docuementation expects a window arg"
+    (select-window window))
+
+(defun my/set-buffer-darth ()
+    "Set my regexex"
+    (add-to-list 'display-buffer-alist
+            ;; List of display functions (Emacs will use the first successful one)
+            `("\\*Occur\\*"
+            (display-buffer-reuse-mode-window display-buffer-below-selected)
+            ;; Parameters
+            (window-height . fit-window-to-buffer)
+            (dedicated . t)
+            (body-function . darth-select-window))))
+
+(add-hook 'doom-after-init-hook #'my/set-buffer-darth)
+#+end_src
+
+** fonts
+change fonts on the fly [[file:~/org/roam/20250401030930-doom_emacs.org::*To change fonts on the fly][Link to my notes]]
+
+#+begin_src emacs-lisp :tangle yes
+  (setq doom-symbol-font (font-spec :family "Symbols Nerd Font")
+         doom-font (font-spec :family "JetBrains Mono"
+                             :size 15
+                             :weight 'regular)
+         doom-emoji-font (font-spec :family "Noto Color Emoji")
+         doom-variable-pitch-font (font-spec :family "VictorMono Nerd Font" :size 14 :weight 'semibold))
+#+end_src
+
+=Useful conditionals=
+(if (string-equal (system-name) "tangier") 'regular 'regular))
+
+=Investigate=
+doom-unicode-font
+doom-serif-font
+
+=Ligatures=
+#FIXME Make this work for org
+#+begin_src emacs-lisp :tangle no
+;; (set-font-ligatures! '(org-mode) ">>=" ">>-")
+(after! org
+  (set-ligatures! 'org-mode
+    :def "ƒ"))
+#+end_src
+
+** modeline
+*** Active | Inactive
+works !!...height too small thought :height 0.9
+
+#+begin_src emacs-lisp :tangle yes
+(custom-set-faces!
+  '(mode-line :family "Mononoki Nerd Font" :box nil :overline nil)
+  ;; '(doom-modeline-buffer-modified :foreground "green") ; color of modified buffer indicator
+  '(mode-line-inactive :family "VictorMono Nerd Font" :weight bold :height 0.95))
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
+;; TODO: see if fonts can be changed this way instead
+  ;; DOOM MODELINE
+  (setq doom-modeline-height 1) ; optional
+  (if (facep 'mode-line-active)
+      (set-face-attribute 'mode-line-active nil :family "Mononoki Nerd Font" :height 100) ; For 29+
+    (set-face-attribute 'mode-line nil :family "Noto Sans" :height 100))
+  (set-face-attribute 'mode-line-inactive nil :family "VictorMono Nerd Font"  :height 100)
+
+#+end_src
+
+:height 0.95
+
+*** battery
+#+begin_src emacs-lisp :tangle no
+(if (string= (system-name) "tangier") ;; battery on TANGIER
+    (progn
+      (setq doom-modeline-battery t)
+      (display-battery-mode 1))
+  (setq doom-modeline-battery nil))
+#+end_src
+
+** Backup dir alist | projectile | auto save
+Projectile, lsp-mode, and other packages create their own files to store variables and state!
+
+#+begin_src elisp :tangle yes
+(setq projectile-known-projects-file (expand-file-name "tmp/projectile-bookmarks.eld" user-emacs-directory)
+      lsp-session-file (expand-file-name "tmp/.lsp-session-v1" user-emacs-directory))
+
+(setq backup-directory-alist '(("." . "~/.local/share/Trash/files"))) ; delete to trash instead of create backup files with .el~ suffix (alot of clutter)
+;; (setq user-emacs-directory (expand-file-name "~/.cache/emacs")) ;default is in .emacs dir cache
+#+end_src
+
+#+begin_src elisp :tangle yes
+;; Auto-save-mode doesn't create the path automatically!
+(make-directory (expand-file-name "tmp/auto-saves/" user-emacs-directory) t)
+
+(setq auto-save-list-file-prefix (expand-file-name "tmp/auto-saves/sessions/" user-emacs-directory)
+      auto-save-file-name-transforms `((".*" ,(expand-file-name "tmp/auto-saves/" user-emacs-directory) t)))
+#+end_src
+
+https://www.gnu.org/software/emacs/manual/html_node/emacs/Auto-Save-Files.html#Auto-Save-Files
+
+** emacs sane
+#+begin_src elisp :tangle yes
+(use-package! emacs
+  :init
+  (setq custom-file (expand-file-name "custom.el" doom-user-dir))
+  :custom
+  (fancy-splash-image (file-name-concat doom-user-dir "emacs.png"))
+        ;; initial-buffer-choice #'eshell
+  (+dashboard-name "maluware" )
+  (+dashboard-functions '(+dashboard-widget-banner))
+  ;; latex
+  ;; (org-latex-compiler 'lualatex)        ;pdflatex::
+  ;; (org-preview-latex-default-process 'dvisvgm) ;dvipng::
+  ;; (org-super-agenda-mode t)
+  ;; (epg-pinentry-mode 'loopback)
+  (tab-width 2)
+  (tab-always-indent 'complete)
+  (tab-first-completion nil) ;; word 'word-or-paren-or-punct
+  ;; (completion-styles '(orderless basic partial-completion emacs22)) ; flex (orderless basic) ; flex -fuzzy find
+  (display-line-numbers-type nil) ;numbers, relative , - perfomance enhance...turn on if needed
+  ;; (auto-save-default t)
+  ;; (auto-save-timeout 10) ;;30:-:
+  ;; (auto-save-interval 200) ;; NOTE: Must be -gt 20...emacs will behave as if value is 20 if less
+  ;; (undo-limit 80000000)
+  (delete-by-moving-to-trash t) ; use system trash can
+  ;; (x-stretch-cursor t) ; see if needed really
+  (bookmark-save-flag 1) ; TODO see docs
+  ;; (uniquify-buffer-name-style 'post-forward) ;nil::
+
+  (inhibit-startup-message t)           ;Tutorial Page lol---useless with doom?
+
+  ;; (doom-fallback-buffer-name " ") ;last page...creat if does not exist
+
+  (+evil-want-o/O-to-continue-comments nil) ; o/O does not continue comment to next new line 😸
+  (+default-want-RET-continue-comments nil)
+  ;; (evil-move-cursor-back nil)               ; don't move cursor back one CHAR when exiting insert mode
+
+  (evil-shift-width 2)
+  (eros-eval-result-prefix "⟹ ") ; default =>
+  (user-full-name "Justin Malu") ; foor GPG config, email clients, file templates & snippets ; optional
+  (user-mail-address "justinmalu@gmail.com")
+
+  ;; magit
+  (magit-view-git-manual-method 'woman)
+
+  ;;; https://www.gnu.org/software/emacs/manual/html_node/emacs/Auto-Scrolling.html
+  (scroll-margin 8)
+  (scroll-conservatively 101)
+
+  ;; TODO: check what the numbers mean in doom
+  ;; (doom-modeline-check-simple-format t)
+  ;; (doom-modeline-check-icon t)
+  ;; (doom-modeline-height 3)             ;5:: -If charheight is larger its respected instead
+  ;; (doom-modeline-hud t)       ;Only respected in GUI
+  ;;; ON BY DEFAULT
+  ;; (doom-modeline-buffer-file-name-style 'auto)
+  ;; (doom-modeline-major-mode-color-icon t)
+  ;; (doom-modeline-lsp-icon t)
+  ;; (doom-modeline-buffer-name t)
+  ;; Whether display the minor modes in the mode-line.
+  ;; (doom-modeline-minor-modes nil)
+  ;; (doom-modeline-vcs-icon t)
+  ;; (doom-modeline-vcs-max-length 15)
+  (doom-modeline-modal nil)
+  ;; (doom-modeline-modal-icon t)
+  ;; (doom-modeline-modal-modern-icon t) ;; Whether display the modern icons for modals.
+  
+  (doom-modeline-always-show-macro-register t) ;show register name when recording a macro
+
+  ;; Major modes in which to display word count continuously.
+  ;; Also applies to any derived modes. Respects `doom-modeline-enable-word-count'.
+  ;; If it brings the sluggish issue, disable `doom-modeline-enable-word-count' or
+  ;; remove the modes from `doom-modeline-continuous-word-count-modes'.
+  ;; (doom-modeline-continuous-word-count-modes '(markdown-mode gfm-mode org-mode))
+  
+
+  ;; (lsp-ui-sideline-show-code-actions t) ;nil::
+
+  ;;(display-time-mode 1)                             ; Enable time in the line-mode
+  ;; (display-time-format "%H:%M")
+  ;;(display-time-default-load-average nil)
+  ;; (display-time-day-and-date 1)
+
+  :config
+  (defalias 'man 'woman)
+  ;; (global-set-key [escape] 'keyboard-escape-quit) ; By default, Emacs requires you to hit ESC three times to escape quit the minibuffer. ; test this further
+  ;; (global-auto-revert-mode t) ;; NOTE enabled by default?
+  (drag-stuff-global-mode 1)
+  (drag-stuff-define-keys)
+  (customize-set-variable 'uniquify-buffer-name-style 'post-forward)
+  (customize-set-variable 'uniquify-separator " ❄ ") ;💎 🧿💢
+  ;; (customize-set-variable 'ein:jupyter-server-use-command 'server)
+  ;; (customize-set-variable 'ein:jupyter-server-use-subcommand "server")
+  (load! "+darthBinds")
+  :bind (
+         :map evil-normal-state-map
+          ;;;misc
+          ("M-;" . save-buffer)      
+          ("<mouse-8>" . previous-buffer)
+          ("<mouse-9>" . next-buffer)
+          ("C-M-o" . consult-outline)
+          ("M-n" . avy-goto-char-2)
+          ("C-e" . evil-end-of-line) ; clash with other settings - capitalise, org-metaright
+          ("C-a" . beginning-of-line-text)
+
+          ;;; EOL, BOL
+          ("M-S-l" . end-of-visual-line)
+          ("M-S-h" . beginning-of-visual-line)
+
+          ;;; insert newline below/above
+          ("M-o" . +evil/insert-newline-below)
+          ("M-O" . +evil/insert-newline-above)
+
+          ("C-'" . olivetti-mode)
+
+          :map evil-insert-state-map
+          ("M-/" . #'org-comment-dwim) 
+          ("M-;" . nil)                 ;Unmap default org-comment-dwim
+
+          :map doom-leader-map
+          ("to" . hl-todo-occur)
+          ("I" . ielm)
+          ("SPC" . ace-window)))
+#+end_src
+
+** format +onsave disabled modes
+#+begin_src emacs-lisp :tangle yes
+(customize-set-variable '+format-on-save-disabled-modes '(nxml-mode)) ;Android studio
+#+end_src
+** delete spaces, tabs, newline
+#+begin_src emacs-lisp :tangle yes
+(setq backward-delete-char-untabify-method 'all)
+#+end_src
+
++ all - all whitespace - tabs, spaces, \n
++ hungry - all whitespace - tabs, spaces
++ untabify - turn a tab into many spaces, then delete one space at a time
+
+** create a new window and switch cursor to it
+#+begin_src emacs-lisp :tangle no
+ (defun split-and-follow-horizontally ()
+	(interactive)
+	(split-window-below)
+	(balance-windows)
+	(other-window 1))
+ (global-set-key (kbd "C-x 2") 'split-and-follow-horizontally)
+
+ (defun split-and-follow-vertically ()
+	(interactive)
+	(split-window-right)
+	(balance-windows)
+	(other-window 1))
+ (global-set-key (kbd "C-x 3") 'split-and-follow-vertically)
+#+end_src
+** experiment
+*** initial buffer
+ #+begin_src emacs-lisp :tangle no
+(setq initial-buffer-choice "~/.doom.d/config.org") ;
+ #+end_src
+
+*** custom start mode
+
+#+begin_src emacs-lisp :tangle no
+(define-minor-mode start-mode
+  "Provide functions for custom start page"
+  :lighter " start"
+  :keymap (let ((map (make-sparse-keymap)))
+                (evil-define-key 'normal start-mode-map
+                  (kbd "1") '(lambda () (interactive) (find-file "~/.doom.d/packages.org")))
+                map))
+;;(add-hook! 'start-mode-hook 'read-only-mode) ;;make start org read only
+(provide 'start-mode)
+#+end_src
+
+*** hide #+begin_src end_src blocks
+**** FIX does not work well...with doom? better way?
+see plugin options
+#+begin_src emacs-lisp :tangle no
+(let ((background-color (face-attribute 'default :background)))
+  (set-face-attribute 'org-block-begin-line nil
+                      :foreground background-color
+                      :background background-color))
+#+end_src
+*** select and type
+useful in vanilla emacs?
+#+begin_src emacs-lisp :tangle no
+(delete-selection-mode 1)
+(setq delete-selection-mode t) ;;TODO test if this works
+#+end_src
+*** turn yes-or-no questions into y or no
+#+begin_src emacs-lisp :tangle no
+(defalias 'yes-or-no-p 'y-or-n-p)
+#+end_src
+* Packages
+** elcord
+#+begin_src emacs-lisp :tangle yes
+(use-package! elcord
+  :commands elcord-mode
+  :custom
+  (elcord-display-elapsed nil)
+  (elcord-idle-message "Sipo Kwenye Keyboard...👻")
+  :config
+  ;; (elcord-mode 1)
+  (setq elcord--editor-name "Church of Emacs"
+        elcord-use-major-mode-as-main-icon t
+        ))
+#+end_src
+** org-auto-tangle
+#+begin_src emacs-lisp :tangle yes
+(use-package! org-auto-tangle
+  :defer t
+  :hook (org-mode . org-auto-tangle-mode)
+  :config
+  ;; (setq org-auto-tangle-default t) ; set auto_tangle: nil for buffers not to auto tangle
+  (setq org-auto-tangle-babel-safelist '("~/system.org" "~/test.org")))
+#+end_src
+
+[[github:yilkalargaw/org-auto-tangle]]
+
+** corfu
+not sure if after! init works lul
+
+#+begin_src elisp :tangle yes
+(use-package! corfu
+  :init
+  (customize-set-variable 'corfu-auto nil))
+#+end_src
+
+
+(text-mode-ispell-word-completion nil) - NOTE: nil by default...consider changing to sane default
+
+Hide commands in M-x which do not apply to the current mode.  Corfu commands are hidden, since they are not used via M-x. This setting is useful beyond Corfu.
+
+(read-extended-command-predicate #'command-completion-default-include-p)
+
+=tabs-always-indent=
+Enable indentation+completion using the TAB key. =`completion-at-point'= is often bound to M-TAB.
+
+(setq tab-always-indent 'complete) ; try complete if indent is off
+- If t, hitting TAB always just indents the current line.
+- If nil, hitting TAB indents the current line if point is at the left margin
+ or in the line's indentation, otherwise it inserts a "real" TAB character.
+- If complete, TAB first tries to indent the current line, and if the line
+was already indented, then try to complete the thing at point.
+
+Also see =tab-first-completion.=(This variable has no effect unless tab-always-indent is complete.)
+
+Some programming language modes have their own variable to control this, e.g., c-tab-always-indent, and do not respect this variable.
+
+** TODO Persp-mode default workspace behaviour fix
+#+begin_src emacs-lisp :tangle yes
+;; Trying to save workspaces
+(after! persp
+  ;; Auto-save workspaces when Emacs exits
+  (setq persp-auto-save-opt 1
+         ;; Save all workspace info including window configurations
+         persp-set-last-persp-for-new-frames nil
+         persp-reset-windows-on-nil-window-conf nil
+         ;; Load workspaces automatically on startup
+         persp-auto-resume-time -1.0)
+         ;; persp-emacsclient-init-frame-behaviour-override #'+workspace/restore-last-session          ;+workspaces-associate-frame-fn::
+  )
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
+(after! persp
+  (setq persp-emacsclient-init-frame-behaviour-override
+   `(+workspace-current-name))          ;+workspaces-associate-frame-fn::
+)
+#+end_src
+** spelling
+https://www.gnu.org/software/emacs/manual/html_node/emacs/Spelling.html
+*** ispell
+Dictionary is set by ispell-dictionary variable. Can be changed locally with the function ispell-change-dictionary.
+
+#+begin_src emacs-lisp :tangle no
+;; (setq ispell-program-name "hunspell")
+(setq ispell-dictionary "en_US")
+;; Or, for local dictionary settings:
+(setq ispell-local-dictionary "en_US")
+#+end_src
+
+*** TODO spell-fu
+always activating in org mode...keep it as hook in [[ORG]]
+#+begin_src emacs-lisp :tangle yes
+;; (after! spell-fu
+;;   (setq spell-fu-idle-delay 0.5)  ; default is 0.25
+;;   ;; (setq spell-fu-faces nil)
+;;   (setq spell-fu-ignore-modes (list 'org-mode) )
+;;   )
+
+(use-package! spell-fu
+  :defer t
+  :custom
+  (spell-fu-ignore-modes (list 'org-mode 'markdown-mode 'html-mode 'prog-mode 'astro-ts-mode))
+  (spell-fu-global-ignore-buffer (lambda (buf)
+                                   (buffer-local-value 'buffer-read-only buf)))
+  ;; (spell-fu-global-mode nil)
+  :config
+  (spell-fu-global-mode -1)
+  ;; :hook
+  ;; (emacs-lisp-mode . (lambda () (spell-fu-mode)))
+  ;; (org-mode . (lambda ()
+  ;;             (setq-local spell-fu-faces-exclude
+  ;;               '(org-block-begin-line
+  ;;                 org-block-end-line
+  ;;                 org-code
+  ;;                 org-date
+  ;;                 org-drawer org-document-info-keyword
+  ;;                 org-ellipsis
+  ;;                 org-link
+  ;;                 org-meta-line
+  ;;                 org-properties
+  ;;                 org-properties-value
+  ;;                 org-special-keyword
+  ;;                 org-src
+  ;;                 org-tag
+  ;;                 org-verbatim))))
+)
+#+end_src
+
+=Exclude faces=
+#+begin_src emacs-lisp :tangle no
+(setf (alist-get 'markdown-mode +spell-excluded-faces-alist)
+      '(markdown-code-face
+	markdown-reference-face
+	markdown-link-face
+	markdown-url-face
+	markdown-markup-face
+	markdown-html-attr-value-face
+	markdown-html-attr-name-face
+	markdown-html-tag-name-face))
+#+end_src
+** evil-nerd-commenter | better comments
+#+begin_src elisp :tangle yes
+(use-package! evil-nerd-commenter
+  :defer t
+  :bind ("M-/" . evilnc-comment-or-uncomment-lines))
+#+end_src
+
+** highlight TODO
+#+begin_src emacs-lisp :tangle yes
+(use-package! hl-todo
+  :hook (org-mode . hl-todo-mode)
+  :config
+  (setq hl-todo-highlight-punctuation ":"
+        hl-todo-keyword-faces `(("TODO"       warning bold)
+                                ("FIXME"      error bold)
+                                ("!TODO"    error bold)
+                                ("HACK"       font-lock-constant-face bold)
+                                ("SEEKGOD"       font-lock-constant-face bold)
+                                ("KESHO"       font-lock-constant-face bold)
+                                ("REVIEW"     font-lock-keyword-face bold)
+                                ("NOTE"       success bold)
+                                ("DEPRECATED" font-lock-doc-face bold))))
+#+end_src
+
+** Ace-window
+#+begin_src emacs-lisp :tangle yes
+(custom-set-faces!
+  '(aw-leading-char-face
+    :foreground "white" :background "red"
+    :weight bold :height 2.5 :box (:line-width 10 :color "red")))
+#+end_src
+
+** Disabled
+*** electric TODO test further
+#+begin_src emacs-lisp :tangle no
+(setq electric-pair-pairs '(
+                            (?\{ . ?\})
+                            (?\( . ?\))
+                            (?\[ . ?\])
+                            (?\" . ?\")
+                            ))
+;; (electric-indent-mode -1) ; on::
+  ;; (electric-pair-mode 1) ; on by default
+#+end_src
+*** all the icons
+#+begin_src elisp :tangle yes
+(use-package! all-the-icons
+  :if (display-graphic-p))
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
+(use-package! all-the-icons-dired
+  :hook (dired-mode . (lambda () (all-the-icons-dired-mode t))))
+#+end_src
+**** projectile
+
+0 - check DIRECTORY
+1- check SUBDIRECTORIES
+
+#+begin_src elisp :tangle yes
+(use-package! projectile
+  :init
+  (setq projectile-project-search-path '(
+                                         ;; ("~/Development" . 1) ;; TODO see if you can omit import of dir itself - dirty
+                                         ("~/Development/SkunkWorks" . 1) 
+                                         "~/.config"
+                                         ;; ("~/USIU" . 1)
+                                         ;; "~/Development/Quickshell-Inspiration"
+                                         ))
+  :custom
+  (projectile-auto-cleanup-known-projects t))
+#+end_src
+*** gpg - pinentry
+#+begin_src emacs-lisp :tangle no
+  (defun pinentry-emacs (desc prompt ok error)
+    (let ((str (read-passwd (concat (replace-regexp-in-string "%22" "\"" (replace-regexp-in-string "%0A" "\n" desc)) prompt ": "))))
+      str))
+#+end_src
+*** old | phased out
+**** dired
+#+begin_src emacs-lisp :tangle no
+(use-package! dired-open
+  :config
+  (setq dired-open-extensions '(("gif" . "viewnior")
+                                ("jpg" . "viewnior")
+                                ("png" . "viewnior")
+                                ("mkv" . "mpv")
+                                ("mp4" . "mpv"))))
+
+(use-package! peep-dired
+  :after dired
+  :hook (evil-normalize-keymaps . peep-dired-hook)
+  :config
+    (evil-define-key 'normal dired-mode-map (kbd "h") 'dired-up-directory)
+    (evil-define-key 'normal dired-mode-map (kbd "l") 'dired-open-file) ; use dired-find-file instead if not using dired-open package
+    (evil-define-key 'normal peep-dired-mode-map (kbd "j") 'peep-dired-next-file)
+    (evil-define-key 'normal peep-dired-mode-map (kbd "k") 'peep-dired-prev-file)
+)
+#+end_src
+**** centaur tabs
+#+begin_src elisp :tangle no
+(use-package! centaur-tabs
+  :defer t
+  ;; :demand ; for when you need it immediately
+  ;; :init
+  ;; (setq centaur-tabs-mode nil)
+  ;; (centaur-tabs-change-fonts "arial" 112)
+  ;; (centaur-tabs-headline-match) ; FIXME does not work causes error
+  ;; (require 'projectile)
+  ;; (centaur-tabs-group-by-projectile-project) ; group tabs by projectile
+  :config
+  (setq centaur-tabs-set-bar nil ; left, over, under
+        centaur-tabs-style 'bar ;alternate, bar, box(x), wave, zigzag, chamfer FIXME...slant does not work
+        centaur-tabs-icon-type 'all-the-icons ; or nerd-icons
+        centaur-tabs-set-icons t
+        ;; centaur-tabs-close-button "X"
+        ;; centaur-tabs-modified-marker "•" - Also
+        ;; centaur-tabs-set-close-button nil
+        ;; centaur-tabs-plain-icons t ; for same color as text
+        ;; centaur-tabs-show-navigation-buttons t
+        centaur-tabs-gray-out-icons 'buffer
+        centaur-tabs-cycle-scope 'tabs ; default::, tabs , groups
+        centaur-tabs-height 15)
+  :hook (
+         ;; (nix-mode  . centaur-tabs-mode)
+         ;; (python-mode  . centaur-tabs-mode)
+         ;; (prog-mode  . centaur-tabs-mode)
+         (pdf-view-mode . centaur-tabs-local-mode)
+         (org-mode . centaur-tabs-local-mode)) ; no centaur tabs on org documents
+  :bind
+  (:map evil-normal-state-map
+        ("g t" . centaur-tabs-forward)
+        ("g T" . centaur-tabs-backward)))
+#+end_src
+
+  there are two faces to customize the close button string: centaur-tabs-modified-marker-unselected and centaur-tabs-modified-marker-selected
+
+
+=Projectile integration=
+You can group your tabs by Projectile’s project. Just use the following function in your configuration:
+
+~(centaur-tabs-group-by-projectile-project)~
+This function can be called interactively to enable Projectile grouping. To go back to centaur-tabs’s user defined (or default) buffer grouping function you can interactively call:
+
+~(centaur-tabs-group-buffer-groups)~
+
+You can make the headline face match the centaur-tabs-default face. This makes the tabbar have an uniform appearance. In your configuration use the following function:
+~(centaur-tabs-headline-match)~
+
+see also:
++ https://github.com/ema2159/centaur-tabs?tab=readme-ov-file#buffer-groups
++ https://github.com/ema2159/centaur-tabs?tab=readme-ov-file#tab-styles
+
+**** emms
+#+begin_src elisp :tangle no
+(emms-all)
+(emms-add-directory-tree "/home/malu/Music/")
+(setq emms-player-list '(emms-player-mpv)
+      emms-info-functions '(emms-info-native
+                            ;; emms-info-metaflac ;FIXME not found
+                            ;; emms-info-ogginfo
+                            ))
+#+end_src
+**** company
+#+begin_src elisp :tangle no
+;; (after! company
+(use-package! company
+  ;; :after lsp-mode
+  ;; :hook
+  ;; (lsp-mode . company-mode)
+  ;; (evil-normal-state-entry #'company-abort )
+  ;; (after-init 'global-company-mode)
+  :defer t
+  :custom
+  (company-idle-delay (lambda () (if (company-in-string-or-comment) nil 0.3))) ; delay in seconds 0.3;;
+  ;; (company-idle-delay 0.0)
+  (company-minimum-prefix-length 2)
+  (company-selection-wrap-around t)
+  (company-show-numbers t)
+  (company-require-match 'never) ; dont need to pick a choice
+  (company-tooltip-limit 6)
+  :bind
+  (:map company-active-map
+        ;; ("<tab>" . company-complete-selection)
+        ;; ("<tab>" . company-select-next-or-abort)
+        ;; ("<tab>" . company-select-next)
+        ;; ("backtab" . company-select-previous)
+        ("RET" . company-complete-selection)
+        ("<escape>" . company-abort)))
+#+end_src
+
+Company is a text and code completion framework for Emacs. The name stands for "complete anything".
+
+It uses pluggable back-ends and front-ends to retrieve and display completion candidates.
+
+It comes with several back-ends such as Clang, Ispell, CMake, BBDB, Yasnippet, Dabbrev, Etags, Gtags, Files, Keywords and others.
+And the CAPF back-end provides a bridge to the standard completion-at-point-functions facility, and thus works with any major mode that uses the common protocol.
+
+To see or change the list of enabled back-ends, type M-x =customize-variable= RET company-backends. Also see its description for information on writing a back-end.
+
+Once installed, enable company-mode with M-x =company-mode=.
+
+usage:
+|-------------------------+------------------------------------------------------|
+| =C-n / C-p=             | up / down                                            |
+| =C-s C-r C-o=           | search through completions                           |
+| =M-<digit>=             | quickly complete with one of the first 10 candidates |
+| =M-x: company-complete= | to initiate completion manually                      |
+|-------------------------+------------------------------------------------------|
+source:[[http://company-mode.github.io/manual/Getting-Started.html#Commands-1]]
+
+**** obsidian
+#+begin_src emacs-lisp :tangle no
+(setq obsidian-directory "~/OBSIDIAN")
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
+(use-package! obsidian
+  :config
+  (global-obsidian-mode t)
+  (obsidian-backlinks-mode t)
+  :custom
+  ;; location of obsidian vault
+  (obsidian-directory "~/OBSIDIAN")
+  ;; Default location for new notes from `obsidian-capture'
+  (obsidian-inbox-directory "Inbox")
+  ;; Useful if you're going to be using wiki links
+  (markdown-enable-wiki-links t)
+
+  ;; These bindings are only suggestions; it's okay to use other bindings
+  :bind (:map obsidian-mode-map
+              ;; Create note
+              ("C-c C-n" . obsidian-capture)
+              ;; If you prefer you can use `obsidian-insert-wikilink'
+              ("C-c C-l" . obsidian-insert-link)
+              ;; Open file pointed to by link at point
+              ("C-c C-o" . obsidian-follow-link-at-point)
+              ;; Open a different note from vault
+              ("C-c C-p" . obsidian-jump)
+              ;; Follow a backlink for the current file
+              ("C-c C-b" . obsidian-backlink-jump)))
+#+end_src
+
+**** FIXME git time machine
+#+begin_src emacs-lisp :tangle no
+(use-package! git-timemachine
+  :after git-timemachine
+  :hook (evil-normalize-keymaps . git-timemachine-hook)
+  :config
+    (evil-define-key 'normal git-timemachine-mode-map (kbd "C-j") 'git-timemachine-show-previous-revision)
+    (evil-define-key 'normal git-timemachine-mode-map (kbd "C-k") 'git-timemachine-show-next-revision)
+)
+#+end_src
+
+**** FIXME Dashboard
+#+begin_src emacs-lisp :tangle no
+(use-package! dashboard
+  :ensure nil
+  :init
+  (setq initial-buffer-choice 'dashboard-open)
+  (setq dashboard-set-heading-icons t)
+  (setq dashboard-set-file-icons t)
+  (setq dashboard-banner-logo-title "Glorious lisp interpreter")
+  ;;(setq dashboard-startup-banner 'logo) ;; use standard emacs logo as banner
+  (setq dashboard-startup-banner "~/Shibuya/assets/emacs/emacs-dash.png")  ;; use custom image as banner
+  (setq dashboard-center-content t) ;; set to 't' for centered content
+  (setq dashboard-items '((recents . 5)
+                          (agenda . 5 )
+                          (bookmarks . 3)
+                          (projects . 3)))
+  :custom
+  (dashboard-modify-heading-icons '((recents . "file-text")
+				      (bookmarks . "book")))
+  :config
+  (dashboard-setup-startup-hook))
+#+end_src
+
+**** Deft
+#+begin_src elisp :tangle no
+(setq deft-directory "~/org/deft"
+      ;; deft-recursive t
+      deft-extensions '("org" "txt"))
+#+end_src
+**** Async
+#+begin_src emacs-lisp :tangle no
+(use-package! async
+  :ensure nil
+  :init
+  (dired-async-mode 1)) ;Do dired actions asynchronously.
+#+end_src
+** codeium
+#+begin_src emacs-lisp :tangle no
+;; we recommend using use-package to organize your init.el
+(use-package codeium
+    ;; if you use straight
+    ;; :straight '(:type git :host github :repo "Exafunction/codeium.el")
+    ;; otherwise, make sure that the codeium.el file is on load-path
+
+    :init
+    ;; use globally
+    (add-to-list 'completion-at-point-functions #'codeium-completion-at-point)
+    ;; or on a hook
+    ;; (add-hook 'python-mode-hook
+    ;;     (lambda ()
+    ;;         (setq-local completion-at-point-functions '(codeium-completion-at-point))))
+
+    ;; if you want multiple completion backends, use cape (https://github.com/minad/cape):
+    ;; (add-hook 'python-mode-hook
+    ;;     (lambda ()
+    ;;         (setq-local completion-at-point-functions
+    ;;             (list (cape-capf-super #'codeium-completion-at-point #'lsp-completion-at-point)))))
+    ;; an async company-backend is coming soon!
+
+    ;; codeium-completion-at-point is autoloaded, but you can
+    ;; optionally set a timer, which might speed up things as the
+    ;; codeium local language server takes ~0.2s to start up
+    ;; (add-hook 'emacs-startup-hook
+    ;;  (lambda () (run-with-timer 0.1 nil #'codeium-init)))
+
+    ;; :defer t ;; lazy loading, if you want
+    :config
+    ;; (setq use-dialog-box nil) ;; do not use popup boxes
+
+    ;; if you don't want to use customize to save the api-key
+    ;; (setq codeium/metadata/api_key "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")
+
+    ;; get codeium status in the modeline
+    (setq codeium-mode-line-enable
+        (lambda (api) (not (memq api '(CancelRequest Heartbeat AcceptCompletion)))))
+    (add-to-list 'mode-line-format '(:eval (car-safe codeium-mode-line)) t)
+    ;; alternatively for a more extensive mode-line
+    ;; (add-to-list 'mode-line-format '(-50 "" codeium-mode-line) t)
+
+    ;; use M-x codeium-diagnose to see apis/fields that would be sent to the local language server
+    (setq codeium-api-enabled
+        (lambda (api)
+            (memq api '(GetCompletions Heartbeat CancelRequest GetAuthToken RegisterUser auth-redirect AcceptCompletion))))
+    ;; you can also set a config for a single buffer like this:
+    ;; (add-hook 'python-mode-hook
+    ;;     (lambda ()
+    ;;         (setq-local codeium/editor_options/tab_size 4)))
+
+    ;; You can overwrite all the codeium configs!
+    ;; for example, we recommend limiting the string sent to codeium for better performance
+    (defun my-codeium/document/text ()
+        (buffer-substring-no-properties (max (- (point) 3000) (point-min)) (min (+ (point) 1000) (point-max))))
+    ;; if you change the text, you should also change the cursor_offset
+    ;; warning: this is measured by UTF-8 encoded bytes
+    (defun my-codeium/document/cursor_offset ()
+        (codeium-utf8-byte-length
+            (buffer-substring-no-properties (max (- (point) 3000) (point-min)) (point))))
+    (setq codeium/document/text 'my-codeium/document/text)
+    (setq codeium/document/cursor_offset 'my-codeium/document/cursor_offset))
+#+end_src
+
+* MU4E
+#+begin_src emacs-lisp :tangle no
+(use-package! mu4e
+  :custom
+  (mu4e-use-fancy-chars t)
+  (mu4e-attachment-dir "~/Documents/Mail/DownloadedAttachement/")
+  :config
+  (setq mu4e-maildir "/home/malu/Documents/Mail"
+        ;; mu4e-user-mail-address-list '("foo@bar.com" "cuux@example.com"
+        ;; mu4e-sent-messages-behavior 'delete
+        mu4e-maildir-shortcuts '(("/INBOX" . ?i)
+                                  ("/[Gmail].Sent Mail" . ?s)
+                                  ("/[Gmail].Trash" . ?t)
+                                  ("/[Gmail].All Mail" . ?a))
+(setq message-send-mail-function 'smtpmail-send-it
+    starttls-use-gnutls t
+    smtpmail-starttls-credentials '(("smtp.gmail.com" 587 nil nil))
+    smtpmail-auth-credentials
+      '(("smtp.gmail.com" 587 "justinmalu@gmail.com" nil))
+    smtpmail-default-smtp-server "smtp.gmail.com"
+    smtpmail-smtp-server "smtp.gmail.com"
+    smtpmail-smtp-service 587)    
+  )
+#+end_src
+* Keybinds
+#+begin_src emacs-lisp :tangle yes
+#+end_src
+
+* ORG
+** my ORG settings
+#+begin_src emacs-lisp :tangle yes
+(defun my-org-mode-setup ()
+  (abbrev-mode)
+  (spell-fu-mode -1)
+  (diff-hl-mode -1))
+
+(defvar my/usiu-files
+  (directory-files-recursively "~/USIU/2026" "\\.org$"))
+
+
+;; Function to be run when org-agenda is opened
+(defun org-agenda-open-hook()
+  "Hook to be run when org-agenda is opened"
+  (olivetti-mode))
+
+(use-package! org
+  :hook
+  (org-mode . my-org-mode-setup)
+  (org-agenda-mode . org-agenda-open-hook)
+
+  :init
+  (setq org-directory (expand-file-name "~/Documents/IMPORTANT/Org")
+        org-agenda-files `(,org-directory ,(file-name-concat org-directory "roam") ,@my/usiu-files)
+        org-noter-notes-search-path (list (file-name-concat org-directory "notes"))
+        org-default-notes-file (expand-file-name  ".notes" org-directory))
+
+  :config
+  (setq org-roam-directory (expand-file-name "roam" org-directory)
+        org-roam-db-location (file-name-concat org-roam-directory ".org-roam.db")
+        org-roam-dailies-directory (expand-file-name "Journal" org-roam-directory))
+  (org-roam-db-autosync-mode)
+
+  :custom
+  (org-log-done 'time) ; task done with timestamp
+  ;; (org-log-done-with-time nil)
+  ;; (org-log-done 'note) ;task done with note prompted to user
+  (org-log-into-drawer t)
+  (org-hide-emphasis-markers t)
+  (org-tag-alist
+      '(("@home" . ?h) ("@school" . ?s)
+
+        ("@carthage" . ?C) ("@tangier" . ?T)
+
+        ("@work" . ?w) ("@pyrple" . ?p) ("@youtubr" . ?y)
+        ("@emacs" . ?e) ("@linux" . ?l) ("@nix" . ?n)))
+
+  (org-todo-keywords
+      '((sequence "TODO(t)" "WAIT(w!)"  "|" "DONE(d!)" "CANCEL(c!)"))))
+
+;; ((sequence "TODO(t)" "PROJ(p)" "LOOP(r)" "STRT(s)" "WAIT(w)" "HOLD(h)" "IDEA(i)"
+;;            "|" "DONE(d)" "KILL(k)")
+;;  (sequence "[ ](T)" "[-](S)" "[?](W)" "|" "[X](D)")
+;;  (sequence "|" "OKAY(o)" "YES(y)" "NO(n)"))
+
+
+
+  ;; (calendar-week-start-day 1)  ; 0 - sun, 1 -mon
+  ;; (org-todo-keywords
+  ;;     '((sequence "TODO(t)" "|" "DONE(d)")
+  ;;       (sequence "REPORT(r)" "BUG(b)" "KNOWNCAUSE(k)" "|" "FIXED(f)")))
+#+end_src
+
+See file-truename, file-name-concat
+
+[[https://orgmode.org/orgguide.html#Properties]]
+*** experiments
+**** FIXME Preserve Indentation On Org-Babel-Tangle
+#+begin_src emacs-lisp :tangle no
+(setq org-src-preserve-indentation t)   ;NOTE: on by default
+#+end_src
+**** custom faces
+#+begin_src emacs-lisp :tangle no
+(custom-theme-set-faces!
+'doom-one
+'(org-level-8 :inherit outline-3 :height 1.0)
+'(org-level-7 :inherit outline-3 :height 1.0)
+'(org-level-6 :inherit outline-3 :height 1.0)
+'(org-level-5 :inherit outline-3 :height 1.0)
+'(org-level-4 :inherit outline-3 :height 1.0)
+'(org-level-3 :inherit outline-3 :height 1.1)
+'(org-level-2 :inherit outline-2 :height 1.2)
+'(org-level-1 :inherit outline-1 :height 1.2)
+'(org-document-title  :height 1.8 :bold t :underline nil))
+#+end_src
+
+** org-agenda
+
+=(key desc type match settings files)=
+
+Doom Emacs sets (org-agenda-start-day "-3d").
+
+*** custom agenda / maluware-org-agenda :prot:
+#+begin_src emacs-lisp :tangle yes
+
+  (load! "maluware-org-agenda") 
+
+  (setq org-agenda-custom-commands
+        `(("S" "School Tasks" tags-todo "@school")
+          ("n" "Linux + Nix" tags-todo "@nix+@linux")
+          ("d" "Today's view"
+           ((tags-todo "+PRIORITY=\"A\"" 
+                       ((org-agenda-block-separator nil)
+                        (org-agenda-overriding-header "\nDaily agenda view 😀\n\nHigh PRIORITY tasks 🔥")))
+            (agenda ""
+                    ((org-agenda-block-separator nil)
+                     (org-agenda-span 1)
+                     (org-agenda-overriding-header "\n")
+                     (org-agenda-start-day nil)))
+            (todo "WAIT"
+                  ((org-agenda-block-separator nil)
+                   (org-agenda-overriding-header "\nTasks on hold ⏳")))))
+          ("u" "untagged tasks" tags-todo "-{.+}" 
+           ((org-agenda-overriding-header "Untagged Tasks")))
+          ("p" "Protesilaos" ,maluware-custom-org-daily-agenda)))
+#+end_src
+
+**** =LibrePhoenix Org Agenda=
+#+begin_src emacs-lisp :tangle no
+;; (setq org-agenda-hide-tags-regexp ".*")
+
+(setq org-agenda-prefix-format '(
+                                 (agenda . " %?-2i %t ")
+                                 (todo . " %i %-12:c")
+                                 (tags . " %i %-12:c")
+                                 (search . " %i %-12:c")))
+
+(setq org-agenda-time-grid '((daily) () "" ""))
+
+(setq org-agenda-current-time-string "")
+(setq org-agenda-skip-timestamp-if-done t
+      org-agenda-skip-deadline-if-done t
+      org-agenda-skip-scheduled-if-done t
+      org-agenda-skip-scheduled-if-deadline-is-shown t
+      org-agenda-skip-timestamp-if-deadline-is-shown t)
+
+TODO move this to libre block for easier troubleshoot
+(use-package! all-the-icons
+  :if (display-graphic-p))
+
+(setq org-agenda-category-icon-alist
+      `(("NixOs" ,(list (all-the-icons-faicon "graduation-cap" :height 0.8)) nil nil :ascent center)
+        ("Emacs" ,(list (all-the-icons-faicon "home" :v-adjust 0.005)) nil nil :ascent center)
+        ("School" ,(list (all-the-icons-faicon "youtube-play" :height 0.9)) nil nil :ascent center)
+        ("Quickshell" ,(list (all-the-icons-faicon "music" :height 0.9)) nil nil :ascent center)
+        ("Linux" ,(list (all-the-icons-faicon "book" :height 0.9)) nil nil :ascent center)
+        ("Pyrple" ,(list (all-the-icons-faicon "pencil" :height 0.9)) nil nil :ascent center)
+        ("Gamedev.s" ,(list (all-the-icons-faicon "gamepad" :height 0.9)) nil nil :ascent center)
+        ("Knowledge.p" ,(list (all-the-icons-faicon "database" :height 0.8)) nil nil :ascent center)
+        ("Personal.p" ,(list (all-the-icons-material "person" :height 0.9)) nil nil :ascent center)
+))
+#+end_src
+
+***** =org super agenda=
+#+begin_src elisp :tangle no
+(setq org-super-agenda-groups
+       '(;; Each group has an implicit boolean OR operator between its selectors.
+
+         ;; This is the first filter, anything found here
+         ;; will be placed in this group
+         ;; even if it matches following groups
+         (:name " Overdue" ; Name
+                :scheduled past ; Filter criteria
+                :order 2 ; Order it should appear in agenda view
+                :face 'error) ; Font face used for text
+
+         ;; This is the second filter, anything not found
+         ;; from the first filter, but found here,
+         ;; will be placed in this group
+         ;; even if it matches following groups
+         (:name "Personal" ; Name
+                :file-path "Personal" ; Filter criteria
+                :order 3 ; Order it should appear in the agenda view
+                :not (:tag "event")
+                :face 'error) ; Font faced used for text
+
+         (:name "NixOs"  ; Name
+                :file-path "NixOs" ; Filter criteria
+                :order 3 ; Order it should appear in the agenda view
+                :face 'error) ; Font face used for text
+
+         ;; Third filter..
+         (:name "Work"  ; Name
+                :file-path "Work" ; Filter criteria
+                :order 3 ; Order it should appear in the agenda view
+                :face 'error) ; Font face used for text
+
+         ;; Fourth filter..
+         (:name " Today "  ; Optionally specify section name
+                :time-grid t ; Use the time grid
+                :date today ; Filter criteria
+                :scheduled today ; Another filter criteria
+                :order 1 ; Order it should appear in the agenda view
+                :face 'warning) ; Font face used for text
+        )
+)
+#+end_src
+
++ start day defaults: "-3d".
++ today is '+0d'
++ org-agenda-span: 10::
+
+  org-agenda-date-today
+
+*** external variable files For neater/shorter presentation
+**** defvar maluware-org-custom-daily-agenda
+#+begin_src emacs-lisp :tangle maluware-org-agenda.el
+(defvar maluware-custom-org-daily-agenda
+  `((tags-todo "*"
+     ((org-agenda-skip-function '(org-agenda-skip-if nil '(timestamp)))
+      (org-agenda-skip-function
+       `(org-agenda-skip-entry-if
+         'notregexp ,(format "\\[#%s\\]" (char-to-string org-priority-highest))))
+      (org-agenda-block-separator nil)
+      (org-agenda-overriding-header "Important tasks without a date\n")))
+    (agenda "" ((org-agenda-span 1)
+                (org-deadline-warning-days 0)
+                (org-agenda-block-separator nil)
+                (org-scheduled-past-days 0)
+                ;; We don't need the `org-agenda-date-today'
+                ;; highlight because that only has a practical
+                ;; utility in multi-day views.
+                (org-agenda-day-face-function (lambda (date) 'org-agenda-date))
+                (org-agenda-format-date "%A %-e %B %Y")
+                (org-agenda-overriding-header "\nToday's agenda\n")))
+    (agenda "" ((org-agenda-start-on-weekday nil)
+                (org-agenda-start-day "+1d")
+                (org-agenda-span 3)
+                (org-deadline-warning-days 0)
+                (org-agenda-block-separator nil)
+                (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                (org-agenda-overriding-header "\nNext three days\n")))
+    (agenda "" ((org-agenda-time-grid nil) ;Removes ... blank times and the ....
+                (org-agenda-start-on-weekday nil)
+                ;; We don't want to replicate the previous section's
+                ;; three days, so we start counting from the day after.
+                (org-agenda-start-day "+4d")
+                (org-agenda-span 14)
+                (org-agenda-show-all-dates nil)
+                (org-deadline-warning-days 0)
+                (org-agenda-block-separator nil)
+                (org-agenda-entry-types '(:deadline))
+                (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                (org-agenda-overriding-header "\nUpcoming deadlines (+14d)\n"))))
+  "Custom agenda for use in `org-agenda-custom-commands'.")
+#+end_src
+
+***** org-agenda-custom-commands
+#+begin_src emacs-lisp :tangle no
+(setq org-agenda-custom-commands
+      `(("A" "Daily agenda and top priority tasks"
+         ((tags-todo "*"
+                     ((org-agenda-skip-function '(org-agenda-skip-if nil '(timestamp)))
+                      (org-agenda-skip-function
+                       `(org-agenda-skip-entry-if
+                         'notregexp ,(format "\\[#%s\\]" (char-to-string org-priority-highest))))
+                      (org-agenda-block-separator nil)
+                      (org-agenda-overriding-header "Important tasks without a date\n")))
+          (agenda "" ((org-agenda-span 1)
+                      (org-deadline-warning-days 0)
+                      (org-agenda-block-separator nil)
+                      (org-scheduled-past-days 0)
+                      ;; We don't need the `org-agenda-date-today'
+                      ;; highlight because that only has a practical
+                      ;; utility in multi-day views.
+                      (org-agenda-day-face-function (lambda (date) 'org-agenda-date))
+                      (org-agenda-format-date "%A %-e %B %Y")
+                      (org-agenda-overriding-header "\nToday's agenda\n")))
+          (agenda "" ((org-agenda-start-on-weekday nil)
+                      (org-agenda-start-day "+1d")
+                      (org-agenda-span 3)
+                      (org-deadline-warning-days 0)
+                      (org-agenda-block-separator nil)
+                      (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                      (org-agenda-overriding-header "\nNext three days\n")))
+          (agenda "" ((org-agenda-time-grid nil)
+                      (org-agenda-start-on-weekday nil)
+                      ;; We don't want to replicate the previous section's
+                      ;; three days, so we start counting from the day after.
+                      (org-agenda-start-day "+4d")
+                      (org-agenda-span 14)
+                      (org-agenda-show-all-dates nil)
+                      (org-deadline-warning-days 0)
+                      (org-agenda-block-separator nil)
+                      (org-agenda-entry-types '(:deadline))
+                      (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                      (org-agenda-overriding-header "\nUpcoming deadlines (+14d)\n")))))
+        ("P" "Plain text daily agenda and top priorities"
+         ((tags-todo "*"
+                     ((org-agenda-skip-function '(org-agenda-skip-if nil '(timestamp)))
+                      (org-agenda-skip-function
+                       `(org-agenda-skip-entry-if
+                         'notregexp ,(format "\\[#%s\\]" (char-to-string org-priority-highest))))
+                      (org-agenda-block-separator nil)
+                      (org-agenda-overriding-header "Important tasks without a date\n")))
+          (agenda "" ((org-agenda-span 1)
+                      (org-deadline-warning-days 0)
+                      (org-agenda-block-separator nil)
+                      (org-scheduled-past-days 0)
+                      ;; We don't need the `org-agenda-date-today'
+                      ;; highlight because that only has a practical
+                      ;; utility in multi-day views.
+                      (org-agenda-day-face-function (lambda (date) 'org-agenda-date))
+                      (org-agenda-format-date "%A %-e %B %Y")
+                      (org-agenda-overriding-header "\nToday's agenda\n")))
+          (agenda "" ((org-agenda-start-on-weekday nil)
+                      (org-agenda-start-day "+1d")
+                      (org-agenda-span 3)
+                      (org-deadline-warning-days 0)
+                      (org-agenda-block-separator nil)
+                      (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                      (org-agenda-overriding-header "\nNext three days\n")))
+          (agenda "" ((org-agenda-time-grid nil)
+                      (org-agenda-start-on-weekday nil)
+                      ;; We don't want to replicate the previous section's
+                      ;; three days, so we start counting from the day after.
+                      (org-agenda-start-day "+4d")
+                      (org-agenda-span 14)
+                      (org-agenda-show-all-dates nil)
+                      (org-deadline-warning-days 0)
+                      (org-agenda-block-separator nil)
+                      (org-agenda-entry-types '(:deadline))
+                      (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                      (org-agenda-overriding-header "\nUpcoming deadlines (+14d)\n"))))
+         ((org-agenda-with-colors nil)
+          (org-agenda-prefix-format "%t %s")
+          (org-agenda-current-time-string ,(car (last org-agenda-time-grid)))
+          (org-agenda-fontify-priorities nil)
+          (org-agenda-remove-tags t))
+         ("agenda.txt"))))
+#+end_src
+
+***** org-agenda-custom-commands
+#+begin_src emacs-lisp :tangle no
+(setq org-agenda-custom-commands
+      `(("A" "Daily agenda and top priority tasks"
+         ,prot-org-custom-daily-agenda)
+        ("P" "Plain text daily agenda and top priorities"
+         ,prot-org-custom-daily-agenda
+         ((org-agenda-with-colors nil)
+          (org-agenda-prefix-format "%t %s")
+          (org-agenda-current-time-string ,(car (last org-agenda-time-grid)))
+          (org-agenda-fontify-priorities nil)
+          (org-agenda-remove-tags t))
+         ("agenda.txt"))))
+#+end_src
+**** experiment custom-org-daily-agenda
+#+begin_src emacs-lisp :tangle no
+(defvar maluware-custom-org-daily-agenda
+         `((tags-todo "*"
+            (org-agenda-skip-function '(org-agenda-skip-if nil '(timestamp))))
+           (org-agenda-skip-function
+            `(org-agenda-skip-entry-if
+              'notrege))
+           (todo "WAIT"
+                ((org-agenda-overriding-header "Tasks on hold\n")))
+         (agenda ""
+                 ((org-agenda-block-separator nil) ;"*"
+                  ;; (org-agenda-span 1) ;7:: how many days should it span
+                  ;; (org-deadline-warning-days 0) ;events not for today
+                  (org-agenda-day-face-function (lambda (date) 'org-agenda-date)) ; remove underline on todays date
+                  ;; (org-agenda-format-date "%A %-e %B %Y") ;modify date
+                  ;; (org-agenda-fontify-priorities nil)
+                  ;; org-agenda-skip-function
+                  (org-agenda-overriding-header "\nDaily agenda\n"))))
+  )
+#+end_src
+*** from manual
+#+begin_src emacs-lisp :tangle no
+(setq org-agenda-custom-commands
+    '(("h" "Agenda and Home-related tasks"
+        ((agenda "")
+        (tags-todo "home")
+        (tags "garden")))
+      ("o" "Agenda and Office-related tasks"
+        ((agenda "")
+        (tags-todo "work")
+        (tags "office")))
+      ))
+#+end_src
+*** worg tricks
+**** Colorize clocking tasks with a block
+
+[[https://orgmode.org/worg/org-hacks.html][org hacks -worg]]
+
+#+begin_src emacs-lisp :tangle no
+;; work with org-agenda dispatcher [c] "Today Clocked Tasks" to view today's clocked tasks.
+(defun org-agenda-log-mode-colorize-block ()
+  "Set different line spacing based on clock time duration."
+  (save-excursion
+    (let* ((colors (cl-case (alist-get 'background-mode (frame-parameters))
+                                 ('light
+                                  (list "#F6B1C3" "#FFFF9D" "#BEEB9F" "#ADD5F7"))
+                                 ('dark
+                                  (list "#aa557f" "DarkGreen" "DarkSlateGray" "DarkSlateBlue"))))
+           pos
+           duration)
+      (nconc colors colors)
+      (goto-char (point-min))
+      (while (setq pos (next-single-property-change (point) 'duration))
+        (goto-char pos)
+        (when (and (not (equal pos (point-at-eol)))
+                   (setq duration (org-get-at-bol 'duration)))
+          ;; larger duration bar height
+          (let ((line-height (if (< duration 15) 1.0 (+ 0.5 (/ duration 30))))
+                (ov (make-overlay (point-at-bol) (1+ (point-at-eol)))))
+            (overlay-put ov 'face `(:background ,(car colors) :foreground "black"))
+            (setq colors (cdr colors))
+            (overlay-put ov 'line-height line-height)
+            (overlay-put ov 'line-spacing (1- line-height))))))))
+
+(add-hook! 'org-agenda-finalize-hook #'org-agenda-log-mode-colorize-block)
+#+end_src
+
+**** Go back to the previous top-level heading
+#+begin_src emacs-lisp :tangle no
+(defun org-back-to-top-level-heading ()
+  "Go back to the current top level heading."
+  (interactive)
+  (or (re-search-backward "^\* " nil t)
+      (goto-char (point-min))))
+#+end_src
+** Org-roam-ui
+#+begin_src emacs-lisp :tangle yes
+(use-package! websocket
+    :after org-roam)
+
+(use-package! org-roam-ui
+    :after org-roam ;; or :after org
+;;         normally we'd recommend hooking orui after org-roam, but since org-roam does not have
+;;         a hookable mode anymore, you're advised to pick something yourself
+;;         if you don't care about startup time, use
+;;  :hook (after-init . org-roam-ui-mode)
+    :config
+    (setq org-roam-ui-sync-theme t
+          org-roam-ui-follow t
+          org-roam-ui-update-on-save t
+          org-roam-ui-open-on-start t))
+#+end_src
+ 
+** org-structure-template
+#+begin_src elisp :tangle no
+(add-to-list 'org-structure-template-alist
+             '("ss" . "src emacs-lisp")) ;FIXME deprecated approach find new way to do this
+#+end_src
+
+#+begin_src elisp :tangle no
+(with-eval-after-load 'org
+  (require 'org-tempo)
+  (add-to-list 'org-structure-template-alist
+               '("se" . "src emacs-lisp")))
+
+#+end_src
+
+** org-capture
+Capture lets you quickly store notes with no workflow interruption
+*** escape codes
+|--------------------+-----------------------------------------------------------|
+| special =%= escape | does                                                      |
+|--------------------+-----------------------------------------------------------|
+| =%a=               | annotation, normally the link created with org-store-link |
+| =%i=               | with active region selected, insert it at point           |
+| =%t=  =%T=         | timestamp, date only, or date and time                    |
+| =%^t=              | prompt for timestamp                                      |
+| =%u=  =%U=         | like above, but inactive timestamps                       |
+| =%?=               | after completing the template, position point here        |
+| =%^=               | input/prompt                                              |
+|--------------------+-----------------------------------------------------------|
+**** time management
+dont have to select manually you can:
++ relative time +3d
+
+*** org-capture-template
+**** Current Template
+#+begin_src emacs-lisp :tangle yes
+(use-package! org-capture
+  :bind ("C-c c" . org-capture)
+  :after org
+  :custom
+  ;; (require 'prot-org)
+  (org-capture-templates '(
+                           ("e" "EMACs" plain
+                            (file+headline "EmacsTODO.org" "TODO emacs") ;Create if does not exist otherwise ins under it
+                            "+ [ ] %?")
+
+                           ;; NixOs
+                           ("n" "nixOs" plain
+                            (file+headline "nixTODO.org" "TODO nixOs")
+                            "+ [ ] %?"
+                            :prepend t)
+
+                           ("a" "App Ideas" plain
+                            (file+headline "appsTODO.org" "TODO App Ideas")
+                            "+ [ ] %?"
+                            :prepend t)
+
+                           ;; Quickshell
+                           ("Q" "Quickshell + QML")
+                           ("QQ" "Quickshell" plain
+                            (file+headline "QuickshellTODO.org" "TODO Quickshell")
+                            "+ [ ] %?")
+                           ("QM" "QML" plain
+                            (file+headline "QuickshellTODO.org" "TODO QML")
+                            "+ [ ] %?")
+
+                           ;; BUCKET LIST
+                           ("b" "Bucket List [ movies anime books youtube]") ; group 'em up
+                           ("bm" "movies" plain
+                            (file+headline "bucket-list.org" "Movies")
+                            "+ [ ] %?"
+                            :prepend t)
+                            ("ba"  "Anime List (Movies + Series)")  ;; Just a label, optional dummy
+                            ("bam" "Anime Movie"  plain
+                            (file+headline "bucket-list.org" "Anime")
+                            "+ [ ] %?" :prepend t)
+                            ;; ANIME
+                            ("bas" "Anime Series" plain
+                            (file+headline "bucket-list.org" "Anime")
+                            "+ [ ] %?" :prepend t)
+                           ("bb" "books" plain
+                            (file+headline "bucket-list.org" "Books")
+                            "+ [ ] %?"
+                            :prepend t)
+                           ;;YOUTUBE
+                           ("by" "youtube" plain
+                            (file+headline "bucket-list.org" "YouTube")
+                            "+ [ ] %?"
+                            :prepend t)
+
+                           ;; Learning New Languages
+                           ("l" "Learn Programming Languages")
+                           ("lp" "Python" plain
+                            (file+headline "ProgrammingLanguagesTODO.org" "TODO PythonLearning")
+                            "+ [ ] %?")
+                           ("lc" "C" plain
+                            (file+headline "ProgrammingLanguagesTODO.org" "TODO C")
+                            "+ [ ] %?")
+                           ("ln" "Nix" plain
+                            (file+headline "ProgrammingLanguagesTODO.org" "TODO Nix")
+                            "+ [ ] %?")
+
+                           ;; School
+                           ("s" "School - USIU" plain
+                            (file+headline "USIU_TODO.org" "TODO school work")
+                            "+ [ ] %?")
+
+                           ;; Life's Morsels
+                           ("d" "Life's Morsels")
+                           ("dw" "words [w]" plain
+                            (file+headline "diction.org" "Words") ;TODO see if this can support yassnippets
+                            "\n\n %?"
+                            :empty-lines 1
+                            :prepend t)
+                           ("di" "idioms [i]" plain
+                            (file+headline "diction.org" "Idioms")
+                            "+ %?"
+                            :empty-lines 1
+                            :prepend t)
+                            ("dq" "quotes [q]" plain
+                            (file+headline "diction.org" "Quotes")
+                            ;; Template string starts here
+                            "#+begin_quote\n%i%?\n#+end_quote\n"
+                            :empty-lines 1
+                            :prepend t)
+                            ("dp" "phrases [p]" plain
+                            (file+headline "diction.org" "Phrases")
+                            ;; Template string starts here
+                            "#+begin_quote\n%i%?\n#+end_quote\n"
+                            :empty-lines 1
+                            :prepend t)
+                           ("v" "Video Ideas 📷")
+                           ("ve" "Emacs 📃")
+                           ("vei" "Emacs ideas ✔️" plain
+                            (file+headline "emacsVideoIdea.org" "Random Idea")
+                            " %?"
+                            :prepend t
+                            :empty-lines 1
+                            )
+                           ("vej" "emacs jolts ✏️" plain
+                            (file+headline "emacsVideoIdea.org" "Random Jolt")
+                            " %?"
+                            :prepend t
+                            :empty-lines 1)
+                           )))
+#+end_src
+**** docs
+source: https://orgmode.org/manual/Template-elements.html
+
+=keys=
+characters only  eg. 'a' or 'ab'
+=type=
+|------------+--------------------------------------------------------------------|
+| entry      | text with heading                                                  |
+| item       | plain list item, placed in the first plain list at target location |
+| checkitem  | checkbox item                                                      |
+| table-line | A new line in the first table at the target location. see more     |
+| plain      | text inserted as i                                                 |
+|------------+--------------------------------------------------------------------|
+*** shortcurts
+|----------------------+-------------------+----------------------------------------------------------------------------|
+| command              | keymap            | does                                                                       |
+|----------------------+-------------------+----------------------------------------------------------------------------|
+| org-capture          | =M-x org-capture= | start capture process, placing you into a narrowed indirect buffer to edit |
+| org-capture-finalize | =C-c C-c=         |                                                                            |
+| org-capture-refile   | =C-c C-w=         | Finalize the capture process by refiling the note to a different place     |
+| org-capture-kill     | =C-c C-k=         | Abort the capture process and return to the previous state.                |
+|----------------------+-------------------+----------------------------------------------------------------------------|
+*** org-roam-capture-template 
+#+begin_src emacs-lisp :tangle no
+(after! org-roam
+  (setq org-roam-capture-templates
+        `(("n" "note" plain
+           ,(format "#+title: ${title}\n%%[%s/template/note.org]" org-roam-directory)
+           :target (file "note/%<%Y%m%d%H%M%S>-${slug}.org")
+           :unnarrowed t)
+          ("r" "thought" plain
+           ,(format "#+title: ${title}\n%%[%s/template/thought.org]" org-roam-directory)
+           :target (file "thought/%<%Y%m%d%H%M%S>-${slug}.org")
+           :unnarrowed t)
+          ("t" "topic" plain
+           ,(format "#+title: ${title}\n%%[%s/template/topic.org]" org-roam-directory)
+           :target (file "topic/%<%Y%m%d%H%M%S>-${slug}.org")
+           :unnarrowed t)
+          ("c" "contact" plain
+           ,(format "#+title: ${title}\n%%[%s/template/contact.org]" org-roam-directory)
+           :target (file "contact/%<%Y%m%d%H%M%S>-${slug}.org")
+           :unnarrowed t)
+          ("p" "project" plain
+           ,(format "#+title: ${title}\n%%[%s/template/project.org]" org-roam-directory)
+           :target (file "project/%<%Y%m%d>-${slug}.org")
+           :unnarrowed t)
+          ("i" "invoice" plain
+           ,(format "#+title: %%<%%Y%%m%%d>-${title}\n%%[%s/template/invoice.org]" org-roam-directory)
+           :target (file "invoice/%<%Y%m%d>-${slug}.org")
+           :unnarrowed t)
+          ("f" "ref" plain
+           ,(format "#+title: ${title}\n%%[%s/template/ref.org]" org-roam-directory)
+           :target (file "ref/%<%Y%m%d%H%M%S>-${slug}.org")
+           :unnarrowed t)
+          ("w" "works" plain
+           ,(format "#+title: ${title}\n%%[%s/template/works.org]" org-roam-directory)
+           :target (file "works/%<%Y%m%d%H%M%S>-${slug}.org")
+           :unnarrowed t)
+          ("s" "secret" plain "#+title: ${title}\n\n"
+           :target (file "secret/%<%Y%m%d%H%M%S>-${slug}.org.gpg")
+           :unnarrowed t))
+        ;; Use human readable dates for dailies titles
+        org-roam-dailies-capture-templates
+        `(("d" "default" plain ""
+           :target (file+head "%<%Y-%m-%d>.org" ,(format "%%[%s/template/journal.org]" org-roam-directory))))))
+#+end_src
+**** inspo
+***** howardism
+
+org capture template consists of 3 parts:
++ a key binding
++ a destination, (a file, and some section in that file, like a heading, list item etc)
++ a formatting template
+
+source:[[https://howardism.org/Technical/Emacs/capturing-intro.html][Org capturing intro Howardism]]
+
+***** prot tech :prot:
+#+begin_src elisp :tangle no
+(use-package! org-capture
+  :ensure nil
+  :bind ("C-c c" . org-capture)
+  :config
+  ;; (require 'prot-org)
+
+  (setq org-capture-templates
+        `(("u" "Unprocessed" entry
+           (file+headline "tasks.org" "Unprocessed")
+           ,(concat "* %^{Title}\n"
+                    ":PROPERTIES:\n"
+                    ":CAPTURED: %U\n"
+                    ":CUSTOM_ID: h:%(format-time-string \"%Y%m%dT%H%M%S\")\n"
+                    ":END:\n\n"
+                    "%a\n%i%?")
+           :empty-lines-after 1)
+          ("w" "Wishlist" entry
+           (file+olp "tasks.org" "All tasks" "Wishlist")
+           ,(concat "* %^{Title} %^g\n"
+                    ":PROPERTIES:\n"
+                    ":CAPTURED: %U\n"
+                    ":CUSTOM_ID: h:%(format-time-string \"%Y%m%dT%H%M%S\")\n"
+                    ":END:\n\n"
+                    "%a\n%?")
+           :empty-lines-after 1)
+          ("t" "Task to do" entry
+           (file+headline "tasks.org" "All tasks")
+           ,(concat "* TODO %^{Title} %^g\n"
+                    ":PROPERTIES:\n"
+                    ":CAPTURED: %U\n"
+                    ":CUSTOM_ID: h:%(format-time-string \"%Y%m%dT%H%M%S\")\n"
+                    ":END:\n\n"
+                    "%a\n%?")
+           :empty-lines-after 1)
+          ("s" "Select file and heading to add to" entry
+           (function prot-org-select-heading-in-file)
+           ,(concat "* TODO %^{Title}%?\n"
+                    ":PROPERTIES:\n"
+                    ":CAPTURED: %U\n"
+                    ":CUSTOM_ID: h:%(format-time-string \"%Y%m%dT%H%M%S\")\n"
+                    ":END:\n\n")
+           :empty-lines-after 1)
+
+          ;; NOTE 2024-11-24: I am not using this, but am keeping it
+          ;; here because the approach is good.
+
+          ;; ("c" "Clock in and do immediately" entry
+          ;;  (file+headline "tasks.org" "Clocked tasks")
+          ;;  ,(concat "* TODO %^{Title}\n"
+          ;;           ":PROPERTIES:\n"
+          ;;           ":EFFORT: %^{Effort estimate in minutes|5|10|15|30|45|60|90|120}\n"
+          ;;           ":END:\n\n"
+          ;;           "%a\n")
+          ;;  :prepend t
+          ;;  :clock-in t
+          ;;  :clock-keep t
+          ;;  :immediate-finish t
+          ;;  :empty-lines-after 1)
+          ("p" "Private lesson or service" entry
+           (file "coach.org")
+           #'prot-org-capture-coach
+           :prepend t
+           :empty-lines 1)
+          ("P" "Private service clocked" entry
+           (file+headline "coach.org" "Clocked services")
+           #'prot-org-capture-coach-clock
+           :prepend t
+           :clock-in t
+           :clock-keep t
+           :immediate-finish t
+           :empty-lines 1)))
+
+  ;; NOTE 2024-11-10: I realised that I was not using this enough, so
+  ;; I decided to simplify my setup.  Keeping it here, in case I need
+  ;; it again.
+
+  ;; (setq org-capture-templates-contexts
+  ;;       '(("e" ((in-mode . "notmuch-search-mode")
+  ;;               (in-mode . "notmuch-show-mode")
+  ;;               (in-mode . "notmuch-tree-mode")))))
+  )
+#+end_src
+** org-babel
+NOTE: not needed in doom...it auto [[https://discourse.doomemacs.org/t/common-config-anti-patterns/119#loading-org-babel-plugins-yourself-6][does it]]
+#+begin_src emacs-lisp :tangle no
+(after! org
+  (org-babel-do-load-languages 'org-babel-load-languages '((emacs-lisp . t) (jupyter . t))))
+#+end_src
+
+** FIXME org-modern
+#+begin_src emacs-lisp :tangle no
+(use-package! org-modern
+  ;; :hook (org-mode . org-modern-mode) ; NOTE auto enabled?
+  ;; (org-agenda-finalize . org-modern-agenda) ; FIXME
+  :config
+  (setq org-modern-star ["◉" "○" "✸" "✿" "✤" "✜" "◆" "▶"]
+        org-modern-table-vertical 1
+        org-modern-table-horizontal 0.2
+        org-modern-list '((43 . "➤")
+                          (45 . "–")
+                          (42 . "•"))
+        org-modern-todo-faces
+        '(("TODO" :inverse-video t :inherit org-todo)
+          ("PROJ" :inverse-video t :inherit +org-todo-project)
+          ("STRT" :inverse-video t :inherit +org-todo-active)
+          ("[-]"  :inverse-video t :inherit +org-todo-active)
+          ("HOLD" :inverse-video t :inherit +org-todo-onhold)
+          ("WAIT" :inverse-video t :inherit +org-todo-onhold)
+          ("[?]"  :inverse-video t :inherit +org-todo-onhold)
+          ("KILL" :inverse-video t :inherit +org-todo-cancel)
+          ("NO"   :inverse-video t :inherit +org-todo-cancel))
+        org-modern-footnote
+        (cons nil (cadr org-script-display))
+  )
+  (custom-set-faces! '(org-modern-statistics :inherit org-checkbox-statistics-todo)))
+
+(setq org-modern-priority t)
+
+(after! spell-fu
+  (cl-pushnew 'org-modern-tag (alist-get 'org-mode +spell-excluded-faces-alist)))
+#+end_src
+* Markdown
+=Markdown-view-mode= toggle
+#+begin_src elisp :tangle yes
+(defun my/markdown-toggler ()
+  "This function toggles markdown view mode on/off 😀"
+  (interactive)
+  ;; (if (eq major-mode #'markdown-view-mode)
+  (if (derived-mode-p 'markdown-view-mode)
+      (markdown-mode)
+    (markdown-view-mode)))
+
+;; (add-hook 'markdown-mode-hook
+;;           (lambda () (local-set-key (kbd "/") #'my/markdown-toggler)))
+
+(map! :map markdown-mode-map
+      :localleader
+      "/" #'my/markdown-toggler)
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
+(custom-set-faces
+ '(markdown-header-face ((t (:inherit font-lock-function-name-face :weight bold :family "variable-pitch"))))
+ '(markdown-header-face-1 ((t (:inherit markdown-header-face :height 1.6))))
+ '(markdown-header-face-2 ((t (:inherit markdown-header-face :height 1.5))))
+ '(markdown-header-face-3 ((t (:inherit markdown-header-face :height 1.4))))
+ '(markdown-header-face-4 ((t (:inherit markdown-header-face :height 1.3))))
+ '(markdown-header-face-5 ((t (:inherit markdown-header-face :height 1.2))))
+ '(markdown-header-face-6 ((t (:inherit markdown-header-face :height 1.1)))))
+#+end_src
+* Emacs Everywhere
+#+begin_src emacs-lisp :tangle no
+(setq emacs-everywhere-frame-name-format "emacs-everywhere")
+#+end_src
+* Inspo
+** witchmacs stuff
+
+https://github.com/snackon/Witchmacs/
+
+=Witchmacs= :witch:
+#+begin_src emacs-lisp :tangle no
+(setq-default tab-width 4)
+(setq-default standard-indent 4)
+(setq c-basic-offset tab-width)
+(setq-default electric-indent-inhibit t)
+(setq-default indent-tabs-mode t)
+(setq backward-delete-char-untabify-method 'nil)
+#+end_src
+
+** Justin-VC tech :justin:
+*** dashboard / misc
+#+begin_src emacs-lisp :tangle no
+(defun +doom-dashboard-setup-modified-keymap ()
+  (setq +doom-dashboard-mode-map (make-sparse-keymap))
+  (map! :map +doom-dashboard-mode-map
+        :desc "Find file" :ne "f" #'find-file
+        :desc "Recent files" :ne "r" #'consult-recent-file
+        :desc "Config dir" :ne "C" #'doom/open-private-config
+        :desc "Open config.org" :ne "c" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
+        :desc "Notes (roam)" :ne "n" #'org-roam-node-find
+        :desc "Search (roam)" :ne "N" #'justin/org-roam-rg-search
+        :desc "Switch buffer" :ne "b" #'+vertico/switch-workspace-buffer
+        :desc "Switch buffers (all)" :ne "B" #'consult-buffer
+        :desc "IBuffer" :ne "i" #'ibuffer
+        :desc "Agenda"  :ne "o" #'org-agenda
+        :desc "Previous buffer" :ne "p" #'previous-buffer
+        :desc "Set theme" :ne "t" #'consult-theme
+        :desc "Quit" :ne "Q" #'save-buffers-kill-terminal
+        :desc "Show keybindings" :ne "h" (cmd! (which-key-show-keymap '+doom-dashboard-mode-map))))
+
+(add-transient-hook! #'+doom-dashboard-mode (+doom-dashboard-setup-modified-keymap))
+(add-transient-hook! #'+doom-dashboard-mode :append (+doom-dashboard-setup-modified-keymap))
+(add-hook! 'doom-init-ui-hook :append (+doom-dashboard-setup-modified-keymap))
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
+(map! :leader :desc "Dashboard" "d" #'+doom-dashboard/open)
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
+(map! :n [mouse-8] #'better-jumper-jump-backward
+      :n [mouse-9] #'better-jumper-jump-forward)
+#+end_src
+
+*** splash images
+#+begin_src emacs-lisp :tangle no
+(use-package! random-splash-image
+  :config
+  (setq random-splash-image-dir (concat (getenv "HOME") "/.doom.d/misc/splash-images"))
+  (unless (file-directory-p random-splash-image-dir)
+  (make-directory random-splash-image-dir t))
+  (random-splash-image-set))
+#+end_src
+*** GPT things
+#+begin_src emacs-lisp :tangle no
+(use-package! gptel
+  :config
+  (setq gptel-model "llama3:latest"
+        gptel-org-branching-context t)
+
+  (setq gptel-backend
+        (gptel-make-ollama "Ollama"
+                           :host "192.168.1.9:11434"
+                           :stream t
+                           :models '("llama3:latest"))))
+
+(use-package! gptel-quick
+  :after gptel
+  :config
+  ;; Add any gptel-quick specific configuration here
+  )
+
+;; Key bindings
+(map! :leader
+      (:prefix ("l" . "LLM")
+       :desc "Quick GPTel" "q" #'gptel-quick
+       :desc "Start GPTel" "s" #'gptel
+       :desc "Send to GPTel" "S" #'gptel-send))
+#+end_src
+*** weather
+#+begin_src emacs-lisp :tangle no
+(use-package! wttrin
+  :commands wttrin
+  :config
+  wttrin-default-cities '("Nairobi" ))
+#+end_src
+** prot tech :prot:
+#+begin_src elisp :tangle no
+(use-package! org-capture
+  :ensure nil
+  :bind ("C-c c" . org-capture)
+  :config
+  ;; (require 'prot-org)
+
+  (setq org-capture-templates
+        `(("u" "Unprocessed" entry
+           (file+headline "tasks.org" "Unprocessed")
+           ,(concat "* %^{Title}\n"
+                    ":PROPERTIES:\n"
+                    ":CAPTURED: %U\n"
+                    ":CUSTOM_ID: h:%(format-time-string \"%Y%m%dT%H%M%S\")\n"
+                    ":END:\n\n"
+                    "%a\n%i%?")
+           :empty-lines-after 1)
+          ("w" "Wishlist" entry
+           (file+olp "tasks.org" "All tasks" "Wishlist")
+           ,(concat "* %^{Title} %^g\n"
+                    ":PROPERTIES:\n"
+                    ":CAPTURED: %U\n"
+                    ":CUSTOM_ID: h:%(format-time-string \"%Y%m%dT%H%M%S\")\n"
+                    ":END:\n\n"
+                    "%a\n%?")
+           :empty-lines-after 1)
+          ("t" "Task to do" entry
+           (file+headline "tasks.org" "All tasks")
+           ,(concat "* TODO %^{Title} %^g\n"
+                    ":PROPERTIES:\n"
+                    ":CAPTURED: %U\n"
+                    ":CUSTOM_ID: h:%(format-time-string \"%Y%m%dT%H%M%S\")\n"
+                    ":END:\n\n"
+                    "%a\n%?")
+           :empty-lines-after 1)
+          ("s" "Select file and heading to add to" entry
+           (function prot-org-select-heading-in-file)
+           ,(concat "* TODO %^{Title}%?\n"
+                    ":PROPERTIES:\n"
+                    ":CAPTURED: %U\n"
+                    ":CUSTOM_ID: h:%(format-time-string \"%Y%m%dT%H%M%S\")\n"
+                    ":END:\n\n")
+           :empty-lines-after 1)
+
+          ;; NOTE 2024-11-24: I am not using this, but am keeping it
+          ;; here because the approach is good.
+
+          ;; ("c" "Clock in and do immediately" entry
+          ;;  (file+headline "tasks.org" "Clocked tasks")
+          ;;  ,(concat "* TODO %^{Title}\n"
+          ;;           ":PROPERTIES:\n"
+          ;;           ":EFFORT: %^{Effort estimate in minutes|5|10|15|30|45|60|90|120}\n"
+          ;;           ":END:\n\n"
+          ;;           "%a\n")
+          ;;  :prepend t
+          ;;  :clock-in t
+          ;;  :clock-keep t
+          ;;  :immediate-finish t
+          ;;  :empty-lines-after 1)
+          ("p" "Private lesson or service" entry
+           (file "coach.org")
+           #'prot-org-capture-coach
+           :prepend t
+           :empty-lines 1)
+          ("P" "Private service clocked" entry
+           (file+headline "coach.org" "Clocked services")
+           #'prot-org-capture-coach-clock
+           :prepend t
+           :clock-in t
+           :clock-keep t
+           :immediate-finish t
+           :empty-lines 1)))
+
+  ;; NOTE 2024-11-10: I realised that I was not using this enough, so
+  ;; I decided to simplify my setup.  Keeping it here, in case I need
+  ;; it again.
+
+  ;; (setq org-capture-templates-contexts
+  ;;       '(("e" ((in-mode . "notmuch-search-mode")
+  ;;               (in-mode . "notmuch-show-mode")
+  ;;               (in-mode . "notmuch-tree-mode")))))
+  )
+#+end_src
+** howardism
+
+org capture template consists of 3 parts:
++ a key binding
++ a destination, (a file, and some section in that file, like a heading, list item etc)
++ a formatting template
+
+source:[[https://howardism.org/Technical/Emacs/capturing-intro.html][Org capturing intro Howardism]]
+** Henrik lissner tech
+#+begin_src emacs-lisp :tangle no
+;; Prevents some cases of Emacs flickering.
+(add-to-list 'default-frame-alist '(inhibit-double-buffering . t))
+#+end_src

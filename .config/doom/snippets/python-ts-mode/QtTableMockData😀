@@ -1,0 +1,4 @@
+# key: vdata+
+# name: QtTableMockData😀
+# --
+${1:value} = self._data[index.row()][index.column()]
