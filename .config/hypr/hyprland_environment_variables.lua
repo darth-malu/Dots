@@ -1,5 +1,5 @@
--- hl.env("HYPRCURSOR_THEME" ,"theme_GoogleDot-Violet")
--- hl.env("HYPRCURSOR_SIZE" ,"24")
+hl.env("HYPRCURSOR_THEME", "theme_GoogleDot-Violet")
+hl.env("HYPRCURSOR_SIZE", "24")
 
 hl.env("SLURP_ARGS", "-d -b -B F050F022 -b 10101022 -c ff00ff")
 

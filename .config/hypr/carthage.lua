@@ -23,5 +23,5 @@ hl.device({
 })
 
 hl.config({
-  input = {scroll_factor = 1.0,}
+  input = { scroll_factor = 1.0, }
 })

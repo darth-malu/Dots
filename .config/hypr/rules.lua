@@ -53,10 +53,26 @@ hl.window_rule({
 })
 
 hl.window_rule({
+  name  = "Select Fonts Qt6 settings",
+  match = {
+    class = "qt6ct",
+    title = "^Select Font$",
+  },
+  size  = { 1000, 500 },
+})
+
+hl.window_rule({
   name = "Floating windows",
   match = { float = true },
   center = true,
   border_size = 0
+})
+
+hl.window_rule({
+  name = "Hypr pipewire Float",
+  match = { class = "hyprpwcenter", title = "Pipewire Control Center" },
+  center = true,
+  float = true,
 })
 
 hl.window_rule({
