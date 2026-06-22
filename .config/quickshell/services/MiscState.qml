@@ -43,6 +43,9 @@ Singleton {
     }
 
     property bool showGpu: false
+    property bool showPlayerChooser: false
+    property bool showShuffle: false
+    property bool showLoop: false
 
     readonly property var currentToplevels: Hyprland.toplevels
 }

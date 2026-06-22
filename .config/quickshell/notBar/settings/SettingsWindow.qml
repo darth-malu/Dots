@@ -935,6 +935,184 @@ Item {
                         }
                     }
                 }
+
+                Text {
+                    text: "Now Playing"
+                    color: "#cdd6f4"
+                    font {
+                        pixelSize: 20
+                        bold: true
+                        family: "Quicksand"
+                    }
+                }
+
+                Text {
+                    text: "Configure now playing controls visibility."
+                    color: "#a6adc8"
+                    font {
+                        pixelSize: 11
+                        family: "ZedMono Nerd Font"
+                    }
+                    Layout.bottomMargin: 8
+                }
+
+                Card {
+                    title: "Now Playing"
+                    icon: ""
+                    accent: "#cba6f7"
+
+                    ColumnLayout {
+                        spacing: 8
+                        Layout.fillWidth: true
+
+                        RowLayout {
+                            spacing: 10
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 32
+
+                            Text {
+                                text: ""
+                                color: MiscState.showShuffle ? "#89b4fa" : "#585b70"
+                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            ColumnLayout {
+                                spacing: 0
+                                Text {
+                                    text: "Shuffle"
+                                    color: "#cdd6f4"
+                                    font { pixelSize: 11; family: "Quicksand"; bold: true }
+                                }
+                                Text {
+                                    text: "Show shuffle button in controls"
+                                    color: "#585b70"
+                                    font { pixelSize: 8; family: "ZedMono Nerd Font" }
+                                }
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Rectangle {
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: 36; implicitHeight: 20; radius: 10
+                                color: MiscState.showShuffle ? "#89b4fa" : "#45475a"
+                                Behavior on color { ColorAnimation { duration: 120 } }
+
+                                Rectangle {
+                                    width: 16; height: 16; radius: 8
+                                    color: "#1e1e2e"
+                                    x: parent.parent.MiscState.showShuffle ? parent.width - width - 2 : 2
+                                    y: (parent.height - height) / 2
+                                    Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                    onClicked: MiscState.showShuffle = !MiscState.showShuffle
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            spacing: 10
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 32
+
+                            Text {
+                                text: ""
+                                color: MiscState.showLoop ? "#89b4fa" : "#585b70"
+                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            ColumnLayout {
+                                spacing: 0
+                                Text {
+                                    text: "Loop"
+                                    color: "#cdd6f4"
+                                    font { pixelSize: 11; family: "Quicksand"; bold: true }
+                                }
+                                Text {
+                                    text: "Show loop button in controls"
+                                    color: "#585b70"
+                                    font { pixelSize: 8; family: "ZedMono Nerd Font" }
+                                }
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Rectangle {
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: 36; implicitHeight: 20; radius: 10
+                                color: MiscState.showLoop ? "#89b4fa" : "#45475a"
+                                Behavior on color { ColorAnimation { duration: 120 } }
+
+                                Rectangle {
+                                    width: 16; height: 16; radius: 8
+                                    color: "#1e1e2e"
+                                    x: parent.parent.MiscState.showLoop ? parent.width - width - 2 : 2
+                                    y: (parent.height - height) / 2
+                                    Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                    onClicked: MiscState.showLoop = !MiscState.showLoop
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            spacing: 10
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 32
+
+                            Text {
+                                text: ""
+                                color: MiscState.showPlayerChooser ? "#89b4fa" : "#585b70"
+                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            ColumnLayout {
+                                spacing: 0
+                                Text {
+                                    text: "Player Chooser"
+                                    color: "#cdd6f4"
+                                    font { pixelSize: 11; family: "Quicksand"; bold: true }
+                                }
+                                Text {
+                                    text: "Show player switcher in now playing"
+                                    color: "#585b70"
+                                    font { pixelSize: 8; family: "ZedMono Nerd Font" }
+                                }
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Rectangle {
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: 36; implicitHeight: 20; radius: 10
+                                color: MiscState.showPlayerChooser ? "#89b4fa" : "#45475a"
+                                Behavior on color { ColorAnimation { duration: 120 } }
+
+                                Rectangle {
+                                    width: 16; height: 16; radius: 8
+                                    color: "#1e1e2e"
+                                    x: parent.parent.MiscState.showPlayerChooser ? parent.width - width - 2 : 2
+                                    y: (parent.height - height) / 2
+                                    Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                    onClicked: MiscState.showPlayerChooser = !MiscState.showPlayerChooser
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

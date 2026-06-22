@@ -457,6 +457,27 @@ BarBlock {
                         }
                     }
 
+                    // ═══ POWER ═══
+                    Card {
+                        title: ""
+                        icon: ""
+                        visible: root.showPowerPopup
+                        Layout.topMargin: 6
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 1
+                            Layout.preferredHeight: 42
+
+                            QsPower { icon: ""; color: "#89b4fa"; label: "Lock"; cmd: "loginctl lock-session" }
+                            QsPower { icon: ""; color: "#a6e3a1"; label: "Sleep"; cmd: "systemctl suspend" }
+                            QsPower { icon: ""; color: "#f5c2e7"; label: "Hibernate"; cmd: "systemctl hibernate" }
+                            QsPower { icon: ""; color: "#f9e2af"; label: "Reboot"; cmd: "systemctl reboot" }
+                            QsPower { icon: ""; color: "#f38ba8"; label: "Off"; cmd: "systemctl poweroff" }
+                            QsPower { icon: ""; color: "#cba6f7"; label: "Exit"; cmd: "loginctl terminate-user $USER" }
+                        }
+                    }
+
                     // ═══ NOW PLAYING ═══
                     Rectangle {
                         id: nowPlayingCard
@@ -477,32 +498,19 @@ BarBlock {
 
                         property int progressTick: 0
 
-                        // ── Album art background (blurred) ──
-                        Item {
+                        // ── Album art background (visible glass) ──
+                        Image {
                             anchors.fill: parent
-                            visible: bgArtSource.status === Image.Ready
+                            source: MprisState.player?.trackArtUrl || ""
+                            fillMode: Image.PreserveAspectCrop
+                            asynchronous: true
+                            opacity: 0.35
+                            visible: status === Image.Ready
+                        }
 
-                            Image {
-                                id: bgArtSource
-                                anchors.fill: parent
-                                source: MprisState.player?.trackArtUrl || ""
-                                fillMode: Image.PreserveAspectCrop
-                                asynchronous: true
-                            }
-
-                            MultiEffect {
-                                anchors.fill: parent
-                                source: bgArtSource
-                                blurEnabled: true
-                                blur: 0.85
-                                blurMax: 64
-                                opacity: 0.35
-                            }
-
-                            Rectangle {
-                                anchors.fill: parent
-                                color: Qt.rgba(0.04, 0.04, 0.06, 0.15)
-                            }
+                        Rectangle {
+                            anchors.fill: parent
+                            color: Qt.rgba(0.04, 0.04, 0.06, 0.25)
                         }
 
                         // ── Hidden helpers ──
@@ -554,9 +562,38 @@ BarBlock {
                                 spacing: 0
                                 Item { Layout.fillWidth: true }
                                 TrackButton {
-                                    text: root.compactNowPlaying ? "" : ""
+                                    text: root.compactNowPlaying ? "-" : ""
                                     accentColor: "#585b70"
                                     onClicked: root.compactNowPlaying = !root.compactNowPlaying
+                                }
+                                Rectangle {
+                                    visible: MiscState.showPlayerChooser
+                                    implicitHeight: 16; radius: height / 2
+                                    color: Qt.rgba(0, 0, 0, 0.3)
+                                    Layout.preferredWidth: playerPill.implicitWidth + 12
+
+                                    RowLayout {
+                                        id: playerPill
+                                        anchors.fill: parent; anchors.leftMargin: 5; anchors.rightMargin: 5; spacing: 3
+                                        Rectangle { implicitWidth: 4; implicitHeight: 4; radius: 2; color: MprisState.player?.isPlaying ? "#88FF00" : "#585b70" }
+                                        Text {
+                                            text: MprisState.player?.identity || ""
+                                            color: "#cdd6f4"
+                                            font { pixelSize: 8; family: "Quicksand"; bold: true }
+                                            elide: Text.ElideRight
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                        onClicked: playerListOpen = !playerListOpen
+                                    }
+                                }
+                                Text {
+                                    visible: MiscState.showPlayerChooser
+                                    text: Mpris.players.length + " player(s)"
+                                    color: "#585b70"
+                                    font { pixelSize: 7; family: "ZedMono Nerd Font" }
                                 }
                             }
 
@@ -623,32 +660,6 @@ BarBlock {
                                             return Math.min(pos / len, 1);
                                         }
 
-                                        Text {
-                                            anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
-                                            text: {
-                                                nowPlayingCard.progressTick;
-                                                var pos = MprisState.player?.position;
-                                                if (pos == null || isNaN(pos)) return "0:00";
-                                                var s = Math.max(0, Math.floor(pos / 1000000));
-                                                return Math.floor(s / 60) + ":" + ((s % 60) < 10 ? "0" : "") + (s % 60);
-                                            }
-                                            color: "#585b70"
-                                            font { pixelSize: 7; family: "ZedMono Nerd Font" }
-                                        }
-
-                                        Text {
-                                            anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-                                            text: {
-                                                var len = MprisState.player?.length;
-                                                if (len == null || isNaN(len) || len <= 0) return "--:--";
-                                                var s = Math.floor(len / 1000000);
-                                                if (s <= 0) return "--:--";
-                                                return Math.floor(s / 60) + ":" + ((s % 60) < 10 ? "0" : "") + (s % 60);
-                                            }
-                                            color: "#585b70"
-                                            font { pixelSize: 7; family: "ZedMono Nerd Font" }
-                                        }
-
                                         Rectangle {
                                             anchors.left: parent.left; anchors.right: parent.right
                                             anchors.leftMargin: 16; anchors.rightMargin: 16
@@ -674,44 +685,33 @@ BarBlock {
                                     }
 
                                     RowLayout {
-                                        Layout.fillWidth: true; spacing: 2
-
-                                        TrackButton { text: ""; accentColor: "#cba6f7"; active: root.shuffleOn; onClicked: { root.shuffleOn = !root.shuffleOn; Quickshell.execDetached(["sh", "-c", "playerctl shuffle " + (root.shuffleOn ? "on" : "off") + " 2>/dev/null"]); } }
+                                        Layout.fillWidth: true; spacing: 6
+                                        Item { Layout.fillWidth: true }
+                                        TrackButton {
+                                            text: ""
+                                            visible: MiscState.showShuffle
+                                            active: MprisState.player?.shuffle ?? false
+                                            accentColor: MprisState.player?.shuffle ? "#f9e2af" : "#cba6f7"
+                                            onClicked: { var p = MprisState.player; if (p?.canControl && p?.shuffleSupported) p.shuffle = !p.shuffle; }
+                                        }
                                         TrackButton { text: ""; accentColor: "#cba6f7"; onClicked: MprisState.player?.previous() }
                                         TrackButton { text: MprisState.player?.isPlaying ? "" : ""; accentColor: "#cba6f7"; onClicked: MprisState.player?.togglePlaying() }
                                         TrackButton { text: ""; accentColor: "#cba6f7"; onClicked: MprisState.player?.next() }
-                                        TrackButton { text: ""; accentColor: "#cba6f7"; active: root.loopOn; onClicked: { root.loopOn = !root.loopOn; Quickshell.execDetached(["sh", "-c", "playerctl loop " + (root.loopOn ? "Playlist" : "None") + " 2>/dev/null"]); } }
+                                        TrackButton {
+                                            text: ""
+                                            visible: MiscState.showLoop
+                                            active: MprisState.player?.loopState !== MprisLoopState.None
+                                            accentColor: MprisState.player?.loopState === MprisLoopState.Track ? "#f9e2af" : MprisState.player?.loopState === MprisLoopState.Playlist ? "#89b4fa" : "#cba6f7"
+                                            onClicked: {
+                                                var p = MprisState.player;
+                                                if (!p?.canControl || !p?.loopSupported) return;
+                                                var ls = p.loopState;
+                                                if (ls === MprisLoopState.None) p.loopState = MprisLoopState.Track;
+                                                else if (ls === MprisLoopState.Track) p.loopState = MprisLoopState.Playlist;
+                                                else p.loopState = MprisLoopState.None;
+                                            }
+                                        }
                                         Item { Layout.fillWidth: true }
-
-                                        Rectangle {
-                                            implicitHeight: 16; radius: height / 2
-                                            color: Qt.rgba(0, 0, 0, 0.3)
-                                            Layout.preferredWidth: playerPill.implicitWidth + 12
-
-                                            RowLayout {
-                                                id: playerPill
-                                                anchors.fill: parent; anchors.leftMargin: 5; anchors.rightMargin: 5; spacing: 3
-                                                Rectangle { implicitWidth: 4; implicitHeight: 4; radius: 2; color: MprisState.player?.isPlaying ? "#88FF00" : "#585b70" }
-                                                Text {
-                                                    text: MprisState.player?.identity || ""
-                                                    color: "#cdd6f4"
-                                                    font { pixelSize: 8; family: "Quicksand"; bold: true }
-                                                    elide: Text.ElideRight
-                                                }
-                                            }
-
-                                            MouseArea {
-                                                anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                                                onClicked: playerListOpen = !playerListOpen
-                                            }
-                                        }
-
-                                        Text {
-                                            text: Mpris.players.length + " player(s)"
-                                            color: "#585b70"
-                                            font { pixelSize: 7; family: "ZedMono Nerd Font" }
-                                            visible: Mpris.players.length > 1
-                                        }
                                     }
                                 }
                             }
@@ -784,32 +784,6 @@ BarBlock {
                                         return Math.min(pos / len, 1);
                                     }
 
-                                    Text {
-                                        anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
-                                        text: {
-                                            nowPlayingCard.progressTick;
-                                            var pos = MprisState.player?.position;
-                                            if (pos == null || isNaN(pos)) return "0:00";
-                                            var s = Math.max(0, Math.floor(pos / 1000000));
-                                            return Math.floor(s / 60) + ":" + ((s % 60) < 10 ? "0" : "") + (s % 60);
-                                        }
-                                        color: "#585b70"
-                                        font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                                    }
-
-                                    Text {
-                                        anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-                                        text: {
-                                            var len = MprisState.player?.length;
-                                            if (len == null || isNaN(len) || len <= 0) return "--:--";
-                                            var s = Math.floor(len / 1000000);
-                                            if (s <= 0) return "--:--";
-                                            return Math.floor(s / 60) + ":" + ((s % 60) < 10 ? "0" : "") + (s % 60);
-                                        }
-                                        color: "#585b70"
-                                        font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                                    }
-
                                     Rectangle {
                                         anchors.left: parent.left; anchors.right: parent.right
                                         anchors.leftMargin: 24; anchors.rightMargin: 24
@@ -835,44 +809,33 @@ BarBlock {
                                 }
 
                                 RowLayout {
-                                    Layout.fillWidth: true; spacing: 2
-
-                                    TrackButton { text: ""; accentColor: "#cba6f7"; active: root.shuffleOn; onClicked: { root.shuffleOn = !root.shuffleOn; Quickshell.execDetached(["sh", "-c", "playerctl shuffle " + (root.shuffleOn ? "on" : "off") + " 2>/dev/null"]); } }
+                                    Layout.fillWidth: true; spacing: 6
+                                    Item { Layout.fillWidth: true }
+                                    TrackButton {
+                                        text: ""
+                                        visible: MiscState.showShuffle
+                                        active: MprisState.player?.shuffle ?? false
+                                        accentColor: MprisState.player?.shuffle ? "#f9e2af" : "#cba6f7"
+                                        onClicked: { var p = MprisState.player; if (p?.canControl && p?.shuffleSupported) p.shuffle = !p.shuffle; }
+                                    }
                                     TrackButton { text: ""; accentColor: "#cba6f7"; onClicked: MprisState.player?.previous() }
                                     TrackButton { text: MprisState.player?.isPlaying ? "" : ""; accentColor: "#cba6f7"; onClicked: MprisState.player?.togglePlaying() }
                                     TrackButton { text: ""; accentColor: "#cba6f7"; onClicked: MprisState.player?.next() }
-                                    TrackButton { text: ""; accentColor: "#cba6f7"; active: root.loopOn; onClicked: { root.loopOn = !root.loopOn; Quickshell.execDetached(["sh", "-c", "playerctl loop " + (root.loopOn ? "Playlist" : "None") + " 2>/dev/null"]); } }
+                                    TrackButton {
+                                        text: ""
+                                        visible: MiscState.showLoop
+                                        active: MprisState.player?.loopState !== MprisLoopState.None
+                                        accentColor: MprisState.player?.loopState === MprisLoopState.Track ? "#f9e2af" : MprisState.player?.loopState === MprisLoopState.Playlist ? "#89b4fa" : "#cba6f7"
+                                        onClicked: {
+                                            var p = MprisState.player;
+                                            if (!p?.canControl || !p?.loopSupported) return;
+                                            var ls = p.loopState;
+                                            if (ls === MprisLoopState.None) p.loopState = MprisLoopState.Track;
+                                            else if (ls === MprisLoopState.Track) p.loopState = MprisLoopState.Playlist;
+                                            else p.loopState = MprisLoopState.None;
+                                        }
+                                    }
                                     Item { Layout.fillWidth: true }
-
-                                    Rectangle {
-                                        implicitHeight: 16; radius: height / 2
-                                        color: Qt.rgba(0, 0, 0, 0.3)
-                                        Layout.preferredWidth: expandedPill.implicitWidth + 12
-
-                                        RowLayout {
-                                            id: expandedPill
-                                            anchors.fill: parent; anchors.leftMargin: 5; anchors.rightMargin: 5; spacing: 3
-                                            Rectangle { implicitWidth: 4; implicitHeight: 4; radius: 2; color: MprisState.player?.isPlaying ? "#88FF00" : "#585b70" }
-                                            Text {
-                                                text: MprisState.player?.identity || ""
-                                                color: "#cdd6f4"
-                                                font { pixelSize: 8; family: "Quicksand"; bold: true }
-                                                elide: Text.ElideRight
-                                            }
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                                            onClicked: playerListOpen = !playerListOpen
-                                        }
-                                    }
-
-                                    Text {
-                                        text: Mpris.players.length + " player(s)"
-                                        color: "#585b70"
-                                        font { pixelSize: 7; family: "ZedMono Nerd Font" }
-                                        visible: Mpris.players.length > 1
-                                    }
                                 }
                             }
 
@@ -1047,9 +1010,9 @@ BarBlock {
 
                                 RowLayout {
                                     anchors.fill: parent
-                                    anchors.leftMargin: 10
+                                    anchors.leftMargin: 12
                                     anchors.rightMargin: 10
-                                    spacing: 0
+                                    spacing: 6
 
                                     // ── Wi‑Fi section ──
                                     Item {
@@ -1075,9 +1038,9 @@ BarBlock {
 
                                         RowLayout {
                                             anchors.fill: parent
-                                            anchors.leftMargin: 8
+                                            anchors.leftMargin: 10
                                             anchors.rightMargin: 8
-                                            spacing: 6
+                                            spacing: 8
 
                                             Text {
                                                 text: ""
@@ -1089,7 +1052,7 @@ BarBlock {
 
                                             ColumnLayout {
                                                 spacing: 1
-                                                Layout.preferredWidth: 70
+                                                Layout.preferredWidth: 64
                                                 Text {
                                                     text: "Wi-Fi"
                                                     color: root.wifiEnabled ? "#cdd6f4" : "#6c7086"
@@ -1105,8 +1068,6 @@ BarBlock {
                                                     font { pixelSize: 9; family: "ZedMono Nerd Font" }
                                                 }
                                             }
-
-                                            Item { Layout.fillWidth: true }
 
                                             Rectangle {
                                                 Layout.alignment: Qt.AlignVCenter
@@ -1154,15 +1115,6 @@ BarBlock {
                                         }
                                     }
 
-                                    // ── Divider ──
-                                    Rectangle {
-                                        implicitWidth: 1
-                                        Layout.fillHeight: true
-                                        color: "#45475a"
-                                        Layout.topMargin: 8
-                                        Layout.bottomMargin: 8
-                                    }
-
                                     // ── Bluetooth section ──
                                     Item {
                                         Layout.fillWidth: true
@@ -1187,9 +1139,9 @@ BarBlock {
 
                                         RowLayout {
                                             anchors.fill: parent
-                                            anchors.leftMargin: 8
+                                            anchors.leftMargin: 10
                                             anchors.rightMargin: 8
-                                            spacing: 6
+                                            spacing: 8
 
                                             Text {
                                                 text: ""
@@ -1201,7 +1153,7 @@ BarBlock {
 
                                             ColumnLayout {
                                                 spacing: 1
-                                                Layout.preferredWidth: 70
+                                                Layout.preferredWidth: 64
                                                 Text {
                                                     text: "Bluetooth"
                                                     color: root.bluetoothEnabled ? "#cdd6f4" : "#6c7086"
@@ -1213,8 +1165,6 @@ BarBlock {
                                                     font { pixelSize: 9; family: "ZedMono Nerd Font" }
                                                 }
                                             }
-
-                                            Item { Layout.fillWidth: true }
 
                                             Rectangle {
                                                 Layout.alignment: Qt.AlignVCenter
@@ -1553,26 +1503,6 @@ BarBlock {
                     }
 
 
-                    // ═══ POWER ═══
-                    Card {
-                        title: ""
-                        icon: ""
-                        visible: root.showPowerPopup
-                        Layout.topMargin: 6
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 1
-                            Layout.preferredHeight: 42
-
-                            QsPower { icon: ""; color: "#89b4fa"; label: "Lock"; cmd: "loginctl lock-session" }
-                            QsPower { icon: ""; color: "#a6e3a1"; label: "Sleep"; cmd: "systemctl suspend" }
-                            QsPower { icon: ""; color: "#f5c2e7"; label: "Hibernate"; cmd: "systemctl hibernate" }
-                            QsPower { icon: ""; color: "#f9e2af"; label: "Reboot"; cmd: "systemctl reboot" }
-                            QsPower { icon: ""; color: "#f38ba8"; label: "Off"; cmd: "systemctl poweroff" }
-                            QsPower { icon: ""; color: "#cba6f7"; label: "Exit"; cmd: "loginctl terminate-user $USER" }
-                        }
-                    }
                 }
             }
         }
