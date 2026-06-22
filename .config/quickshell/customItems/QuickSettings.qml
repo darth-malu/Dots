@@ -498,14 +498,29 @@ BarBlock {
 
                         property int progressTick: 0
 
-                        // ── Album art background (visible glass) ──
-                        Image {
+                        // ── Album art background (gaussian blur glass) ──
+                        Item {
+                            id: artGlass
                             anchors.fill: parent
-                            source: MprisState.player?.trackArtUrl || ""
-                            fillMode: Image.PreserveAspectCrop
-                            asynchronous: true
-                            opacity: 0.35
-                            visible: status === Image.Ready
+                            visible: hiddenArt.status === Image.Ready
+
+                            Image {
+                                id: artGlassImg
+                                anchors.fill: parent
+                                source: MprisState.player?.trackArtUrl || ""
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                                opacity: 0
+                            }
+
+                            MultiEffect {
+                                anchors.fill: parent
+                                source: artGlassImg
+                                blurEnabled: true
+                                blur: 1.0
+                                blurMax: 64
+                                saturation: 0.3
+                            }
                         }
 
                         Rectangle {
@@ -549,23 +564,52 @@ BarBlock {
                             }
                         }
 
+                        // ── Full-height album art strip (compact) ──
+                        Rectangle {
+                            id: compactArt
+                            visible: root.compactNowPlaying
+                            anchors {
+                                left: parent.left
+                                top: parent.top
+                                bottom: parent.bottom
+                            }
+                            width: 56
+                            color: "#313244"
+                            clip: true
+
+                            Image {
+                                anchors.fill: parent
+                                source: MprisState.player?.trackArtUrl || ""
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                                visible: status === Image.Ready
+                            }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: ""; color: "#585b70"
+                                font { pixelSize: 20; family: "Symbols Nerd Font Mono" }
+                                visible: parent.children[0].status !== Image.Ready
+                            }
+
+                            Rectangle {
+                                anchors.fill: parent; color: "transparent"
+                                border { width: 1; color: Qt.rgba(0.80, 0.65, 0.97, 0.3) }
+                            }
+                        }
+
                         // ── Content ──
                         ColumnLayout {
                             id: npContent
-                            x: 8; y: 8
-                            width: parent.width - 16
+                            x: root.compactNowPlaying ? 56 : 8
+                            y: 8
+                            width: parent.width - (root.compactNowPlaying ? 56 + 8 : 16)
                             spacing: 6
 
                             RowLayout {
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 14
                                 spacing: 0
-                                Item { Layout.fillWidth: true }
-                                TrackButton {
-                                    text: root.compactNowPlaying ? "-" : ""
-                                    accentColor: "#585b70"
-                                    onClicked: root.compactNowPlaying = !root.compactNowPlaying
-                                }
                                 Rectangle {
                                     visible: MiscState.showPlayerChooser
                                     implicitHeight: 16; radius: height / 2
@@ -595,38 +639,19 @@ BarBlock {
                                     color: "#585b70"
                                     font { pixelSize: 7; family: "ZedMono Nerd Font" }
                                 }
+                                Item { Layout.fillWidth: true }
+                                TrackButton {
+                                    text: root.compactNowPlaying ? "+" : "−"
+                                    accentColor: "#585b70"
+                                    onClicked: root.compactNowPlaying = !root.compactNowPlaying
+                                }
                             }
 
                             // ── COMPACT VIEW ──
-                            RowLayout {
+                            ColumnLayout {
                                 visible: root.compactNowPlaying
                                 Layout.fillWidth: true
-                                spacing: 8
-
-                                Rectangle {
-                                    implicitWidth: 56; implicitHeight: 56
-                                    radius: 6; color: "#313244"
-
-                                    Image {
-                                        anchors.fill: parent
-                                        source: MprisState.player?.trackArtUrl || ""
-                                        fillMode: Image.PreserveAspectCrop
-                                        asynchronous: true
-                                        visible: status === Image.Ready
-                                    }
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: ""; color: "#585b70"
-                                        font { pixelSize: 20; family: "Symbols Nerd Font Mono" }
-                                        visible: parent.children[0].status !== Image.Ready
-                                    }
-
-                                    Rectangle {
-                                        anchors.fill: parent; radius: 6; color: "transparent"
-                                        border { width: 1; color: Qt.rgba(0.80, 0.65, 0.97, 0.3) }
-                                    }
-                                }
+                                spacing: 2
 
                                 ColumnLayout {
                                     Layout.fillWidth: true; spacing: 2
@@ -886,6 +911,11 @@ BarBlock {
                                                 MprisState.player = modelData;
                                                 playerListOpen = false;
                                             }
+                                            onWheel: wheel => {
+                                                if (!modelData?.canControl || !modelData?.volumeSupported) return;
+                                                var delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
+                                                modelData.volume = Math.max(0, Math.min(1, (modelData.volume || 0) + delta));
+                                            }
                                         }
                                     }
 
@@ -1010,8 +1040,8 @@ BarBlock {
 
                                 RowLayout {
                                     anchors.fill: parent
-                                    anchors.leftMargin: 12
-                                    anchors.rightMargin: 10
+                                    anchors.leftMargin: 10
+                                    anchors.rightMargin: 8
                                     spacing: 6
 
                                     // ── Wi‑Fi section ──
@@ -1556,8 +1586,8 @@ BarBlock {
             anchors.fill: parent
             radius: 6
             color: mouseArea.containsMouse
-                ? Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.12)
-                : "transparent"
+                ? Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.15)
+                : Qt.rgba(0, 0, 0, 0.2)
             scale: parent.scaleVal
             Behavior on color { ColorAnimation { duration: 120 } }
         }
@@ -1567,7 +1597,7 @@ BarBlock {
             text: parent.text
             color: mouseArea.containsMouse
                 ? parent.accentColor
-                : (parent.active ? parent.accentColor : "#585b70")
+                : (parent.active ? parent.accentColor : "#cdd6f4")
             font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
             Behavior on color { ColorAnimation { duration: 120 } }
         }

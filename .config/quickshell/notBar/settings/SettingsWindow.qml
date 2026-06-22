@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
@@ -402,9 +403,19 @@ Item {
                                 topMargin: 28
                             }
 
-                            Loader {
+                            Flickable {
                                 anchors.fill: parent
-                                sourceComponent: root.currentCategory === 0 ? generalPage : root.currentCategory === 1 ? barPage : audioPage
+                                contentWidth: parent.width
+                                contentHeight: pageLoader.implicitHeight + 16
+                                clip: true
+                                boundsBehavior: Flickable.StopAtBounds
+                                ScrollBar.vertical: ScrollBar { policy: ScrollBar.AlwaysOff }
+
+                                Loader {
+                                    id: pageLoader
+                                    width: parent.width
+                                    sourceComponent: root.currentCategory === 0 ? generalPage : root.currentCategory === 1 ? barPage : audioPage
+                                }
                             }
                         }
                     }
