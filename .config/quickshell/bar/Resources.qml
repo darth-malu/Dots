@@ -9,6 +9,7 @@ Loader {
 
     required property var host
 
+    Layout.alignment: Qt.AlignVCenter
     active: ResourcesState.resourcesVisible
 
     visible: active

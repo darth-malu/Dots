@@ -252,12 +252,38 @@ local mpv = hl.window_rule({
 })
 mpv:set_enabled(false)
 
-local steam = hl.window_rule({
-  name      = "Try Launch Steam in emptym", -- FIXME: borked
-  match     = { class = "^(steam)$", title = "^(steam)$" },
+
+local emptymSteam = hl.window_rule({
+  name      = "OpenSteam In Emptym",
+  match     = { class = "steam", title = "Steam" },
   workspace = "emptym",
 })
-steam:set_enabled(true)
+emptymSteam:set_enabled(true)
+
+local nofocusSteamOffers = hl.window_rule({
+  name     = "no focus on steam offers",
+  match    = { class = "^(steam)$", title = "^(Special Offers)$" },
+  no_focus = true,
+})
+nofocusSteamOffers:set_enabled(true)
+
+hl.window_rule({
+  name      = "Silent Sign In page --steam",
+  match     = { class = "^(steam)$", title = "^(Sign in to Steam)$" },
+  workspace = "emptym silent",
+})
+
+hl.window_rule({
+  name = "Discord - Init Load up",
+  match = { class = "^(.*)([dD]iscord)$", title = "(Discord Updater)", },
+  workspace = "emptym silent",
+})
+
+hl.window_rule({
+  name = "Discord - Main App",
+  match = { initial_title = "^(.*)(Discord)$", initial_class = "^(discord)$", },
+  workspace = "emptym",
+})
 
 --[[
 

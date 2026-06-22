@@ -8,6 +8,7 @@ import qs.themes
 
 RowLayout {
     id: batteryBlock
+    Layout.alignment: Qt.AlignVCenter
     spacing: 6
     visible: BatteryState.available
 

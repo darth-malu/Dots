@@ -12,7 +12,7 @@ import qs.services
 RowLayout {
     id: root
 
-    anchors.verticalCenter: parent.verticalCenter
+    Layout.alignment: Qt.AlignVCenter
 
     required property var host
 

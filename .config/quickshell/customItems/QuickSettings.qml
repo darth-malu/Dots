@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
@@ -43,6 +44,7 @@ BarBlock {
     property real brightness: 0
     property real maxBrightness: 100
     property bool showWifiList: false
+    property bool showPower: false
     property string wifiNetworks: ""
 
     FileView {
@@ -277,7 +279,7 @@ BarBlock {
         // }
 
         implicitWidth: 340
-        implicitHeight: qsContent.implicitHeight + 16
+        implicitHeight: Math.min(qsContent.implicitHeight + 16, Screen.desktopAvailableHeight * 0.7)
 
         Rectangle {
             anchors.fill: parent
@@ -287,16 +289,17 @@ BarBlock {
             color: "#1e1e2e"
             border.color: "#45475a"
 
-            ColumnLayout {
-                id: qsContent
-                anchors {
-                    top: parent.top
-                    left: parent.left
-                    right: parent.right
-                    leftMargin: 8
-                    rightMargin: 8
-                }
-                spacing: 0
+            ScrollView {
+                anchors.fill: parent
+                anchors.margins: 8
+                clip: true
+                ScrollBar.vertical.policy: ScrollBar.AsNeeded
+                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+
+                ColumnLayout {
+                    id: qsContent
+                    width: parent.width
+                    spacing: 0
 
                 // ═══ CONTENT ═══
                 ColumnLayout {
@@ -412,6 +415,28 @@ BarBlock {
                                         root.showQsPopup = false;
                                         MiscState.toggleSettings = true;
                                     }
+                                }
+                            }
+
+                            Rectangle {
+                                Layout.preferredWidth: 32
+                                Layout.preferredHeight: 32
+                                radius: 6
+                                color: powerBtnMouse.containsMouse ? Qt.rgba(0.95, 0.55, 0.66, 0.15) : "transparent"
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: ""
+                                    color: root.showPower ? "#f38ba8" : "#585b70"
+                                    font { pixelSize: 16; family: "Symbols Nerd Font Mono" }
+                                }
+
+                                MouseArea {
+                                    id: powerBtnMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.showPower = !root.showPower
                                 }
                             }
                         }
@@ -1660,6 +1685,7 @@ BarBlock {
                         title: "Power"
                         icon: ""
                         accent: "#f38ba8"
+                        visible: root.showPower
                         Layout.bottomMargin: 0
 
                         RowLayout {
@@ -1707,6 +1733,7 @@ BarBlock {
                 }
             }
         }
+    }
     }
 
     // ═══ COMPONENTS ═══

@@ -3,7 +3,6 @@ hl.env("HYPRCURSOR_SIZE", "24")
 
 hl.env("SLURP_ARGS", "-d -b -B F050F022 -b 10101022 -c ff00ff")
 
-
 -- QT
 hl.env("QT_QPA_PLATFORM", "wayland;xcb") -- Qt: Use Wayland if available, fall back to X11 if not.
 hl.env("QT_AUTO_SCREEN_SCALE_FACTOR", "1")

@@ -6,6 +6,7 @@ import QtQuick.Layouts
 
 Loader {
     id: loaderBig
+    Layout.alignment: Qt.AlignVCenter
     active: NetworkState.netspeedVisible
     visible: active
 
