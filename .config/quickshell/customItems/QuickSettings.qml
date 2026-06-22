@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Window
 import QtQuick.Layouts
 import QtQuick.Controls
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Pipewire
@@ -476,19 +477,32 @@ BarBlock {
 
                         property int progressTick: 0
 
-                        // ── Album art background ──
-                        Image {
+                        // ── Album art background (blurred) ──
+                        Item {
                             anchors.fill: parent
-                            source: MprisState.player?.trackArtUrl || ""
-                            fillMode: Image.PreserveAspectCrop
-                            asynchronous: true
-                            opacity: 0.12
-                            visible: status === Image.Ready
-                        }
+                            visible: bgArtSource.status === Image.Ready
 
-                        Rectangle {
-                            anchors.fill: parent
-                            color: Qt.rgba(0.04, 0.04, 0.06, 0.65)
+                            Image {
+                                id: bgArtSource
+                                anchors.fill: parent
+                                source: MprisState.player?.trackArtUrl || ""
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                            }
+
+                            MultiEffect {
+                                anchors.fill: parent
+                                source: bgArtSource
+                                blurEnabled: true
+                                blur: 0.85
+                                blurMax: 64
+                                opacity: 0.35
+                            }
+
+                            Rectangle {
+                                anchors.fill: parent
+                                color: Qt.rgba(0.04, 0.04, 0.06, 0.15)
+                            }
                         }
 
                         // ── Hidden helpers ──
@@ -540,7 +554,7 @@ BarBlock {
                                 spacing: 0
                                 Item { Layout.fillWidth: true }
                                 TrackButton {
-                                    text: root.compactNowPlaying ? "" : ""
+                                    text: root.compactNowPlaying ? "" : ""
                                     accentColor: "#585b70"
                                     onClicked: root.compactNowPlaying = !root.compactNowPlaying
                                 }
@@ -1069,10 +1083,13 @@ BarBlock {
                                                 text: ""
                                                 color: root.wifiEnabled ? "#89b4fa" : "#585b70"
                                                 font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                                Layout.preferredWidth: 18
+                                                horizontalAlignment: Text.AlignHCenter
                                             }
 
                                             ColumnLayout {
                                                 spacing: 1
+                                                Layout.preferredWidth: 70
                                                 Text {
                                                     text: "Wi-Fi"
                                                     color: root.wifiEnabled ? "#cdd6f4" : "#6c7086"
@@ -1092,7 +1109,7 @@ BarBlock {
                                             Item { Layout.fillWidth: true }
 
                                             Rectangle {
-                                                anchors.verticalCenter: parent.verticalCenter
+                                                Layout.alignment: Qt.AlignVCenter
                                                 implicitWidth: 24
                                                 implicitHeight: 24
                                                 radius: 6
@@ -1178,10 +1195,13 @@ BarBlock {
                                                 text: ""
                                                 color: root.bluetoothEnabled ? "#89b4fa" : "#585b70"
                                                 font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                                Layout.preferredWidth: 18
+                                                horizontalAlignment: Text.AlignHCenter
                                             }
 
                                             ColumnLayout {
                                                 spacing: 1
+                                                Layout.preferredWidth: 70
                                                 Text {
                                                     text: "Bluetooth"
                                                     color: root.bluetoothEnabled ? "#cdd6f4" : "#6c7086"
@@ -1197,7 +1217,7 @@ BarBlock {
                                             Item { Layout.fillWidth: true }
 
                                             Rectangle {
-                                                anchors.verticalCenter: parent.verticalCenter
+                                                Layout.alignment: Qt.AlignVCenter
                                                 implicitWidth: 24
                                                 implicitHeight: 24
                                                 radius: 6
@@ -1455,7 +1475,7 @@ BarBlock {
                                     Item { Layout.fillWidth: true }
 
                                     Rectangle {
-                                        anchors.verticalCenter: parent.verticalCenter
+                                        Layout.alignment: Qt.AlignVCenter
                                         implicitWidth: 8; implicitHeight: 8; radius: 4
                                         color: root.ethernetConnected ? "#a6e3a1" : "#585b70"
                                     }
@@ -1533,54 +1553,30 @@ BarBlock {
                     }
 
 
+                    // ═══ POWER ═══
+                    Card {
+                        title: ""
+                        icon: ""
+                        visible: root.showPowerPopup
+                        Layout.topMargin: 6
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 1
+                            Layout.preferredHeight: 42
+
+                            QsPower { icon: ""; color: "#89b4fa"; label: "Lock"; cmd: "loginctl lock-session" }
+                            QsPower { icon: ""; color: "#a6e3a1"; label: "Sleep"; cmd: "systemctl suspend" }
+                            QsPower { icon: ""; color: "#f5c2e7"; label: "Hibernate"; cmd: "systemctl hibernate" }
+                            QsPower { icon: ""; color: "#f9e2af"; label: "Reboot"; cmd: "systemctl reboot" }
+                            QsPower { icon: ""; color: "#f38ba8"; label: "Off"; cmd: "systemctl poweroff" }
+                            QsPower { icon: ""; color: "#cba6f7"; label: "Exit"; cmd: "loginctl terminate-user $USER" }
+                        }
+                    }
                 }
             }
         }
     }
-    }
-
-    PopupWindow {
-        id: powerPopup
-        visible: root.showPowerPopup && root.showQsPopup
-        grabFocus: true
-        color: 'transparent'
-
-        anchor.window: root.host
-        anchor.rect.x: powerBtnMouse.mapToGlobal(0, 0).x - 4
-        anchor.rect.y: powerBtnMouse.mapToGlobal(0, 0).y + powerBtnMouse.height + 4
-
-        implicitWidth: 280
-        implicitHeight: 50
-
-        onVisibleChanged: if (!visible) root.showPowerPopup = false
-
-        Rectangle {
-            anchors.fill: parent
-            radius: 10
-            layer.enabled: true
-            layer.samples: 8
-            color: "#1e1e2e"
-            border.color: "#45475a"
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.margins: 4
-                spacing: 1
-
-                QsPower { icon: ""; color: "#89b4fa"; label: "Lock"; cmd: "loginctl lock-session" }
-                QsPower { icon: ""; color: "#a6e3a1"; label: "Sleep"; cmd: "systemctl suspend" }
-                QsPower { icon: ""; color: "#f5c2e7"; label: "Hibernate"; cmd: "systemctl hibernate" }
-                QsPower { icon: ""; color: "#f9e2af"; label: "Reboot"; cmd: "systemctl reboot" }
-                QsPower { icon: ""; color: "#f38ba8"; label: "Off"; cmd: "systemctl poweroff" }
-                QsPower { icon: ""; color: "#cba6f7"; label: "Exit"; cmd: "loginctl terminate-user $USER" }
-            }
-        }
-
-        Shortcut {
-            sequence: "Escape"
-            enabled: root.showPowerPopup
-            onActivated: root.showPowerPopup = false
-        }
     }
 
     // ═══ COMPONENTS ═══
@@ -1686,7 +1682,7 @@ BarBlock {
             spacing: 1
 
             Text {
-                anchors.horizontalCenter: parent.horizontalCenter
+                Layout.alignment: Qt.AlignHCenter
                 text: parent.parent.icon
                 color: mouseArea.containsMouse ? parent.parent.color : Qt.rgba(parent.parent.color.r, parent.parent.color.g, parent.parent.color.b, 0.6)
                 font {
@@ -1701,7 +1697,7 @@ BarBlock {
             }
 
             Text {
-                anchors.horizontalCenter: parent.horizontalCenter
+                Layout.alignment: Qt.AlignHCenter
                 text: parent.parent.label
                 color: mouseArea.containsMouse ? parent.parent.color : "#585b70"
                 font {
