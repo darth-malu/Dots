@@ -28,9 +28,6 @@ BarBlock {
     }
 
     content: RowLayout {
-        anchors.fill: parent
-        anchors.leftMargin: 6
-        anchors.rightMargin: 6
         spacing: 4
 
         BarText {
