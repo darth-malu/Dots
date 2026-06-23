@@ -104,8 +104,14 @@ ColumnLayout {
             Rectangle {
                 anchors.fill: parent
                 radius: height / 2
-                color: model.today ? Themes.calendarToday : parent.hovered ? "#313244" : "transparent"
-                opacity: model.today ? 0.3 : parent.hovered ? 1 : 0
+                color: model.today ? Themes.calendarToday
+                     : parent.hovered ? "#45475a"
+                     : Qt.rgba(1, 1, 1, 0.04)
+                opacity: model.today ? 0.5 : parent.hovered ? 1 : 1
+                border {
+                    width: model.today ? 2 : parent.hovered ? 1 : 0
+                    color: model.today ? Themes.calendarToday : Qt.rgba(1, 1, 1, 0.1)
+                }
             }
 
             Text {
@@ -113,7 +119,7 @@ ColumnLayout {
                 text: model.day
                 font: Themes.quicksand
                 color: {
-                    if (model.today) return Themes.calendarToday;
+                    if (model.today) return "#1e1e2e";
                     if (model.month === grid.month) return Themes.calendarActiveMonth;
                     return Themes.calendarInactiveMonth;
                 }
@@ -122,9 +128,9 @@ ColumnLayout {
             Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.bottom: parent.bottom
-                anchors.bottomMargin: 3
-                width: 5
-                height: 5
+                anchors.bottomMargin: 2
+                width: 4
+                height: 4
                 radius: width / 2
                 color: Themes.calendarActiveMonth
                 visible: parent.isTracked

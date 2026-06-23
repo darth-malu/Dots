@@ -754,34 +754,63 @@ BarBlock {
 
                                 Item { Layout.fillWidth: true }
 
-                                ColumnLayout {
-                                    Layout.fillWidth: true
+                                Rectangle {
                                     Layout.alignment: Qt.AlignHCenter
-                                    spacing: 2
-                                    Layout.preferredWidth: parent.parent.width - 48
+                                    implicitWidth: 100; implicitHeight: 100
+                                    radius: 8; color: "#313244"
 
-                                    Text {
-                                        Layout.fillWidth: true
-                                        horizontalAlignment: Text.AlignHCenter
-                                        text: MprisState.player?.trackTitle || "No track"
-                                        color: "#ffffff"
-                                        font { pixelSize: 16; bold: true; family: "Quicksand" }
-                                        elide: Text.ElideRight; maximumLineCount: 2
-                                        wrapMode: Text.WordWrap
-                                        style: Text.Outline
-                                        styleColor: Qt.rgba(0, 0, 0, 0.6)
+                                    Image {
+                                        anchors.fill: parent
+                                        source: MprisState.player?.trackArtUrl || ""
+                                        fillMode: Image.PreserveAspectCrop
+                                        asynchronous: true
+                                        visible: status === Image.Ready
                                     }
 
                                     Text {
-                                        Layout.fillWidth: true
-                                        horizontalAlignment: Text.AlignHCenter
-                                        text: MprisState.player?.trackArtist || ""
-                                        color: "#e0d8f0"
-                                        font { pixelSize: 12; family: "ZedMono Nerd Font" }
-                                        elide: Text.ElideRight; maximumLineCount: 2
-                                        visible: text.length > 0
-                                        style: Text.Outline
-                                        styleColor: Qt.rgba(0, 0, 0, 0.5)
+                                        anchors.centerIn: parent
+                                        text: ""; color: "#585b70"
+                                        font { pixelSize: 32; family: "Symbols Nerd Font Mono" }
+                                        visible: parent.children[0].status !== Image.Ready
+                                    }
+
+                                    Rectangle {
+                                        anchors.fill: parent; radius: 8; color: "transparent"
+                                        border { width: 1; color: Qt.rgba(0.80, 0.65, 0.97, 0.3) }
+                                    }
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.maximumWidth: parent.parent.width - 64
+                                    Layout.alignment: Qt.AlignHCenter
+                                    radius: 8
+                                    color: Qt.rgba(0, 0, 0, 0.25)
+
+                                    ColumnLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 8
+                                        spacing: 2
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            horizontalAlignment: Text.AlignHCenter
+                                            text: MprisState.player?.trackTitle || "No track"
+                                            color: "#ffffff"
+                                            font { pixelSize: 15; bold: true; family: "Quicksand" }
+                                            elide: Text.ElideRight; maximumLineCount: 2
+                                            wrapMode: Text.WordWrap
+                                        }
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            horizontalAlignment: Text.AlignHCenter
+                                            text: MprisState.player?.trackArtist || ""
+                                            color: "#e0d8f0"
+                                            font { pixelSize: 11; family: "ZedMono Nerd Font" }
+                                            elide: Text.ElideRight; maximumLineCount: 2
+                                            visible: text.length > 0
+                                        }
                                     }
                                 }
 

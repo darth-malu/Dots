@@ -1,6 +1,7 @@
 import qs.themes
 // import QtMultimedia
 import QtQuick
+import QtQuick.Controls
 import qs.customItems
 import qs.services
 import Quickshell.Io
@@ -82,8 +83,10 @@ BarBlock {
                 radius: 10
                 anchors.fill: parent
                 border.width: 1
-                border.color: '#A020F0'
-                color: Qt.rgba(0.1, 0.04, 0.18, 0.7)
+                border.color: Qt.rgba(0.80, 0.65, 0.97, 0.3)
+                color: Qt.rgba(0.06, 0.04, 0.15, 0.7)
+
+                Shortcut { sequence: "Escape"; onActivated: MiscState.showPopup = false }
 
                 ClockPopup {
                     anchors.fill: parent
