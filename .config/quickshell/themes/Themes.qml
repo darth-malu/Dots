@@ -50,7 +50,7 @@ Singleton {
     readonly property color calendarDayRow: '#a6e3a1'
     readonly property color calendarInactiveMonth: "#6c7086"
     readonly property color calendarActiveMonth: '#f5c2e7'
-    readonly property color calendarToday: '#a6e3a1'
+    readonly property color calendarToday: '#ff79c6'
     readonly property color clockColor: '#ff79c6'
 
     // Soft organic inactive state (Everforest 'Background Soft')

@@ -112,7 +112,7 @@ BarBlock {
         id: allDisksPopup
         visible: false
         grabFocus: true
-        color: 'transparent'
+        color: MiscState.popupSolidBg ? "#1e1e2e" : "transparent"
 
         anchor.window: disk.host
         anchor.rect.x: {

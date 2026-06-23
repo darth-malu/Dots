@@ -280,7 +280,7 @@ BarBlock {
         id: qsPopup
         visible: root.showQsPopup
         grabFocus: true
-        color: 'transparent'
+        color: MiscState.popupSolidBg ? "#1e1e2e" : "transparent"
 
         anchor.window: root.host
         anchor.rect.x: {
@@ -288,23 +288,27 @@ BarBlock {
             return g.x + (root.width / 2) - (width / 2);
         }
         anchor.rect.y: 33
-        // anchor.rect.y: {
-        //     let g = root.mapToGlobal(0, 0);
-        //     return g.y + root.height + 4;
-        // }
 
         implicitWidth: 340
         implicitHeight: Math.min(qsContent.implicitHeight + 16, Screen.desktopAvailableHeight * 0.7)
 
-        Rectangle {
-            anchors.fill: parent
-            radius: 12
-            layer.enabled: true
-            layer.samples: 8
-            color: "#1e1e2e"
-            border.color: "#45475a"
+            Rectangle {
+                anchors.fill: parent
+                radius: 12
+                layer.enabled: true
+                layer.samples: 8
+                color: "#1e1e2e"
+                border.color: "#45475a"
 
-            ScrollView {
+                Shortcut { sequence: "Escape"; onActivated: root.showQsPopup = false }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: root.showQsPopup = false
+                    z: -1
+                }
+
+                ScrollView {
                 anchors.fill: parent
                 anchors.margins: 8
                 clip: true
@@ -487,7 +491,7 @@ BarBlock {
                         clip: true
                         visible: MprisState.player !== null
                         color: "#181825"
-                        implicitHeight: npContent.implicitHeight + 16
+                        implicitHeight: root.compactNowPlaying ? compactContent.implicitHeight + 20 : 240
 
                         property color dominantColor: "#cba6f7"
                         border {
@@ -497,6 +501,16 @@ BarBlock {
                         Behavior on border.color { ColorAnimation { duration: 300 } }
 
                         property int progressTick: 0
+                        property bool showVolumeBadge: false
+                        readonly property int currentVolume: Math.round((MprisState.player?.volume ?? 0) * 100)
+
+                        Timer {
+                            id: volumeBadgeTimer
+                            interval: 800
+                            running: false
+                            repeat: false
+                            onTriggered: nowPlayingCard.showVolumeBadge = false
+                        }
 
                         // ── Hidden helpers ──
                         Item {
@@ -534,131 +548,121 @@ BarBlock {
                             }
                         }
 
-                        // ── Full-height album art strip (compact) ──
-                        Rectangle {
-                            id: compactArt
+                        // ── SPACER (prevents npContent from interfering with padding) ──
+
+                        // ── COMPACT VIEW ──
+                        RowLayout {
+                            id: compactContent
                             visible: root.compactNowPlaying
-                            anchors {
-                                left: parent.left
-                                top: parent.top
-                                bottom: parent.bottom
-                            }
-                            width: parent.height
-                            color: "#313244"
-                            clip: true
-
-                            Image {
-                                anchors.fill: parent
-                                source: MprisState.player?.trackArtUrl || ""
-                                fillMode: Image.PreserveAspectCrop
-                                asynchronous: true
-                                visible: status === Image.Ready
-                            }
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: ""; color: "#585b70"
-                                font { pixelSize: 20; family: "Symbols Nerd Font Mono" }
-                                visible: parent.children[0].status !== Image.Ready
-                            }
+                            anchors.fill: parent
+                            anchors.margins: 8
+                            spacing: 8
 
                             Rectangle {
-                                anchors.fill: parent; color: "transparent"
-                                border { width: 1; color: Qt.rgba(0.80, 0.65, 0.97, 0.3) }
-                            }
+                                id: compactArt
+                                implicitWidth: 48
+                                implicitHeight: 48
+                                radius: 6
+                                color: "#313244"
+                                clip: true
 
-                            Rectangle {
-                                anchors.bottom: parent.bottom
-                                anchors.right: parent.right
-                                anchors.margins: 4
-                                implicitWidth: 16
-                                implicitHeight: 16
-                                radius: 4
-                                color: Qt.rgba(0, 0, 0, 0.5)
-                                opacity: artHoverC.containsMouse ? 1 : 0
-                                Behavior on opacity { NumberAnimation { duration: 150 } }
+                                Image {
+                                    anchors.fill: parent
+                                    source: MprisState.player?.trackArtUrl || ""
+                                    fillMode: Image.PreserveAspectCrop
+                                    asynchronous: true
+                                    visible: status === Image.Ready
+                                }
 
                                 Text {
                                     anchors.centerIn: parent
-                                    text: ""
-                                    color: "#ffffff"
-                                    font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
+                                    text: ""; color: "#585b70"
+                                    font { pixelSize: 20; family: "Symbols Nerd Font Mono" }
+                                    visible: compactArt.children[0].status !== Image.Ready
+                                }
+
+                                Rectangle {
+                                    anchors.fill: parent; color: "transparent"
+                                    border { width: 1; color: Qt.rgba(0.80, 0.65, 0.97, 0.3) }
+                                    radius: 6
+                                }
+
+                                Rectangle {
+                                    anchors.bottom: parent.bottom
+                                    anchors.right: parent.right
+                                    anchors.margins: 4
+                                    implicitWidth: 26
+                                    implicitHeight: 16
+                                    radius: 4
+                                    color: Qt.rgba(0, 0, 0, 0.5)
+                                    opacity: compactArtMouse.containsMouse ? 1 : 0
+                                    Behavior on opacity { NumberAnimation { duration: 150 } }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: MprisState.player?.volumeSupported
+                                            ? Math.round((MprisState.player?.volume ?? 0) * 100) + "%"
+                                            : ""
+                                        color: "#ffffff"
+                                        font { pixelSize: 8; family: "ZedMono Nerd Font"; bold: true }
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: compactArtMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    acceptedButtons: Qt.NoButton
                                 }
                             }
 
-                            MouseArea {
-                                id: artHoverC
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                acceptedButtons: Qt.NoButton
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onWheel: wheel => {
-                                var p = MprisState.player;
-                                if (p?.canControl && p?.volumeSupported)
-                                    p.volume = Math.max(0, Math.min(p.volume + (wheel.angleDelta.y > 0 ? 0.05 : -0.05), 1));
-                            }
-                        }
-
-                        // ── Content ──
-                        ColumnLayout {
-                            id: npContent
-                            x: root.compactNowPlaying ? compactArt.width + 4 : 8
-                            y: 6
-                            width: parent.width - (root.compactNowPlaying ? compactArt.width + 4 + 8 : 16)
-                            spacing: 4
-
-                            RowLayout {
+                            ColumnLayout {
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: 12
-                                spacing: 0
-                                Rectangle {
-                                    visible: MiscState.showPlayerChooser
-                                    implicitHeight: 16; radius: height / 2
-                                    color: Qt.rgba(0, 0, 0, 0.3)
-                                    Layout.preferredWidth: playerPill.implicitWidth + 12
+                                Layout.fillHeight: true
+                                spacing: 3
+                                Layout.topMargin: 2
 
-                                    RowLayout {
-                                        id: playerPill
-                                        anchors.fill: parent; anchors.leftMargin: 5; anchors.rightMargin: 5; spacing: 3
-                                        Rectangle { implicitWidth: 4; implicitHeight: 4; radius: 2; color: MprisState.player?.isPlaying ? "#88FF00" : "#585b70" }
-                                        Text {
-                                            text: MprisState.player?.identity || ""
-                                            color: "#cdd6f4"
-                                            font { pixelSize: 8; family: "Quicksand"; bold: true }
-                                            elide: Text.ElideRight
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 0
+
+                                    Rectangle {
+                                        visible: MiscState.showPlayerChooser
+                                        implicitHeight: 16; radius: height / 2
+                                        color: Qt.rgba(0, 0, 0, 0.3)
+                                        Layout.preferredWidth: compPill.implicitWidth + 12
+
+                                        RowLayout {
+                                            id: compPill
+                                            anchors.fill: parent; anchors.leftMargin: 5; anchors.rightMargin: 5; spacing: 3
+                                            Rectangle { implicitWidth: 4; implicitHeight: 4; radius: 2; color: MprisState.player?.isPlaying ? "#88FF00" : "#585b70" }
+                                            Text {
+                                                text: MprisState.player?.identity || ""
+                                                color: "#cdd6f4"
+                                                font { pixelSize: 8; family: "Quicksand"; bold: true }
+                                                elide: Text.ElideRight
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                            onClicked: playerListOpen = !playerListOpen
                                         }
                                     }
-
-                                    MouseArea {
-                                        anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                                        onClicked: playerListOpen = !playerListOpen
+                                    Text {
+                                        visible: MiscState.showPlayerChooser
+                                        text: Mpris.players.length + " player(s)"
+                                        color: "#585b70"
+                                        font { pixelSize: 7; family: "ZedMono Nerd Font" }
+                                    }
+                                    Item { Layout.fillWidth: true }
+                                    TrackButton {
+                                        text: "+"
+                                        accentColor: "#585b70"
+                                        onClicked: root.compactNowPlaying = false
                                     }
                                 }
-                                Text {
-                                    visible: MiscState.showPlayerChooser
-                                    text: Mpris.players.length + " player(s)"
-                                    color: "#585b70"
-                                    font { pixelSize: 7; family: "ZedMono Nerd Font" }
-                                }
-                                Item { Layout.fillWidth: true }
-                                TrackButton {
-                                    text: root.compactNowPlaying ? "+" : "−"
-                                    accentColor: "#585b70"
-                                    onClicked: root.compactNowPlaying = !root.compactNowPlaying
-                                }
-                            }
-
-                            // ── COMPACT VIEW ──
-                            ColumnLayout {
-                                visible: root.compactNowPlaying
-                                Layout.fillWidth: true
-                                spacing: 1
 
                                 Text {
                                     Layout.fillWidth: true
@@ -666,8 +670,6 @@ BarBlock {
                                     color: "#cdd6f4"
                                     font { pixelSize: 11; bold: true; family: "Quicksand" }
                                     elide: Text.ElideRight; maximumLineCount: 1
-                                    style: Text.Outline
-                                    styleColor: Qt.rgba(0, 0, 0, 0.5)
                                 }
 
                                 Text {
@@ -677,8 +679,6 @@ BarBlock {
                                     font { pixelSize: 9; family: "ZedMono Nerd Font" }
                                     elide: Text.ElideRight; maximumLineCount: 1
                                     visible: text.length > 0
-                                    style: Text.Outline
-                                    styleColor: Qt.rgba(0, 0, 0, 0.4)
                                 }
 
                                 Item {
@@ -721,6 +721,171 @@ BarBlock {
                                     Item { Layout.fillWidth: true }
                                     TrackButton {
                                             text: ""
+                                            flat: true
+                                            visible: MiscState.showShuffle
+                                            active: MprisState.player?.shuffle ?? false
+                                            accentColor: MprisState.player?.shuffle ? "#f9e2af" : "#cba6f7"
+                                            onClicked: { var p = MprisState.player; if (p?.canControl && p?.shuffleSupported) p.shuffle = !p.shuffle; }
+                                        }
+                                        TrackButton { text: ""; flat: true; accentColor: "#cba6f7"; onClicked: MprisState.player?.previous() }
+                                        TrackButton { text: MprisState.player?.isPlaying ? "" : ""; flat: true; accentColor: "#cba6f7"; onClicked: MprisState.player?.togglePlaying() }
+                                        TrackButton { text: ""; flat: true; accentColor: "#cba6f7"; onClicked: MprisState.player?.next() }
+                                        TrackButton {
+                                            text: ""
+                                            flat: true
+                                            visible: MiscState.showLoop
+                                            active: MprisState.player?.loopState !== MprisLoopState.None
+                                            accentColor: MprisState.player?.loopState === MprisLoopState.Track ? "#f9e2af" : MprisState.player?.loopState === MprisLoopState.Playlist ? "#89b4fa" : "#cba6f7"
+                                            onClicked: {
+                                                var p = MprisState.player;
+                                                if (!p?.canControl || !p?.loopSupported) return;
+                                                var ls = p.loopState;
+                                                if (ls === MprisLoopState.None) p.loopState = MprisLoopState.Track;
+                                                else if (ls === MprisLoopState.Track) p.loopState = MprisLoopState.Playlist;
+                                                else p.loopState = MprisLoopState.None;
+                                            }
+                                        }
+                                        Item { Layout.fillWidth: true }
+                                    }
+                                }
+
+                            // ── EXPANDED VIEW ──
+                            Item {
+                                visible: !root.compactNowPlaying
+                                anchors.fill: parent
+
+                                Image {
+                                    anchors.fill: parent
+                                    source: MprisState.player?.trackArtUrl || ""
+                                    fillMode: Image.PreserveAspectCrop
+                                    asynchronous: true
+                                }
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    color: Qt.rgba(0, 0, 0, 0.40)
+                                }
+
+                                ColumnLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 10
+                                    spacing: 4
+
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 0
+
+                                        Rectangle {
+                                            visible: MiscState.showPlayerChooser
+                                            implicitHeight: 16; radius: height / 2
+                                            color: Qt.rgba(0, 0, 0, 0.3)
+                                            Layout.preferredWidth: expPill.implicitWidth + 12
+
+                                            RowLayout {
+                                                id: expPill
+                                                anchors.fill: parent; anchors.leftMargin: 5; anchors.rightMargin: 5; spacing: 3
+                                                Rectangle { implicitWidth: 4; implicitHeight: 4; radius: 2; color: MprisState.player?.isPlaying ? "#88FF00" : "#585b70" }
+                                                Text {
+                                                    text: MprisState.player?.identity || ""
+                                                    color: "#cdd6f4"
+                                                    font { pixelSize: 8; family: "Quicksand"; bold: true }
+                                                    elide: Text.ElideRight
+                                                }
+                                            }
+
+                                            MouseArea {
+                                                anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                                onClicked: playerListOpen = !playerListOpen
+                                            }
+                                        }
+
+                                        Text {
+                                            visible: MiscState.showPlayerChooser
+                                            text: Mpris.players.length + " player(s)"
+                                            color: "#585b70"
+                                            font { pixelSize: 7; family: "ZedMono Nerd Font" }
+                                        }
+
+                                        Item { Layout.fillWidth: true }
+                                        TrackButton {
+                                            text: "−"
+                                            accentColor: Qt.rgba(1, 1, 1, 0.5)
+                                            onClicked: root.compactNowPlaying = true
+                                        }
+                                    }
+
+                                    Item { Layout.fillHeight: true }
+
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 2
+                                        Layout.leftMargin: 4
+                                        Layout.rightMargin: 4
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: MprisState.player?.trackTitle || "No track"
+                                            color: "#ffffff"
+                                            font { pixelSize: 16; bold: true; family: "Quicksand" }
+                                            elide: Text.ElideRight; maximumLineCount: 1
+                                            style: Text.Outline
+                                            styleColor: Qt.rgba(0, 0, 0, 0.7)
+                                        }
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: MprisState.player?.trackArtist || ""
+                                            color: "#d0d0e0"
+                                            font { pixelSize: 11; family: "ZedMono Nerd Font" }
+                                            elide: Text.ElideRight; maximumLineCount: 1
+                                            visible: text.length > 0
+                                        }
+                                    }
+
+                                    Item {
+                                        Layout.fillWidth: true
+                                        Layout.preferredHeight: 14
+                                        Layout.topMargin: 4
+
+                                        readonly property real ratio: {
+                                            nowPlayingCard.progressTick;
+                                            var p = MprisState.player;
+                                            if (!p) return 0;
+                                            var pos = p.position; var len = p.length;
+                                            if (pos == null || len == null || len <= 0 || isNaN(pos) || isNaN(len)) return 0;
+                                            return Math.min(pos / len, 1);
+                                        }
+
+                                        Rectangle {
+                                            anchors.left: parent.left; anchors.right: parent.right
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            height: 3; radius: 1.5
+                                            color: Qt.rgba(1, 1, 1, 0.15)
+
+                                            Rectangle {
+                                                width: parent.width * parent.parent.ratio
+                                                height: parent.height; radius: 1.5
+                                                color: "#cba6f7"
+                                                Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.Linear } }
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                            onClicked: mouse => {
+                                                var p = MprisState.player;
+                                                if (p && p.length > 0) p.position = (mouse.x / width) * p.length;
+                                            }
+                                        }
+                                    }
+
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        Layout.preferredHeight: 28
+                                        spacing: 6
+                                        Item { Layout.fillWidth: true }
+                                        TrackButton {
+                                            text: ""
                                             visible: MiscState.showShuffle
                                             active: MprisState.player?.shuffle ?? false
                                             accentColor: MprisState.player?.shuffle ? "#f9e2af" : "#cba6f7"
@@ -746,227 +911,38 @@ BarBlock {
                                         Item { Layout.fillWidth: true }
                                     }
                                 }
-                            }
 
-                            // ── EXPANDED VIEW ──
-                            ColumnLayout {
-                                visible: !root.compactNowPlaying
-                                Layout.fillWidth: true; spacing: 6
-
-                                Item { Layout.fillWidth: true }
-
+                                // ── Volume badge (shows on scroll) ──
                                 Rectangle {
-                                    Layout.alignment: Qt.AlignHCenter
-                                    implicitWidth: 100; implicitHeight: 100
-                                    radius: 8; color: "#313244"
-
-                                    Image {
-                                        anchors.fill: parent
-                                        source: MprisState.player?.trackArtUrl || ""
-                                        fillMode: Image.PreserveAspectCrop
-                                        asynchronous: true
-                                        visible: status === Image.Ready
-                                    }
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    implicitWidth: 48
+                                    implicitHeight: 32
+                                    radius: 8
+                                    color: Qt.rgba(0, 0, 0, 0.7)
+                                    opacity: nowPlayingCard.showVolumeBadge ? 1 : 0
+                                    Behavior on opacity { NumberAnimation { duration: 150 } }
 
                                     Text {
                                         anchors.centerIn: parent
-                                        text: ""; color: "#585b70"
-                                        font { pixelSize: 32; family: "Symbols Nerd Font Mono" }
-                                        visible: parent.children[0].status !== Image.Ready
+                                        text: nowPlayingCard.currentVolume + "%"
+                                        color: "#ffffff"
+                                        font { pixelSize: 13; bold: true; family: "Quicksand" }
                                     }
-
-                                    Rectangle {
-                                        anchors.fill: parent; radius: 8; color: "transparent"
-                                        border { width: 1; color: Qt.rgba(0.80, 0.65, 0.97, 0.3) }
-                                    }
-
-                                    Rectangle {
-                                        anchors.bottom: parent.bottom
-                                        anchors.right: parent.right
-                                        anchors.margins: 4
-                                        implicitWidth: 20
-                                        implicitHeight: 20
-                                        radius: 5
-                                        color: Qt.rgba(0, 0, 0, 0.5)
-                                        opacity: artHoverE.containsMouse ? 1 : 0
-                                        Behavior on opacity { NumberAnimation { duration: 150 } }
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: ""
-                                            color: "#ffffff"
-                                            font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
-                                        }
-                                    }
-
-                                    MouseArea {
-                                        id: artHoverE
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        acceptedButtons: Qt.NoButton
-                                    }
-                                }
-
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    Layout.maximumWidth: parent.parent.width - 64
-                                    Layout.alignment: Qt.AlignHCenter
-                                    radius: 8
-                                    color: Qt.rgba(0, 0, 0, 0.25)
-
-                                    ColumnLayout {
-                                        anchors.fill: parent
-                                        anchors.margins: 8
-                                        spacing: 2
-
-                                        Text {
-                                            Layout.fillWidth: true
-                                            horizontalAlignment: Text.AlignHCenter
-                                            text: MprisState.player?.trackTitle || "No track"
-                                            color: "#ffffff"
-                                            font { pixelSize: 15; bold: true; family: "Quicksand" }
-                                            elide: Text.ElideRight; maximumLineCount: 2
-                                            wrapMode: Text.WordWrap
-                                        }
-
-                                        Text {
-                                            Layout.fillWidth: true
-                                            horizontalAlignment: Text.AlignHCenter
-                                            text: MprisState.player?.trackArtist || ""
-                                            color: "#e0d8f0"
-                                            font { pixelSize: 11; family: "ZedMono Nerd Font" }
-                                            elide: Text.ElideRight; maximumLineCount: 2
-                                            visible: text.length > 0
-                                        }
-                                    }
-                                }
-
-                                Item { Layout.fillWidth: true }
-
-                                Item {
-                                    Layout.fillWidth: true; Layout.preferredHeight: 16
-
-                                    readonly property real ratio: {
-                                        nowPlayingCard.progressTick;
-                                        var p = MprisState.player;
-                                        if (!p) return 0;
-                                        var pos = p.position; var len = p.length;
-                                        if (pos == null || len == null || len <= 0 || isNaN(pos) || isNaN(len)) return 0;
-                                        return Math.min(pos / len, 1);
-                                    }
-
-                                    Rectangle {
-                                        anchors.left: parent.left; anchors.right: parent.right
-                                        anchors.leftMargin: 24; anchors.rightMargin: 24
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        height: 3; radius: 1.5
-                                        color: Qt.rgba(1, 1, 1, 0.08)
-
-                                        Rectangle {
-                                            width: parent.width * parent.parent.ratio
-                                            height: parent.height; radius: 1.5
-                                            color: "#cba6f7"
-                                            Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.Linear } }
-                                        }
-                                    }
-
-                                    MouseArea {
-                                        anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                                        onClicked: mouse => {
-                                            var p = MprisState.player;
-                                            if (p && p.length > 0) p.position = (mouse.x / width) * p.length;
-                                        }
-                                    }
-                                }
-
-                                RowLayout {
-                                    Layout.fillWidth: true; spacing: 6
-                                    Item { Layout.fillWidth: true }
-                                    TrackButton {
-                                        text: ""
-                                        visible: MiscState.showShuffle
-                                        active: MprisState.player?.shuffle ?? false
-                                        accentColor: MprisState.player?.shuffle ? "#f9e2af" : "#cba6f7"
-                                        onClicked: { var p = MprisState.player; if (p?.canControl && p?.shuffleSupported) p.shuffle = !p.shuffle; }
-                                    }
-                                    TrackButton { text: ""; accentColor: "#cba6f7"; onClicked: MprisState.player?.previous() }
-                                    TrackButton { text: MprisState.player?.isPlaying ? "" : ""; accentColor: "#cba6f7"; onClicked: MprisState.player?.togglePlaying() }
-                                    TrackButton { text: ""; accentColor: "#cba6f7"; onClicked: MprisState.player?.next() }
-                                    TrackButton {
-                                        text: ""
-                                        visible: MiscState.showLoop
-                                        active: MprisState.player?.loopState !== MprisLoopState.None
-                                        accentColor: MprisState.player?.loopState === MprisLoopState.Track ? "#f9e2af" : MprisState.player?.loopState === MprisLoopState.Playlist ? "#89b4fa" : "#cba6f7"
-                                        onClicked: {
-                                            var p = MprisState.player;
-                                            if (!p?.canControl || !p?.loopSupported) return;
-                                            var ls = p.loopState;
-                                            if (ls === MprisLoopState.None) p.loopState = MprisLoopState.Track;
-                                            else if (ls === MprisLoopState.Track) p.loopState = MprisLoopState.Playlist;
-                                            else p.loopState = MprisLoopState.None;
-                                        }
-                                    }
-                                    Item { Layout.fillWidth: true }
                                 }
                             }
 
-                            // ── Player list ──
-                            ColumnLayout {
-                                id: playerListLayout
-                                Layout.fillWidth: true
-                                visible: playerListOpen
-                                spacing: 2
-
-                                Instantiator {
-                                    active: playerListOpen
-                                    model: Mpris.players
-
-                                    Rectangle {
-                                        required property var modelData
-                                        Layout.fillWidth: true
-                                        implicitHeight: 18
-                                        radius: 4
-                                        color: mouseArea.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
-
-                                        Behavior on color { ColorAnimation { duration: 80 } }
-
-                                        RowLayout {
-                                            anchors.fill: parent
-                                            anchors.leftMargin: 8
-                                            spacing: 6
-
-                                            Rectangle {
-                                                implicitWidth: 5; implicitHeight: 5; radius: 2.5
-                                                color: modelData.playbackState === MprisPlaybackState.Playing ? "#88FF00" : "#585b70"
-                                            }
-
-                                            Text {
-                                                text: modelData.identity
-                                                color: modelData.playbackState === MprisPlaybackState.Playing ? "#cdd6f4" : "#585b70"
-                                                font { pixelSize: 9; family: "Quicksand"; bold: true }
-                                                elide: Text.ElideRight; Layout.fillWidth: true
-                                            }
-                                        }
-
-                                        MouseArea {
-                                            id: mouseArea
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: {
-                                                MprisState.player = modelData;
-                                                playerListOpen = false;
-                                            }
-                                            onWheel: wheel => {
-                                                if (!modelData?.canControl || !modelData?.volumeSupported) return;
-                                                var delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                                                modelData.volume = Math.max(0, Math.min(1, (modelData.volume || 0) + delta));
-                                            }
-                                        }
+                            // ── Mouse area for scroll volume ──
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onWheel: wheel => {
+                                    var p = MprisState.player;
+                                    if (p?.canControl && p?.volumeSupported) {
+                                        p.volume = Math.max(0, Math.min(p.volume + (wheel.angleDelta.y > 0 ? 0.05 : -0.05), 1));
+                                        nowPlayingCard.showVolumeBadge = true;
+                                        volumeBadgeTimer.restart();
                                     }
-
-                                    onObjectAdded: (index, object) => object.parent = playerListLayout
                                 }
                             }
                         }
@@ -1583,6 +1559,121 @@ BarBlock {
         }
     }
 
+    // ═══ PLAYER POPUP ═══
+    PopupWindow {
+        id: playerPopup
+        visible: playerListOpen
+        grabFocus: true
+        color: MiscState.popupSolidBg ? "#1e1e2e" : "transparent"
+
+        anchor.window: root.host
+        anchor.rect.x: {
+            let g = root.mapToGlobal(0, 0);
+            return g.x + (root.width / 2) - (width / 2);
+        }
+        anchor.rect.y: 33
+
+        implicitWidth: 340
+        implicitHeight: Math.min(playerContent.implicitHeight + 32, Screen.desktopAvailableHeight * 0.7)
+
+        Rectangle {
+            anchors.fill: parent
+            radius: 12
+            layer.enabled: true
+            layer.samples: 8
+            color: "#1e1e2e"
+            border.color: "#45475a"
+
+            Shortcut { sequence: "Escape"; onActivated: playerListOpen = false }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: playerListOpen = false
+                z: -1
+            }
+
+            ColumnLayout {
+                id: playerContent
+                anchors.fill: parent
+                anchors.margins: 12
+                spacing: 6
+
+                Text {
+                    text: "Select Player"
+                    color: "#cdd6f4"
+                    font { pixelSize: 13; bold: true; family: "Quicksand" }
+                    Layout.bottomMargin: 4
+                }
+
+                ScrollView {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    ScrollBar.vertical.policy: ScrollBar.AsNeeded
+                    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+
+                    ColumnLayout {
+                        width: parent.width
+                        spacing: 2
+
+                        Repeater {
+                            model: Mpris.players
+
+                            delegate: Rectangle {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                implicitHeight: 36
+                                radius: 6
+                                color: mouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
+
+                                Behavior on color { ColorAnimation { duration: 80 } }
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 8
+                                    anchors.rightMargin: 8
+                                    spacing: 8
+
+                                    Rectangle {
+                                        implicitWidth: 8; implicitHeight: 8; radius: 4
+                                        color: modelData.playbackState === MprisPlaybackState.Playing ? "#88FF00" : "#585b70"
+                                    }
+
+                                    Text {
+                                        text: modelData.identity
+                                        color: modelData.playbackState === MprisPlaybackState.Playing ? "#cdd6f4" : "#585b70"
+                                        font { pixelSize: 11; bold: true; family: "Quicksand" }
+                                        Layout.fillWidth: true
+                                        elide: Text.ElideRight
+                                    }
+
+                                    Text {
+                                        text: modelData.trackTitle || ""
+                                        color: "#a6adc8"
+                                        font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                        Layout.preferredWidth: 150
+                                        elide: Text.ElideRight
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: mouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        MprisState.player = modelData;
+                                        playerListOpen = false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // ═══ COMPONENTS ═══
 
     component SectionHeader: RowLayout {
@@ -1618,6 +1709,7 @@ BarBlock {
         property string text
         property color accentColor: "#cba6f7"
         property bool active: false
+        property bool flat: false
         signal clicked
 
         implicitWidth: 28
@@ -1629,6 +1721,7 @@ BarBlock {
         Rectangle {
             anchors.fill: parent
             radius: 6
+            visible: !parent.flat
             color: mouseArea.containsMouse
                 ? Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.22)
                 : parent.active
@@ -1643,7 +1736,7 @@ BarBlock {
             radius: 6
             color: "transparent"
             border {
-                width: mouseArea.containsMouse || parent.active ? 1 : 0
+                width: (mouseArea.containsMouse || parent.active) && !parent.flat ? 1 : 0
                 color: Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.3)
             }
             Behavior on border.width { NumberAnimation { duration: 80 } }
@@ -1840,4 +1933,5 @@ BarBlock {
             }
         }
     }
+}
 }

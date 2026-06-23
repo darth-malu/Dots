@@ -23,6 +23,7 @@ Singleton {
     property date currentDate: new Date()
 
     property bool showPopup: false
+    property bool popupSolidBg: true
 
     property var trackedDates: ({})
     property int trackedDatesRev: 0

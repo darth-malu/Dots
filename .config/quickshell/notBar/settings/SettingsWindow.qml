@@ -555,6 +555,54 @@ Item {
                                 }
                             }
                         }
+
+                        RowLayout {
+                            spacing: 10
+                            Layout.fillWidth: true
+
+                            ColumnLayout {
+                                spacing: 2
+                                Layout.fillWidth: true
+
+                                Text {
+                                    text: "Popup Background"
+                                    color: "#cdd6f4"
+                                    font { pixelSize: 12; family: "Quicksand"; bold: true }
+                                }
+
+                                Text {
+                                    text: MiscState.popupSolidBg ? "Solid" : "Transparent"
+                                    color: "#585b70"
+                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                }
+                            }
+
+                            Rectangle {
+                                implicitWidth: 44
+                                implicitHeight: 24
+                                radius: 12
+                                color: MiscState.popupSolidBg ? "#89b4fa" : "#45475a"
+
+                                Behavior on color { ColorAnimation { duration: 120 } }
+
+                                Rectangle {
+                                    width: 18
+                                    height: 18
+                                    radius: 9
+                                    color: "#1e1e2e"
+                                    x: MiscState.popupSolidBg ? parent.width - width - 3 : 3
+                                    y: (parent.height - height) / 2
+
+                                    Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: MiscState.popupSolidBg = !MiscState.popupSolidBg
+                                }
+                            }
+                        }
                     }
                 }
             }

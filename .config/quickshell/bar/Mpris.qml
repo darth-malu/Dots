@@ -83,20 +83,33 @@ Loader {
                 anchor.rect.x: mprisLoader.host.width / 2 - width / 2
                 anchor.rect.y: 35
                 visible: mprisRoot.showPopup
-                color: 'transparent'
-                implicitWidth: Math.min(600, mprisPopupRectangle.implicitWidth + 10)
-                implicitHeight: mprisPopupRectangle.implicitHeight + 20
+                grabFocus: true
+                color: MiscState.popupSolidBg ? "#1e1e2e" : "transparent"
+                implicitWidth: 280
+                implicitHeight: Math.min(mprisPopupRect.implicitHeight, 300)
 
-                WrapperRectangle {
-                    id: mprisPopupRectangle
-                    radius: 6
+                Rectangle {
+                    id: mprisPopupRect
                     anchors.fill: parent
-
-                    color: Qt.rgba(0.1, 0.04, 0.18, 0.7)
+                    radius: 10
+                    color: "#1e1e2e"
                     border.width: 1
-                    border.color: '#A020F0'
+                    border.color: "#45475a"
+                    layer.enabled: true
+                    layer.samples: 8
 
-                    MprisPopup {}
+                    Shortcut { sequence: "Escape"; onActivated: mprisRoot.showPopup = false }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: mprisRoot.showPopup = false
+                        z: -1
+                    }
+
+                    MprisPopup {
+                        anchors.fill: parent
+                        anchors.margins: 8
+                    }
                 }
             }
         }

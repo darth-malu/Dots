@@ -63,14 +63,12 @@ BarBlock {
         PopupWindow {
             id: popup
             visible: MiscState.showPopup
-            color: 'transparent'
+            grabFocus: true
+            color: MiscState.popupSolidBg ? "#1e1e2e" : "transparent"
 
             anchor.window: root.host
-            // anchor.rect.x: root.host.x - popup.width / 2 // TODO make this bound to clock only
-            // anchor.rect.x: root.host.x
             anchor.rect.x: {
                 let globalPos = root.mapToGlobal(0, 0);
-                // Global X + half clock width - half popup width
                 return globalPos.x + (root.width / 2) - (width / 2);
             }
 
@@ -90,6 +88,7 @@ BarBlock {
 
                 MouseArea {
                     anchors.fill: parent
+                    z: -1
                     onClicked: MiscState.showPopup = false
                 }
 
