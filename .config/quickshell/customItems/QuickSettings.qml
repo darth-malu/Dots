@@ -512,16 +512,16 @@ BarBlock {
                         MultiEffect {
                             anchors.fill: artGlassImg
                             source: artGlassImg
-                            blurEnabled: root.compactNowPlaying
-                            blur: root.compactNowPlaying ? 0.6 : 0
-                            blurMax: root.compactNowPlaying ? 32 : 0
-                            saturation: root.compactNowPlaying ? 0.4 : 0.5
+                            blurEnabled: true
+                            blur: 0.4
+                            blurMax: 24
+                            saturation: 0.45
                             visible: artGlassImg.visible
                         }
 
                         Rectangle {
                             anchors.fill: parent
-                            color: root.compactNowPlaying ? Qt.rgba(0.04, 0.04, 0.06, 0.22) : Qt.rgba(0, 0, 0, 0)
+                            color: Qt.rgba(0.06, 0.04, 0.15, 0.45)
                         }
 
                         // ── Hidden helpers ──
@@ -592,15 +592,15 @@ BarBlock {
                                 anchors.fill: parent; color: "transparent"
                                 border { width: 1; color: Qt.rgba(0.80, 0.65, 0.97, 0.3) }
                             }
+                        }
 
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onWheel: wheel => {
-                                    var p = MprisState.player;
-                                    if (p?.canControl && p?.volumeSupported)
-                                        p.volume = Math.max(0, Math.min(p.volume + (wheel.angleDelta.y > 0 ? 0.05 : -0.05), 1));
-                                }
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onWheel: wheel => {
+                                var p = MprisState.player;
+                                if (p?.canControl && p?.volumeSupported)
+                                    p.volume = Math.max(0, Math.min(p.volume + (wheel.angleDelta.y > 0 ? 0.05 : -0.05), 1));
                             }
                         }
 
@@ -665,6 +665,8 @@ BarBlock {
                                     color: "#cdd6f4"
                                     font { pixelSize: 11; bold: true; family: "Quicksand" }
                                     elide: Text.ElideRight; maximumLineCount: 1
+                                    style: Text.Outline
+                                    styleColor: Qt.rgba(0, 0, 0, 0.5)
                                 }
 
                                 Text {
@@ -674,6 +676,8 @@ BarBlock {
                                     font { pixelSize: 9; family: "ZedMono Nerd Font" }
                                     elide: Text.ElideRight; maximumLineCount: 1
                                     visible: text.length > 0
+                                    style: Text.Outline
+                                    styleColor: Qt.rgba(0, 0, 0, 0.4)
                                 }
 
                                 Item {
@@ -750,17 +754,6 @@ BarBlock {
 
                                 Item { Layout.fillWidth: true }
 
-                                MouseArea {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: 100
-                                    cursorShape: Qt.PointingHandCursor
-                                    onWheel: wheel => {
-                                        var p = MprisState.player;
-                                        if (p?.canControl && p?.volumeSupported)
-                                            p.volume = Math.max(0, Math.min(p.volume + (wheel.angleDelta.y > 0 ? 0.05 : -0.05), 1));
-                                    }
-                                }
-
                                 ColumnLayout {
                                     Layout.fillWidth: true
                                     Layout.alignment: Qt.AlignHCenter
@@ -771,20 +764,24 @@ BarBlock {
                                         Layout.fillWidth: true
                                         horizontalAlignment: Text.AlignHCenter
                                         text: MprisState.player?.trackTitle || "No track"
-                                        color: "#cdd6f4"
-                                        font { pixelSize: 14; bold: true; family: "Quicksand" }
+                                        color: "#ffffff"
+                                        font { pixelSize: 16; bold: true; family: "Quicksand" }
                                         elide: Text.ElideRight; maximumLineCount: 2
                                         wrapMode: Text.WordWrap
+                                        style: Text.Outline
+                                        styleColor: Qt.rgba(0, 0, 0, 0.6)
                                     }
 
                                     Text {
                                         Layout.fillWidth: true
                                         horizontalAlignment: Text.AlignHCenter
                                         text: MprisState.player?.trackArtist || ""
-                                        color: "#a6adc8"
-                                        font { pixelSize: 11; family: "ZedMono Nerd Font" }
+                                        color: "#e0d8f0"
+                                        font { pixelSize: 12; family: "ZedMono Nerd Font" }
                                         elide: Text.ElideRight; maximumLineCount: 2
                                         visible: text.length > 0
+                                        style: Text.Outline
+                                        styleColor: Qt.rgba(0, 0, 0, 0.5)
                                     }
                                 }
 
