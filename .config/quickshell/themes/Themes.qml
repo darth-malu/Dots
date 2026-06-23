@@ -45,12 +45,12 @@ Singleton {
     // App Launcher
     readonly property color launcherBg: "#1e1e2e" //"#88FF00"  "#ff79c6"
 
-    // Calendar (bright mpris-inspired)
-    readonly property color calendarHeader: '#FAAB8DED'
-    readonly property color calendarDayRow: '#88FF00'
-    readonly property color calendarInactiveMonth: "#585b70"
-    readonly property color calendarActiveMonth: '#f5e0dc'
-    readonly property color calendarToday: '#88FF00'
+    // Calendar (pastel)
+    readonly property color calendarHeader: '#cba6f7'
+    readonly property color calendarDayRow: '#a6e3a1'
+    readonly property color calendarInactiveMonth: "#6c7086"
+    readonly property color calendarActiveMonth: '#f5c2e7'
+    readonly property color calendarToday: '#a6e3a1'
     readonly property color clockColor: '#ff79c6'
 
     // Soft organic inactive state (Everforest 'Background Soft')

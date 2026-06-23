@@ -499,33 +499,29 @@ BarBlock {
                         property int progressTick: 0
 
                         // ── Album art background (gaussian blur glass) ──
-                        Item {
-                            id: artGlass
+                        Image {
+                            id: artGlassImg
                             anchors.fill: parent
-                            visible: hiddenArt.status === Image.Ready
+                            source: MprisState.player?.trackArtUrl || ""
+                            fillMode: Image.PreserveAspectCrop
+                            asynchronous: true
+                            opacity: root.compactNowPlaying ? 0.7 : 1.0
+                            visible: status === Image.Ready
+                        }
 
-                            Image {
-                                id: artGlassImg
-                                anchors.fill: parent
-                                source: MprisState.player?.trackArtUrl || ""
-                                fillMode: Image.PreserveAspectCrop
-                                asynchronous: true
-                                opacity: 0
-                            }
-
-                            MultiEffect {
-                                anchors.fill: parent
-                                source: artGlassImg
-                                blurEnabled: true
-                                blur: 1.0
-                                blurMax: 64
-                                saturation: 0.3
-                            }
+                        MultiEffect {
+                            anchors.fill: artGlassImg
+                            source: artGlassImg
+                            blurEnabled: root.compactNowPlaying
+                            blur: root.compactNowPlaying ? 0.6 : 0
+                            blurMax: root.compactNowPlaying ? 32 : 0
+                            saturation: root.compactNowPlaying ? 0.4 : 0.5
+                            visible: artGlassImg.visible
                         }
 
                         Rectangle {
                             anchors.fill: parent
-                            color: Qt.rgba(0.04, 0.04, 0.06, 0.25)
+                            color: root.compactNowPlaying ? Qt.rgba(0.04, 0.04, 0.06, 0.22) : Qt.rgba(0, 0, 0, 0)
                         }
 
                         // ── Hidden helpers ──
@@ -573,7 +569,7 @@ BarBlock {
                                 top: parent.top
                                 bottom: parent.bottom
                             }
-                            width: 56
+                            width: parent.height
                             color: "#313244"
                             clip: true
 
@@ -596,19 +592,29 @@ BarBlock {
                                 anchors.fill: parent; color: "transparent"
                                 border { width: 1; color: Qt.rgba(0.80, 0.65, 0.97, 0.3) }
                             }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onWheel: wheel => {
+                                    var p = MprisState.player;
+                                    if (p?.canControl && p?.volumeSupported)
+                                        p.volume = Math.max(0, Math.min(p.volume + (wheel.angleDelta.y > 0 ? 0.05 : -0.05), 1));
+                                }
+                            }
                         }
 
                         // ── Content ──
                         ColumnLayout {
                             id: npContent
-                            x: root.compactNowPlaying ? 56 : 8
-                            y: 8
-                            width: parent.width - (root.compactNowPlaying ? 56 + 8 : 16)
-                            spacing: 6
+                            x: root.compactNowPlaying ? compactArt.width + 4 : 8
+                            y: 6
+                            width: parent.width - (root.compactNowPlaying ? compactArt.width + 4 + 8 : 16)
+                            spacing: 4
 
                             RowLayout {
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: 14
+                                Layout.preferredHeight: 12
                                 spacing: 0
                                 Rectangle {
                                     visible: MiscState.showPlayerChooser
@@ -651,68 +657,64 @@ BarBlock {
                             ColumnLayout {
                                 visible: root.compactNowPlaying
                                 Layout.fillWidth: true
-                                spacing: 2
+                                spacing: 1
 
-                                ColumnLayout {
-                                    Layout.fillWidth: true; spacing: 2
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: MprisState.player?.trackTitle || "No track"
+                                    color: "#cdd6f4"
+                                    font { pixelSize: 11; bold: true; family: "Quicksand" }
+                                    elide: Text.ElideRight; maximumLineCount: 1
+                                }
 
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: MprisState.player?.trackTitle || "No track"
-                                        color: "#cdd6f4"
-                                        font { pixelSize: 12; bold: true; family: "Quicksand" }
-                                        elide: Text.ElideRight; maximumLineCount: 1
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: MprisState.player?.trackArtist || ""
+                                    color: "#a6adc8"
+                                    font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                    elide: Text.ElideRight; maximumLineCount: 1
+                                    visible: text.length > 0
+                                }
+
+                                Item {
+                                    Layout.fillWidth: true; Layout.preferredHeight: 6
+
+                                    readonly property real ratio: {
+                                        nowPlayingCard.progressTick;
+                                        var p = MprisState.player;
+                                        if (!p) return 0;
+                                        var pos = p.position; var len = p.length;
+                                        if (pos == null || len == null || len <= 0 || isNaN(pos) || isNaN(len)) return 0;
+                                        return Math.min(pos / len, 1);
                                     }
 
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: MprisState.player?.trackArtist || ""
-                                        color: "#a6adc8"
-                                        font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                                        elide: Text.ElideRight; maximumLineCount: 1
-                                        visible: text.length > 0
-                                    }
-
-                                    Item {
-                                        Layout.fillWidth: true; Layout.preferredHeight: 12
-
-                                        readonly property real ratio: {
-                                            nowPlayingCard.progressTick;
-                                            var p = MprisState.player;
-                                            if (!p) return 0;
-                                            var pos = p.position; var len = p.length;
-                                            if (pos == null || len == null || len <= 0 || isNaN(pos) || isNaN(len)) return 0;
-                                            return Math.min(pos / len, 1);
-                                        }
+                                    Rectangle {
+                                        anchors.left: parent.left; anchors.right: parent.right
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        height: 2; radius: 1
+                                        color: Qt.rgba(1, 1, 1, 0.08)
 
                                         Rectangle {
-                                            anchors.left: parent.left; anchors.right: parent.right
-                                            anchors.leftMargin: 16; anchors.rightMargin: 16
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            height: 2; radius: 1
-                                            color: Qt.rgba(1, 1, 1, 0.08)
-
-                                            Rectangle {
-                                                width: parent.width * parent.parent.ratio
-                                                height: parent.height; radius: 1
-                                                color: "#cba6f7"
-                                                Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.Linear } }
-                                            }
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                                            onClicked: mouse => {
-                                                var p = MprisState.player;
-                                                if (p && p.length > 0) p.position = (mouse.x / width) * p.length;
-                                            }
+                                            width: parent.width * parent.parent.ratio
+                                            height: parent.height; radius: 1
+                                            color: "#cba6f7"
+                                            Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.Linear } }
                                         }
                                     }
 
-                                    RowLayout {
-                                        Layout.fillWidth: true; spacing: 6
-                                        Item { Layout.fillWidth: true }
-                                        TrackButton {
+                                    MouseArea {
+                                        anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                        onClicked: mouse => {
+                                            var p = MprisState.player;
+                                            if (p && p.length > 0) p.position = (mouse.x / width) * p.length;
+                                        }
+                                    }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true; spacing: 3
+                                    Item { Layout.fillWidth: true }
+                                    TrackButton {
                                             text: ""
                                             visible: MiscState.showShuffle
                                             active: MprisState.player?.shuffle ?? false
@@ -746,56 +748,47 @@ BarBlock {
                                 visible: !root.compactNowPlaying
                                 Layout.fillWidth: true; spacing: 6
 
-                                RowLayout {
-                                    Layout.fillWidth: true; spacing: 10
+                                Item { Layout.fillWidth: true }
 
-                                    Rectangle {
-                                        implicitWidth: 100; implicitHeight: 100
-                                        radius: 8; color: "#313244"
-
-                                        Image {
-                                            anchors.fill: parent
-                                            source: MprisState.player?.trackArtUrl || ""
-                                            fillMode: Image.PreserveAspectCrop
-                                            asynchronous: true
-                                            visible: status === Image.Ready
-                                        }
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: ""; color: "#585b70"
-                                            font { pixelSize: 32; family: "Symbols Nerd Font Mono" }
-                                            visible: parent.children[0].status !== Image.Ready
-                                        }
-
-                                        Rectangle {
-                                            anchors.fill: parent; radius: 8; color: "transparent"
-                                            border { width: 1; color: Qt.rgba(0.80, 0.65, 0.97, 0.3) }
-                                        }
-                                    }
-
-                                    ColumnLayout {
-                                        Layout.fillWidth: true; spacing: 3
-
-                                        Text {
-                                            Layout.fillWidth: true
-                                            text: MprisState.player?.trackTitle || "No track"
-                                            color: "#cdd6f4"
-                                            font { pixelSize: 14; bold: true; family: "Quicksand" }
-                                            elide: Text.ElideRight; maximumLineCount: 2
-                                            wrapMode: Text.WordWrap
-                                        }
-
-                                        Text {
-                                            Layout.fillWidth: true
-                                            text: MprisState.player?.trackArtist || ""
-                                            color: "#a6adc8"
-                                            font { pixelSize: 11; family: "ZedMono Nerd Font" }
-                                            elide: Text.ElideRight; maximumLineCount: 2
-                                            visible: text.length > 0
-                                        }
+                                MouseArea {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 100
+                                    cursorShape: Qt.PointingHandCursor
+                                    onWheel: wheel => {
+                                        var p = MprisState.player;
+                                        if (p?.canControl && p?.volumeSupported)
+                                            p.volume = Math.max(0, Math.min(p.volume + (wheel.angleDelta.y > 0 ? 0.05 : -0.05), 1));
                                     }
                                 }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    Layout.alignment: Qt.AlignHCenter
+                                    spacing: 2
+                                    Layout.preferredWidth: parent.parent.width - 48
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        horizontalAlignment: Text.AlignHCenter
+                                        text: MprisState.player?.trackTitle || "No track"
+                                        color: "#cdd6f4"
+                                        font { pixelSize: 14; bold: true; family: "Quicksand" }
+                                        elide: Text.ElideRight; maximumLineCount: 2
+                                        wrapMode: Text.WordWrap
+                                    }
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        horizontalAlignment: Text.AlignHCenter
+                                        text: MprisState.player?.trackArtist || ""
+                                        color: "#a6adc8"
+                                        font { pixelSize: 11; family: "ZedMono Nerd Font" }
+                                        elide: Text.ElideRight; maximumLineCount: 2
+                                        visible: text.length > 0
+                                    }
+                                }
+
+                                Item { Layout.fillWidth: true }
 
                                 Item {
                                     Layout.fillWidth: true; Layout.preferredHeight: 16
@@ -1051,7 +1044,6 @@ BarBlock {
 
                                         Rectangle {
                                             anchors.fill: parent
-                                            anchors.margins: 1
                                             radius: 6
                                             color: wifiHover.containsMouse
                                                 ? Qt.rgba(0.54, 0.57, 0.96, root.wifiEnabled ? 0.1 : 0.06)
@@ -1068,8 +1060,8 @@ BarBlock {
 
                                         RowLayout {
                                             anchors.fill: parent
-                                            anchors.leftMargin: 10
-                                            anchors.rightMargin: 8
+                                            anchors.leftMargin: 0
+                                            anchors.rightMargin: 0
                                             spacing: 8
 
                                             Text {
@@ -1152,7 +1144,6 @@ BarBlock {
 
                                         Rectangle {
                                             anchors.fill: parent
-                                            anchors.margins: 1
                                             radius: 6
                                             color: btHover.containsMouse
                                                 ? Qt.rgba(0.54, 0.57, 0.96, root.bluetoothEnabled ? 0.1 : 0.06)
@@ -1169,8 +1160,8 @@ BarBlock {
 
                                         RowLayout {
                                             anchors.fill: parent
-                                            anchors.leftMargin: 10
-                                            anchors.rightMargin: 8
+                                            anchors.leftMargin: 0
+                                            anchors.rightMargin: 0
                                             spacing: 8
 
                                             Text {
@@ -1418,7 +1409,7 @@ BarBlock {
                             // ── Ethernet pill ──
                             Rectangle {
                                 Layout.fillWidth: true
-                                implicitHeight: 42
+                                implicitHeight: 46
                                 radius: 8
                                 visible: root.ethernetConnected
                                 color: ethMouse.containsMouse
@@ -1537,7 +1528,6 @@ BarBlock {
             }
         }
     }
-    }
 
     // ═══ COMPONENTS ═══
 
@@ -1586,10 +1576,23 @@ BarBlock {
             anchors.fill: parent
             radius: 6
             color: mouseArea.containsMouse
-                ? Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.15)
-                : Qt.rgba(0, 0, 0, 0.2)
+                ? Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.22)
+                : parent.active
+                    ? Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.15)
+                    : Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.06)
             scale: parent.scaleVal
             Behavior on color { ColorAnimation { duration: 120 } }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: 6
+            color: "transparent"
+            border {
+                width: mouseArea.containsMouse || parent.active ? 1 : 0
+                color: Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.3)
+            }
+            Behavior on border.width { NumberAnimation { duration: 80 } }
         }
 
         Text {
@@ -1597,7 +1600,7 @@ BarBlock {
             text: parent.text
             color: mouseArea.containsMouse
                 ? parent.accentColor
-                : (parent.active ? parent.accentColor : "#cdd6f4")
+                : (parent.active ? parent.accentColor : Qt.rgba(1, 1, 1, 0.7))
             font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
             Behavior on color { ColorAnimation { duration: 120 } }
         }
