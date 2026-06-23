@@ -498,32 +498,6 @@ BarBlock {
 
                         property int progressTick: 0
 
-                        // ── Album art background (gaussian blur glass) ──
-                        Image {
-                            id: artGlassImg
-                            anchors.fill: parent
-                            source: MprisState.player?.trackArtUrl || ""
-                            fillMode: Image.PreserveAspectCrop
-                            asynchronous: true
-                            opacity: root.compactNowPlaying ? 0.7 : 1.0
-                            visible: status === Image.Ready
-                        }
-
-                        MultiEffect {
-                            anchors.fill: artGlassImg
-                            source: artGlassImg
-                            blurEnabled: true
-                            blur: 0.4
-                            blurMax: 24
-                            saturation: 0.45
-                            visible: artGlassImg.visible
-                        }
-
-                        Rectangle {
-                            anchors.fill: parent
-                            color: Qt.rgba(0.06, 0.04, 0.15, 0.45)
-                        }
-
                         // ── Hidden helpers ──
                         Item {
                             visible: false; width: 0; height: 0
@@ -591,6 +565,33 @@ BarBlock {
                             Rectangle {
                                 anchors.fill: parent; color: "transparent"
                                 border { width: 1; color: Qt.rgba(0.80, 0.65, 0.97, 0.3) }
+                            }
+
+                            Rectangle {
+                                anchors.bottom: parent.bottom
+                                anchors.right: parent.right
+                                anchors.margins: 4
+                                implicitWidth: 16
+                                implicitHeight: 16
+                                radius: 4
+                                color: Qt.rgba(0, 0, 0, 0.5)
+                                opacity: artHoverC.containsMouse ? 1 : 0
+                                Behavior on opacity { NumberAnimation { duration: 150 } }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: ""
+                                    color: "#ffffff"
+                                    font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
+                                }
+                            }
+
+                            MouseArea {
+                                id: artHoverC
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                acceptedButtons: Qt.NoButton
                             }
                         }
 
@@ -777,6 +778,33 @@ BarBlock {
                                     Rectangle {
                                         anchors.fill: parent; radius: 8; color: "transparent"
                                         border { width: 1; color: Qt.rgba(0.80, 0.65, 0.97, 0.3) }
+                                    }
+
+                                    Rectangle {
+                                        anchors.bottom: parent.bottom
+                                        anchors.right: parent.right
+                                        anchors.margins: 4
+                                        implicitWidth: 20
+                                        implicitHeight: 20
+                                        radius: 5
+                                        color: Qt.rgba(0, 0, 0, 0.5)
+                                        opacity: artHoverE.containsMouse ? 1 : 0
+                                        Behavior on opacity { NumberAnimation { duration: 150 } }
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: ""
+                                            color: "#ffffff"
+                                            font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: artHoverE
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        acceptedButtons: Qt.NoButton
                                     }
                                 }
 

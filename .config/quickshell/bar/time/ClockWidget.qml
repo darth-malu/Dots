@@ -84,9 +84,14 @@ BarBlock {
                 anchors.fill: parent
                 border.width: 1
                 border.color: Qt.rgba(0.80, 0.65, 0.97, 0.3)
-                color: Qt.rgba(0.06, 0.04, 0.15, 0.7)
+                color: "#1e1e2e"
 
                 Shortcut { sequence: "Escape"; onActivated: MiscState.showPopup = false }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: MiscState.showPopup = false
+                }
 
                 ClockPopup {
                     anchors.fill: parent
