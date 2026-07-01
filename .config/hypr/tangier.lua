@@ -35,8 +35,9 @@ hl.config({
       drag_lock = false,
       clickfinger_behavior = true, -- Button presses with 1, 2, or 3 fingers will be mapped to LMB, RMB, and MMB respectively. This disables interpretation of clicks based on location on the touchpad. libinput#clickfinger-behavior
       tap_and_drag = true,
-      scroll_factor = 1.2,
+      scroll_factor = 1.0,         --1.2;;
     },
+    -- sensitivity = 0.1,
   },
   xwayland = {
     force_zero_scaling = true
