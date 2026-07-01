@@ -254,7 +254,7 @@ mpv:set_enabled(false)
 
 
 local emptymSteam = hl.window_rule({
-  name      = "OpenSteam In Emptym",
+  name      = "Main Steam Page In Emptym -- After everything is loaded",
   match     = { class = "steam", title = "Steam" },
   workspace = "emptym",
 })
@@ -262,7 +262,7 @@ emptymSteam:set_enabled(true)
 
 local nofocusSteamOffers = hl.window_rule({
   name     = "no focus on steam offers",
-  match    = { class = "^(steam)$", title = "^(Special Offers)$" },
+  match    = { class = "^steam$ | ^$", title = "^(Special Offers)$" },
   no_focus = true,
 })
 nofocusSteamOffers:set_enabled(true)

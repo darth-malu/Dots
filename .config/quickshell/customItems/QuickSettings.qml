@@ -7,6 +7,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Pipewire
 import Quickshell.Services.Mpris
+import Quickshell.Widgets
 
 import qs.customItems
 import qs.services
@@ -558,17 +559,16 @@ BarBlock {
                             anchors.margins: 8
                             spacing: 8
 
-                            Rectangle {
+                            ClippingWrapperRectangle {
                                 id: compactArt
                                 implicitWidth: 48
-                                implicitHeight: 48
-                                radius: 6
-                                color: "#313244"
-                                clip: true
+                                Layout.fillHeight: true
+                                radius: 8
+                                color: "transparent"
 
                                 Image {
                                     anchors.fill: parent
-                                    source: MprisState.player?.trackArtUrl || ""
+                                    source: NotificationState.getImage(MprisState.player?.trackArtUrl || "")
                                     fillMode: Image.PreserveAspectCrop
                                     asynchronous: true
                                     visible: status === Image.Ready
@@ -579,12 +579,6 @@ BarBlock {
                                     text: ""; color: "#585b70"
                                     font { pixelSize: 20; family: "Symbols Nerd Font Mono" }
                                     visible: compactArt.children[0].status !== Image.Ready
-                                }
-
-                                Rectangle {
-                                    anchors.fill: parent; color: "transparent"
-                                    border { width: 1; color: Qt.rgba(0.80, 0.65, 0.97, 0.3) }
-                                    radius: 6
                                 }
 
                                 Rectangle {
@@ -746,20 +740,21 @@ BarBlock {
                                             }
                                         }
                                         Item { Layout.fillWidth: true }
-                                    }
                                 }
+                            }
+                        }
 
-                            // ── EXPANDED VIEW ──
-                            Item {
-                                visible: !root.compactNowPlaying
+                        // ── EXPANDED VIEW ──
+                        Item {
+                            visible: !root.compactNowPlaying
+                            anchors.fill: parent
+
+                            Image {
                                 anchors.fill: parent
-
-                                Image {
-                                    anchors.fill: parent
-                                    source: MprisState.player?.trackArtUrl || ""
-                                    fillMode: Image.PreserveAspectCrop
-                                    asynchronous: true
-                                }
+                                source: NotificationState.getImage(MprisState.player?.trackArtUrl || "")
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                            }
 
                                 Rectangle {
                                     anchors.fill: parent
@@ -944,7 +939,6 @@ BarBlock {
                                         volumeBadgeTimer.restart();
                                     }
                                 }
-                            }
                         }
                     }
 

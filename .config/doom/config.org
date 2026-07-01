@@ -454,13 +454,14 @@ because ui: popup use set-popup-rules
 (set-popup-rules!
   '(("\\*Occur\\*" :select t :side bottom :actions (display-buffer-in-side-window) :ttl 5 :quit t)
     ("\\*doom:scratch\\*" :quit t)
+    ("\\*doom:vterm-popup.*\\*" :quit t)
     ("\\*info\\*" :quit t :side right :select t :width +popup-shrink-to-fit)
     ("\\*ielm\\*" :quit t :side right :select t :width +popup-shrink-to-fit)
-    ("^\\*WoMan.*\\*" :quit t :side right :width +popup-shrink-to-fit)
-    ))
+    ("^\\*WoMan.*\\*" :quit t :side right :width +popup-shrink-to-fit)))
 #+end_src
 
 ttl - time to live
+
 **** vanilla emacs
 =Anatomy of an entry=
 ( BUFFER-MATCHER
