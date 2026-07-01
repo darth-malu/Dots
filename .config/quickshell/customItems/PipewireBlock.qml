@@ -14,6 +14,9 @@ BarBlock {
 
     readonly property color volColor: muted ? "#585b70" : vol > 0.7 ? "#f5a0d6" : vol > 0.4 ? "#c6a0f6" : "#89b4fa"
 
+    property bool hovering: false
+    property real targetVol: vol
+
     onWheel: event => {
         if (!Pipewire.defaultAudioSink?.audio)
             return;
@@ -28,29 +31,46 @@ BarBlock {
     }
 
     content: RowLayout {
-        spacing: 4
+        spacing: 6
 
-        BarText {
-            symbolText: root.muted ? "婢" : root.vol > 0.7 ? "" : root.vol > 0.05 ? "" : ""
-            baseColor: root.volColor
-            pointSize: 10
+        Text {
+            text: root.muted ? "婢" : root.vol > 0.7 ? "" : root.vol > 0.05 ? "" : ""
+            color: root.volColor
+            font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
+            Behavior on color { ColorAnimation { duration: 150 } }
         }
 
         Item {
             id: volBar
-            implicitWidth: 40
-            implicitHeight: 4
+            implicitWidth: 48
+            implicitHeight: 6
 
             Rectangle {
                 anchors.fill: parent
-                radius: 2
+                radius: 3
                 color: "#313244"
 
                 Rectangle {
+                    radius: 3
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.bottom: parent.bottom
                     width: parent.width * Math.min(root.vol, 1)
-                    height: parent.height
-                    radius: 2
                     color: root.volColor
+                    Behavior on width { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
+                    Behavior on color { ColorAnimation { duration: 150 } }
+
+                    Rectangle {
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 8
+                        height: 8
+                        radius: 4
+                        color: root.volColor
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                        opacity: root.hovering ? 1 : 0
+                        Behavior on opacity { NumberAnimation { duration: 120 } }
+                    }
                 }
             }
 
@@ -59,11 +79,27 @@ BarBlock {
                 anchors.fill: parent
                 acceptedButtons: Qt.LeftButton
                 cursorShape: Qt.PointingHandCursor
+                hoverEnabled: true
+                onEntered: root.hovering = true
+                onExited: root.hovering = false
+                onPositionChanged: mouse => {
+                    if (pressed && Pipewire.defaultAudioSink?.audio)
+                        Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(mouse.x / width, 1));
+                }
                 onClicked: mouse => {
                     if (Pipewire.defaultAudioSink?.audio)
                         Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(mouse.x / width, 1));
                 }
             }
+        }
+
+        Text {
+            text: Math.round(root.vol * 100) + "%"
+            color: root.volColor
+            font { pixelSize: 9; family: "ZedMono Nerd Font"; bold: true }
+            opacity: root.hovering ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: 120 } }
+            visible: root.hovering
         }
     }
 }
