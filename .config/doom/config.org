@@ -454,14 +454,13 @@ because ui: popup use set-popup-rules
 (set-popup-rules!
   '(("\\*Occur\\*" :select t :side bottom :actions (display-buffer-in-side-window) :ttl 5 :quit t)
     ("\\*doom:scratch\\*" :quit t)
-    ("\\*doom:vterm-popup.*\\*" :quit t)
     ("\\*info\\*" :quit t :side right :select t :width +popup-shrink-to-fit)
     ("\\*ielm\\*" :quit t :side right :select t :width +popup-shrink-to-fit)
-    ("^\\*WoMan.*\\*" :quit t :side right :width +popup-shrink-to-fit)))
+    ("^\\*WoMan.*\\*" :quit t :side right :width +popup-shrink-to-fit)
+    ))
 #+end_src
 
 ttl - time to live
-
 **** vanilla emacs
 =Anatomy of an entry=
 ( BUFFER-MATCHER
@@ -1313,7 +1312,7 @@ source:[[http://company-mode.github.io/manual/Getting-Started.html#Commands-1]]
   (org-agenda-mode . org-agenda-open-hook)
 
   :init
-  (setq org-directory (expand-file-name "~/Documents/IMPORTANT/Org")
+  (setq org-directory (expand-file-name "~/Documents/Org")
         org-agenda-files `(,org-directory ,(file-name-concat org-directory "roam") ,@my/usiu-files)
         org-noter-notes-search-path (list (file-name-concat org-directory "notes"))
         org-default-notes-file (expand-file-name  ".notes" org-directory))
