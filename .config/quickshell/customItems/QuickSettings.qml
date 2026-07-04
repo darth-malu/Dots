@@ -571,7 +571,7 @@ BarBlock {
                                     Image {
                                         id: compactArtImage
                                         anchors.fill: parent
-                                        source: NotificationState.getImage(MprisState.player?.trackArtUrl || "")
+                                        source: MprisState.player?.trackArtUrl || ""
                                         fillMode: Image.PreserveAspectCrop
                                         asynchronous: true
                                         visible: status === Image.Ready
@@ -691,7 +691,7 @@ BarBlock {
                                 Image {
                                     id: expandedArtImage
                                     anchors.fill: parent
-                                    source: NotificationState.getImage(MprisState.player?.trackArtUrl || "")
+                                    source: MprisState.player?.trackArtUrl || ""
                                     fillMode: Image.PreserveAspectCrop
                                     asynchronous: true
                                     visible: status === Image.Ready
@@ -1060,7 +1060,7 @@ BarBlock {
 
                                             ColumnLayout {
                                                 spacing: 1
-                                                Layout.preferredWidth: 64
+                                                Layout.fillWidth: true
                                                 Text {
                                                     text: "Wi-Fi"
                                                     color: root.wifiEnabled ? "#cdd6f4" : "#6c7086"
@@ -1160,7 +1160,7 @@ BarBlock {
 
                                             ColumnLayout {
                                                 spacing: 1
-                                                Layout.preferredWidth: 64
+                                                Layout.fillWidth: true
                                                 Text {
                                                     text: "Bluetooth"
                                                     color: root.bluetoothEnabled ? "#cdd6f4" : "#6c7086"
@@ -1421,6 +1421,8 @@ BarBlock {
                                         text: ""
                                         color: root.ethernetConnected ? "#a6e3a1" : "#585b70"
                                         font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                        Layout.preferredWidth: 18
+                                        horizontalAlignment: Text.AlignHCenter
                                     }
 
                                     Text {

@@ -13,7 +13,6 @@ BarBlock {
     readonly property string date: TimeService.date
     readonly property string time: TimeService.time
     readonly property string dateTime: TimeService.dateTime
-    hoveredBg: false
     // color: 'red'
 
     // anchors.verticalCenter: parent.verticalCenter

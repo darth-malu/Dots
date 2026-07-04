@@ -500,7 +500,7 @@ change fonts on the fly [[file:~/org/roam/20250401030930-doom_emacs.org::*To cha
                              :size 15
                              :weight 'regular)
          doom-emoji-font (font-spec :family "Noto Color Emoji")
-         doom-variable-pitch-font (font-spec :family "VictorMono Nerd Font" :size 14 :weight 'semibold))
+         doom-variable-pitch-font (font-spec :family "VictorMono Nerd Font" :size 13 :weight 'semibold))
 #+end_src
 
 =Useful conditionals=

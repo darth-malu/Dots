@@ -7,7 +7,6 @@ import qs.services
 BarBlock {
     id: root
     visible: PipewireState.pipewireReady
-    color: Qt.rgba(1, 1, 1, 0.19)
 
     readonly property real vol: Pipewire.defaultAudioSink?.audio?.volume ?? 0
     readonly property bool muted: Pipewire.defaultAudioSink?.audio?.muted ?? false
@@ -32,13 +31,6 @@ BarBlock {
 
     content: RowLayout {
         spacing: 6
-
-        Text {
-            text: root.muted ? "婢" : root.vol > 0.7 ? "" : root.vol > 0.05 ? "" : ""
-            color: root.volColor
-            font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
-            Behavior on color { ColorAnimation { duration: 150 } }
-        }
 
         Item {
             id: volBar

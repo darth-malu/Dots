@@ -24,38 +24,13 @@ Rectangle {
 
     property color underlineColor: 'orange'
 
-    property bool hoveredBg: true
-
     signal clicked(var mouse)
     signal leftClicked
     signal rightClicked
     signal middleClicked
     signal wheel(var event)
 
-    property string hoveredBgColor: Qt.rgba(1, 1, 1, 0.15)//"#666666"
-
-    color: {
-        if (mouseArea.containsMouse && hoveredBg)
-            return hoveredBgColor;
-        return "transparent";
-    }
-
-    // color: "transparent"
-
-    // states: [
-    //     State {
-    //         when: mouseArea.containsMouse
-    //         PropertyChanges {
-    //             target: root
-    //         }
-    //     }
-    // ]
-
-    Behavior on color {
-        ColorAnimation {
-            duration: 150
-        }
-    }
+    color: "transparent"
 
     Item {
         id: contentContainer
