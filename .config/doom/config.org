@@ -666,7 +666,7 @@ https://www.gnu.org/software/emacs/manual/html_node/emacs/Auto-Save-Files.html#A
   (customize-set-variable 'uniquify-separator " ❄ ") ;💎 🧿💢
   ;; (customize-set-variable 'ein:jupyter-server-use-command 'server)
   ;; (customize-set-variable 'ein:jupyter-server-use-subcommand "server")
-  (load! "+darthBinds")
+  ;; (load! "+darthBinds")  ;; FIXME: where darthBinds
   :bind (
          :map evil-normal-state-map
           ;;;misc
@@ -681,6 +681,7 @@ https://www.gnu.org/software/emacs/manual/html_node/emacs/Auto-Save-Files.html#A
           ;;; EOL, BOL
           ("M-S-l" . end-of-visual-line)
           ("M-S-h" . beginning-of-visual-line)
+          ("C-S-v" . #'clipboard-yank)
 
           ;;; insert newline below/above
           ("M-o" . +evil/insert-newline-below)
@@ -1286,7 +1287,9 @@ source:[[http://company-mode.github.io/manual/Getting-Started.html#Commands-1]]
   )
 #+end_src
 * Keybinds
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp :tangle no
+(map!
+ "C-S-v" #'clipboard-yank)
 #+end_src
 
 * ORG
