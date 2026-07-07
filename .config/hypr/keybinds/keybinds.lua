@@ -91,6 +91,10 @@ hl.bind(mainMod .. "+ mouse:272", hl.dsp.window.drag(), { mouse = true })   -- A
 hl.bind(mainMod .. "+ mouse:273", hl.dsp.window.resize(), { mouse = true }) -- ALT + LMB: Floats a window by clicking
 hl.bind(mainMod .. "+ CONTROL + mouse:273", hl.dsp.exec_cmd("qs ipc call openWindows toggle"))
 
+-- UUCTL
+hl.bind(mainMod .. "+ U", hl.dsp.exec_cmd("uuctl"))
+hl.bind(mainMod .. "+ SHIFT + U", hl.dsp.exec_cmd("systemctl --user restart mpd.service"))
+
 -- Scroll through existing workspaces with mainMod + scroll
 hl.bind("SUPER + mouse_down", hl.dsp.focus({ workspace = "m+1" }))
 hl.bind("SUPER + mouse_up", hl.dsp.focus({ workspace = "m-1" }))
