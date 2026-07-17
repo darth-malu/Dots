@@ -67,11 +67,13 @@ BarBlock {
     Process {
         id: interfaceCheck
         running: false
-        command: ["sh", "-c", "ip -o route show default 2>/dev/null | head -1 | awk '{print $5}'"]
+        // command: ["sh", "-c", "ip -o route show default 2>/dev/null | head -1 | awk '{print $5}'"] -- redux
+        command: ["sh", "-c", "ip -o route show default 2>/dev/null | cut -f5 -d ' '"]
         stdout: SplitParser {
             onRead: data => {
-                if (data.trim().length > 0) {
-                    root.activeInterface = data.trim();
+                data = data.trim();
+                if (data.length > 0) {
+                    root.activeInterface = data;
                     ipProcess.running = true;
                 }
             }
@@ -99,7 +101,7 @@ BarBlock {
     Process {
         id: avatarPickProcess
         running: false
-        command: ["sh", "-c", `PATH="$HOME/.nix-profile/bin:$PATH" zenity --file-selection --title="Choose Avatar" --file-filter="Images | *.png *.jpg *.jpeg *.webp" 2>/dev/null | while read file; do mkdir -p ~/.config/quickshell/assets && cp "$file" ~/.config/quickshell/assets/avatar.png; done`]
+        command: ["sh", "-c", `file=$(PATH="$HOME/.nix-profile/bin:$PATH" zenity --file-selection --title="Choose Avatar" --file-filter="Images | *.png *.jpg *.jpeg *.webp" 2>/dev/null) && [ -n "$file" ] && mkdir -p ~/.config/quickshell/assets && cp "$file" ~/.config/quickshell/assets/avatar.png`]
     }
 
     Process {
@@ -155,7 +157,12 @@ BarBlock {
             onRead: data => {
                 var parts = data.trim().split("|");
                 if (parts.length >= 2) {
-                    root.sinkList = root.sinkList.concat([{ name: parts[0], description: parts[1] }]);
+                    root.sinkList = root.sinkList.concat([
+                        {
+                            name: parts[0],
+                            description: parts[1]
+                        }
+                    ]);
                 }
             }
         }
@@ -168,7 +175,8 @@ BarBlock {
         stdout: SplitParser {
             onRead: data => {
                 var v = parseInt(data.trim());
-                if (!isNaN(v)) root.brightness = v;
+                if (!isNaN(v))
+                    root.brightness = v;
             }
         }
     }
@@ -211,7 +219,8 @@ BarBlock {
             btProcess.running = true;
             ethProcess.running = true;
             wifiSsidProcess.running = true;
-            if (BatteryState.available) brightnessProcess.running = true;
+            if (BatteryState.available)
+                brightnessProcess.running = true;
             root.refreshSinks();
         }
     }
@@ -293,23 +302,26 @@ BarBlock {
         implicitWidth: 340
         implicitHeight: Math.min(qsContent.implicitHeight + 16, Screen.desktopAvailableHeight * 0.7)
 
-            Rectangle {
+        Rectangle {
+            anchors.fill: parent
+            radius: 12
+            layer.enabled: true
+            layer.samples: 8
+            color: "#1e1e2e"
+            border.color: "#45475a"
+
+            Shortcut {
+                sequence: "Escape"
+                onActivated: root.showQsPopup = false
+            }
+
+            MouseArea {
                 anchors.fill: parent
-                radius: 12
-                layer.enabled: true
-                layer.samples: 8
-                color: "#1e1e2e"
-                border.color: "#45475a"
+                onClicked: root.showQsPopup = false
+                z: -1
+            }
 
-                Shortcut { sequence: "Escape"; onActivated: root.showQsPopup = false }
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: root.showQsPopup = false
-                    z: -1
-                }
-
-                ScrollView {
+            ScrollView {
                 anchors.fill: parent
                 anchors.margins: 8
                 clip: true
@@ -321,255 +333,484 @@ BarBlock {
                     width: parent.width
                     spacing: 0
 
-                // ═══ CONTENT ═══
-                ColumnLayout {
-                    id: contentCol
-                    Layout.fillWidth: true
-                    spacing: 0
-
-                    // ═══ HEADER ═══
-                    Card {
-                        title: ""
-                        icon: ""
-                        accent: "transparent"
-                        cardColor: "transparent"
-                        cardPadding: 8
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 10
-
-                            Rectangle {
-                                implicitWidth: 42
-                                implicitHeight: 42
-                                radius: 21
-                                color: "#313244"
-
-                                Image {
-                                    id: avatarImg
-                                    anchors.fill: parent
-                                    source: "file://" + root.avatarPath
-                                    fillMode: Image.PreserveAspectCrop
-                                    asynchronous: true
-                                    visible: status === Image.Ready
-                                }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: ""
-                                    color: "#585b70"
-                                    font { pixelSize: 18; family: "Symbols Nerd Font Mono" }
-                                    visible: avatarImg.status !== Image.Ready
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: avatarPickProcess.running = true
-                                }
-                            }
-
-                            ColumnLayout {
-                                spacing: 2
-                                Layout.fillWidth: true
-
-                                Text {
-                                    text: root.hostName
-                                    color: "#cdd6f4"
-                                    font { pixelSize: 13; family: "Quicksand"; bold: true }
-                                    elide: Text.ElideRight
-                                    Layout.fillWidth: true
-                                }
-
-                                Text {
-                                    text: root.ipAddr.length > 0
-                                        ? root.ipAddr
-                                        : (root.isOnline ? "Connected" : "Offline")
-                                    color: root.isOnline ? "#a6e3a1" : "#f38ba8"
-                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                                    elide: Text.ElideRight
-                                }
-                            }
-
-                            Rectangle {
-                                Layout.preferredWidth: 32
-                                Layout.preferredHeight: 32
-                                radius: 6
-                                color: caffeineMouse.containsMouse ? Qt.rgba(0.98, 0.70, 0.53, 0.15) : "transparent"
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: CaffeineService.enabled ? "" : "󰾪"
-                                    color: CaffeineService.enabled ? "#fab387" : "#585b70"
-                                    font { pixelSize: 16; family: "Symbols Nerd Font Mono" }
-                                }
-
-                                MouseArea {
-                                    id: caffeineMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: CaffeineService.toggle()
-                                }
-                            }
-
-                            Rectangle {
-                                Layout.preferredWidth: 32
-                                Layout.preferredHeight: 32
-                                radius: 6
-                                color: settingsBtnMouse.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, 0.15) : "transparent"
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: ""
-                                    color: "#89b4fa"
-                                    font { pixelSize: 16; family: "Symbols Nerd Font Mono" }
-                                }
-
-                                MouseArea {
-                                    id: settingsBtnMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        root.showQsPopup = false;
-                                        MiscState.toggleSettings = true;
-                                    }
-                                }
-                            }
-
-                            Rectangle {
-                                Layout.preferredWidth: 32
-                                Layout.preferredHeight: 32
-                                radius: 6
-                                color: powerBtnMouse.containsMouse ? Qt.rgba(0.95, 0.55, 0.66, 0.15) : "transparent"
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: ""
-                                    color: root.showPowerPopup ? "#f38ba8" : "#585b70"
-                                    font { pixelSize: 16; family: "Symbols Nerd Font Mono" }
-                                }
-
-                                MouseArea {
-                                    id: powerBtnMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.showPowerPopup = !root.showPowerPopup
-                                }
-                            }
-                        }
-                    }
-
-                    // ═══ POWER ═══
-                    Card {
-                        title: ""
-                        icon: ""
-                        visible: root.showPowerPopup
-                        Layout.topMargin: 6
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 1
-                            Layout.preferredHeight: 42
-
-                            QsPower { icon: ""; color: "#89b4fa"; label: "Lock"; cmd: "loginctl lock-session" }
-                            QsPower { icon: ""; color: "#a6e3a1"; label: "Sleep"; cmd: "systemctl suspend" }
-                            QsPower { icon: ""; color: "#f5c2e7"; label: "Hibernate"; cmd: "systemctl hibernate" }
-                            QsPower { icon: ""; color: "#f9e2af"; label: "Reboot"; cmd: "systemctl reboot" }
-                            QsPower { icon: ""; color: "#f38ba8"; label: "Off"; cmd: "systemctl poweroff" }
-                            QsPower { icon: ""; color: "#cba6f7"; label: "Exit"; cmd: "loginctl terminate-user $USER" }
-                        }
-                    }
-
-                    // ═══ NOW PLAYING ═══
-                    Rectangle {
-                        id: nowPlayingCard
+                    // ═══ CONTENT ═══
+                    ColumnLayout {
+                        id: contentCol
                         Layout.fillWidth: true
-                        Layout.bottomMargin: 6
-                        radius: 10
-                        clip: true
-                        visible: MprisState.player !== null
-                        color: "#181825"
-                        implicitHeight: root.compactNowPlaying ? 82 : 260
+                        spacing: 0
 
-                        property color dominantColor: "#cba6f7"
-                        border {
-                            width: 1
-                            color: Qt.rgba(dominantColor.r, dominantColor.g, dominantColor.b, 0.25)
-                        }
-                        Behavior on border.color { ColorAnimation { duration: 300 } }
-
-                        property int progressTick: 0
-                        property bool showVolumeBadge: false
-                        readonly property int currentVolume: Math.round((MprisState.player?.volume ?? 0) * 100)
-
-                        Timer {
-                            id: volumeBadgeTimer
-                            interval: 800
-                            running: false
-                            repeat: false
-                            onTriggered: nowPlayingCard.showVolumeBadge = false
-                        }
-
-                        // ── Hidden helpers ──
-                        Item {
-                            visible: false; width: 0; height: 0
-
-                            Image {
-                                id: hiddenArt
-                                source: MprisState.player?.trackArtUrl || ""
-                                asynchronous: true
-                                onStatusChanged: if (status === Image.Ready) colorSampler.requestPaint()
-                            }
-
-                            Canvas {
-                                id: colorSampler
-                                width: 1; height: 1
-                                onPaint: {
-                                    var ctx = getContext("2d");
-                                    if (hiddenArt.status === Image.Ready) {
-                                        try {
-                                            ctx.clearRect(0, 0, 1, 1);
-                                            ctx.drawImage(hiddenArt, 0, 0, 1, 1);
-                                            var d = ctx.getImageData(0, 0, 1, 1).data;
-                                            if (d && d.length >= 4 && d[3] > 0)
-                                                nowPlayingCard.dominantColor = Qt.rgba(d[0]/255, d[1]/255, d[2]/255, 1.0);
-                                        } catch(e) {}
-                                    }
-                                }
-                            }
-
-                            Timer {
-                                interval: 1000
-                                running: MprisState.player?.isPlaying ?? false
-                                repeat: true
-                                onTriggered: nowPlayingCard.progressTick++
-                            }
-                        }
-
-                        // ── COMPACT VIEW ──
-                        Item {
-                            visible: root.compactNowPlaying
-                            anchors.fill: parent
-                            anchors.margins: 8
+                        // ═══ HEADER ═══
+                        Card {
+                            title: ""
+                            icon: ""
+                            accent: "transparent"
+                            cardColor: "transparent"
+                            cardPadding: 8
 
                             RowLayout {
-                                anchors.fill: parent
+                                Layout.fillWidth: true
                                 spacing: 10
 
-                                // ── Album art (full height) ──
-                                ClippingWrapperRectangle {
-                                    id: compactArt
-                                    implicitWidth: 64
-                                    Layout.fillHeight: true
-                                    radius: 8
-                                    color: "transparent"
-                                    Layout.minimumWidth: 48
+                                Rectangle {
+                                    implicitWidth: 42
+                                    implicitHeight: 42
+                                    radius: 21
+                                    color: "#313244"
 
                                     Image {
-                                        id: compactArtImage
+                                        id: avatarImg
+                                        anchors.fill: parent
+                                        source: "file://" + root.avatarPath
+                                        fillMode: Image.PreserveAspectCrop
+                                        asynchronous: true
+                                        visible: status === Image.Ready
+                                    }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: ""
+                                        color: "#585b70"
+                                        font {
+                                            pixelSize: 18
+                                            family: "Symbols Nerd Font Mono"
+                                        }
+                                        visible: avatarImg.status !== Image.Ready
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: avatarPickProcess.running = true
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    spacing: 2
+                                    Layout.fillWidth: true
+
+                                    Text {
+                                        text: root.hostName
+                                        color: "#cdd6f4"
+                                        font {
+                                            pixelSize: 13
+                                            family: "Quicksand"
+                                            bold: true
+                                        }
+                                        elide: Text.ElideRight
+                                        Layout.fillWidth: true
+                                    }
+
+                                    Text {
+                                        text: root.ipAddr.length > 0 ? root.ipAddr : (root.isOnline ? "Connected" : "Offline")
+                                        color: root.isOnline ? "#a6e3a1" : "#f38ba8"
+                                        font {
+                                            pixelSize: 10
+                                            family: "ZedMono Nerd Font"
+                                        }
+                                        elide: Text.ElideRight
+                                    }
+                                }
+
+                                Rectangle {
+                                    Layout.preferredWidth: 32
+                                    Layout.preferredHeight: 32
+                                    radius: 6
+                                    color: caffeineMouse.containsMouse ? Qt.rgba(0.98, 0.70, 0.53, 0.15) : "transparent"
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: CaffeineService.enabled ? "" : "󰾪"
+                                        color: CaffeineService.enabled ? "#fab387" : "#585b70"
+                                        font {
+                                            pixelSize: 16
+                                            family: "Symbols Nerd Font Mono"
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: caffeineMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: CaffeineService.toggle()
+                                    }
+                                }
+
+                                Rectangle {
+                                    Layout.preferredWidth: 32
+                                    Layout.preferredHeight: 32
+                                    radius: 6
+                                    color: settingsBtnMouse.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, 0.15) : "transparent"
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: ""
+                                        color: "#89b4fa"
+                                        font {
+                                            pixelSize: 16
+                                            family: "Symbols Nerd Font Mono"
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: settingsBtnMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            root.showQsPopup = false;
+                                            MiscState.toggleSettings = true;
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    Layout.preferredWidth: 32
+                                    Layout.preferredHeight: 32
+                                    radius: 6
+                                    color: powerBtnMouse.containsMouse ? Qt.rgba(0.95, 0.55, 0.66, 0.15) : "transparent"
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: ""
+                                        color: root.showPowerPopup ? "#f38ba8" : "#585b70"
+                                        font {
+                                            pixelSize: 16
+                                            family: "Symbols Nerd Font Mono"
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: powerBtnMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.showPowerPopup = !root.showPowerPopup
+                                    }
+                                }
+                            }
+                        }
+
+                        // ═══ POWER ═══
+                        Card {
+                            title: ""
+                            icon: ""
+                            visible: root.showPowerPopup
+                            Layout.topMargin: 6
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 1
+                                Layout.preferredHeight: 42
+
+                                QsPower {
+                                    icon: ""
+                                    color: "#89b4fa"
+                                    label: "Lock"
+                                    cmd: "loginctl lock-session"
+                                }
+                                QsPower {
+                                    icon: ""
+                                    color: "#a6e3a1"
+                                    label: "Sleep"
+                                    cmd: "systemctl suspend"
+                                }
+                                QsPower {
+                                    icon: ""
+                                    color: "#f5c2e7"
+                                    label: "Hibernate"
+                                    cmd: "systemctl hibernate"
+                                }
+                                QsPower {
+                                    icon: ""
+                                    color: "#f9e2af"
+                                    label: "Reboot"
+                                    cmd: "systemctl reboot"
+                                }
+                                QsPower {
+                                    icon: ""
+                                    color: "#f38ba8"
+                                    label: "Off"
+                                    cmd: "systemctl poweroff"
+                                }
+                                QsPower {
+                                    icon: ""
+                                    color: "#cba6f7"
+                                    label: "Exit"
+                                    cmd: "loginctl terminate-user $USER"
+                                }
+                            }
+                        }
+
+                        // ═══ NOW PLAYING ═══
+                        Rectangle {
+                            id: nowPlayingCard
+                            Layout.fillWidth: true
+                            Layout.bottomMargin: 6
+                            radius: 10
+                            clip: true
+                            visible: MprisState.player !== null
+                            color: "#181825"
+                            implicitHeight: root.compactNowPlaying ? 82 : 260
+                            Behavior on implicitHeight {
+                                NumberAnimation {
+                                    duration: 250
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
+
+                            property color dominantColor: "#cba6f7"
+                            border {
+                                width: 1
+                                color: Qt.rgba(dominantColor.r, dominantColor.g, dominantColor.b, 0.25)
+                            }
+                            Behavior on border.color {
+                                ColorAnimation {
+                                    duration: 300
+                                }
+                            }
+
+                            property int progressTick: 0
+                            property bool showVolumeBadge: false
+                            readonly property int currentVolume: Math.round((MprisState.player?.volume ?? 0) * 100)
+
+                            Timer {
+                                id: volumeBadgeTimer
+                                interval: 800
+                                running: false
+                                repeat: false
+                                onTriggered: nowPlayingCard.showVolumeBadge = false
+                            }
+
+                            // ── Hidden helpers ──
+                            Item {
+                                visible: false
+                                width: 0
+                                height: 0
+
+                                Image {
+                                    id: hiddenArt
+                                    source: MprisState.player?.trackArtUrl || ""
+                                    asynchronous: true
+                                    onStatusChanged: if (status === Image.Ready)
+                                        colorSampler.requestPaint()
+                                }
+
+                                Canvas {
+                                    id: colorSampler
+                                    width: 1
+                                    height: 1
+                                    onPaint: {
+                                        var ctx = getContext("2d");
+                                        if (hiddenArt.status === Image.Ready) {
+                                            try {
+                                                ctx.clearRect(0, 0, 1, 1);
+                                                ctx.drawImage(hiddenArt, 0, 0, 1, 1);
+                                                var d = ctx.getImageData(0, 0, 1, 1).data;
+                                                if (d && d.length >= 4 && d[3] > 0)
+                                                    nowPlayingCard.dominantColor = Qt.rgba(d[0] / 255, d[1] / 255, d[2] / 255, 1.0);
+                                            } catch (e) {}
+                                        }
+                                    }
+                                }
+
+                                Timer {
+                                    interval: 1000
+                                    running: MprisState.player?.isPlaying ?? false
+                                    repeat: true
+                                    onTriggered: nowPlayingCard.progressTick++
+                                }
+                            }
+
+                            // ── COMPACT VIEW ──
+                            Item {
+                                visible: root.compactNowPlaying
+                                anchors.fill: parent
+                                anchors.margins: 8
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    spacing: 10
+
+                                    // ── Album art (full height) ──
+                                    Rectangle {
+                                        id: compactArt
+                                        implicitWidth: 64
+                                        Layout.fillHeight: true
+                                        radius: 8
+                                        clip: true
+                                        color: "#313244"
+                                        Layout.minimumWidth: 48
+
+                                        Image {
+                                            id: compactArtImage
+                                            anchors.fill: parent
+                                            source: MprisState.player?.trackArtUrl || ""
+                                            fillMode: Image.PreserveAspectCrop
+                                            asynchronous: true
+                                            visible: status === Image.Ready
+                                        }
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: ""
+                                            color: "#585b70"
+                                            font {
+                                                pixelSize: 24
+                                                family: "Symbols Nerd Font Mono"
+                                            }
+                                            visible: compactArtImage.status !== Image.Ready
+                                        }
+                                    }
+
+                                    // ── Info panel ──
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
+                                        spacing: 2
+
+                                        // ── Title + row ──
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 4
+
+                                            ColumnLayout {
+                                                Layout.fillWidth: true
+                                                spacing: 1
+
+                                                Text {
+                                                    Layout.fillWidth: true
+                                                    text: MprisState.player?.trackTitle || "No track"
+                                                    color: "#cdd6f4"
+                                                    font {
+                                                        pixelSize: 11
+                                                        bold: true
+                                                        family: "Quicksand"
+                                                    }
+                                                    elide: Text.ElideRight
+                                                    maximumLineCount: 1
+                                                }
+
+                                                Text {
+                                                    Layout.fillWidth: true
+                                                    text: MprisState.player?.trackArtist || ""
+                                                    color: "#a6adc8"
+                                                    font {
+                                                        pixelSize: 9
+                                                        family: "ZedMono Nerd Font"
+                                                    }
+                                                    elide: Text.ElideRight
+                                                    maximumLineCount: 1
+                                                    visible: text.length > 0
+                                                }
+                                            }
+
+                                            TrackButton {
+                                                text: "+"
+                                                accentColor: "#585b70"
+                                                onClicked: root.compactNowPlaying = false
+                                            }
+                                        }
+
+                                        Item {
+                                            Layout.fillWidth: true
+                                        }
+
+                                        // ── Progress bar ──
+                                        Item {
+                                            Layout.fillWidth: true
+                                            Layout.preferredHeight: 6
+
+                                            readonly property real ratio: {
+                                                nowPlayingCard.progressTick;
+                                                var p = MprisState.player;
+                                                if (!p)
+                                                    return 0;
+                                                var pos = p.position;
+                                                var len = p.length;
+                                                if (pos == null || len == null || len <= 0 || isNaN(pos) || isNaN(len))
+                                                    return 0;
+                                                return Math.min(pos / len, 1);
+                                            }
+
+                                            Rectangle {
+                                                anchors.left: parent.left
+                                                anchors.right: parent.right
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                height: 3
+                                                radius: 1.5
+                                                color: Qt.rgba(1, 1, 1, 0.08)
+
+                                                Rectangle {
+                                                    width: parent.width * parent.parent.ratio
+                                                    height: parent.height
+                                                    radius: 1.5
+                                                    color: "#cba6f7"
+                                                    Behavior on width {
+                                                        NumberAnimation {
+                                                            duration: 200
+                                                            easing.type: Easing.Linear
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: mouse => {
+                                                    var p = MprisState.player;
+                                                    if (p && p.length > 0)
+                                                        p.position = (mouse.x / width) * p.length;
+                                                }
+                                            }
+                                        }
+
+                                        // ── Controls ──
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 2
+                                            Item {
+                                                Layout.fillWidth: true
+                                            }
+                                            TrackButton {
+                                                text: ""
+                                                flat: true
+                                                accentColor: "#cba6f7"
+                                                onClicked: MprisState.player?.previous()
+                                            }
+                                            TrackButton {
+                                                text: MprisState.player?.isPlaying ? "" : ""
+                                                flat: true
+                                                accentColor: "#cba6f7"
+                                                onClicked: MprisState.player?.togglePlaying()
+                                            }
+                                            TrackButton {
+                                                text: ""
+                                                flat: true
+                                                accentColor: "#cba6f7"
+                                                onClicked: MprisState.player?.next()
+                                            }
+                                            Item {
+                                                Layout.fillWidth: true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // ── EXPANDED VIEW ──
+                            Item {
+                                visible: !root.compactNowPlaying
+                                anchors.fill: parent
+
+                                // ── Album art background ──
+                                Rectangle {
+                                    anchors.fill: parent
+                                    color: "#181825"
+
+                                    Image {
+                                        id: expandedArtImage
                                         anchors.fill: parent
                                         source: MprisState.player?.trackArtUrl || ""
                                         fillMode: Image.PreserveAspectCrop
@@ -579,518 +820,464 @@ BarBlock {
 
                                     Text {
                                         anchors.centerIn: parent
-                                        text: ""; color: "#585b70"
-                                        font { pixelSize: 24; family: "Symbols Nerd Font Mono" }
-                                        visible: compactArtImage.status !== Image.Ready
+                                        text: ""
+                                        color: "#585b70"
+                                        font {
+                                            pixelSize: 56
+                                            family: "Symbols Nerd Font Mono"
+                                        }
+                                        visible: expandedArtImage.status !== Image.Ready
+                                    }
+
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        color: Qt.rgba(0, 0, 0, 0.5)
                                     }
                                 }
 
-                                // ── Info panel ──
+                                // ── Controls overlay ──
                                 ColumnLayout {
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    spacing: 2
+                                    anchors.fill: parent
+                                    anchors.margins: 14
+                                    spacing: 6
 
-                                    // ── Title + row ──
+                                    // ── Top bar ──
                                     RowLayout {
                                         Layout.fillWidth: true
-                                        spacing: 4
+                                        spacing: 6
 
-                                        ColumnLayout {
+                                        Item {
                                             Layout.fillWidth: true
-                                            spacing: 1
+                                        }
 
-                                            Text {
-                                                Layout.fillWidth: true
-                                                text: MprisState.player?.trackTitle || "No track"
-                                                color: "#cdd6f4"
-                                                font { pixelSize: 11; bold: true; family: "Quicksand" }
-                                                elide: Text.ElideRight; maximumLineCount: 1
+                                        Rectangle {
+                                            visible: MiscState.showPlayerChooser
+                                            implicitHeight: 20
+                                            radius: height / 2
+                                            color: Qt.rgba(0, 0, 0, 0.35)
+                                            Layout.preferredWidth: expPill.implicitWidth + 16
+
+                                            RowLayout {
+                                                id: expPill
+                                                anchors.fill: parent
+                                                anchors.leftMargin: 7
+                                                anchors.rightMargin: 7
+                                                spacing: 4
+                                                Rectangle {
+                                                    implicitWidth: 5
+                                                    implicitHeight: 5
+                                                    radius: 2.5
+                                                    color: MprisState.player?.isPlaying ? "#88FF00" : "#585b70"
+                                                }
+                                                Text {
+                                                    text: MprisState.player?.identity || ""
+                                                    color: "#cdd6f4"
+                                                    font {
+                                                        pixelSize: 8
+                                                        family: "Quicksand"
+                                                        bold: true
+                                                    }
+                                                    elide: Text.ElideRight
+                                                }
                                             }
 
-                                            Text {
-                                                Layout.fillWidth: true
-                                                text: MprisState.player?.trackArtist || ""
-                                                color: "#a6adc8"
-                                                font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                                                elide: Text.ElideRight; maximumLineCount: 1
-                                                visible: text.length > 0
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: playerListOpen = !playerListOpen
+                                            }
+                                        }
+
+                                        Text {
+                                            visible: MiscState.showPlayerChooser
+                                            text: Mpris.players.length + " player(s)"
+                                            color: "#585b70"
+                                            font {
+                                                pixelSize: 7
+                                                family: "ZedMono Nerd Font"
                                             }
                                         }
 
                                         TrackButton {
-                                            text: "+"
-                                            accentColor: "#585b70"
-                                            onClicked: root.compactNowPlaying = false
+                                            text: "−"
+                                            accentColor: Qt.rgba(1, 1, 1, 0.6)
+                                            onClicked: root.compactNowPlaying = true
                                         }
                                     }
 
-                                    Item { Layout.fillWidth: true }
+                                    Item {
+                                        Layout.fillHeight: true
+                                    }
+
+                                    // ── Track info ──
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 3
+                                        Layout.leftMargin: 4
+                                        Layout.rightMargin: 4
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: MprisState.player?.trackTitle || "No track"
+                                            color: "#ffffff"
+                                            font {
+                                                pixelSize: 20
+                                                bold: true
+                                                family: "Quicksand"
+                                            }
+                                            elide: Text.ElideRight
+                                            maximumLineCount: 1
+                                            style: Text.Outline
+                                            styleColor: Qt.rgba(0, 0, 0, 0.7)
+                                        }
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: MprisState.player?.trackArtist || ""
+                                            color: Qt.rgba(1, 1, 1, 0.7)
+                                            font {
+                                                pixelSize: 12
+                                                family: "ZedMono Nerd Font"
+                                            }
+                                            elide: Text.ElideRight
+                                            maximumLineCount: 1
+                                            visible: text.length > 0
+                                        }
+                                    }
 
                                     // ── Progress bar ──
                                     Item {
                                         Layout.fillWidth: true
-                                        Layout.preferredHeight: 6
+                                        Layout.preferredHeight: 16
+                                        Layout.topMargin: 2
 
                                         readonly property real ratio: {
                                             nowPlayingCard.progressTick;
                                             var p = MprisState.player;
-                                            if (!p) return 0;
-                                            var pos = p.position; var len = p.length;
-                                            if (pos == null || len == null || len <= 0 || isNaN(pos) || isNaN(len)) return 0;
+                                            if (!p)
+                                                return 0;
+                                            var pos = p.position;
+                                            var len = p.length;
+                                            if (pos == null || len == null || len <= 0 || isNaN(pos) || isNaN(len))
+                                                return 0;
                                             return Math.min(pos / len, 1);
                                         }
 
                                         Rectangle {
-                                            anchors.left: parent.left; anchors.right: parent.right
+                                            anchors.left: parent.left
+                                            anchors.right: parent.right
                                             anchors.verticalCenter: parent.verticalCenter
-                                            height: 3; radius: 1.5
-                                            color: Qt.rgba(1, 1, 1, 0.08)
+                                            height: 4
+                                            radius: 2
+                                            color: Qt.rgba(1, 1, 1, 0.12)
 
                                             Rectangle {
                                                 width: parent.width * parent.parent.ratio
-                                                height: parent.height; radius: 1.5
+                                                height: parent.height
+                                                radius: 2
                                                 color: "#cba6f7"
-                                                Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.Linear } }
+                                                Behavior on width {
+                                                    NumberAnimation {
+                                                        duration: 200
+                                                        easing.type: Easing.Linear
+                                                    }
+                                                }
                                             }
                                         }
 
                                         MouseArea {
-                                            anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
                                             onClicked: mouse => {
                                                 var p = MprisState.player;
-                                                if (p && p.length > 0) p.position = (mouse.x / width) * p.length;
+                                                if (p && p.length > 0)
+                                                    p.position = (mouse.x / width) * p.length;
                                             }
                                         }
                                     }
 
-                                    // ── Controls ──
+                                    // ── Playback controls ──
                                     RowLayout {
                                         Layout.fillWidth: true
-                                        spacing: 2
-                                        Item { Layout.fillWidth: true }
-                                        TrackButton { text: ""; flat: true; accentColor: "#cba6f7"; onClicked: MprisState.player?.previous() }
-                                        TrackButton { text: MprisState.player?.isPlaying ? "" : ""; flat: true; accentColor: "#cba6f7"; onClicked: MprisState.player?.togglePlaying() }
-                                        TrackButton { text: ""; flat: true; accentColor: "#cba6f7"; onClicked: MprisState.player?.next() }
-                                        Item { Layout.fillWidth: true }
+                                        Layout.preferredHeight: 32
+                                        spacing: 8
+                                        Layout.bottomMargin: 2
+
+                                        Item {
+                                            Layout.fillWidth: true
+                                        }
+                                        TrackButton {
+                                            text: ""
+                                            visible: MiscState.showShuffle
+                                            active: MprisState.player?.shuffle ?? false
+                                            accentColor: MprisState.player?.shuffle ? "#f9e2af" : Qt.rgba(1, 1, 1, 0.6)
+                                            onClicked: {
+                                                var p = MprisState.player;
+                                                if (p?.canControl && p?.shuffleSupported)
+                                                    p.shuffle = !p.shuffle;
+                                            }
+                                        }
+                                        TrackButton {
+                                            text: ""
+                                            accentColor: Qt.rgba(1, 1, 1, 0.8)
+                                            onClicked: MprisState.player?.previous()
+                                        }
+                                        TrackButton {
+                                            text: MprisState.player?.isPlaying ? "" : ""
+                                            accentColor: "#ffffff"
+                                            onClicked: MprisState.player?.togglePlaying()
+                                        }
+                                        TrackButton {
+                                            text: ""
+                                            accentColor: Qt.rgba(1, 1, 1, 0.8)
+                                            onClicked: MprisState.player?.next()
+                                        }
+                                        TrackButton {
+                                            text: ""
+                                            visible: MiscState.showLoop
+                                            active: MprisState.player?.loopState !== MprisLoopState.None
+                                            accentColor: MprisState.player?.loopState === MprisLoopState.Track ? "#f9e2af" : MprisState.player?.loopState === MprisLoopState.Playlist ? "#89b4fa" : Qt.rgba(1, 1, 1, 0.6)
+                                            onClicked: {
+                                                var p = MprisState.player;
+                                                if (!p?.canControl || !p?.loopSupported)
+                                                    return;
+                                                var ls = p.loopState;
+                                                if (ls === MprisLoopState.None)
+                                                    p.loopState = MprisLoopState.Track;
+                                                else if (ls === MprisLoopState.Track)
+                                                    p.loopState = MprisLoopState.Playlist;
+                                                else
+                                                    p.loopState = MprisLoopState.None;
+                                            }
+                                        }
+                                        Item {
+                                            Layout.fillWidth: true
+                                        }
                                     }
                                 }
-                            }
-                        }
 
-                        // ── EXPANDED VIEW ──
-                        Item {
-                            visible: !root.compactNowPlaying
-                            anchors.fill: parent
-
-                            // ── Album art background ──
-                            Rectangle {
-                                anchors.fill: parent
-                                color: "#181825"
-
-                                Image {
-                                    id: expandedArtImage
-                                    anchors.fill: parent
-                                    source: MprisState.player?.trackArtUrl || ""
-                                    fillMode: Image.PreserveAspectCrop
-                                    asynchronous: true
-                                    visible: status === Image.Ready
-                                }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: ""
-                                    color: "#585b70"
-                                    font { pixelSize: 56; family: "Symbols Nerd Font Mono" }
-                                    visible: expandedArtImage.status !== Image.Ready
-                                }
-
+                                // ── Volume badge (shows on scroll) ──
                                 Rectangle {
-                                    anchors.fill: parent
-                                    color: Qt.rgba(0, 0, 0, 0.5)
+                                    anchors.centerIn: parent
+                                    implicitWidth: 60
+                                    implicitHeight: 36
+                                    radius: 8
+                                    color: Qt.rgba(0, 0, 0, 0.75)
+                                    opacity: nowPlayingCard.showVolumeBadge ? 1 : 0
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: 150
+                                        }
+                                    }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: nowPlayingCard.currentVolume + "%"
+                                        color: "#ffffff"
+                                        font {
+                                            pixelSize: 14
+                                            bold: true
+                                            family: "Quicksand"
+                                        }
+                                    }
                                 }
                             }
 
-                            // ── Controls overlay ──
-                            ColumnLayout {
+                            // ── Mouse area for scroll volume ──
+                            MouseArea {
                                 anchors.fill: parent
-                                anchors.margins: 14
+                                acceptedButtons: Qt.NoButton
+                                onWheel: wheel => {
+                                    var p = MprisState.player;
+                                    if (p?.canControl && p?.volumeSupported) {
+                                        p.volume = Math.max(0, Math.min(p.volume + (wheel.angleDelta.y > 0 ? 0.05 : -0.05), 1));
+                                        nowPlayingCard.showVolumeBadge = true;
+                                        volumeBadgeTimer.restart();
+                                    }
+                                }
+                            }
+                        }
+
+                        // ═══ DISKS ═══
+                        Card {
+                            id: diskPlace
+                            visible: false
+                            title: "Disks"
+                            icon: ""
+                            accent: Themes.mprisTextColor
+
+                            ColumnLayout {
+                                id: disksCol
                                 spacing: 6
+                                Layout.fillWidth: true
 
-                                // ── Top bar ──
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 6
+                                Repeater {
+                                    model: {
+                                        var raw = root.diskData.trim();
+                                        return raw.length > 0 ? raw.split("\n") : [];
+                                    }
 
-                                    Item { Layout.fillWidth: true }
+                                    RowLayout {
+                                        required property string modelData
+                                        spacing: 8
+                                        Layout.fillWidth: true
 
-                                    Rectangle {
-                                        visible: MiscState.showPlayerChooser
-                                        implicitHeight: 20; radius: height / 2
-                                        color: Qt.rgba(0, 0, 0, 0.35)
-                                        Layout.preferredWidth: expPill.implicitWidth + 16
+                                        readonly property var parts: modelData.trim().split(/\s+/)
+                                        readonly property int pct: parts.length >= 5 ? parseInt(parts[4]) || 0 : 0
 
-                                        RowLayout {
-                                            id: expPill
-                                            anchors.fill: parent
-                                            anchors.leftMargin: 7; anchors.rightMargin: 7; spacing: 4
-                                            Rectangle {
-                                                implicitWidth: 5; implicitHeight: 5
-                                                radius: 2.5
-                                                color: MprisState.player?.isPlaying ? "#88FF00" : "#585b70"
+                                        Text {
+                                            Layout.preferredWidth: 130
+                                            text: parent.parts[0] || ""
+                                            color: "#cdd6f4"
+                                            font {
+                                                pixelSize: 10
+                                                family: "ZedMono Nerd Font"
                                             }
-                                            Text {
-                                                text: MprisState.player?.identity || ""
-                                                color: "#cdd6f4"
-                                                font { pixelSize: 8; family: "Quicksand"; bold: true }
-                                                elide: Text.ElideRight
-                                            }
+                                            elide: Text.ElideRight
                                         }
 
-                                        MouseArea {
-                                            anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                                            onClicked: playerListOpen = !playerListOpen
+                                        Text {
+                                            Layout.preferredWidth: 50
+                                            horizontalAlignment: Text.AlignRight
+                                            text: parent.parts[1] || ""
+                                            color: "#585b70"
+                                            font {
+                                                pixelSize: 9
+                                                family: "ZedMono Nerd Font"
+                                            }
                                         }
-                                    }
-
-                                    Text {
-                                        visible: MiscState.showPlayerChooser
-                                        text: Mpris.players.length + " player(s)"
-                                        color: "#585b70"
-                                        font { pixelSize: 7; family: "ZedMono Nerd Font" }
-                                    }
-
-                                    TrackButton {
-                                        text: "−"
-                                        accentColor: Qt.rgba(1, 1, 1, 0.6)
-                                        onClicked: root.compactNowPlaying = true
-                                    }
-                                }
-
-                                Item { Layout.fillHeight: true }
-
-                                // ── Track info ──
-                                ColumnLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 3
-                                    Layout.leftMargin: 4
-                                    Layout.rightMargin: 4
-
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: MprisState.player?.trackTitle || "No track"
-                                        color: "#ffffff"
-                                        font { pixelSize: 20; bold: true; family: "Quicksand" }
-                                        elide: Text.ElideRight; maximumLineCount: 1
-                                        style: Text.Outline
-                                        styleColor: Qt.rgba(0, 0, 0, 0.7)
-                                    }
-
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: MprisState.player?.trackArtist || ""
-                                        color: Qt.rgba(1, 1, 1, 0.7)
-                                        font { pixelSize: 12; family: "ZedMono Nerd Font" }
-                                        elide: Text.ElideRight; maximumLineCount: 1
-                                        visible: text.length > 0
-                                    }
-                                }
-
-                                // ── Progress bar ──
-                                Item {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: 16
-                                    Layout.topMargin: 2
-
-                                    readonly property real ratio: {
-                                        nowPlayingCard.progressTick;
-                                        var p = MprisState.player;
-                                        if (!p) return 0;
-                                        var pos = p.position; var len = p.length;
-                                        if (pos == null || len == null || len <= 0 || isNaN(pos) || isNaN(len)) return 0;
-                                        return Math.min(pos / len, 1);
-                                    }
-
-                                    Rectangle {
-                                        anchors.left: parent.left; anchors.right: parent.right
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        height: 4; radius: 2
-                                        color: Qt.rgba(1, 1, 1, 0.12)
 
                                         Rectangle {
-                                            width: parent.width * parent.parent.ratio
-                                            height: parent.height; radius: 2
-                                            color: "#cba6f7"
-                                            Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.Linear } }
-                                        }
-                                    }
+                                            Layout.fillWidth: true
+                                            Layout.preferredHeight: 8
+                                            radius: 4
+                                            color: "#313244"
 
-                                    MouseArea {
-                                        anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                                        onClicked: mouse => {
-                                            var p = MprisState.player;
-                                            if (p && p.length > 0) p.position = (mouse.x / width) * p.length;
+                                            Rectangle {
+                                                width: parent.width * Math.min(parent.parent.pct / 100, 1)
+                                                height: parent.height
+                                                radius: 4
+                                                color: parent.parent.pct > 90 ? "#f38ba8" : parent.parent.pct > 70 ? "#f5c2e7" : "#89dceb"
+
+                                                Behavior on width {
+                                                    NumberAnimation {
+                                                        duration: 300
+                                                        easing.type: Easing.OutCubic
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        Text {
+                                            Layout.preferredWidth: 36
+                                            horizontalAlignment: Text.AlignRight
+                                            text: `${parent.pct}%`
+                                            color: parent.pct > 90 ? "#f38ba8" : "#a6adc8"
+                                            font {
+                                                pixelSize: 9
+                                                family: "ZedMono Nerd Font"
+                                                bold: parent.pct > 90
+                                            }
                                         }
                                     }
                                 }
-
-                                // ── Playback controls ──
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: 32
-                                    spacing: 8
-                                    Layout.bottomMargin: 2
-
-                                    Item { Layout.fillWidth: true }
-                                    TrackButton {
-                                        text: ""
-                                        visible: MiscState.showShuffle
-                                        active: MprisState.player?.shuffle ?? false
-                                        accentColor: MprisState.player?.shuffle ? "#f9e2af" : Qt.rgba(1, 1, 1, 0.6)
-                                        onClicked: { var p = MprisState.player; if (p?.canControl && p?.shuffleSupported) p.shuffle = !p.shuffle; }
-                                    }
-                                    TrackButton { text: ""; accentColor: Qt.rgba(1, 1, 1, 0.8); onClicked: MprisState.player?.previous() }
-                                    TrackButton { text: MprisState.player?.isPlaying ? "" : ""; accentColor: "#ffffff"; onClicked: MprisState.player?.togglePlaying() }
-                                    TrackButton { text: ""; accentColor: Qt.rgba(1, 1, 1, 0.8); onClicked: MprisState.player?.next() }
-                                    TrackButton {
-                                        text: ""
-                                        visible: MiscState.showLoop
-                                        active: MprisState.player?.loopState !== MprisLoopState.None
-                                        accentColor: MprisState.player?.loopState === MprisLoopState.Track ? "#f9e2af" : MprisState.player?.loopState === MprisLoopState.Playlist ? "#89b4fa" : Qt.rgba(1, 1, 1, 0.6)
-                                        onClicked: {
-                                            var p = MprisState.player;
-                                            if (!p?.canControl || !p?.loopSupported) return;
-                                            var ls = p.loopState;
-                                            if (ls === MprisLoopState.None) p.loopState = MprisLoopState.Track;
-                                            else if (ls === MprisLoopState.Track) p.loopState = MprisLoopState.Playlist;
-                                            else p.loopState = MprisLoopState.None;
-                                        }
-                                    }
-                                    Item { Layout.fillWidth: true }
-                                }
-                            }
-
-                            // ── Volume badge (shows on scroll) ──
-                            Rectangle {
-                                anchors.centerIn: parent
-                                implicitWidth: 60
-                                implicitHeight: 36
-                                radius: 8
-                                color: Qt.rgba(0, 0, 0, 0.75)
-                                opacity: nowPlayingCard.showVolumeBadge ? 1 : 0
-                                Behavior on opacity { NumberAnimation { duration: 150 } }
 
                                 Text {
-                                    anchors.centerIn: parent
-                                    text: nowPlayingCard.currentVolume + "%"
-                                    color: "#ffffff"
-                                    font { pixelSize: 14; bold: true; family: "Quicksand" }
+                                    text: "No disks found"
+                                    color: "#585b70"
+                                    font {
+                                        pixelSize: 10
+                                        family: "ZedMono Nerd Font"
+                                    }
+                                    visible: root.diskData.trim().length === 0
                                 }
                             }
                         }
 
-                        // ── Mouse area for scroll volume ──
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onWheel: wheel => {
-                                var p = MprisState.player;
-                                if (p?.canControl && p?.volumeSupported) {
-                                    p.volume = Math.max(0, Math.min(p.volume + (wheel.angleDelta.y > 0 ? 0.05 : -0.05), 1));
-                                    nowPlayingCard.showVolumeBadge = true;
-                                    volumeBadgeTimer.restart();
-                                }
-                            }
-                        }
-                    }
+                        // ═══ CONNECTIONS ═══
+                        Card {
+                            title: ""
+                            icon: ""
+                            accent: "#89b4fa"
 
-                    // ═══ DISKS ═══
-                    Card {
-                        id: diskPlace
-                        visible: false
-                        title: "Disks"
-                        icon: ""
-                        accent: Themes.mprisTextColor
+                            ColumnLayout {
+                                spacing: 4
+                                Layout.fillWidth: true
 
-                        ColumnLayout {
-                            id: disksCol
-                            spacing: 6
-                            Layout.fillWidth: true
-
-                            Repeater {
-                                model: {
-                                    var raw = root.diskData.trim();
-                                    return raw.length > 0 ? raw.split("\n") : [];
-                                }
-
+                                // ── Wi-Fi + Bluetooth row ──
                                 RowLayout {
-                                    required property string modelData
-                                    spacing: 8
                                     Layout.fillWidth: true
+                                    spacing: 4
 
-                                    readonly property var parts: modelData.trim().split(/\s+/)
-                                    readonly property int pct: parts.length >= 5 ? parseInt(parts[4]) || 0 : 0
-
-                                    Text {
-                                        Layout.preferredWidth: 130
-                                        text: parent.parts[0] || ""
-                                        color: "#cdd6f4"
-                                        font {
-                                            pixelSize: 10
-                                            family: "ZedMono Nerd Font"
-                                        }
-                                        elide: Text.ElideRight
-                                    }
-
-                                    Text {
-                                        Layout.preferredWidth: 50
-                                        horizontalAlignment: Text.AlignRight
-                                        text: parent.parts[1] || ""
-                                        color: "#585b70"
-                                        font {
-                                            pixelSize: 9
-                                            family: "ZedMono Nerd Font"
-                                        }
-                                    }
-
+                                    // ── Wi‑Fi tile ──
                                     Rectangle {
                                         Layout.fillWidth: true
-                                        Layout.preferredHeight: 8
-                                        radius: 4
-                                        color: "#313244"
+                                        Layout.preferredWidth: 1
+                                        implicitHeight: 48
+                                        radius: 10
+                                        color: wifiHover.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, root.wifiEnabled ? 0.12 : 0.06) : Qt.rgba(0.54, 0.57, 0.96, root.wifiEnabled ? 0.06 : 0.02)
 
+                                        // outer glow
                                         Rectangle {
-                                            width: parent.width * Math.min(parent.parent.pct / 100, 1)
-                                            height: parent.height
-                                            radius: 4
-                                            color: parent.parent.pct > 90 ? "#f38ba8" : parent.parent.pct > 70 ? "#f5c2e7" : "#89dceb"
-
-                                            Behavior on width {
+                                            anchors.fill: parent
+                                            anchors.margins: -1
+                                            radius: parent.radius + 1
+                                            color: "transparent"
+                                            border.width: 2
+                                            border.color: root.wifiEnabled ? Qt.rgba(0.54, 0.57, 0.96, 0.5) : Qt.rgba(0.35, 0.35, 0.44, 0.1)
+                                            opacity: wifiHover.containsMouse ? 1 : 0.6
+                                            Behavior on border.color {
+                                                ColorAnimation {
+                                                    duration: 200
+                                                }
+                                            }
+                                            Behavior on opacity {
                                                 NumberAnimation {
-                                                    duration: 300
-                                                    easing.type: Easing.OutCubic
+                                                    duration: 200
                                                 }
                                             }
                                         }
-                                    }
 
-                                    Text {
-                                        Layout.preferredWidth: 36
-                                        horizontalAlignment: Text.AlignRight
-                                        text: `${parent.pct}%`
-                                        color: parent.pct > 90 ? "#f38ba8" : "#a6adc8"
-                                        font {
-                                            pixelSize: 9
-                                            family: "ZedMono Nerd Font"
-                                            bold: parent.pct > 90
-                                        }
-                                    }
-                                }
-                            }
-
-                            Text {
-                                text: "No disks found"
-                                color: "#585b70"
-                                font {
-                                    pixelSize: 10
-                                    family: "ZedMono Nerd Font"
-                                }
-                                visible: root.diskData.trim().length === 0
-                            }
-                        }
-                    }
-
-                    // ═══ CONNECTIONS ═══
-                    Card {
-                        title: ""
-                        icon: ""
-                        accent: "#89b4fa"
-
-                        ColumnLayout {
-                            spacing: 6
-                            Layout.fillWidth: true
-
-                            // ── Combined Wi‑Fi + Bluetooth row ──
-                            Rectangle {
-                                Layout.fillWidth: true
-                                implicitHeight: 46
-                                radius: 8
-                                color: "transparent"
-
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 10
-                                    anchors.rightMargin: 8
-                                    spacing: 6
-
-                                    // ── Wi‑Fi section ──
-                                    Item {
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-
-                                        Rectangle {
-                                            anchors.fill: parent
-                                            radius: 6
-                                            color: wifiHover.containsMouse
-                                                ? Qt.rgba(0.54, 0.57, 0.96, root.wifiEnabled ? 0.1 : 0.06)
-                                                : Qt.rgba(0.54, 0.57, 0.96, root.wifiEnabled ? 0.05 : 0.02)
-                                            border {
-                                                width: 1
-                                                color: root.wifiEnabled
-                                                    ? (wifiHover.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, 0.5) : Qt.rgba(0.54, 0.57, 0.96, 0.25))
-                                                    : (wifiHover.containsMouse ? Qt.rgba(0.35, 0.35, 0.44, 0.4) : Qt.rgba(0.35, 0.35, 0.44, 0.15))
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: 150
                                             }
-                                            Behavior on color { ColorAnimation { duration: 120 } }
-                                            Behavior on border.color { ColorAnimation { duration: 120 } }
                                         }
 
-                                        RowLayout {
-                                            anchors.fill: parent
-                                            anchors.leftMargin: 0
-                                            anchors.rightMargin: 0
-                                            spacing: 8
+                                        ColumnLayout {
+                                            anchors.centerIn: parent
+                                            spacing: 2
 
                                             Text {
-                                                text: ""
+                                                text: "\uf1eb"
                                                 color: root.wifiEnabled ? "#89b4fa" : "#585b70"
-                                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                                                Layout.preferredWidth: 18
-                                                horizontalAlignment: Text.AlignHCenter
-                                            }
-
-                                            ColumnLayout {
-                                                spacing: 1
-                                                Layout.fillWidth: true
-                                                Text {
-                                                    text: "Wi-Fi"
-                                                    color: root.wifiEnabled ? "#cdd6f4" : "#6c7086"
-                                                    font { pixelSize: 11; family: "Quicksand"; bold: true }
+                                                font {
+                                                    pixelSize: 16
+                                                    family: "Symbols Nerd Font Mono"
                                                 }
-                                                Text {
-                                                    text: root.wifiEnabled
-                                                        ? (root.wifiSsid.length > 0 ? "Connected" : "On")
-                                                        : "Off"
-                                                    color: root.wifiEnabled
-                                                        ? (root.wifiSsid.length > 0 ? "#a6e3a1" : "#a6adc8")
-                                                        : "#585b70"
-                                                    font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                                Layout.alignment: Qt.AlignHCenter
+                                                Behavior on color {
+                                                    ColorAnimation {
+                                                        duration: 200
+                                                    }
                                                 }
                                             }
 
-                                            Rectangle {
-                                                Layout.alignment: Qt.AlignVCenter
-                                                implicitWidth: 24
-                                                implicitHeight: 24
-                                                radius: 6
-                                                color: wifiHover.containsMouse
-                                                    ? Qt.rgba(0.54, 0.57, 0.96, 0.15)
-                                                    : "transparent"
-
-                                                Text {
-                                                    anchors.centerIn: parent
-                                                    text: root.wifiEnabled ? "" : ""
-                                                    color: root.wifiEnabled ? "#89b4fa" : "#585b70"
-                                                    font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                            Text {
+                                                text: root.wifiEnabled ? (root.wifiSsid.length > 0 ? root.wifiSsid : "On") : "Off"
+                                                color: root.wifiEnabled ? (root.wifiSsid.length > 0 ? "#a6e3a1" : "#a6adc8") : "#585b70"
+                                                font {
+                                                    pixelSize: 9
+                                                    family: "ZedMono Nerd Font"
+                                                }
+                                                Layout.alignment: Qt.AlignHCenter
+                                                elide: Text.ElideRight
+                                                Layout.maximumWidth: parent.parent.parent.width - 16
+                                                maximumLineCount: 1
+                                                Behavior on color {
+                                                    ColorAnimation {
+                                                        duration: 200
+                                                    }
                                                 }
                                             }
                                         }
@@ -1106,6 +1293,7 @@ BarBlock {
                                                 held = true;
                                                 if (root.wifiEnabled) {
                                                     root.showWifiList = !root.showWifiList;
+                                                    root.showBtList = false;
                                                     if (root.showWifiList) {
                                                         root.wifiNetworks = "";
                                                         wifiNetworksProcess.running = true;
@@ -1116,77 +1304,80 @@ BarBlock {
                                                 if (!held) {
                                                     root.wifiEnabled = !root.wifiEnabled;
                                                     Quickshell.execDetached(["sh", "-c", "nmcli radio wifi " + (root.wifiEnabled ? "on" : "off")]);
-                                                    if (!root.wifiEnabled) root.showWifiList = false;
+                                                    if (!root.wifiEnabled)
+                                                        root.showWifiList = false;
                                                     toggleCheckTimer.restart();
                                                 }
                                             }
                                         }
                                     }
 
-                                    // ── Bluetooth section ──
-                                    Item {
+                                    // ── Bluetooth tile ──
+                                    Rectangle {
                                         Layout.fillWidth: true
-                                        Layout.fillHeight: true
+                                        Layout.preferredWidth: 1
+                                        implicitHeight: 48
+                                        radius: 10
+                                        color: btHover.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, root.bluetoothEnabled ? 0.12 : 0.06) : Qt.rgba(0.54, 0.57, 0.96, root.bluetoothEnabled ? 0.06 : 0.02)
 
+                                        // outer glow
                                         Rectangle {
                                             anchors.fill: parent
-                                            radius: 6
-                                            color: btHover.containsMouse
-                                                ? Qt.rgba(0.54, 0.57, 0.96, root.bluetoothEnabled ? 0.1 : 0.06)
-                                                : Qt.rgba(0.54, 0.57, 0.96, root.bluetoothEnabled ? 0.05 : 0.02)
-                                            border {
-                                                width: 1
-                                                color: root.bluetoothEnabled
-                                                    ? (btHover.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, 0.5) : Qt.rgba(0.54, 0.57, 0.96, 0.25))
-                                                    : (btHover.containsMouse ? Qt.rgba(0.35, 0.35, 0.44, 0.4) : Qt.rgba(0.35, 0.35, 0.44, 0.15))
+                                            anchors.margins: -1
+                                            radius: parent.radius + 1
+                                            color: "transparent"
+                                            border.width: 2
+                                            border.color: root.bluetoothEnabled ? Qt.rgba(0.54, 0.57, 0.96, 0.5) : Qt.rgba(0.35, 0.35, 0.44, 0.1)
+                                            opacity: btHover.containsMouse ? 1 : 0.6
+                                            Behavior on border.color {
+                                                ColorAnimation {
+                                                    duration: 200
+                                                }
                                             }
-                                            Behavior on color { ColorAnimation { duration: 120 } }
-                                            Behavior on border.color { ColorAnimation { duration: 120 } }
+                                            Behavior on opacity {
+                                                NumberAnimation {
+                                                    duration: 200
+                                                }
+                                            }
                                         }
 
-                                        RowLayout {
-                                            anchors.fill: parent
-                                            anchors.leftMargin: 0
-                                            anchors.rightMargin: 0
-                                            spacing: 8
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: 150
+                                            }
+                                        }
+
+                                        ColumnLayout {
+                                            anchors.centerIn: parent
+                                            spacing: 2
 
                                             Text {
-                                                text: ""
+                                                text: "\uf293"
                                                 color: root.bluetoothEnabled ? "#89b4fa" : "#585b70"
-                                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                                                Layout.preferredWidth: 18
-                                                horizontalAlignment: Text.AlignHCenter
-                                            }
-
-                                            ColumnLayout {
-                                                spacing: 1
-                                                Layout.fillWidth: true
-                                                Text {
-                                                    text: "Bluetooth"
-                                                    color: root.bluetoothEnabled ? "#cdd6f4" : "#6c7086"
-                                                    font { pixelSize: 11; family: "Quicksand"; bold: true }
+                                                font {
+                                                    pixelSize: 16
+                                                    family: "Symbols Nerd Font Mono"
                                                 }
-                                                Text {
-                                                    text: root.bluetoothEnabled ? "On" : "Off"
-                                                    color: root.bluetoothEnabled ? "#a6adc8" : "#585b70"
-                                                    font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                                Layout.alignment: Qt.AlignHCenter
+                                                Behavior on color {
+                                                    ColorAnimation {
+                                                        duration: 200
+                                                    }
                                                 }
                                             }
 
-                                            Rectangle {
-                                                Layout.alignment: Qt.AlignVCenter
-                                                implicitWidth: 24
-                                                implicitHeight: 24
-                                                radius: 6
-                                                color: btHover.containsMouse
-                                                    ? Qt.rgba(0.54, 0.57, 0.96, 0.15)
-                                                    : "transparent"
-
-                                                Text {
-                                                    anchors.centerIn: parent
-                                                    text: root.bluetoothEnabled ? "" : ""
-                                                    color: root.bluetoothEnabled ? "#89b4fa" : "#585b70"
-                                                    font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                            Text {
+                                                text: root.bluetoothEnabled ? "On" : "Off"
+                                                color: root.bluetoothEnabled ? "#a6adc8" : "#585b70"
+                                                font {
+                                                    pixelSize: 9
+                                                    family: "ZedMono Nerd Font"
+                                                }
+                                                Layout.alignment: Qt.AlignHCenter
+                                                Behavior on color {
+                                                    ColorAnimation {
+                                                        duration: 200
+                                                    }
                                                 }
                                             }
                                         }
@@ -1202,6 +1393,7 @@ BarBlock {
                                                 held = true;
                                                 if (root.bluetoothEnabled) {
                                                     root.showBtList = !root.showBtList;
+                                                    root.showWifiList = false;
                                                     if (root.showBtList) {
                                                         root.btDevices = "";
                                                         btDevicesProcess.running = true;
@@ -1217,27 +1409,21 @@ BarBlock {
                                             }
                                         }
                                     }
-                                }
-                            }
+                                } // end RowLayout
 
-                            // ── Combined dropdown list (scrollable) ──
-                            ScrollView {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: Math.min(listContainer.implicitHeight, 160)
-                                visible: (root.showWifiList && root.wifiEnabled) || (root.showBtList && root.bluetoothEnabled)
-                                clip: true
-                                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                                ScrollBar.vertical.policy: ScrollBar.AsNeeded
+                                // ── Wi‑Fi network list ──
+                                ScrollView {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: Math.min(wifiListCol.implicitHeight + 8, 140)
+                                    visible: root.showWifiList && root.wifiEnabled
+                                    clip: true
+                                    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                                    ScrollBar.vertical.policy: ScrollBar.AsNeeded
 
-                                ColumnLayout {
-                                    id: listContainer
-                                    width: parent.width
-                                    spacing: 2
-
-                                    // ── Wi‑Fi network list ──
                                     ColumnLayout {
-                                        spacing: 2
-                                        visible: root.showWifiList && root.wifiEnabled
+                                        id: wifiListCol
+                                        width: parent.width
+                                        spacing: 1
 
                                         Repeater {
                                             model: {
@@ -1248,8 +1434,8 @@ BarBlock {
                                             Rectangle {
                                                 required property string modelData
                                                 Layout.fillWidth: true
-                                                implicitHeight: 28
-                                                radius: 4
+                                                implicitHeight: 30
+                                                radius: 5
                                                 color: netMouse.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, 0.12) : "transparent"
 
                                                 readonly property var parts: modelData.split(":")
@@ -1261,33 +1447,40 @@ BarBlock {
                                                 RowLayout {
                                                     anchors.fill: parent
                                                     anchors.leftMargin: 32
-                                                    anchors.rightMargin: 8
-                                                    spacing: 6
+                                                    anchors.rightMargin: 10
+                                                    spacing: 8
 
                                                     Text {
-                                                        text: parent.parent.isCurrent ? "" : (parent.parent.hasSecurity ? "" : "")
+                                                        text: parent.parent.isCurrent ? "\uf00c" : (parent.parent.hasSecurity ? "\uf023" : "\uf110")
                                                         color: parent.parent.isCurrent ? "#a6e3a1" : "#585b70"
-                                                        font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                                        font {
+                                                            pixelSize: 10
+                                                            family: "Symbols Nerd Font Mono"
+                                                        }
                                                     }
 
                                                     Text {
                                                         text: parent.parent.ssid
                                                         color: parent.parent.isCurrent ? "#a6e3a1" : "#cdd6f4"
-                                                        font { pixelSize: 10; family: "ZedMono Nerd Font"; bold: parent.parent.isCurrent }
+                                                        font {
+                                                            pixelSize: 10
+                                                            family: "ZedMono Nerd Font"
+                                                            bold: parent.parent.isCurrent
+                                                        }
                                                         elide: Text.ElideRight
                                                         Layout.fillWidth: true
                                                     }
 
                                                     Rectangle {
-                                                        implicitWidth: 40
-                                                        implicitHeight: 6
-                                                        radius: 3
+                                                        implicitWidth: 36
+                                                        implicitHeight: 5
+                                                        radius: 2.5
                                                         color: "#313244"
 
                                                         Rectangle {
                                                             width: parent.width * Math.min(parent.parent.signal / 100, 1)
                                                             height: parent.height
-                                                            radius: 3
+                                                            radius: 2.5
                                                             color: parent.parent.signal > 70 ? "#a6e3a1" : parent.parent.signal > 40 ? "#f9e2af" : "#f38ba8"
                                                         }
                                                     }
@@ -1299,8 +1492,8 @@ BarBlock {
                                                     hoverEnabled: true
                                                     cursorShape: Qt.PointingHandCursor
                                                     onClicked: {
-                                                        if (parent.ssid.length > 0 && !parent.isCurrent) {
-                                                            Quickshell.execDetached(["sh", "-c", "nmcli dev wifi connect '" + parent.ssid.replace(/'/g, "'\\''") + "'"]);
+                                                        if (parent.parent.ssid.length > 0 && !parent.parent.isCurrent) {
+                                                            Quickshell.execDetached(["sh", "-c", "nmcli dev wifi connect '" + parent.parent.ssid.replace(/'/g, "'\\''") + "'"]);
                                                             root.showWifiList = false;
                                                             toggleCheckTimer.restart();
                                                         }
@@ -1312,17 +1505,30 @@ BarBlock {
                                         Text {
                                             text: "No networks found"
                                             color: "#585b70"
-                                            font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                            font {
+                                                pixelSize: 10
+                                                family: "ZedMono Nerd Font"
+                                            }
                                             visible: root.wifiNetworks.trim().length === 0
                                             Layout.leftMargin: 32
-                                            Layout.topMargin: 2
+                                            Layout.topMargin: 4
                                         }
                                     }
+                                }
 
-                                    // ── Bluetooth devices list ──
+                                // ── Bluetooth devices list ──
+                                ScrollView {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: Math.min(btListCol.implicitHeight + 8, 140)
+                                    visible: root.showBtList && root.bluetoothEnabled
+                                    clip: true
+                                    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                                    ScrollBar.vertical.policy: ScrollBar.AsNeeded
+
                                     ColumnLayout {
-                                        spacing: 2
-                                        visible: root.showBtList && root.bluetoothEnabled
+                                        id: btListCol
+                                        width: parent.width
+                                        spacing: 1
 
                                         Repeater {
                                             model: {
@@ -1333,8 +1539,8 @@ BarBlock {
                                             Rectangle {
                                                 required property string modelData
                                                 Layout.fillWidth: true
-                                                implicitHeight: 28
-                                                radius: 4
+                                                implicitHeight: 30
+                                                radius: 5
                                                 color: btDevMouse.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, 0.12) : "transparent"
 
                                                 readonly property var parts: modelData.trim().split(/\s+/)
@@ -1344,19 +1550,25 @@ BarBlock {
                                                 RowLayout {
                                                     anchors.fill: parent
                                                     anchors.leftMargin: 32
-                                                    anchors.rightMargin: 8
-                                                    spacing: 6
+                                                    anchors.rightMargin: 10
+                                                    spacing: 8
 
                                                     Text {
-                                                        text: ""
+                                                        text: "\uf293"
                                                         color: "#89b4fa"
-                                                        font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                                        font {
+                                                            pixelSize: 10
+                                                            family: "Symbols Nerd Font Mono"
+                                                        }
                                                     }
 
                                                     Text {
                                                         text: parent.parent.btName.length > 0 ? parent.parent.btName : parent.parent.mac
                                                         color: "#cdd6f4"
-                                                        font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                                        font {
+                                                            pixelSize: 10
+                                                            family: "ZedMono Nerd Font"
+                                                        }
                                                         elide: Text.ElideRight
                                                         Layout.fillWidth: true
                                                     }
@@ -1364,7 +1576,10 @@ BarBlock {
                                                     Text {
                                                         text: parent.parent.mac
                                                         color: "#585b70"
-                                                        font { pixelSize: 8; family: "ZedMono Nerd Font" }
+                                                        font {
+                                                            pixelSize: 8
+                                                            family: "ZedMono Nerd Font"
+                                                        }
                                                     }
                                                 }
 
@@ -1383,245 +1598,280 @@ BarBlock {
                                         Text {
                                             text: "No devices found"
                                             color: "#585b70"
-                                            font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                            font {
+                                                pixelSize: 10
+                                                family: "ZedMono Nerd Font"
+                                            }
                                             visible: root.btDevices.trim().length === 0
                                             Layout.leftMargin: 32
-                                            Layout.topMargin: 2
+                                            Layout.topMargin: 4
                                         }
                                     }
                                 }
-                            }
 
-                            // ── Ethernet pill ──
-                            Rectangle {
-                                Layout.fillWidth: true
-                                implicitHeight: 46
-                                radius: 8
-                                visible: root.ethernetConnected
-                                color: ethMouse.containsMouse
-                                    ? Qt.rgba(0.65, 0.89, 0.63, 0.15)
-                                    : Qt.rgba(0.65, 0.89, 0.63, root.ethernetConnected ? 0.08 : 0.03)
-                                border {
-                                    width: 1
-                                    color: root.ethernetConnected
-                                        ? Qt.rgba(0.65, 0.89, 0.63, 0.35)
-                                        : Qt.rgba(0.35, 0.35, 0.44, 0.2)
-                                }
-
-                                Behavior on color { ColorAnimation { duration: 120 } }
-                                Behavior on border.color { ColorAnimation { duration: 120 } }
-
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 10
-                                    anchors.rightMargin: 8
-                                    spacing: 8
-
-                                    Text {
-                                        text: ""
-                                        color: root.ethernetConnected ? "#a6e3a1" : "#585b70"
-                                        font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                                        Layout.preferredWidth: 18
-                                        horizontalAlignment: Text.AlignHCenter
-                                    }
-
-                                    Text {
-                                        text: "Ethernet"
-                                        color: root.ethernetConnected ? "#cdd6f4" : "#6c7086"
-                                        font { pixelSize: 11; family: "Quicksand"; bold: true }
-                                    }
-
-                                    Item { Layout.fillWidth: true }
-
-                                    Rectangle {
-                                        Layout.alignment: Qt.AlignVCenter
-                                        implicitWidth: 8; implicitHeight: 8; radius: 4
-                                        color: root.ethernetConnected ? "#a6e3a1" : "#585b70"
-                                    }
-                                }
-
-                                MouseArea {
-                                    id: ethMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                }
-                            }
-                        }
-                    }
-
-
-                    // ═══ BRIGHTNESS ═══
-                    Card {
-                        title: "Display"
-                        icon: ""
-                        accent: "#f9e2af"
-                        visible: BatteryState.available
-
-                        RowLayout {
-                            spacing: 10
-                            Layout.fillWidth: true
-
-                            Text {
-                                text: ""
-                                color: "#f9e2af"
-                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                            }
-
-                            Text {
-                                text: Math.round(root.brightness) + "%"
-                                color: "#cdd6f4"
-                                font { pixelSize: 10; family: "ZedMono Nerd Font"; bold: true }
-                                Layout.preferredWidth: 36
-                            }
-
-                            Item {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 5
-
+                                // ── Ethernet pill ──
                                 Rectangle {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: parent.width
-                                    height: 5
-                                    radius: 2.5
-                                    color: "#313244"
+                                    Layout.fillWidth: true
+                                    implicitHeight: 42
+                                    radius: 8
+                                    visible: root.ethernetConnected
+                                    color: Qt.rgba(0.65, 0.89, 0.63, 0.08)
+                                    border {
+                                        width: 1
+                                        color: Qt.rgba(0.65, 0.89, 0.63, 0.25)
+                                    }
 
-                                    Rectangle {
-                                        width: parent.width * Math.min(root.brightness / 100, 1)
-                                        height: parent.height
-                                        radius: 2.5
-                                        color: "#f9e2af"
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 10
+                                        anchors.rightMargin: 10
+                                        spacing: 8
 
-                                        Behavior on width {
-                                            NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                                        Text {
+                                            text: "\uf0e8"
+                                            color: "#a6e3a1"
+                                            font {
+                                                pixelSize: 14
+                                                family: "Symbols Nerd Font Mono"
+                                            }
+                                            Layout.preferredWidth: 18
+                                            horizontalAlignment: Text.AlignHCenter
+                                        }
+
+                                        Text {
+                                            text: "Ethernet"
+                                            color: "#cdd6f4"
+                                            font {
+                                                pixelSize: 11
+                                                family: "Quicksand"
+                                                bold: true
+                                            }
+                                        }
+
+                                        Item {
+                                            Layout.fillWidth: true
+                                        }
+
+                                        Rectangle {
+                                            implicitWidth: 8
+                                            implicitHeight: 8
+                                            radius: 4
+                                            color: "#a6e3a1"
                                         }
                                     }
                                 }
+                            }
+                        }
 
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: mouse => {
-                                        var pct = Math.max(0, Math.min(Math.round(mouse.x / width * 100), 100));
-                                        root.brightness = pct;
-                                        Quickshell.execDetached(["sh", "-c", "brightnessctl set " + pct + "%"]);
+                        // ═══ BRIGHTNESS ═══
+                        Card {
+                            title: "Display"
+                            icon: ""
+                            accent: "#f9e2af"
+                            visible: BatteryState.available
+
+                            RowLayout {
+                                spacing: 10
+                                Layout.fillWidth: true
+
+                                Text {
+                                    text: ""
+                                    color: "#f9e2af"
+                                    font {
+                                        pixelSize: 14
+                                        family: "Symbols Nerd Font Mono"
+                                    }
+                                }
+
+                                Text {
+                                    text: Math.round(root.brightness) + "%"
+                                    color: "#cdd6f4"
+                                    font {
+                                        pixelSize: 10
+                                        family: "ZedMono Nerd Font"
+                                        bold: true
+                                    }
+                                    Layout.preferredWidth: 36
+                                }
+
+                                Item {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 5
+
+                                    Rectangle {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: parent.width
+                                        height: 5
+                                        radius: 2.5
+                                        color: "#313244"
+
+                                        Rectangle {
+                                            width: parent.width * Math.min(root.brightness / 100, 1)
+                                            height: parent.height
+                                            radius: 2.5
+                                            color: "#f9e2af"
+
+                                            Behavior on width {
+                                                NumberAnimation {
+                                                    duration: 100
+                                                    easing.type: Easing.OutCubic
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: mouse => {
+                                            var pct = Math.max(0, Math.min(Math.round(mouse.x / width * 100), 100));
+                                            root.brightness = pct;
+                                            Quickshell.execDetached(["sh", "-c", "brightnessctl set " + pct + "%"]);
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-
-
                 }
             }
         }
-    }
 
-    // ═══ PLAYER POPUP ═══
-    PopupWindow {
-        id: playerPopup
-        visible: playerListOpen
-        grabFocus: true
-        color: MiscState.popupSolidBg ? "#1e1e2e" : "transparent"
+        // ═══ PLAYER POPUP ═══
+        PopupWindow {
+            id: playerPopup
+            visible: playerListOpen
+            grabFocus: true
+            color: MiscState.popupSolidBg ? "#1e1e2e" : "transparent"
 
-        anchor.window: root.host
-        anchor.rect.x: {
-            let g = root.mapToGlobal(0, 0);
-            return g.x + (root.width / 2) - (width / 2);
-        }
-        anchor.rect.y: 33
-
-        implicitWidth: 340
-        implicitHeight: Math.min(playerContent.implicitHeight + 32, Screen.desktopAvailableHeight * 0.7)
-
-        Rectangle {
-            anchors.fill: parent
-            radius: 12
-            layer.enabled: true
-            layer.samples: 8
-            color: "#1e1e2e"
-            border.color: "#45475a"
-
-            Shortcut { sequence: "Escape"; onActivated: playerListOpen = false }
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: playerListOpen = false
-                z: -1
+            anchor.window: root.host
+            anchor.rect.x: {
+                let g = root.mapToGlobal(0, 0);
+                return g.x + (root.width / 2) - (width / 2);
             }
+            anchor.rect.y: 33
 
-            ColumnLayout {
-                id: playerContent
+            implicitWidth: 340
+            implicitHeight: Math.min(playerContent.implicitHeight + 32, Screen.desktopAvailableHeight * 0.7)
+
+            Rectangle {
                 anchors.fill: parent
-                anchors.margins: 12
-                spacing: 6
+                radius: 12
+                layer.enabled: true
+                layer.samples: 8
+                color: "#1e1e2e"
+                border.color: "#45475a"
 
-                Text {
-                    text: "Select Player"
-                    color: "#cdd6f4"
-                    font { pixelSize: 13; bold: true; family: "Quicksand" }
-                    Layout.bottomMargin: 4
+                Shortcut {
+                    sequence: "Escape"
+                    onActivated: playerListOpen = false
                 }
 
-                ScrollView {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    clip: true
-                    ScrollBar.vertical.policy: ScrollBar.AsNeeded
-                    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: playerListOpen = false
+                    z: -1
+                }
 
-                    ColumnLayout {
-                        width: parent.width
-                        spacing: 2
+                ColumnLayout {
+                    id: playerContent
+                    anchors.fill: parent
+                    anchors.margins: 12
+                    spacing: 6
 
-                        Repeater {
-                            model: Mpris.players
+                    Text {
+                        text: "Select Player"
+                        color: "#cdd6f4"
+                        font {
+                            pixelSize: 13
+                            bold: true
+                            family: "Quicksand"
+                        }
+                        Layout.bottomMargin: 4
+                    }
 
-                            delegate: Rectangle {
-                                required property var modelData
-                                Layout.fillWidth: true
-                                implicitHeight: 36
-                                radius: 6
-                                color: mouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
+                    ScrollView {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        clip: true
+                        ScrollBar.vertical.policy: ScrollBar.AsNeeded
+                        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
-                                Behavior on color { ColorAnimation { duration: 80 } }
+                        ColumnLayout {
+                            width: parent.width
+                            spacing: 2
 
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 8
-                                    anchors.rightMargin: 8
-                                    spacing: 8
-
-                                    Rectangle {
-                                        implicitWidth: 8; implicitHeight: 8; radius: 4
-                                        color: modelData.playbackState === MprisPlaybackState.Playing ? "#88FF00" : "#585b70"
+                            Repeater {
+                                model: {
+                                    var filtered = [];
+                                    for (let p of Mpris.players.values) {
+                                        if (!MprisState.isIgnored(p))
+                                            filtered.push(p);
                                     }
-
-                                    Text {
-                                        text: modelData.identity
-                                        color: modelData.playbackState === MprisPlaybackState.Playing ? "#cdd6f4" : "#585b70"
-                                        font { pixelSize: 11; bold: true; family: "Quicksand" }
-                                        Layout.fillWidth: true
-                                        elide: Text.ElideRight
-                                    }
-
-                                    Text {
-                                        text: modelData.trackTitle || ""
-                                        color: "#a6adc8"
-                                        font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                                        Layout.preferredWidth: 150
-                                        elide: Text.ElideRight
-                                    }
+                                    return filtered;
                                 }
 
-                                MouseArea {
-                                    id: mouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        MprisState.player = modelData;
-                                        playerListOpen = false;
+                                delegate: Rectangle {
+                                    required property var modelData
+                                    Layout.fillWidth: true
+                                    implicitHeight: 36
+                                    radius: 6
+                                    color: mouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
+
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: 80
+                                        }
+                                    }
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 8
+                                        anchors.rightMargin: 8
+                                        spacing: 8
+
+                                        Rectangle {
+                                            implicitWidth: 8
+                                            implicitHeight: 8
+                                            radius: 4
+                                            color: modelData && modelData.playbackState === MprisPlaybackState.Playing ? "#88FF00" : "#585b70"
+                                        }
+
+                                        Text {
+                                            text: modelData ? (modelData.identity || "Unknown") : "Unknown"
+                                            color: modelData && modelData.playbackState === MprisPlaybackState.Playing ? "#cdd6f4" : "#585b70"
+                                            font {
+                                                pixelSize: 11
+                                                bold: true
+                                                family: "Quicksand"
+                                            }
+                                            Layout.fillWidth: true
+                                            elide: Text.ElideRight
+                                        }
+
+                                        Text {
+                                            text: modelData ? (modelData.trackTitle || "") : ""
+                                            color: "#a6adc8"
+                                            font {
+                                                pixelSize: 9
+                                                family: "ZedMono Nerd Font"
+                                            }
+                                            Layout.preferredWidth: 150
+                                            elide: Text.ElideRight
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: mouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            if (!modelData)
+                                                return;
+                                            MprisState.player = modelData;
+                                            playerListOpen = false;
+                                        }
                                     }
                                 }
                             }
@@ -1674,19 +1924,24 @@ BarBlock {
         implicitHeight: 28
 
         property real scaleVal: 1.0
-        Behavior on scaleVal { NumberAnimation { duration: 80; easing.type: Easing.OutCubic } }
+        Behavior on scaleVal {
+            NumberAnimation {
+                duration: 80
+                easing.type: Easing.OutCubic
+            }
+        }
 
         Rectangle {
             anchors.fill: parent
             radius: 6
             visible: !parent.flat
-            color: mouseArea.containsMouse
-                ? Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.22)
-                : parent.active
-                    ? Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.15)
-                    : Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.06)
+            color: mouseArea.containsMouse ? Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.22) : parent.active ? Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.15) : Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.06)
             scale: parent.scaleVal
-            Behavior on color { ColorAnimation { duration: 120 } }
+            Behavior on color {
+                ColorAnimation {
+                    duration: 120
+                }
+            }
         }
 
         Rectangle {
@@ -1697,17 +1952,26 @@ BarBlock {
                 width: (mouseArea.containsMouse || parent.active) && !parent.flat ? 1 : 0
                 color: Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.3)
             }
-            Behavior on border.width { NumberAnimation { duration: 80 } }
+            Behavior on border.width {
+                NumberAnimation {
+                    duration: 80
+                }
+            }
         }
 
         Text {
             anchors.centerIn: parent
             text: parent.text
-            color: mouseArea.containsMouse
-                ? parent.accentColor
-                : (parent.active ? parent.accentColor : Qt.rgba(1, 1, 1, 0.7))
-            font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
-            Behavior on color { ColorAnimation { duration: 120 } }
+            color: mouseArea.containsMouse ? parent.accentColor : (parent.active ? parent.accentColor : Qt.rgba(1, 1, 1, 0.7))
+            font {
+                pixelSize: 12
+                family: "Symbols Nerd Font Mono"
+            }
+            Behavior on color {
+                ColorAnimation {
+                    duration: 120
+                }
+            }
         }
 
         MouseArea {
@@ -1851,7 +2115,9 @@ BarBlock {
             }
         }
 
-        Item { Layout.fillWidth: true }
+        Item {
+            Layout.fillWidth: true
+        }
 
         Rectangle {
             visible: parent.showToggle
@@ -1860,7 +2126,11 @@ BarBlock {
             radius: 11
             color: parent.active ? "#89b4fa" : "#45475a"
 
-            Behavior on color { ColorAnimation { duration: 120 } }
+            Behavior on color {
+                ColorAnimation {
+                    duration: 120
+                }
+            }
 
             Rectangle {
                 width: 18
@@ -1870,7 +2140,12 @@ BarBlock {
                 x: parent.parent.active ? parent.width - width - 2 : 2
                 y: (parent.height - height) / 2
 
-                Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                Behavior on x {
+                    NumberAnimation {
+                        duration: 120
+                        easing.type: Easing.OutCubic
+                    }
+                }
             }
 
             MouseArea {
@@ -1891,5 +2166,4 @@ BarBlock {
             }
         }
     }
-}
 }

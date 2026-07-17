@@ -8,36 +8,35 @@ import qs.services
 import qs.customItems
 import qs.themes
 
-Loader {
-    id: mprisLoader
-
-    active: MprisState.mprisVisible
-    visible: active
+Item {
+    id: mprisRoot
 
     required property var host
 
-    sourceComponent: WrapperMouseArea {
-        id: mprisRoot
+    width: mprisRoot.showPlaying ? pill.implicitWidth : 0
+    height: mprisRoot.showPlaying ? pill.implicitHeight : 0
+    implicitWidth: width
+    implicitHeight: height
 
-        width: mprisRoot.showPlaying ? pill.implicitWidth : 0
-        height: mprisRoot.showPlaying ? pill.implicitHeight : 0
-        implicitWidth: width
-        implicitHeight: height
+    visible: MprisState.mprisVisible
 
+    property bool showVolume: false
+    property bool showPlaying: MprisState.player?.isPlaying ?? false
+    property bool showPopup: false
+
+    Timer {
+        id: hideVolumeTimer
+        interval: 1000
+        repeat: false
+        running: false
+        onTriggered: mprisRoot.showVolume = false
+    }
+
+    WrapperMouseArea {
+        id: mouseArea
+        anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.RightButton | Qt.LeftButton | Qt.MiddleButton | Qt.ForwardButton | Qt.BackButton
-
-        property bool showVolume: false
-        property bool showPlaying: MprisState.player?.isPlaying
-        property bool showPopup: false
-
-        Timer {
-            id: hideVolumeTimer
-            interval: 1000
-            repeat: false
-            running: false
-            onTriggered: mprisRoot.showVolume = false
-        }
 
         onExited: {
             hideVolumeTimer.restart();
@@ -56,11 +55,11 @@ Loader {
                     MprisState.player?.raise();
                 }
             } else if (mouse.button == Qt.MiddleButton)
-                showPopup = !showPopup;
+                mprisRoot.showPopup = !mprisRoot.showPopup;
         }
 
         onWheel: event => {
-            if (!MprisState.player?.isPlaying)
+            if (!(MprisState.player?.isPlaying ?? false))
                 return;
 
             if (MprisState.player?.volumeSupported) {
@@ -69,48 +68,7 @@ Loader {
                 vol = Math.max(0, Math.min(vol, 100));
                 MprisState.player.volume = vol / 100;
                 mprisRoot.showVolume = true;
-            }
-        }
-
-        // ── popup (first child of the wrapper for MarginWrapperManager) ──
-        LazyLoader {
-            loading: true
-
-            PopupWindow {
-                id: popup
-
-                anchor.window: mprisLoader.host
-                anchor.rect.x: mprisLoader.host.width / 2 - width / 2
-                anchor.rect.y: 35
-                visible: mprisRoot.showPopup
-                grabFocus: true
-                color: MiscState.popupSolidBg ? "#1e1e2e" : "transparent"
-                implicitWidth: 280
-                implicitHeight: Math.min(mprisPopupRect.implicitHeight, 300)
-
-                Rectangle {
-                    id: mprisPopupRect
-                    anchors.fill: parent
-                    radius: 10
-                    color: "#1e1e2e"
-                    border.width: 1
-                    border.color: "#45475a"
-                    layer.enabled: true
-                    layer.samples: 8
-
-                    Shortcut { sequence: "Escape"; onActivated: mprisRoot.showPopup = false }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: mprisRoot.showPopup = false
-                        z: -1
-                    }
-
-                    MprisPopup {
-                        anchors.fill: parent
-                        anchors.margins: 8
-                    }
-                }
+                hideVolumeTimer.restart();
             }
         }
 
@@ -118,7 +76,7 @@ Loader {
         Rectangle {
             id: pill
             visible: mprisRoot.showPlaying
-            implicitHeight: mprisLoader.host ? mprisLoader.host.height : 30
+            implicitHeight: mprisRoot.host ? mprisRoot.host.height : 30
             implicitWidth: pillRow.implicitWidth + 12
             radius: height / 2
             color: Qt.rgba(0.1, 0.04, 0.18, 0.4)
@@ -228,6 +186,7 @@ Loader {
                         anchors.fill: parent
                         anchors.margins: 1.5
                         antialiasing: true
+                        visible: MprisState.showMprisProgress
 
                         property real progress: 0
 
@@ -275,12 +234,57 @@ Loader {
 
                     BarText {
                         anchors.centerIn: parent
-                        text: MprisState.player?.isPlaying ? "⏸" : "▶"
+                        text: MprisState.player?.isPlaying ? "" : ""
                         baseColor: "#FF7EB3"
                         color: "#FF7EB3"
                         pointSize: 9
                         paddingg: 0
                     }
+                }
+            }
+        }
+    }
+
+    // ── popup (lives outside the mouse area, never destroyed by Loader) ──
+    LazyLoader {
+        loading: true
+
+        PopupWindow {
+            id: popup
+
+            anchor.window: mprisRoot.host
+            anchor.rect.x: mprisRoot.host.width / 2 - width / 2
+            anchor.rect.y: 35
+            visible: mprisRoot.showPopup
+            grabFocus: true
+            color: MiscState.popupSolidBg ? "#1e1e2e" : "transparent"
+            implicitWidth: 280
+            implicitHeight: Math.min(mprisPopupRect.implicitHeight, 300)
+
+            Rectangle {
+                id: mprisPopupRect
+                anchors.fill: parent
+                radius: 10
+                color: "#1e1e2e"
+                border.width: 1
+                border.color: "#45475a"
+                layer.enabled: true
+                layer.samples: 8
+
+                Shortcut {
+                    sequence: "Escape"
+                    onActivated: mprisRoot.showPopup = false
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: mprisRoot.showPopup = false
+                    z: -1
+                }
+
+                MprisPopup {
+                    anchors.fill: parent
+                    anchors.margins: 8
                 }
             }
         }

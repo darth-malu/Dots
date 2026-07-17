@@ -32,19 +32,19 @@ ColumnLayout {
 
                 Rectangle {
                     implicitWidth: 6; implicitHeight: 6; radius: 3
-                    color: modelData.playbackState === MprisPlaybackState.Playing ? "#88FF00" : "#585b70"
+                    color: modelData && modelData.playbackState === MprisPlaybackState.Playing ? "#88FF00" : "#585b70"
                 }
 
                 Text {
-                    text: modelData.identity
-                    color: modelData.playbackState === MprisPlaybackState.Playing ? "#88FF00" : "#cdd6f4"
+                    text: modelData ? (modelData.identity || "Unknown") : "Unknown"
+                    color: modelData && modelData.playbackState === MprisPlaybackState.Playing ? "#88FF00" : "#cdd6f4"
                     font { pixelSize: 11; bold: true; family: "Quicksand" }
                     elide: Text.ElideRight
                     Layout.fillWidth: true
                 }
 
                 Text {
-                    text: modelData.trackTitle || ""
+                    text: modelData ? (modelData.trackTitle || "") : ""
                     color: "#a6adc8"
                     font { pixelSize: 9; family: "ZedMono Nerd Font" }
                     elide: Text.ElideRight
@@ -58,10 +58,11 @@ ColumnLayout {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
+                    if (!modelData) return;
                     var isMpd = modelData.identity === "Music Player Daemon";
                     if (isMpd)
                         Quickshell.execDetached(["hyprctl", "dispatch", "togglespecialworkspace", "nc"]);
-                    if (modelData.canRaise)
+                    else if (modelData.canRaise)
                         modelData.raise();
                 }
             }

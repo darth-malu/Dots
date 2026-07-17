@@ -16,6 +16,8 @@ Singleton {
 
     property bool mprisArtVisible: true
 
+    property bool showMprisProgress: true
+
     property var ignored: ["mpv", "whatsapp", "Chrome", "chromium", "firefox", "Mozilla zen", "undefined"]
 
     function ignorePlayer(identity) {
@@ -52,6 +54,7 @@ Singleton {
     }
 
     function sendNotify() {
+        if (!root.player) return;
         let title = root.player.trackTitle || "Unknown Title";
         let artist = root.player.trackArtist || "Unknown Artist";
         let album = root.player.trackAlbum || "Unknown Album";
@@ -73,9 +76,10 @@ Singleton {
     Connections {
         target: root.player
         function onPostTrackChanged() {
+            if (!root.player) return;
             const isIgnored = root.ignored.some(app => root.player.identity.includes(app) || root.player.desktopEntry.includes(app));
 
-            if (!isIgnored && root.player)
+            if (!isIgnored)
                 root.sendNotify();
         }
     }

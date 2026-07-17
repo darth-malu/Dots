@@ -1300,8 +1300,9 @@ source:[[http://company-mode.github.io/manual/Getting-Started.html#Commands-1]]
   (spell-fu-mode -1)
   (diff-hl-mode -1))
 
-(defvar my/usiu-files
-  (directory-files-recursively "~/USIU/2026" "\\.org$"))
+;; (defvar my/usiu-files
+;;   (directory-files-recursively "~/USIU/2026" "\\.org$"))
+;; NOTE: disabled because conflict with my externals
 
 
 ;; Function to be run when org-agenda is opened
@@ -1316,7 +1317,8 @@ source:[[http://company-mode.github.io/manual/Getting-Started.html#Commands-1]]
 
   :init
   (setq org-directory (expand-file-name "~/Documents/Org")
-        org-agenda-files `(,org-directory ,(file-name-concat org-directory "roam") ,@my/usiu-files)
+        ;; org-agenda-files `(,org-directory ,(file-name-concat org-directory "roam") ,@my/usiu-files)
+        org-agenda-files `(,org-directory ,(file-name-concat org-directory "roam"))
         org-noter-notes-search-path (list (file-name-concat org-directory "notes"))
         org-default-notes-file (expand-file-name  ".notes" org-directory))
 
@@ -2076,6 +2078,18 @@ NOTE: not needed in doom...it auto [[https://discourse.doomemacs.org/t/common-co
 
 (after! spell-fu
   (cl-pushnew 'org-modern-tag (alist-get 'org-mode +spell-excluded-faces-alist)))
+#+end_src
+* Clipboard | xclip wayland
+FIXME: does not work
+#+begin_src emacs-lisp :tangle no
+(use-package! xclip
+  :config
+  (setq xclip-program "wl-copy")
+  (setq xclip-select-enable-clipboard t)
+  (setq xclip-mode t)
+  (setq xclip-method (quote wl-copy)))
+
+(setq xclip-select-enable-clipboard t)
 #+end_src
 * Markdown
 =Markdown-view-mode= toggle

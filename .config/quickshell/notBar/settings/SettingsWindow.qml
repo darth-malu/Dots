@@ -96,7 +96,7 @@ Item {
     Process {
         id: avatarPickProcess
         running: false
-        command: ["sh", "-c", `PATH="$HOME/.nix-profile/bin:$PATH" zenity --file-selection --title="Choose Avatar" --file-filter="Images | *.png *.jpg *.jpeg *.webp" 2>/dev/null | while read file; do mkdir -p ~/.config/quickshell/assets && cp "$file" ~/.config/quickshell/assets/avatar.png; done`]
+        command: ["sh", "-c", `file=$(PATH="$HOME/.nix-profile/bin:$PATH" zenity --file-selection --title="Choose Avatar" --file-filter="Images | *.png *.jpg *.jpeg *.webp" 2>/dev/null) && [ -n "$file" ] && mkdir -p ~/.config/quickshell/assets && cp "$file" ~/.config/quickshell/assets/avatar.png`]
     }
 
     FileView {
@@ -467,6 +467,61 @@ Item {
                             text: root.hostName
                             color: "#cdd6f4"
                             font { pixelSize: 13; family: "Quicksand" }
+                        }
+                    }
+                }
+
+                Card {
+                    title: "MPRIS"
+                    icon: ""
+                    accent: "#cba6f7"
+
+                    ColumnLayout {
+                        spacing: 10
+                        Layout.fillWidth: true
+
+                        RowLayout {
+                            spacing: 10
+                            Layout.fillWidth: true
+
+                            ColumnLayout {
+                                spacing: 2
+                                Layout.fillWidth: true
+
+                                Text {
+                                    text: "Progress Ring"
+                                    color: "#cdd6f4"
+                                    font { pixelSize: 12; family: "Quicksand"; bold: true }
+                                }
+
+                                Text {
+                                    text: MprisState.showMprisProgress ? "Visible on pill" : "Hidden"
+                                    color: "#585b70"
+                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                }
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Rectangle {
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: 36; implicitHeight: 20; radius: 10
+                                color: MprisState.showMprisProgress ? "#89b4fa" : "#45475a"
+                                Behavior on color { ColorAnimation { duration: 120 } }
+
+                                Rectangle {
+                                    width: 16; height: 16; radius: 8
+                                    color: "#1e1e2e"
+                                    x: MprisState.showMprisProgress ? parent.width - width - 2 : 2
+                                    y: (parent.height - height) / 2
+                                    Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                    onClicked: MprisState.showMprisProgress = !MprisState.showMprisProgress
+                                }
+                            }
                         }
                     }
                 }
