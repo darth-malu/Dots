@@ -477,15 +477,23 @@ Item {
                     accent: "#cba6f7"
 
                     ColumnLayout {
-                        spacing: 10
+                        spacing: 0
                         Layout.fillWidth: true
 
                         RowLayout {
                             spacing: 10
                             Layout.fillWidth: true
+                            Layout.preferredHeight: 36
+
+                            Text {
+                                text: ""
+                                color: "#cba6f7"
+                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
+                            }
 
                             ColumnLayout {
-                                spacing: 2
+                                spacing: 0
                                 Layout.fillWidth: true
 
                                 Text {
@@ -500,8 +508,6 @@ Item {
                                     font { pixelSize: 10; family: "ZedMono Nerd Font" }
                                 }
                             }
-
-                            Item { Layout.fillWidth: true }
 
                             Rectangle {
                                 Layout.alignment: Qt.AlignVCenter
@@ -524,12 +530,23 @@ Item {
                             }
                         }
 
+                        // Separator
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#313244"; Layout.leftMargin: 28 }
+
                         RowLayout {
                             spacing: 10
                             Layout.fillWidth: true
+                            Layout.preferredHeight: 36
+
+                            Text {
+                                text: ""
+                                color: "#cba6f7"
+                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
+                            }
 
                             ColumnLayout {
-                                spacing: 2
+                                spacing: 0
                                 Layout.fillWidth: true
 
                                 Text {
@@ -544,8 +561,6 @@ Item {
                                     font { pixelSize: 10; family: "ZedMono Nerd Font" }
                                 }
                             }
-
-                            Item { Layout.fillWidth: true }
 
                             Rectangle {
                                 Layout.alignment: Qt.AlignVCenter
@@ -604,15 +619,23 @@ Item {
                     accent: "#89b4fa"
 
                     ColumnLayout {
-                        spacing: 10
+                        spacing: 0
                         Layout.fillWidth: true
 
                         RowLayout {
                             spacing: 10
                             Layout.fillWidth: true
+                            Layout.preferredHeight: 36
+
+                            Text {
+                                text: ""
+                                color: "#89b4fa"
+                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
+                            }
 
                             ColumnLayout {
-                                spacing: 2
+                                spacing: 0
                                 Layout.fillWidth: true
 
                                 Text {
@@ -629,19 +652,16 @@ Item {
                             }
 
                             Rectangle {
-                                implicitWidth: 44
-                                implicitHeight: 24
-                                radius: 12
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: 36; implicitHeight: 20; radius: 10
                                 color: BarState.modernBarStyle ? "#89b4fa" : "#45475a"
 
                                 Behavior on color { ColorAnimation { duration: 120 } }
 
                                 Rectangle {
-                                    width: 18
-                                    height: 18
-                                    radius: 9
+                                    width: 16; height: 16; radius: 8
                                     color: "#1e1e2e"
-                                    x: BarState.modernBarStyle ? parent.width - width - 3 : 3
+                                    x: BarState.modernBarStyle ? parent.width - width - 2 : 2
                                     y: (parent.height - height) / 2
 
                                     Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
@@ -655,12 +675,23 @@ Item {
                             }
                         }
 
+                        // Separator
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#313244"; Layout.leftMargin: 28 }
+
                         RowLayout {
                             spacing: 10
                             Layout.fillWidth: true
+                            Layout.preferredHeight: 36
+
+                            Text {
+                                text: ""
+                                color: "#89b4fa"
+                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
+                            }
 
                             ColumnLayout {
-                                spacing: 2
+                                spacing: 0
                                 Layout.fillWidth: true
 
                                 Text {
@@ -677,19 +708,16 @@ Item {
                             }
 
                             Rectangle {
-                                implicitWidth: 44
-                                implicitHeight: 24
-                                radius: 12
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: 36; implicitHeight: 20; radius: 10
                                 color: MiscState.popupSolidBg ? "#89b4fa" : "#45475a"
 
                                 Behavior on color { ColorAnimation { duration: 120 } }
 
                                 Rectangle {
-                                    width: 18
-                                    height: 18
-                                    radius: 9
+                                    width: 16; height: 16; radius: 8
                                     color: "#1e1e2e"
-                                    x: MiscState.popupSolidBg ? parent.width - width - 3 : 3
+                                    x: MiscState.popupSolidBg ? parent.width - width - 2 : 2
                                     y: (parent.height - height) / 2
 
                                     Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
@@ -744,6 +772,7 @@ Item {
                         Layout.fillWidth: true
 
                         property bool audioSinkListOpen: false
+                        property bool showPlayerVolumes: false
 
                         readonly property bool isMuted: Pipewire.defaultAudioSink?.audio?.muted ?? false
 
@@ -878,89 +907,163 @@ Item {
                             Layout.bottomMargin: 2
                         }
 
-                        // MPRIS per-player volumes
-                        Repeater {
-                            model: {
-                                let players = [];
-                                try {
-                                    for (let p of Mpris.players.values) {
-                                        if (p.volumeSupported)
-                                            players.push(p);
-                                    }
-                                } catch (e) {}
-                                return players;
-                            }
+                        // Player volumes toggle header
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 28
+                            radius: 6
+                            color: pvtHover.containsMouse ? Qt.rgba(1, 1, 1, 0.04) : "transparent"
 
                             RowLayout {
-                                required property var modelData
-                                spacing: 8
-                                Layout.fillWidth: true
+                                anchors.fill: parent
+                                anchors.leftMargin: 2
+                                anchors.rightMargin: 2
+                                spacing: 6
 
                                 Text {
-                                    text: modelData.identity
-                                    color: "#585b70"
-                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                                    elide: Text.ElideRight
-                                    Layout.preferredWidth: 80
-                                    Layout.maximumWidth: 80
+                                    text: audioCol.showPlayerVolumes ? "\uf078" : "\uf054"
+                                    color: "#cba6f7"
+                                    font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+                                    Layout.preferredWidth: 14
+                                    horizontalAlignment: Text.AlignHCenter
                                 }
 
-                                Item {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: 4
+                                Text {
+                                    text: "Player Volumes"
+                                    color: "#cdd6f4"
+                                    font { pixelSize: 11; family: "Quicksand"; bold: true }
+                                }
 
-                                    Rectangle {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        width: parent.width
-                                        height: 4
-                                        radius: 2
-                                        color: "#313244"
+                                Text {
+                                    text: {
+                                        let count = 0;
+                                        try {
+                                            for (let p of Mpris.players.values)
+                                                if (p.volumeSupported) count++;
+                                        } catch (e) {}
+                                        return count > 0 ? "(" + count + ")" : "";
+                                    }
+                                    color: "#585b70"
+                                    font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                }
+
+                                Item { Layout.fillWidth: true }
+                            }
+
+                            MouseArea {
+                                id: pvtHover
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: audioCol.showPlayerVolumes = !audioCol.showPlayerVolumes
+                            }
+                        }
+
+                        // MPRIS per-player volumes (collapsible)
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 4
+                            visible: audioCol.showPlayerVolumes
+
+                            Repeater {
+                                model: {
+                                    let players = [];
+                                    try {
+                                        for (let p of Mpris.players.values) {
+                                            if (p.volumeSupported)
+                                                players.push(p);
+                                        }
+                                    } catch (e) {}
+                                    return players;
+                                }
+
+                                RowLayout {
+                                    required property var modelData
+                                    spacing: 8
+                                    Layout.fillWidth: true
+
+                                    Text {
+                                        text: modelData.identity
+                                        color: "#585b70"
+                                        font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                        elide: Text.ElideRight
+                                        Layout.preferredWidth: 80
+                                        Layout.maximumWidth: 80
+                                    }
+
+                                    Item {
+                                        Layout.fillWidth: true
+                                        Layout.preferredHeight: 4
 
                                         Rectangle {
-                                            width: parent.width * Math.min(modelData.volume, 1)
-                                            height: parent.height
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: parent.width
+                                            height: 4
                                             radius: 2
-                                            color: "#cba6f7"
+                                            color: "#313244"
 
-                                            Behavior on width {
-                                                NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                                            Rectangle {
+                                                width: parent.width * Math.min(modelData.volume, 1)
+                                                height: parent.height
+                                                radius: 2
+                                                color: "#cba6f7"
+
+                                                Behavior on width {
+                                                    NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                                                }
                                             }
                                         }
-                                    }
 
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            acceptedButtons: Qt.LeftButton | Qt.RightButton
 
-                                        property bool dragging: false
+                                            property bool dragging: false
 
-                                        function setVolFromMouse(mx) {
-                                            modelData.volume = Math.max(0, Math.min(mx / width, 1));
-                                        }
+                                            function setVolFromMouse(mx) {
+                                                modelData.volume = Math.max(0, Math.min(mx / width, 1));
+                                            }
 
-                                        onPressed: mouse => {
-                                            dragging = true;
-                                            setVolFromMouse(mouse.x);
-                                        }
-                                        onPositionChanged: mouse => {
-                                            if (dragging) setVolFromMouse(mouse.x);
-                                        }
-                                        onReleased: { dragging = false; }
-                                        onClicked: mouse => {
-                                            if (mouse.button == Qt.RightButton) {
-                                                modelData.volume = modelData.volume > 0 ? 0 : 0.5;
-                                            } else {
+                                            onPressed: mouse => {
+                                                dragging = true;
                                                 setVolFromMouse(mouse.x);
                                             }
-                                        }
+                                            onPositionChanged: mouse => {
+                                                if (dragging) setVolFromMouse(mouse.x);
+                                            }
+                                            onReleased: { dragging = false; }
+                                            onClicked: mouse => {
+                                                if (mouse.button == Qt.RightButton) {
+                                                    modelData.volume = modelData.volume > 0 ? 0 : 0.5;
+                                                } else {
+                                                    setVolFromMouse(mouse.x);
+                                                }
+                                            }
 
-                                        onWheel: event => {
-                                            var v = modelData.volume;
-                                            v += event.angleDelta.y > 0 ? 0.05 : -0.05;
-                                            modelData.volume = Math.max(0, Math.min(v, 1));
+                                            onWheel: event => {
+                                                var v = modelData.volume;
+                                                v += event.angleDelta.y > 0 ? 0.05 : -0.05;
+                                                modelData.volume = Math.max(0, Math.min(v, 1));
+                                            }
                                         }
                                     }
+                                }
+                            }
+
+                            Text {
+                                text: "No active players"
+                                color: "#585b70"
+                                font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                Layout.topMargin: 2
+                                Layout.leftMargin: 2
+                                visible: {
+                                    let count = 0;
+                                    try {
+                                        for (let p of Mpris.players.values)
+                                            if (p.volumeSupported) count++;
+                                    } catch (e) {}
+                                    return count === 0;
                                 }
                             }
                         }
@@ -1120,16 +1223,16 @@ Item {
                     accent: "#cba6f7"
 
                     ColumnLayout {
-                        spacing: 8
+                        spacing: 0
                         Layout.fillWidth: true
 
                         RowLayout {
                             spacing: 10
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 32
+                            Layout.preferredHeight: 36
 
                             Text {
-                                text: ""
+                                text: ""
                                 color: MiscState.showShuffle ? "#89b4fa" : "#585b70"
                                 font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
                                 Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
@@ -1137,6 +1240,7 @@ Item {
 
                             ColumnLayout {
                                 spacing: 0
+                                Layout.fillWidth: true
                                 Text {
                                     text: "Shuffle"
                                     color: "#cdd6f4"
@@ -1160,7 +1264,7 @@ Item {
                                 Rectangle {
                                     width: 16; height: 16; radius: 8
                                     color: "#1e1e2e"
-                                    x: parent.parent.MiscState.showShuffle ? parent.width - width - 2 : 2
+                                    x: MiscState.showShuffle ? parent.width - width - 2 : 2
                                     y: (parent.height - height) / 2
                                     Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
                                 }
@@ -1172,10 +1276,12 @@ Item {
                             }
                         }
 
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#313244"; Layout.leftMargin: 28 }
+
                         RowLayout {
                             spacing: 10
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 32
+                            Layout.preferredHeight: 36
 
                             Text {
                                 text: ""
@@ -1209,7 +1315,7 @@ Item {
                                 Rectangle {
                                     width: 16; height: 16; radius: 8
                                     color: "#1e1e2e"
-                                    x: parent.parent.MiscState.showLoop ? parent.width - width - 2 : 2
+                                    x: MiscState.showLoop ? parent.width - width - 2 : 2
                                     y: (parent.height - height) / 2
                                     Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
                                 }
@@ -1224,7 +1330,9 @@ Item {
                         RowLayout {
                             spacing: 10
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 32
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#313244"; Layout.leftMargin: 28 }
+
+                            Layout.preferredHeight: 36
 
                             Text {
                                 text: ""
@@ -1258,7 +1366,7 @@ Item {
                                 Rectangle {
                                     width: 16; height: 16; radius: 8
                                     color: "#1e1e2e"
-                                    x: parent.parent.MiscState.showPlayerChooser ? parent.width - width - 2 : 2
+                                    x: MiscState.showPlayerChooser ? parent.width - width - 2 : 2
                                     y: (parent.height - height) / 2
                                     Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
                                 }

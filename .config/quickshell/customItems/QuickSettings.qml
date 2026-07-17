@@ -651,9 +651,11 @@ BarBlock {
                                         Layout.fillHeight: true
                                         radius: 8
                                         clip: true
-                                        color: Qt.rgba(dominantColor.r, dominantColor.g, dominantColor.b, 0.15)
+                                        color: compactArtImage.status === Image.Ready
+                                            ? Qt.rgba(dominantColor.r, dominantColor.g, dominantColor.b, 0.15)
+                                            : "#313244"
                                         border {
-                                            width: 1
+                                            width: compactArtImage.status === Image.Ready ? 1 : 0
                                             color: Qt.rgba(dominantColor.r, dominantColor.g, dominantColor.b, 0.2)
                                         }
                                         Layout.minimumWidth: 48
@@ -789,24 +791,24 @@ BarBlock {
                                             Item {
                                                 Layout.fillWidth: true
                                             }
-                                             TrackButton {
-                                                 text: ""
-                                                 flat: true
-                                                 accentColor: dominantColor
-                                                 onClicked: MprisState.player?.previous()
-                                             }
-                                             TrackButton {
-                                                 text: MprisState.player?.isPlaying ? "" : ""
-                                                 flat: true
-                                                 accentColor: dominantColor
-                                                 onClicked: MprisState.player?.togglePlaying()
-                                             }
-                                             TrackButton {
-                                                 text: ""
-                                                 flat: true
-                                                 accentColor: dominantColor
-                                                 onClicked: MprisState.player?.next()
-                                             }
+                                            TrackButton {
+                                                text: ""
+                                                flat: true
+                                                accentColor: dominantColor
+                                                onClicked: MprisState.player?.previous()
+                                            }
+                                            TrackButton {
+                                                text: MprisState.player?.isPlaying ? "" : ""
+                                                flat: true
+                                                accentColor: dominantColor
+                                                onClicked: MprisState.player?.togglePlaying()
+                                            }
+                                            TrackButton {
+                                                text: ""
+                                                flat: true
+                                                accentColor: dominantColor
+                                                onClicked: MprisState.player?.next()
+                                            }
                                             Item {
                                                 Layout.fillWidth: true
                                             }
@@ -851,11 +853,7 @@ BarBlock {
 
                                     Rectangle {
                                         anchors.fill: parent
-                                        gradient: Gradient {
-                                            GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, 0.3) }
-                                            GradientStop { position: 0.5; color: Qt.rgba(dominantColor.r * 0.3, dominantColor.g * 0.3, dominantColor.b * 0.3, 0.5) }
-                                            GradientStop { position: 1.0; color: Qt.rgba(dominantColor.r * 0.15, dominantColor.g * 0.15, dominantColor.b * 0.15, 0.85) }
-                                        }
+                                        color: Qt.rgba(0, 0, 0, 0.5)
                                     }
                                 }
 
