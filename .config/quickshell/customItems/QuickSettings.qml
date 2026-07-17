@@ -550,7 +550,11 @@ BarBlock {
                             radius: 10
                             clip: true
                             visible: MprisState.player !== null
-                            color: "#181825"
+                            color: {
+                                if (MprisState.player?.trackArtUrl)
+                                    return Qt.rgba(dominantColor.r, dominantColor.g, dominantColor.b, 0.12);
+                                return "#181825";
+                            }
                             implicitHeight: root.compactNowPlaying ? 82 : 260
                             Behavior on implicitHeight {
                                 NumberAnimation {
@@ -562,7 +566,7 @@ BarBlock {
                             property color dominantColor: "#cba6f7"
                             border {
                                 width: 1
-                                color: Qt.rgba(dominantColor.r, dominantColor.g, dominantColor.b, 0.25)
+                                color: Qt.rgba(dominantColor.r, dominantColor.g, dominantColor.b, 0.35)
                             }
                             Behavior on border.color {
                                 ColorAnimation {
@@ -596,23 +600,31 @@ BarBlock {
                                         colorSampler.requestPaint()
                                 }
 
-                                Canvas {
-                                    id: colorSampler
-                                    width: 1
-                                    height: 1
-                                    onPaint: {
-                                        var ctx = getContext("2d");
-                                        if (hiddenArt.status === Image.Ready) {
-                                            try {
-                                                ctx.clearRect(0, 0, 1, 1);
-                                                ctx.drawImage(hiddenArt, 0, 0, 1, 1);
-                                                var d = ctx.getImageData(0, 0, 1, 1).data;
-                                                if (d && d.length >= 4 && d[3] > 0)
-                                                    nowPlayingCard.dominantColor = Qt.rgba(d[0] / 255, d[1] / 255, d[2] / 255, 1.0);
-                                            } catch (e) {}
-                                        }
+                            Canvas {
+                                id: colorSampler
+                                width: 1
+                                height: 1
+                                onPaint: {
+                                    var ctx = getContext("2d");
+                                    if (hiddenArt.status === Image.Ready) {
+                                        try {
+                                            ctx.clearRect(0, 0, 1, 1);
+                                            ctx.drawImage(hiddenArt, 0, 0, 1, 1);
+                                            var d = ctx.getImageData(0, 0, 1, 1).data;
+                                            if (d && d.length >= 4 && d[3] > 0) {
+                                                var r = d[0] / 255, g = d[1] / 255, b = d[2] / 255;
+                                                var lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                                                if (lum < 0.15) {
+                                                    r = Math.min(1, r + 0.15);
+                                                    g = Math.min(1, g + 0.15);
+                                                    b = Math.min(1, b + 0.15);
+                                                }
+                                                nowPlayingCard.dominantColor = Qt.rgba(r, g, b, 1.0);
+                                            }
+                                        } catch (e) {}
                                     }
                                 }
+                            }
 
                                 Timer {
                                     interval: 1000
@@ -639,7 +651,11 @@ BarBlock {
                                         Layout.fillHeight: true
                                         radius: 8
                                         clip: true
-                                        color: "#313244"
+                                        color: Qt.rgba(dominantColor.r, dominantColor.g, dominantColor.b, 0.15)
+                                        border {
+                                            width: 1
+                                            color: Qt.rgba(dominantColor.r, dominantColor.g, dominantColor.b, 0.2)
+                                        }
                                         Layout.minimumWidth: 48
 
                                         Image {
@@ -745,7 +761,7 @@ BarBlock {
                                                     width: parent.width * parent.parent.ratio
                                                     height: parent.height
                                                     radius: 1.5
-                                                    color: "#cba6f7"
+                                                    color: dominantColor
                                                     Behavior on width {
                                                         NumberAnimation {
                                                             duration: 200
@@ -773,24 +789,24 @@ BarBlock {
                                             Item {
                                                 Layout.fillWidth: true
                                             }
-                                            TrackButton {
-                                                text: ""
-                                                flat: true
-                                                accentColor: "#cba6f7"
-                                                onClicked: MprisState.player?.previous()
-                                            }
-                                            TrackButton {
-                                                text: MprisState.player?.isPlaying ? "" : ""
-                                                flat: true
-                                                accentColor: "#cba6f7"
-                                                onClicked: MprisState.player?.togglePlaying()
-                                            }
-                                            TrackButton {
-                                                text: ""
-                                                flat: true
-                                                accentColor: "#cba6f7"
-                                                onClicked: MprisState.player?.next()
-                                            }
+                                             TrackButton {
+                                                 text: ""
+                                                 flat: true
+                                                 accentColor: dominantColor
+                                                 onClicked: MprisState.player?.previous()
+                                             }
+                                             TrackButton {
+                                                 text: MprisState.player?.isPlaying ? "" : ""
+                                                 flat: true
+                                                 accentColor: dominantColor
+                                                 onClicked: MprisState.player?.togglePlaying()
+                                             }
+                                             TrackButton {
+                                                 text: ""
+                                                 flat: true
+                                                 accentColor: dominantColor
+                                                 onClicked: MprisState.player?.next()
+                                             }
                                             Item {
                                                 Layout.fillWidth: true
                                             }
@@ -807,7 +823,11 @@ BarBlock {
                                 // ── Album art background ──
                                 Rectangle {
                                     anchors.fill: parent
-                                    color: "#181825"
+                            color: {
+                                if (MprisState.player?.trackArtUrl)
+                                    return Qt.rgba(dominantColor.r, dominantColor.g, dominantColor.b, 0.12);
+                                return "#181825";
+                            }
 
                                     Image {
                                         id: expandedArtImage
@@ -831,7 +851,11 @@ BarBlock {
 
                                     Rectangle {
                                         anchors.fill: parent
-                                        color: Qt.rgba(0, 0, 0, 0.5)
+                                        gradient: Gradient {
+                                            GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, 0.3) }
+                                            GradientStop { position: 0.5; color: Qt.rgba(dominantColor.r * 0.3, dominantColor.g * 0.3, dominantColor.b * 0.3, 0.5) }
+                                            GradientStop { position: 1.0; color: Qt.rgba(dominantColor.r * 0.15, dominantColor.g * 0.15, dominantColor.b * 0.15, 0.85) }
+                                        }
                                     }
                                 }
 
@@ -975,7 +999,7 @@ BarBlock {
                                                 width: parent.width * parent.parent.ratio
                                                 height: parent.height
                                                 radius: 2
-                                                color: "#cba6f7"
+                                                color: dominantColor
                                                 Behavior on width {
                                                     NumberAnimation {
                                                         duration: 200

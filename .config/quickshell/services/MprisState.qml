@@ -18,6 +18,8 @@ Singleton {
 
     property bool showMprisProgress: true
 
+    property bool hideWhenIdle: true
+
     property var ignored: ["mpv", "whatsapp", "Chrome", "chromium", "firefox", "Mozilla zen", "undefined"]
 
     function ignorePlayer(identity) {
@@ -41,7 +43,7 @@ Singleton {
             if (p.isPlaying) playing.push(p);
         }
 
-        root.mprisVisible = playing.length > 0;
+        root.mprisVisible = root.hideWhenIdle ? playing.length > 0 : Mpris.players.values.length > 0;
 
         let best = null;
         let fallback = null;

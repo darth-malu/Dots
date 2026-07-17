@@ -523,6 +523,50 @@ Item {
                                 }
                             }
                         }
+
+                        RowLayout {
+                            spacing: 10
+                            Layout.fillWidth: true
+
+                            ColumnLayout {
+                                spacing: 2
+                                Layout.fillWidth: true
+
+                                Text {
+                                    text: "Hide when idle"
+                                    color: "#cdd6f4"
+                                    font { pixelSize: 12; family: "Quicksand"; bold: true }
+                                }
+
+                                Text {
+                                    text: MprisState.hideWhenIdle ? "Pill hides when paused" : "Always show pill"
+                                    color: "#585b70"
+                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                }
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Rectangle {
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: 36; implicitHeight: 20; radius: 10
+                                color: MprisState.hideWhenIdle ? "#89b4fa" : "#45475a"
+                                Behavior on color { ColorAnimation { duration: 120 } }
+
+                                Rectangle {
+                                    width: 16; height: 16; radius: 8
+                                    color: "#1e1e2e"
+                                    x: MprisState.hideWhenIdle ? parent.width - width - 2 : 2
+                                    y: (parent.height - height) / 2
+                                    Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                    onClicked: MprisState.hideWhenIdle = !MprisState.hideWhenIdle
+                                }
+                            }
+                        }
                     }
                 }
             }

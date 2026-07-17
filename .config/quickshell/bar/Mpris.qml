@@ -13,8 +13,8 @@ Item {
 
     required property var host
 
-    width: mprisRoot.showPlaying ? pill.implicitWidth : 0
-    height: mprisRoot.showPlaying ? pill.implicitHeight : 0
+    width: mprisRoot.pillVisible ? pill.implicitWidth : 0
+    height: mprisRoot.pillVisible ? pill.implicitHeight : 0
     implicitWidth: width
     implicitHeight: height
 
@@ -23,6 +23,7 @@ Item {
     property bool showVolume: false
     property bool showPlaying: MprisState.player?.isPlaying ?? false
     property bool showPopup: false
+    readonly property bool pillVisible: MprisState.hideWhenIdle ? showPlaying : (MprisState.player !== null)
 
     Timer {
         id: hideVolumeTimer
@@ -75,7 +76,7 @@ Item {
         // ── pill ──
         Rectangle {
             id: pill
-            visible: mprisRoot.showPlaying
+            visible: mprisRoot.pillVisible
             implicitHeight: mprisRoot.host ? mprisRoot.host.height : 30
             implicitWidth: pillRow.implicitWidth + 12
             radius: height / 2
@@ -234,10 +235,11 @@ Item {
 
                     BarText {
                         anchors.centerIn: parent
-                        text: MprisState.player?.isPlaying ? "" : ""
+                        symbolText: MprisState.player?.isPlaying ? "\uf04c" : "\uf04b"
                         baseColor: "#FF7EB3"
                         color: "#FF7EB3"
-                        pointSize: 9
+                        pointSize: 7
+                        symbolSize: 7
                         paddingg: 0
                     }
                 }
