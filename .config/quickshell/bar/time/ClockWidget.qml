@@ -74,7 +74,8 @@ BarBlock {
             anchor.rect.y: 33
 
             implicitWidth: 280
-            implicitHeight: 220
+            implicitHeight: clockPopup.inputVisible ? 268 : 220
+            Behavior on implicitHeight { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
             Rectangle {
                 radius: 10
@@ -83,7 +84,15 @@ BarBlock {
                 border.color: Qt.rgba(0.80, 0.65, 0.97, 0.3)
                 color: "#1e1e2e"
 
-                Shortcut { sequence: "Escape"; onActivated: MiscState.showPopup = false }
+                Shortcut {
+                    sequence: "Escape";
+                    onActivated: {
+                        if (clockPopup.inputVisible)
+                            clockPopup.clearSelection();
+                        else
+                            MiscState.showPopup = false;
+                    }
+                }
 
                 MouseArea {
                     anchors.fill: parent
@@ -92,21 +101,23 @@ BarBlock {
                 }
 
                 ClockPopup {
+                    id: clockPopup
                     anchors.fill: parent
                     anchors.margins: 8
-                    onDayClicked: (day, month, year) => {
+                    onTaskSubmitted: (day, month, year, task) => {
                         MiscState.showPopup = false;
                         MiscState.toggleTrackedDate(year, month, day);
 
-                        var m = month < 10 ? '0' + month : '' + month;
+                        var m = (month + 1) < 10 ? '0' + (month + 1) : '' + (month + 1);
                         var d = day < 10 ? '0' + day : '' + day;
                         var key = year + '-' + m + '-' + d;
                         var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                         var dt = new Date(year, month - 1, day);
                         var dayName = days[dt.getDay()];
+                        var initial = "* TODO " + task + "\n  SCHEDULED: <" + key + " " + dayName + ">";
                         Quickshell.execDetached([
                             'emacsclient', '-c', '-n', '-e',
-                            '(org-capture :time "<' + key + ' ' + dayName + '>")'
+                            '(progn (setq org-capture-initial "' + initial + '") (org-capture nil "t"))'
                         ]);
                     }
                 }

@@ -1,9 +1,77 @@
-require("keybinds.launchApplications")
-require("keybinds.quickshell")
-require("keybinds.multimedia")
-
--- hl.bind(keys, dispatcher, { flag1 = true, flag2 = true })
+local emacs = "app2unit -s a -- emacsclient -c"
+local emacs_restart_ico = "/home/malu/Shibuya/assets/icons/icons8-emacs-color/icons8-emacs-48.png";
+local emacs_restarting = "notify-send 'restarting emacs' -i " .. emacs_restart_ico;
+local emacs_restarted = "notify-send 'restarted emacs' -i " .. emacs_restart_ico;
 local mainMod = "SUPER"
+local kitty = "app2unit -s a -- kitty -1 --instance-group kitty"
+local yazi_kitty = "app2unit -s a -- kitty -1 --instance-group yazi -e yazi"
+local mainMod = "SUPER"
+local mainMod_SHIFT = "SUPER + SHIFT"
+local mainMod_CTRL = "SUPER + CTRL"
+
+-- Kitty
+hl.bind(mainMod .. " + return", hl.dsp.exec_cmd(kitty))
+hl.bind(mainMod .. "+ SHIFT + return", hl.dsp.exec_cmd("[workspace emptym]" .. kitty))
+hl.bind(mainMod .. " + CONTROL + return", hl.dsp.focus({ window = "class:^kitty$" }))
+
+hl.bind(mainMod .. " + Y", hl.dsp.exec_cmd("[workspace emptym]" .. yazi_kitty))
+hl.bind(mainMod .. " + CONTROL + Y", hl.dsp.focus({ window = "title:^(Yazi)(.*)" }))
+
+-- Stremio
+hl.bind(mainMod .. " + CONTROL + 1", hl.dsp.focus({ window = "class:^(com.stremio.Stremio)(.*)" }))
+-- hl.bind(mainMod .. " + CONTROL + 9",
+-- hl.dsp.focus({ window = [[class:^(com.stremio.Stremio)(.*)]], title = [[^(Stremio)(.*)]] }))
+-- hl.dsp.focus({ window = [[class:^(com.stremio.Stremio)(.*)]], title = [[^(Stremio)(.*)]] }))
+
+-- Emacs
+hl.bind("SUPER + E", hl.dsp.exec_cmd(emacs))
+hl.bind("SUPER + CONTROL + E", hl.dsp.focus({ window = "class:^[eE]macs$" }))
+hl.bind("SUPER + SHIFT+ CONTROL + E",
+  hl.dsp.exec_cmd(emacs_restarting .. " ; systemctl --user restart emacs && " .. emacs_restarted .. " ; " .. emacs))
+
+local emptyEmacs = hl.window_rule({
+  name = "Emacs - Launch in emptym",
+  match = { class = "[eE]macs", initial_title = "^(.*)(Doom Emacs)$ | [eE]macs", },
+  workspace = "emptym",
+})
+emptyEmacs:set_enabled(true)
+
+--dolphin
+-- hl.bind(mainMod .. "+ N", hl.dsp.exec_cmd("nautilus", { workspace = "emptym" }))
+hl.bind(mainMod .. "+ N", hl.dsp.exec_cmd("app2unit -s a -- nautilus"))
+hl.bind(mainMod .. "+ CONTROL + N", hl.dsp.focus({ window = "class:^org.gnome.nautilus" }))
+
+hl.bind(mainMod .. "+ SHIFT + N", hl.dsp.exec_cmd("app2unit -s a -- dolphin"))
+hl.bind(mainMod .. "+ SHIFT + CONTROL + N", hl.dsp.focus({ window = "class:^org.kde.dolphin$" }))
+
+-- QUISHELL - ROFI
+hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("qs ipc call appLauncher toggle"))
+hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("qs ipc call openWindows toggle"))
+hl.bind(mainMod .. " + backspace", hl.dsp.exec_cmd("qs ipc call clipHist toggle"))
+
+-- BROWSER
+hl.bind("SUPER + B", hl.dsp.exec_cmd("app2unit -s a -- qutebrowser")) -- can be --last
+hl.bind("SUPER + CONTROL + B", hl.dsp.focus({ window = "class:^org.qutebrowser.qutebrowser$" }))
+
+hl.bind("SUPER + F", hl.dsp.exec_cmd("app2unit -s a -- firefox"))
+hl.bind("SUPER + CONTROL + F", hl.dsp.focus({ window = "class:^firefox$" }))
+
+hl.bind("SUPER + C", hl.dsp.exec_cmd("app2unit -s a -- google-chrome"))
+hl.bind("SUPER + CONTROL + C", hl.dsp.focus({ window = "class:[Gg]oogle-chrome" }))
+
+hl.bind("SUPER + Z", hl.dsp.exec_cmd("app2unit -s a -- zen"))
+hl.bind("SUPER + CONTROL + Z", hl.dsp.focus({ window = "class:zen" }))
+
+hl.bind("SUPER + D", hl.dsp.exec_cmd("app2unit -s a -- discord"))
+hl.bind("SUPER + CONTROL + D", hl.dsp.focus({ window = "class:discord" }))
+
+hl.bind("SUPER + T", hl.dsp.exec_cmd("app2unit -s a -- freetube"))
+hl.bind("SUPER + CONTROL + T", hl.dsp.focus({ window = "initialtitle:FreeTube" }))
+
+-- DANGLING FOCUS
+-- TODO: see if you can loop through all instances of class mpv inorder
+hl.bind("SUPER + CONTROL + M", hl.dsp.focus({ window = "class:^mpv$" }))
+-- hl.bind(keys, dispatcher, { flag1 = true, flag2 = true })
 -- local gaps = "gaps toggle_gaps_out"
 -- local emacs_restart_ico = "/home/malu/Shibuya/assets/icons/icons8-emacs-color/icons8-emacs-48.png"
 -- local notify_send_emacs_restarting = "notify-send 'restarting emacs' -i $emacs_restart_ico"
@@ -19,6 +87,12 @@ hl.bind(mainMod .. " + slash", hl.dsp.layout("swapsplit")) -- dwindle only
 hl.bind("SUPER + SHIFT + slash", hl.dsp.layout("togglesplit"))
 -- hl.bind("SUPER + A", hl.dsp.layout("togglesplit"))
 hl.bind(mainMod .. "+ A", hl.dsp.window.pseudo())
+
+-- steam
+hl.bind(mainMod .. "+ s", hl.dsp.exec_cmd("steam"))
+hl.bind(mainMod_CTRL .. " + s", hl.dsp.focus({ window = "class:.*steam.*" }))
+hl.bind(mainMod_CTRL .. " + 2", hl.dsp.focus({ window = "class:dota2" }))
+-- hl.bind(mainMod .. "+ s", hl.dsp.focus({ last = "urgent_or_last" }))
 
 -- SCREENSHOTS
 hl.bind("Print", hl.dsp.exec_cmd("grimblast --cursor --notify -e 2 copysave screen"))
@@ -95,9 +169,49 @@ hl.bind(mainMod .. "+ CONTROL + mouse:273", hl.dsp.exec_cmd("qs ipc call openWin
 hl.bind(mainMod .. "+ U", hl.dsp.exec_cmd("uuctl"))
 hl.bind(mainMod .. "+ SHIFT + U", hl.dsp.exec_cmd("systemctl --user restart mpd.service"))
 
+-- QUICKSHELL
+local mod = "SUPER +"
+
+-- Media
+hl.bind("XF86AudioNext", hl.dsp.exec_cmd("qs ipc call mpris next"), { locked = true })
+hl.bind("XF86AudioPause", hl.dsp.exec_cmd("qs ipc call mpris togglePlaying"), { locked = true })
+hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("qs ipc call mpris togglePlaying"), { locked = true })
+hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("qs ipc call mpris previous"), { locked = true })
+
+hl.bind(mod .. "+ SHIFT + I", hl.dsp.exec_cmd("qs ipc call mpris songArt"), { locked = true })
+hl.bind(mod .. "+ ALT + I", hl.dsp.exec_cmd("qs ipc call notifications showLast"), { locked = true })
+hl.bind(mod .. "SHIFT+ space", hl.dsp.exec_cmd("qs ipc call notifications dismissAll"), { locked = true })
+
+-- BAR
+hl.bind(mod .. "Delete", hl.dsp.exec_cmd("qs -p $HOME/.config/quickshell/notBar/wlogout/shell.qml"), { locked = true }) --TODO: make this toggle, instead of infinitely overlaying on existing instances
+hl.bind(mod .. "HOME", hl.dsp.exec_cmd("qs ipc call bar toggleBar"), { locked = true })
+hl.bind(mod .. "ALT + HOME", hl.dsp.exec_cmd("systemctl --user restart quickshell"), { locked = true })
+
+-- TIME
+hl.bind(mod .. "backslash", hl.dsp.exec_cmd("qs ipc call Time currentDate"), { locked = true })
+hl.bind(mod .. "ALT + backslash", hl.dsp.exec_cmd("qs ipc call Time currentDateTime"), { locked = true })
+
+-- Resources, etc
+hl.bind(mod .. "ALT + 1", hl.dsp.exec_cmd("qs ipc call netspeed toggleNet"), { locked = true })
+hl.bind(mod .. "ALT + Left", hl.dsp.exec_cmd("qs ipc call netspeed toggleNet"), { locked = true })
+hl.bind(mod .. "ALT + 2", hl.dsp.exec_cmd("qs ipc call resources toggleResources"), { locked = true })
+hl.bind(mod .. "ALT + Up", hl.dsp.exec_cmd("qs ipc call resources toggleResources"), { locked = true })
+hl.bind(mod .. "ALT + 3", hl.dsp.exec_cmd("qs ipc call SysTray toggle"), { locked = true })
+hl.bind(mod .. "ALT + Down", hl.dsp.exec_cmd("qs ipc call SysTray toggle"), { locked = true })
+hl.bind(mod .. "ALT + 5", hl.dsp.exec_cmd("qs ipc call activate toggle"), { locked = true })
+
 -- Scroll through existing workspaces with mainMod + scroll
 hl.bind("SUPER + mouse_down", hl.dsp.focus({ workspace = "m+1" }))
 hl.bind("SUPER + mouse_up", hl.dsp.focus({ workspace = "m-1" }))
 
 hl.bind("SUPER + mouse:275", hl.dsp.window.close(), { mouse = true }) -- ALT + LMB: Floats a window by clicking
 hl.bind("SUPER + mouse:276", hl.dsp.focus({ workspace = "previous_per_monitor" }))
+
+-- Laptop multimedia keys for volume and LCD brightness
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"),
+  { locked = true, repeating = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"),
+  { locked = true, repeating = true })
+hl.bind("XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"),
+  { locked = true, repeating = true })
+-- hl.bind("XF86AudioMicMute",     hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"),   { locked = true, repeating = true })

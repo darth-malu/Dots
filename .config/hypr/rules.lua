@@ -274,6 +274,12 @@ hl.window_rule({
 })
 
 hl.window_rule({
+  name  = "Float my friends list on open",
+  match = { class = "steam", title = "Friends List" },
+  float = true,
+})
+
+hl.window_rule({
   name = "Discord - Init Load up",
   match = { class = "^(.*)([dD]iscord)$", title = "(Discord Updater)", },
   workspace = "emptym silent",
@@ -285,6 +291,10 @@ hl.window_rule({
   workspace = "emptym",
 })
 
+-- hl.window_rule({
+--   name = "FreeTube to w10",
+--   match = { class = "^(FreeTube)$" },
+-- })
 --[[
 
   MOVED - Keybinds
