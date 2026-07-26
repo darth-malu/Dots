@@ -270,8 +270,6 @@ Item {
                 color: "#1e1e2e"
                 border.width: 1
                 border.color: "#45475a"
-                layer.enabled: true
-                layer.samples: 8
 
                 Shortcut {
                     sequence: "Escape"

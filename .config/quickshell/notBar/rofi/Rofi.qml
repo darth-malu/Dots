@@ -128,6 +128,8 @@ PanelWindow {
                 highlightMoveDuration: 150
                 // highlightRangeMode: ListView.StrictlyEnforceRange
                 keyNavigationWraps: true
+                flickableDirection: Flickable.VerticalFlick
+                boundsBehavior: Flickable.StopAtBounds
 
                 signal accepted(var item)
 
@@ -143,6 +145,10 @@ PanelWindow {
                 highlight: HighlightItem {}
 
                 delegate: launcher.delegateIngest
+
+                ScrollBar.vertical: ScrollBar {
+                    policy: itemLauncher.contentHeight > itemLauncher.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                }
             }
         }
     }

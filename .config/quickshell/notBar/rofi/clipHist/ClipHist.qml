@@ -21,7 +21,14 @@ Rofi {
         // onLoaded: root.processJson()
     }
 
-    readonly property var jsonData: JSON.parse(clipmanJson.text())
+    readonly property var jsonData: {
+        try {
+            var t = clipmanJson.text();
+            return t.length > 0 ? JSON.parse(t) : [];
+        } catch (e) {
+            return [];
+        }
+    }
 
     delegateIngest: LauncherDelegate {
         required property var modelData

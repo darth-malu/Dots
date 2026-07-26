@@ -33,7 +33,7 @@ Item {
     }
 
     property string avatarPath: {
-        var home = Quickshell.environment.HOME || "/home/" + root.hostName;
+        var home = (Quickshell.environment && Quickshell.environment.HOME) || "/home/" + root.hostName;
         var p = home + "/.config/quickshell/assets/avatar.png";
         return p;
     }
@@ -503,11 +503,13 @@ Item {
                                 }
 
                                 Text {
-                                    text: MprisState.showMprisProgress ? "Visible on pill" : "Hidden"
+                                    text: "Visible on pill"
                                     color: "#585b70"
                                     font { pixelSize: 10; family: "ZedMono Nerd Font" }
                                 }
                             }
+
+                            Item { Layout.fillWidth: true }
 
                             Rectangle {
                                 Layout.alignment: Qt.AlignVCenter
@@ -561,6 +563,8 @@ Item {
                                     font { pixelSize: 10; family: "ZedMono Nerd Font" }
                                 }
                             }
+
+                            Item { Layout.fillWidth: true }
 
                             Rectangle {
                                 Layout.alignment: Qt.AlignVCenter
@@ -651,6 +655,8 @@ Item {
                                 }
                             }
 
+                            Item { Layout.fillWidth: true }
+
                             Rectangle {
                                 Layout.alignment: Qt.AlignVCenter
                                 implicitWidth: 36; implicitHeight: 20; radius: 10
@@ -706,6 +712,8 @@ Item {
                                     font { pixelSize: 10; family: "ZedMono Nerd Font" }
                                 }
                             }
+
+                            Item { Layout.fillWidth: true }
 
                             Rectangle {
                                 Layout.alignment: Qt.AlignVCenter
@@ -1244,12 +1252,12 @@ Item {
                                 Text {
                                     text: "Shuffle"
                                     color: "#cdd6f4"
-                                    font { pixelSize: 11; family: "Quicksand"; bold: true }
+                                    font { pixelSize: 12; family: "Quicksand"; bold: true }
                                 }
                                 Text {
                                     text: "Show shuffle button in controls"
                                     color: "#585b70"
-                                    font { pixelSize: 8; family: "ZedMono Nerd Font" }
+                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
                                 }
                             }
 
@@ -1292,15 +1300,16 @@ Item {
 
                             ColumnLayout {
                                 spacing: 0
+                                Layout.fillWidth: true
                                 Text {
                                     text: "Loop"
                                     color: "#cdd6f4"
-                                    font { pixelSize: 11; family: "Quicksand"; bold: true }
+                                    font { pixelSize: 12; family: "Quicksand"; bold: true }
                                 }
                                 Text {
                                     text: "Show loop button in controls"
                                     color: "#585b70"
-                                    font { pixelSize: 8; family: "ZedMono Nerd Font" }
+                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
                                 }
                             }
 
@@ -1327,11 +1336,11 @@ Item {
                             }
                         }
 
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#313244"; Layout.leftMargin: 28 }
+
                         RowLayout {
                             spacing: 10
                             Layout.fillWidth: true
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#313244"; Layout.leftMargin: 28 }
-
                             Layout.preferredHeight: 36
 
                             Text {
@@ -1343,15 +1352,16 @@ Item {
 
                             ColumnLayout {
                                 spacing: 0
+                                Layout.fillWidth: true
                                 Text {
                                     text: "Player Chooser"
                                     color: "#cdd6f4"
-                                    font { pixelSize: 11; family: "Quicksand"; bold: true }
+                                    font { pixelSize: 12; family: "Quicksand"; bold: true }
                                 }
                                 Text {
                                     text: "Show player switcher in now playing"
                                     color: "#585b70"
-                                    font { pixelSize: 8; family: "ZedMono Nerd Font" }
+                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
                                 }
                             }
 

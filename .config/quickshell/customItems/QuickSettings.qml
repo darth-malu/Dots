@@ -53,6 +53,7 @@ BarBlock {
     property bool compactNowPlaying: true
     property bool shuffleOn: false
     property bool loopOn: false
+    property var sinkList: []
 
     FileView {
         id: hostFile
@@ -440,6 +441,31 @@ BarBlock {
                                     Layout.preferredWidth: 32
                                     Layout.preferredHeight: 32
                                     radius: 6
+                                    color: nasBtnMouse.containsMouse ? Qt.rgba(0.66, 0.84, 0.72, 0.15) : "transparent"
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "\uf4a6"
+                                        color: "#a6e3a1"
+                                        font {
+                                            pixelSize: 16
+                                            family: "Symbols Nerd Font Mono"
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: nasBtnMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: Quickshell.execDetached(["sh", "-c", "for m in Hyogo Mutsu Yuri; do systemctl is-active \"media-$m.mount\" >/dev/null 2>&1 || systemctl restart \"media-$m.mount\"; done"])
+                                    }
+                                }
+
+                                Rectangle {
+                                    Layout.preferredWidth: 32
+                                    Layout.preferredHeight: 32
+                                    radius: 6
                                     color: settingsBtnMouse.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, 0.15) : "transparent"
 
                                     Text {
@@ -552,7 +578,7 @@ BarBlock {
                             visible: MprisState.player !== null
                             color: {
                                 if (MprisState.player?.trackArtUrl)
-                                    return Qt.rgba(dominantColor.r, dominantColor.g, dominantColor.b, 0.12);
+                                    return Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.12);
                                 return "#181825";
                             }
                             implicitHeight: root.compactNowPlaying ? 82 : 260
@@ -566,7 +592,7 @@ BarBlock {
                             property color dominantColor: "#cba6f7"
                             border {
                                 width: 1
-                                color: Qt.rgba(dominantColor.r, dominantColor.g, dominantColor.b, 0.35)
+                                color: Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.35)
                             }
                             Behavior on border.color {
                                 ColorAnimation {
@@ -652,11 +678,11 @@ BarBlock {
                                         radius: 8
                                         clip: true
                                         color: compactArtImage.status === Image.Ready
-                                            ? Qt.rgba(dominantColor.r, dominantColor.g, dominantColor.b, 0.15)
+                                            ? Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.15)
                                             : "#313244"
                                         border {
                                             width: compactArtImage.status === Image.Ready ? 1 : 0
-                                            color: Qt.rgba(dominantColor.r, dominantColor.g, dominantColor.b, 0.2)
+                                            color: Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.2)
                                         }
                                         Layout.minimumWidth: 48
 
@@ -763,7 +789,7 @@ BarBlock {
                                                     width: parent.width * parent.parent.ratio
                                                     height: parent.height
                                                     radius: 1.5
-                                                    color: dominantColor
+                                                    color: nowPlayingCard.dominantColor
                                                     Behavior on width {
                                                         NumberAnimation {
                                                             duration: 200
@@ -792,21 +818,21 @@ BarBlock {
                                                 Layout.fillWidth: true
                                             }
                                             TrackButton {
-                                                text: ""
+                                                text: ""
                                                 flat: true
-                                                accentColor: dominantColor
+                                                accentColor: nowPlayingCard.dominantColor
                                                 onClicked: MprisState.player?.previous()
                                             }
                                             TrackButton {
-                                                text: MprisState.player?.isPlaying ? "" : ""
+                                                text: MprisState.player?.isPlaying ? "" : ""
                                                 flat: true
-                                                accentColor: dominantColor
+                                                accentColor: nowPlayingCard.dominantColor
                                                 onClicked: MprisState.player?.togglePlaying()
                                             }
                                             TrackButton {
-                                                text: ""
+                                                text: ""
                                                 flat: true
-                                                accentColor: dominantColor
+                                                accentColor: nowPlayingCard.dominantColor
                                                 onClicked: MprisState.player?.next()
                                             }
                                             Item {
@@ -827,7 +853,7 @@ BarBlock {
                                     anchors.fill: parent
                             color: {
                                 if (MprisState.player?.trackArtUrl)
-                                    return Qt.rgba(dominantColor.r, dominantColor.g, dominantColor.b, 0.12);
+                                    return Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.12);
                                 return "#181825";
                             }
 
@@ -997,7 +1023,7 @@ BarBlock {
                                                 width: parent.width * parent.parent.ratio
                                                 height: parent.height
                                                 radius: 2
-                                                color: dominantColor
+                                                color: nowPlayingCard.dominantColor
                                                 Behavior on width {
                                                     NumberAnimation {
                                                         duration: 200
@@ -1779,8 +1805,6 @@ BarBlock {
             Rectangle {
                 anchors.fill: parent
                 radius: 12
-                layer.enabled: true
-                layer.samples: 8
                 color: "#1e1e2e"
                 border.color: "#45475a"
 

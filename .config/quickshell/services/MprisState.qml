@@ -53,6 +53,7 @@ Singleton {
         }
         if (best) root.player = best;
         else if (fallback) root.player = fallback;
+        else root.player = null;
     }
 
     function sendNotify() {
