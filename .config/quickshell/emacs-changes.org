@@ -1,0 +1,56 @@
+#+TITLE: Emacs Changes for Calendar Task Capture
+#+DESCRIPTION: TODO :)
+
+* 1. Create calendar-tasks.org
+
+Create the file ~/Documents/Org/calendar-tasks.org with this content:
+
+#+begin_src org
+,#+TITLE: Calendar Tasks
+,* Tasks
+#+end_src
+
+* 2. Add capture template to config.el
+
+In ~/.config/doom/config.el, inside the ~org-capture-templates~ list
+(line ~457~), add this new template entry.
+
+Place it after the last existing template (the ~"vej"~ entry around line ~559~)
+and before the closing ~))))~:
+
+#+begin_src emacs-lisp
+ ;; Calendar Tasks (from QuickShell calendar)
+ ("t" "Calendar Task" plain
+  (file+headline "calendar-tasks.org" "Tasks")
+  "%i"
+  :prepend t)
+#+end_src
+
+** What this does
+
+- Key ~"t"~ — triggered by QuickShell's calendar click handler
+- Target: ~/Documents/Org/calendar-tasks.org~ under the "Tasks" headline
+- ~%i~ inserts the pre-built content from ~org-capture-initial~ (which QuickShell
+  sets to ~* TODO <task> \n  SCHEDULED: <YYYY-MM-DD DayName>~)
+- ~:prepend t~ — new tasks appear at the top of the Tasks list
+
+* 3. Verify org-agenda includes the new file
+
+Since ~org-agenda-files~ in your config (line ~377~) is set to:
+
+#+begin_src emacs-lisp
+(setq org-agenda-files `(,org-directory ,(file-name-concat org-directory "roam")))
+#+end_src
+
+And ~org-directory~ is ~/Documents/Org~*, the new file will
+*automatically be picked up* — no changes needed to agenda config.
+
+* How it works end-to-end
+
+1. Click a date in the QuickShell calendar
+2. Type a task in the inline input field, press Enter
+3. Emacs opens with org-capture pre-filled:
+   ,* TODO your task
+     SCHEDULED: <2026-07-17 Fri>
+4. Press C-c C-c to save to calendar-tasks.org
+5. The task appears in your org-agenda for that date

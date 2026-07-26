@@ -818,19 +818,19 @@ BarBlock {
                                                 Layout.fillWidth: true
                                             }
                                             TrackButton {
-                                                text: ""
+                                                text: "\uf048"
                                                 flat: true
                                                 accentColor: nowPlayingCard.dominantColor
                                                 onClicked: MprisState.player?.previous()
                                             }
                                             TrackButton {
-                                                text: MprisState.player?.isPlaying ? "" : ""
+                                                text: MprisState.player?.isPlaying ? "\uf04c" : "\uf04b"
                                                 flat: true
                                                 accentColor: nowPlayingCard.dominantColor
                                                 onClicked: MprisState.player?.togglePlaying()
                                             }
                                             TrackButton {
-                                                text: ""
+                                                text: "\uf050"
                                                 flat: true
                                                 accentColor: nowPlayingCard.dominantColor
                                                 onClicked: MprisState.player?.next()
