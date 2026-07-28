@@ -89,7 +89,7 @@ ShellRoot {
                     Layout.leftMargin: 6
 
                     // WorkspacesIcons {}
-                    WorkspacesOnly {}
+                    // WorkspacesOnly {}
                     ActiveWindow {}
                 }
 

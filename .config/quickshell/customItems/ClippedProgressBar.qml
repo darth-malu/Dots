@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Effects
 
 ProgressBar {
     id: root
@@ -44,28 +45,11 @@ ProgressBar {
             color: root.highlightColor
         }
 
-        ShaderEffect {
-            anchors.fill: parent
-            property var source: ShaderEffectSource {
-                sourceItem: contentItem
-                live: true
-                hideSource: true
-            }
-            property var mask: ShaderEffectSource {
-                sourceItem: root.textMask
-                live: true
-                hideSource: true
-            }
-
-            fragmentShader: "varying highp vec2 qt_TexCoord0;
-                uniform sampler2D source;
-                uniform sampler2D mask;
-                uniform highp float qt_Opacity;
-                void main() {
-                    highp vec4 col = texture2D(source, qt_TexCoord0);
-                    highp vec4 msk = texture2D(mask, qt_TexCoord0);
-                    gl_FragColor = vec4(col.rgb, col.a * (1.0 - msk.a)) * qt_Opacity;
-                }"
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            maskEnabled: true
+            maskInverted: true
+            maskSource: root.textMask
         }
     }
 }

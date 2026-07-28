@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import QtQuick
 import qs.services
+import qs.themes
 
 /* what this is?
 + This is a panel window with a list view inside it
@@ -20,7 +21,8 @@ PanelWindow {
     implicitWidth: RofiState.width
     implicitHeight: RofiState.height
     color: "transparent"
-    focusable: true
+    focusable: true             // If the panel should accept keyboard focus
+    // exclusionMode: ExclusionMode.Ignore
     exclusionMode: ExclusionMode.Ignore
 
     property Item content
@@ -40,11 +42,11 @@ PanelWindow {
 
     WrapperRectangle {
         id: wrap
-        color: Qt.rgba(12 / 255, 44 / 255, 44 / 255, 0.9) // "#282a36" //"#1e1e2e"
+        color: Themes.launcherBg
         radius: 6
         anchors.fill: parent
         border {
-            color: Qt.rgba(63 / 255, 167 / 255, 197 / 255, 0.42)
+            color: Themes.rofiBorder
             width: 1
         }
 
@@ -57,8 +59,8 @@ PanelWindow {
                 spacing: 20
 
                 Text {
-                    text: "  "
-                    color: Qt.rgba(63 / 255, 167 / 255, 197 / 255, 0.82)
+                    text: " "
+                    color: Themes.rofiAccent
                     horizontalAlignment: Qt.AlignRight
                 }
 
@@ -70,7 +72,7 @@ PanelWindow {
                     enabled: true
                     hoverEnabled: true
                     maximumLength: 30
-                    color: search.enabled ? Qt.rgba(171 / 255, 141 / 255, 237 / 255, 1) : 'transparent'
+                    color: search.enabled ? Themes.windowTextColor : 'transparent'
                     background: Rectangle {
                         color: 'transparent'
                         implicitHeight: 10
@@ -79,10 +81,10 @@ PanelWindow {
                     }
                     Keys.onPressed: event => {
                         if (event.key === Qt.Key_Up || (event.key === Qt.Key_K && event.modifiers & Qt.ControlModifier)) {
-                            itemLauncher.decrementCurrentIndex();
+                            itemLauncher.currentIndex = itemLauncher.currentIndex > 0 ? itemLauncher.currentIndex - 1 : itemLauncher.count - 1;
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Down || (event.key === Qt.Key_J && event.modifiers & Qt.ControlModifier)) {
-                            itemLauncher.incrementCurrentIndex();
+                            itemLauncher.currentIndex = itemLauncher.currentIndex < itemLauncher.count - 1 ? itemLauncher.currentIndex + 1 : 0;
                             event.accepted = true;
                         } else if (event.key == Qt.Key_Return && event.modifiers & Qt.ControlModifier) {
                             //DELETE STUFF HERE
@@ -127,7 +129,7 @@ PanelWindow {
                 clip: true
                 highlightMoveDuration: 150
                 // highlightRangeMode: ListView.StrictlyEnforceRange
-                keyNavigationWraps: true
+                keyNavigationWraps: false
                 flickableDirection: Flickable.VerticalFlick
                 boundsBehavior: Flickable.StopAtBounds
 

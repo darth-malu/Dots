@@ -1,13 +1,14 @@
 import QtQuick
 import Quickshell.Widgets
+import qs.themes
 
 Item {
     id: root
-    readonly property color accentColor: Qt.rgba(63 / 255, 167 / 255, 197 / 255, 0.82)
+    readonly property color accentColor: Themes.rofiAccent
 
     ClippingRectangle {
         anchors.fill: parent
-        color: Qt.rgba(72 / 255, 191 / 255, 227 / 255, 0.2)
+        color: Themes.rofiHighlightBg
         radius: 3
 
         Rectangle {

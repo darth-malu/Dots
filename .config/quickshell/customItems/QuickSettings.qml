@@ -33,7 +33,7 @@ BarBlock {
     }
     readonly property bool isOnline: root.netState === "up"
     property string avatarPath: {
-        var home = Quickshell.environment.HOME || "/home/" + root.hostName;
+        var home = Quickshell.env("HOME") || "/home/" + root.hostName;
         return home + "/.config/quickshell/assets/avatar.png";
     }
 

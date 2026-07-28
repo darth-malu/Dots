@@ -42,8 +42,16 @@ Singleton {
 
     readonly property color mprisIndicatorColor: "#88FF00"//"#ff79c6"
 
-    // App Launcher
-    readonly property color launcherBg: "#1e1e2e" //"#88FF00"  "#ff79c6"
+    // Rofi / Launcher
+    readonly property color launcherBg: Qt.rgba(12 / 255, 44 / 255, 44 / 255, 0.9)
+    readonly property color rofiBorder: Qt.rgba(63 / 255, 167 / 255, 197 / 255, 0.42)
+    readonly property color rofiAccent: Qt.rgba(63 / 255, 167 / 255, 197 / 255, 0.82)
+    readonly property color rofiHighlightBg: Qt.rgba(72 / 255, 191 / 255, 227 / 255, 0.2)
+    readonly property color rofiDelegateText: Qt.rgba(196 / 255, 203 / 255, 212 / 255, 1)
+    readonly property font rofiFont: Qt.font({
+        family: "Mononoki Nerd Font",
+        pointSize: 11
+    })
 
     // Calendar (pastel)
     readonly property color calendarHeader: '#cba6f7'

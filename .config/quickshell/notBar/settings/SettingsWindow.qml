@@ -33,7 +33,7 @@ Item {
     }
 
     property string avatarPath: {
-        var home = (Quickshell.environment && Quickshell.environment.HOME) || "/home/" + root.hostName;
+        var home = Quickshell.env("HOME") || "/home/" + root.hostName;
         var p = home + "/.config/quickshell/assets/avatar.png";
         return p;
     }

@@ -377,7 +377,6 @@ Steps to get it working:
 #+end_src
 
 ** QML
-Quickshell site
 
 #+begin_src elisp :tangle yes
 (use-package! qml-ts-mode
@@ -395,6 +394,7 @@ Quickshell site
                    (lsp-deferred))))
 #+end_src
 
+NOTE: from Quickshell site
 ** dotnet
 #+begin_src emacs-lisp :tangle no
 (use-package! sharper

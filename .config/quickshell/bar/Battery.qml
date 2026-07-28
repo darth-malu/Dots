@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects
 import qs.services
 import qs.customItems
 import Quickshell
@@ -61,7 +62,6 @@ RowLayout {
 
             Item {
                 id: shaderSourceItem
-                visible: false
                 anchors.fill: parent
 
                 Rectangle {
@@ -80,6 +80,13 @@ RowLayout {
                     width: Math.max(0, (parent.width - 2) * root.percentage)
                     radius: 2
                     color: root.fillColor
+                }
+
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    maskEnabled: true
+                    maskInverted: true
+                    maskSource: textMaskItem
                 }
             }
 
@@ -116,32 +123,6 @@ RowLayout {
                         }
                     }
                 }
-            }
-
-            ShaderEffect {
-                anchors.fill: parent
-
-                property var src: ShaderEffectSource {
-                    sourceItem: shaderSourceItem
-                    hideSource: true
-                    live: true
-                }
-
-                property var msk: ShaderEffectSource {
-                    sourceItem: textMaskItem
-                    hideSource: true
-                    live: true
-                }
-
-                fragmentShader: "varying highp vec2 qt_TexCoord0;
-                    uniform sampler2D src;
-                    uniform sampler2D msk;
-                    uniform highp float qt_Opacity;
-                    void main() {
-                        highp vec4 s = texture2D(src, qt_TexCoord0);
-                        highp vec4 m = texture2D(msk, qt_TexCoord0);
-                        gl_FragColor = vec4(s.rgb, s.a * (1.0 - m.a)) * qt_Opacity;
-                    }"
             }
 
             Item {
