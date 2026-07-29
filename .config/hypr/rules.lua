@@ -252,6 +252,13 @@ local mpv = hl.window_rule({
 })
 mpv:set_enabled(false)
 
+local steamDownloader = hl.window_rule({
+  name      = "Updating steam toplevel",
+  match     = { class = "", title = "Steam" },
+  workspace = "emptym",
+  no_focus  = true,
+})
+steamDownloader:set_enabled(true)
 
 local emptymSteam = hl.window_rule({
   name      = "Main Steam Page In Emptym -- After everything is loaded",
