@@ -23,7 +23,7 @@ Rofi {
 
     readonly property var jsonData: {
         try {
-            var t = clipmanJson.text();
+            var t = clipmanJson.text().trim();
             return t.length > 0 ? JSON.parse(t) : [];
         } catch (e) {
             return [];
@@ -33,6 +33,7 @@ Rofi {
     delegateIngest: LauncherDelegate {
         required property var modelData
         iconUrl: ""
+        // iconUrl: Quickshell.iconPath(modelData?.wayland?.appId ?? "", "image-missing")
         app: TextClipHistDelegate {}
     }
 }

@@ -1,4 +1,5 @@
 import Quickshell
+import Quickshell.Wayland
 import Quickshell.Widgets
 import QtQuick.Layouts
 import QtQuick.Controls
@@ -21,14 +22,12 @@ PanelWindow {
     implicitWidth: RofiState.width
     implicitHeight: RofiState.height
     color: "transparent"
-    focusable: true             // If the panel should accept keyboard focus
-    // exclusionMode: ExclusionMode.Ignore
+    focusable: true
     exclusionMode: ExclusionMode.Ignore
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
     property Item content
-
-    // WlrLayershell.keyboardFocus: WlrLayerShell.OnDemand
-    // WlrLayershell.layer: WlrLayer.Overlay
     required property var modelIngest
     required property Component delegateIngest
 
@@ -147,6 +146,21 @@ PanelWindow {
                 highlight: HighlightItem {}
 
                 delegate: launcher.delegateIngest
+
+                function activateCurrent() {
+                    let current = currentItem;
+                    if (current) {
+                        if (RofiState.toggleOpenWindows)
+                            current.modelData.wayland.activate();
+                        else if (RofiState.toggleAppLauncher)
+                            current.modelData.execute();
+                        else if (RofiState.toggleClipHist) {
+                            Quickshell.clipboardText = current.modelData;
+                        }
+                        RofiState.toggler();
+                        search.text = "";
+                    }
+                }
 
                 ScrollBar.vertical: ScrollBar {
                     policy: itemLauncher.contentHeight > itemLauncher.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff

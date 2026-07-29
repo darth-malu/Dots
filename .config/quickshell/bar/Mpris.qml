@@ -254,7 +254,10 @@ Item {
         PopupWindow {
             id: popup
 
-            anchor.window: mprisRoot.host
+            // anchor.window: mprisRoot.host
+            // anchor.rect.x: mprisRoot.host.width / 2 - width / 2
+            // anchor.rect.y: 35
+            anchor.window: parentWindow
             anchor.rect.x: mprisRoot.host.width / 2 - width / 2
             anchor.rect.y: 35
             visible: mprisRoot.showPopup

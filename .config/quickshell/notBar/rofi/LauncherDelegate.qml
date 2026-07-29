@@ -24,15 +24,23 @@ Rectangle {
 
     property string windowTitle
 
-    signal clicked
-
     MouseArea {
         id: mouseArea
-        enabled: false
         anchors.fill: root
         hoverEnabled: true
-        // onClicked: root.launch_app2unit()
-        acceptedButtons: Qt.LeftButton | PointerDevice.Mouse | PointerDevice.TouchPad
+        acceptedButtons: Qt.LeftButton
+        onClicked: {
+            itemLauncher.currentIndex = index;
+            itemLauncher.activateCurrent();
+        }
+        onWheel: wheel => {
+            let flick = itemLauncher;
+            if (flick) {
+                flick.contentY = Math.max(0, Math.min(flick.contentHeight - flick.height,
+                    flick.contentY - wheel.angleDelta.y));
+                wheel.accepted = true;
+            }
+        }
     }
 
     RowLayout {
