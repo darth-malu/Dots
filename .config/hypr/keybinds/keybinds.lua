@@ -24,19 +24,6 @@ hl.bind(mainMod .. " + CONTROL + 1", hl.dsp.focus({ window = "class:^(com.stremi
 -- hl.dsp.focus({ window = [[class:^(com.stremio.Stremio)(.*)]], title = [[^(Stremio)(.*)]] }))
 -- hl.dsp.focus({ window = [[class:^(com.stremio.Stremio)(.*)]], title = [[^(Stremio)(.*)]] }))
 
--- Emacs
-hl.bind("SUPER + E", hl.dsp.exec_cmd(emacs))
-hl.bind("SUPER + CONTROL + E", hl.dsp.focus({ window = "class:^[eE]macs$" }))
-hl.bind("SUPER + SHIFT+ CONTROL + E",
-  hl.dsp.exec_cmd(emacs_restarting .. " ; systemctl --user restart emacs && " .. emacs_restarted .. " ; " .. emacs))
-
-local emptyEmacs = hl.window_rule({
-  name = "Emacs - Launch in emptym",
-  match = { class = "[eE]macs", initial_title = "^(.*)(Doom Emacs)$ | [eE]macs", },
-  workspace = "emptym",
-})
-emptyEmacs:set_enabled(true)
-
 --dolphin
 -- hl.bind(mainMod .. "+ N", hl.dsp.exec_cmd("nautilus", { workspace = "emptym" }))
 hl.bind(mainMod .. "+ N", hl.dsp.exec_cmd("app2unit -s a -- nautilus || uwsm-app -s a -- nautilus"))
@@ -44,11 +31,6 @@ hl.bind(mainMod .. "+ CONTROL + N", hl.dsp.focus({ window = "class:^org.gnome.na
 
 hl.bind(mainMod .. "+ SHIFT + N", hl.dsp.exec_cmd("app2unit -s a -- dolphin || uwsm-app -s a -- dolphin"))
 hl.bind(mainMod .. "+ SHIFT + CONTROL + N", hl.dsp.focus({ window = "class:^org.kde.dolphin$" }))
-
--- QUISHELL - ROFI
-hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("qs ipc call appLauncher toggle"))
-hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("qs ipc call openWindows toggle"))
-hl.bind(mainMod .. " + backspace", hl.dsp.exec_cmd("qs ipc call clipHist toggle"))
 
 -- BROWSER
 hl.bind("SUPER + B", hl.dsp.exec_cmd("app2unit -s a -- qutebrowser || uwsm-app -s a -- qutebrowser")) -- can be --last
@@ -96,6 +78,7 @@ hl.bind(mainMod_CTRL .. " + 2", hl.dsp.focus({ window = "class:dota2" }))
 -- hl.bind(mainMod .. "+ s", hl.dsp.focus({ last = "urgent_or_last" }))
 
 -- SCREENSHOTS
+<<<<<<< HEAD
 -- hl.bind("Print", hl.dsp.exec_cmd("grimblast --cursor --notify -e 2 copysave screen"))
 hl.bind("Print",
   hl.dsp.exec_cmd('grim - | satty -f - --copy-command wl-copy -o "~/Pictures/Satty/%Y%m%d_%H%M%S.png"'))
@@ -104,6 +87,8 @@ hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("grimblast --cursor --notify -e 2
 hl.bind("CONTROL + Print", hl.dsp.exec_cmd("grimblast --notify -e 2 copy area"))
 hl.bind("ALT + Print", hl.dsp.exec_cmd("grimblast save area - | satty --filename -"))
 
+=======
+>>>>>>> 3691aba (kinda unmodded)
 -- "SUPER, G, exec, sh -c 'grimblast save area - | satty --filename -'"
 hl.bind(mainMod .. " + M", hl.dsp.workspace.toggle_special("magic"))
 hl.bind(mainMod .. " + SHIFT + M", hl.dsp.window.move({ workspace = "special:magic" }))
@@ -172,37 +157,6 @@ hl.bind(mainMod .. "+ CONTROL + mouse:273", hl.dsp.exec_cmd("qs ipc call openWin
 -- UUCTL
 hl.bind(mainMod .. "+ U", hl.dsp.exec_cmd("uuctl"))
 hl.bind(mainMod .. "+ SHIFT + U", hl.dsp.exec_cmd("systemctl --user restart mpd.service"))
-
--- QUICKSHELL
-local mod = "SUPER +"
-
--- Media
-hl.bind("XF86AudioNext", hl.dsp.exec_cmd("qs ipc call mpris next"), { locked = true })
-hl.bind("XF86AudioPause", hl.dsp.exec_cmd("qs ipc call mpris togglePlaying"), { locked = true })
-hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("qs ipc call mpris togglePlaying"), { locked = true })
-hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("qs ipc call mpris previous"), { locked = true })
-
-hl.bind(mod .. "+ SHIFT + I", hl.dsp.exec_cmd("qs ipc call mpris songArt"), { locked = true })
-hl.bind(mod .. "+ ALT + I", hl.dsp.exec_cmd("qs ipc call notifications showLast"), { locked = true })
-hl.bind(mod .. "SHIFT+ space", hl.dsp.exec_cmd("qs ipc call notifications dismissAll"), { locked = true })
-
--- BAR
-hl.bind(mod .. "Delete", hl.dsp.exec_cmd("qs -p $HOME/.config/quickshell/notBar/wlogout/shell.qml"), { locked = true }) --TODO: make this toggle, instead of infinitely overlaying on existing instances
-hl.bind(mod .. "HOME", hl.dsp.exec_cmd("qs ipc call bar toggleBar"), { locked = true })
-hl.bind(mod .. "ALT + HOME", hl.dsp.exec_cmd("systemctl --user restart quickshell"), { locked = true })
-
--- TIME
-hl.bind(mod .. "backslash", hl.dsp.exec_cmd("qs ipc call Time currentDate"), { locked = true })
-hl.bind(mod .. "ALT + backslash", hl.dsp.exec_cmd("qs ipc call Time currentDateTime"), { locked = true })
-
--- Resources, etc
-hl.bind(mod .. "ALT + 1", hl.dsp.exec_cmd("qs ipc call netspeed toggleNet"), { locked = true })
-hl.bind(mod .. "ALT + Left", hl.dsp.exec_cmd("qs ipc call netspeed toggleNet"), { locked = true })
-hl.bind(mod .. "ALT + 2", hl.dsp.exec_cmd("qs ipc call resources toggleResources"), { locked = true })
-hl.bind(mod .. "ALT + right", hl.dsp.exec_cmd("qs ipc call resources toggleResources"), { locked = true })
-hl.bind(mod .. "ALT + 3", hl.dsp.exec_cmd("qs ipc call SysTray toggle"), { locked = true })
-hl.bind(mod .. "ALT + Down", hl.dsp.exec_cmd("qs ipc call SysTray toggle"), { locked = true })
-hl.bind(mod .. "ALT + 5", hl.dsp.exec_cmd("qs ipc call activate toggle"), { locked = true })
 
 -- Scroll through existing workspaces with mainMod + scroll
 hl.bind("SUPER + mouse_down", hl.dsp.focus({ workspace = "m+1" }))

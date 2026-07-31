@@ -23,6 +23,7 @@ BarBlock {
 
     property string activeInterface: ""
     property string ipAddr: ""
+
     readonly property string hostName: {
         var raw = hostFile.text().trim();
         return raw.length > 0 ? raw : "unknown";
@@ -31,7 +32,9 @@ BarBlock {
         var raw = netFile.text().trim();
         return raw.length > 0 ? raw : "down";
     }
+
     readonly property bool isOnline: root.netState === "up"
+
     property string avatarPath: {
         var home = Quickshell.env("HOME") || "/home/" + root.hostName;
         return home + "/.config/quickshell/assets/avatar.png";
@@ -136,6 +139,14 @@ BarBlock {
         id: ethProcess
         running: false
         command: ["sh", "-c", "ip -o link show 2>/dev/null | grep -E '^[0-9]+: en' | grep -q 'state UP' && echo up || echo down"]
+        /*This checks outputs list of interfaces
+         *
+          1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000\    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+          2: enp5s0: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000\    link/ether 70:85:c2:ae:38:94 brd ff:ff:ff:ff:ff:ff\
+         *
+         * checks if en* - ethernet is up and echos up or down
+         * assign property of ethernetConnected to up or down
+         * */
         stdout: SplitParser {
             onRead: data => root.ethernetConnected = data.trim() === "up"
         }
@@ -626,31 +637,31 @@ BarBlock {
                                         colorSampler.requestPaint()
                                 }
 
-                            Canvas {
-                                id: colorSampler
-                                width: 1
-                                height: 1
-                                onPaint: {
-                                    var ctx = getContext("2d");
-                                    if (hiddenArt.status === Image.Ready) {
-                                        try {
-                                            ctx.clearRect(0, 0, 1, 1);
-                                            ctx.drawImage(hiddenArt, 0, 0, 1, 1);
-                                            var d = ctx.getImageData(0, 0, 1, 1).data;
-                                            if (d && d.length >= 4 && d[3] > 0) {
-                                                var r = d[0] / 255, g = d[1] / 255, b = d[2] / 255;
-                                                var lum = 0.299 * r + 0.587 * g + 0.114 * b;
-                                                if (lum < 0.15) {
-                                                    r = Math.min(1, r + 0.15);
-                                                    g = Math.min(1, g + 0.15);
-                                                    b = Math.min(1, b + 0.15);
+                                Canvas {
+                                    id: colorSampler
+                                    width: 1
+                                    height: 1
+                                    onPaint: {
+                                        var ctx = getContext("2d");
+                                        if (hiddenArt.status === Image.Ready) {
+                                            try {
+                                                ctx.clearRect(0, 0, 1, 1);
+                                                ctx.drawImage(hiddenArt, 0, 0, 1, 1);
+                                                var d = ctx.getImageData(0, 0, 1, 1).data;
+                                                if (d && d.length >= 4 && d[3] > 0) {
+                                                    var r = d[0] / 255, g = d[1] / 255, b = d[2] / 255;
+                                                    var lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                                                    if (lum < 0.15) {
+                                                        r = Math.min(1, r + 0.15);
+                                                        g = Math.min(1, g + 0.15);
+                                                        b = Math.min(1, b + 0.15);
+                                                    }
+                                                    nowPlayingCard.dominantColor = Qt.rgba(r, g, b, 1.0);
                                                 }
-                                                nowPlayingCard.dominantColor = Qt.rgba(r, g, b, 1.0);
-                                            }
-                                        } catch (e) {}
+                                            } catch (e) {}
+                                        }
                                     }
                                 }
-                            }
 
                                 Timer {
                                     interval: 1000
@@ -677,9 +688,7 @@ BarBlock {
                                         Layout.fillHeight: true
                                         radius: 8
                                         clip: true
-                                        color: compactArtImage.status === Image.Ready
-                                            ? Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.15)
-                                            : "#313244"
+                                        color: compactArtImage.status === Image.Ready ? Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.15) : "#313244"
                                         border {
                                             width: compactArtImage.status === Image.Ready ? 1 : 0
                                             color: Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.2)
@@ -851,11 +860,11 @@ BarBlock {
                                 // ── Album art background ──
                                 Rectangle {
                                     anchors.fill: parent
-                            color: {
-                                if (MprisState.player?.trackArtUrl)
-                                    return Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.12);
-                                return "#181825";
-                            }
+                                    color: {
+                                        if (MprisState.player?.trackArtUrl)
+                                            return Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.12);
+                                        return "#181825";
+                                    }
 
                                     Image {
                                         id: expandedArtImage
