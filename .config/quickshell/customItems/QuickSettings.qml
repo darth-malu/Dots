@@ -139,6 +139,7 @@ BarBlock {
         id: ethProcess
         running: false
         command: ["sh", "-c", "ip -o link show 2>/dev/null | grep -E '^[0-9]+: en' | grep -q 'state UP' && echo up || echo down"]
+        // TODO: make this work like gnome for simple usagge -- have toggle in settigns toplevel
         /*This checks outputs list of interfaces
          *
           1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000\    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
@@ -367,6 +368,7 @@ BarBlock {
                                     implicitWidth: 42
                                     implicitHeight: 42
                                     radius: 21
+                                    clip: true
                                     color: "#313244"
 
                                     Image {
@@ -456,7 +458,8 @@ BarBlock {
 
                                     Text {
                                         anchors.centerIn: parent
-                                        text: "\uf4a6"
+                                        // text: "\uf4a6"
+                                        text: ""
                                         color: "#a6e3a1"
                                         font {
                                             pixelSize: 16
