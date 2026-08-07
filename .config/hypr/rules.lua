@@ -96,11 +96,12 @@ hl.window_rule({
 -- hl.workspace_rule({ workspace = "w[tv1]s[false]", border_size = 0})
 hl.workspace_rule({ workspace = "f[1]", gaps_out = 0, gaps_in = 0 })
 hl.workspace_rule({ workspace = "special:easy", "easyeffects" })
-hl.workspace_rule({ workspace = "special:nc", on_created_empty = "app2unit -s a kitty -e ncmpcpp" })
+hl.workspace_rule({ workspace = "special:nc", on_created_empty =
+"app2unit -s a kitty -e ncmpcpp || uwsm-app -s a ncmpcpp" })
 hl.workspace_rule({
   workspace = "special:magic",
   on_created_empty =
-  "[workspace special:magic;float true;size (monitor_w*0.9) (monitor_h*0.8);center true] app2unit -s a kitty"
+  "[workspace special:magic;float true;size (monitor_w*0.9) (monitor_h*0.8);center true] app2unit -s a kitty || uwsm-app -s a kitty"
 })
 -- hl.workspace_rule({ workspace = "7", layout = "scrolling" })
 
