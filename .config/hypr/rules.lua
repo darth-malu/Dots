@@ -55,7 +55,6 @@ hl.window_rule({
   no_focus = true,
   float    = true,
 })
-xwaylandFix:set_enabled(false)
 
 local qt6ct = hl.window_rule({
   name  = "Select Fonts Qt6 settings",
@@ -276,7 +275,6 @@ local mpv = hl.window_rule({
   -- workspace = "emptym",
   content = "video",
 })
-<<<<<<< HEAD
 mpv:set_enabled(false)
 
 local steamDownloader = hl.window_rule({
@@ -286,9 +284,6 @@ local steamDownloader = hl.window_rule({
   no_focus  = true,
 })
 steamDownloader:set_enabled(true)
-=======
-mpv:set_enabled(true)
->>>>>>> f0dfa35 (carthage)
 
 -- STEAM
 local emptymSteam = hl.window_rule({

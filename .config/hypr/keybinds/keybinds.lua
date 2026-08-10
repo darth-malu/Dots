@@ -78,7 +78,6 @@ hl.bind(mainMod_CTRL .. " + 2", hl.dsp.focus({ window = "class:dota2" }))
 -- hl.bind(mainMod .. "+ s", hl.dsp.focus({ last = "urgent_or_last" }))
 
 -- SCREENSHOTS
-<<<<<<< HEAD
 -- hl.bind("Print", hl.dsp.exec_cmd("grimblast --cursor --notify -e 2 copysave screen"))
 hl.bind("Print",
   hl.dsp.exec_cmd('grim - | satty -f - --copy-command wl-copy -o "~/Pictures/Satty/%Y%m%d_%H%M%S.png"'))
@@ -87,8 +86,6 @@ hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("grimblast --cursor --notify -e 2
 hl.bind("CONTROL + Print", hl.dsp.exec_cmd("grimblast --notify -e 2 copy area"))
 hl.bind("ALT + Print", hl.dsp.exec_cmd("grimblast save area - | satty --filename -"))
 
-=======
->>>>>>> 3691aba (kinda unmodded)
 -- "SUPER, G, exec, sh -c 'grimblast save area - | satty --filename -'"
 hl.bind(mainMod .. " + M", hl.dsp.workspace.toggle_special("magic"))
 hl.bind(mainMod .. " + SHIFT + M", hl.dsp.window.move({ workspace = "special:magic" }))
