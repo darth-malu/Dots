@@ -98,7 +98,7 @@ hl.bind(mainMod_CTRL .. " + 2", hl.dsp.focus({ window = "class:dota2" }))
 -- SCREENSHOTS
 -- hl.bind("Print", hl.dsp.exec_cmd("grimblast --cursor --notify -e 2 copysave screen"))
 hl.bind("Print",
-  hl.dsp.exec_cmd('grim - | satty -f - --copy-command wl-copy -o "~/Pictures/Screenshots/%Y%m%d_%H%M%S.png"'))
+  hl.dsp.exec_cmd('grim - | satty -f - --copy-command wl-copy -o "~/Pictures/Satty/%Y%m%d_%H%M%S.png"'))
 
 hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("grimblast --cursor --notify -e 2 copy screen"))
 hl.bind("CONTROL + Print", hl.dsp.exec_cmd("grimblast --notify -e 2 copy area"))

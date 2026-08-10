@@ -15,7 +15,7 @@ local suppressMaximizeRule = hl.window_rule({
 })
 suppressMaximizeRule:set_enabled(true)
 
-hl.window_rule({
+local wayland_drag = hl.window_rule({
   -- Fix some dragging issues with XWayland
   name     = "fix-xwayland-drags",
   match    = {
@@ -29,18 +29,20 @@ hl.window_rule({
 
   no_focus = true,
 })
+wayland_drag:set_enabled(false)
 
--- hl.window_rule({
---   name  = "fix-xwayland-weird",
---   match = {
---     class    = "^(.*)$",
---     title    = "^(.*)$",
---     xwayland = true,
---   },
+local xwayland_chrome_weirdness = hl.window_rule({
+  name     = "fix-xwayland-weird",
+  match    = {
+    class    = "^(.*)$",
+    title    = "^(.*)$",
+    xwayland = true,
+  },
 
---   -- no_focus = true,
---   -- float = true,
--- })
+  no_focus = true,
+  float    = true,
+})
+xwayland_chrome_weirdness:set_enabled(false)
 
 hl.window_rule({
   name  = "Virtual Box New VM - fix",
@@ -96,8 +98,11 @@ hl.window_rule({
 -- hl.workspace_rule({ workspace = "w[tv1]s[false]", border_size = 0})
 hl.workspace_rule({ workspace = "f[1]", gaps_out = 0, gaps_in = 0 })
 hl.workspace_rule({ workspace = "special:easy", "easyeffects" })
-hl.workspace_rule({ workspace = "special:nc", on_created_empty =
-"app2unit -s a kitty -e ncmpcpp || uwsm-app -s a ncmpcpp" })
+hl.workspace_rule({
+  workspace = "special:nc",
+  on_created_empty =
+  "app2unit -s a kitty -e ncmpcpp || uwsm-app -s a ncmpcpp"
+})
 hl.workspace_rule({
   workspace = "special:magic",
   on_created_empty =
@@ -168,8 +173,8 @@ hl.window_rule({
 hl.window_rule({
   name = "Viewnior - Images",
   match = { class = "[vV]iewnior", initial_class = "^(.*)([Vv]iewnior)$", },
-  workspace = "emptym",
-  center = true,
+  -- workspace = "emptym",
+  -- center = true,
   float = true,
 })
 
