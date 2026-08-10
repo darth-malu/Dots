@@ -88,8 +88,8 @@ ShellRoot {
                     Layout.alignment: Qt.AlignLeft
                     Layout.leftMargin: 6
 
-                    // WorkspacesIcons {}
-                    // WorkspacesOnly {}
+                    // Workspacesicons {}
+                    // Workspaces {}
                     ActiveWindow {}
                 }
 

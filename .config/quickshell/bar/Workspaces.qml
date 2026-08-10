@@ -14,7 +14,6 @@ RowLayout {
     property HyprlandMonitor monitor: Hyprland.monitorFor(screen)
 
     Repeater {
-        model: 
         model: ScriptModel {
             values: {
                 var seenEmpty = false;
@@ -101,21 +100,15 @@ RowLayout {
                 spacing: 0
                 anchors.centerIn: parent
 
-                        Loader {
-                            id: thetext
-                            anchors.centerIn: parent
-                            active: modelData.type === "text"
-                            sourceComponent: BarText {
-                                text: modelData.value
-                                dim: !rootBlock.isActive
-                                rightPadding: 5
-                                color: dim ? Themes.inactiveTextColor : Themes.activeTextColor
-                            }
-                        }
-
-                                }
-                            }
-                        }
+                Loader {
+                    id: thetext
+                    anchors.centerIn: parent
+                    active: modelData.type === "text"
+                    sourceComponent: BarText {
+                        text: modelData.value
+                        dim: !rootBlock.isActive
+                        rightPadding: 5
+                        color: dim ? Themes.inactiveTextColor : Themes.activeTextColor
                     }
                 }
             }

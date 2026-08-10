@@ -359,25 +359,41 @@ BarBlock {
                             accent: "transparent"
                             cardColor: "transparent"
                             cardPadding: 8
+                            // cardPadding: 0
+                            // x: 0
 
-                            RowLayout {
-                                Layout.fillWidth: true
+                            content: RowLayout {
+                                id: avatarHeader
+                                // Layout.fillWidth: true
                                 spacing: 10
 
-                                Rectangle {
-                                    implicitWidth: 42
-                                    implicitHeight: 42
-                                    radius: 21
-                                    clip: true
-                                    color: "#313244"
+                                Item {
+                                    id: avatarContainer
+                                    // visible: rootMouseArea.image != ""
+                                    // implicitWidth: rootMouseArea.iconSize
+                                    // implicitHeight: rootMouseArea.iconSize
+                                    visible: false
+                                    implicitWidth: height
+                                    implicitHeight: parent.height
+                                    // Layout.topMargin: 2
+                                    // Layout.bottomMargin: 2
+                                    // Layout.leftMargin: 2
 
-                                    Image {
-                                        id: avatarImg
-                                        anchors.fill: parent
-                                        source: "file://" + root.avatarPath
-                                        fillMode: Image.PreserveAspectCrop
-                                        asynchronous: true
-                                        visible: status === Image.Ready
+                                    ClippingWrapperRectangle {
+                                        implicitWidth: parent.width
+                                        implicitHeight: parent.height
+                                        radius: height / 2
+                                        clip: true
+                                        color: "#313244"
+
+                                        Image {
+                                            id: avatarImg
+                                            // anchors.fill: parent
+                                            source: "file://" + root.avatarPath
+                                            fillMode: Image.PreserveAspectCrop
+                                            asynchronous: true
+                                            visible: status === Image.Ready
+                                        }
                                     }
 
                                     Text {
@@ -458,8 +474,8 @@ BarBlock {
 
                                     Text {
                                         anchors.centerIn: parent
-                                        // text: "\uf4a6"
-                                        text: ""
+                                        text: "\uf4a6"
+                                        // text: ""
                                         color: "#a6e3a1"
                                         font {
                                             pixelSize: 16
@@ -1256,7 +1272,7 @@ BarBlock {
 
                         // ═══ CONNECTIONS ═══
                         Card {
-                            title: ""
+                            // title: ""
                             icon: ""
                             accent: "#89b4fa"
 

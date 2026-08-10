@@ -26,6 +26,9 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+    // BackgroundEffect.blurRegion: Region {
+    //     item: launcher.contentItem
+    // }
 
     property Item content
     required property var modelIngest

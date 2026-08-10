@@ -51,10 +51,13 @@ hl.window_rule({
     title    = "^New Virtual Machine$",
     xwayland = true,
   },
-  float = true,
-})
 
-hl.window_rule({
+  no_focus = true,
+  float    = true,
+})
+xwaylandFix:set_enabled(false)
+
+local qt6ct = hl.window_rule({
   name  = "Select Fonts Qt6 settings",
   match = {
     class = "qt6ct",
@@ -62,13 +65,23 @@ hl.window_rule({
   },
   size  = { 1000, 500 },
 })
+qt6ct:set_enabled(false)
 
-hl.window_rule({
+local centerFloatWindows = hl.window_rule({
   name = "Floating windows",
   match = { float = true },
   center = true,
   border_size = 0
 })
+centerFloatWindows:set_enabled(true)
+
+local float_ludusavi = hl.window_rule({
+  name = "Select WIndow float",
+  match = { class = "ludusavi", title = "Select Folder" },
+  -- center = true,
+  float = true,
+})
+float_ludusavi:set_enabled(true)
 
 hl.window_rule({
   name = "Hypr pipewire Float",
@@ -77,13 +90,19 @@ hl.window_rule({
   float = true,
 })
 
-hl.window_rule({
+local noBorder_exSpecial = hl.window_rule({
   name = "No border if only visible window in workspace (except special)",
   match = { workspace = "w[tv1]s[false]" },
   border_size = 0,
 })
+noBorder_exSpecial:set_enabled(false)
 
-
+local noBorder_all = hl.window_rule({
+  name = "No border if only visible window in workspace (except special)",
+  match = { workspace = "w[tv1]" },
+  border_size = 0,
+})
+noBorder_all:set_enabled(true)
 -- Smart Gaps - No gaps when only 1
 -- hl.workspace_rule({
 --     workspace = "w[tv1]" ,
@@ -96,12 +115,13 @@ hl.window_rule({
 
 -- WORKSPACE RULES
 -- hl.workspace_rule({ workspace = "w[tv1]s[false]", border_size = 0})
+-- hl.workspace_rule({ workspace = "w[tv1]", gaps_out = 0, gaps_in = 0 })
 hl.workspace_rule({ workspace = "f[1]", gaps_out = 0, gaps_in = 0 })
 hl.workspace_rule({ workspace = "special:easy", "easyeffects" })
 hl.workspace_rule({
   workspace = "special:nc",
   on_created_empty =
-  "app2unit -s a kitty -e ncmpcpp || uwsm-app -s a ncmpcpp"
+  "app2unit -s a kitty -e ncmpcpp || uwsm-app -s a ncmpcpp" --TODO: see if this works as is
 })
 hl.workspace_rule({
   workspace = "special:magic",
@@ -115,8 +135,6 @@ hl.workspace_rule({
 -- "Smart gaps" / "No gaps when only"
 -- uncomment all if you wish to use that.
 
--- hl.workspace_rule({ workspace = "w[tv1]", gaps_out = 0, gaps_in = 0 })
--- hl.workspace_rule({ workspace = "f[1]",   gaps_out = 0, gaps_in = 0 })
 
 -- hl.window_rule({
 --     name  = "no-gaps-wtv1",
@@ -159,7 +177,7 @@ hl.window_rule({
   size = "(monitor_w*0.8) (monitor_h*0.6)",
   float = true,
   center = true,
-  -- persistent_size = true
+  persistent_size = true
 })
 
 
@@ -170,13 +188,14 @@ hl.window_rule({
 })
 
 
-hl.window_rule({
+local viewnior = hl.window_rule({
   name = "Viewnior - Images",
   match = { class = "[vV]iewnior", initial_class = "^(.*)([Vv]iewnior)$", },
   -- workspace = "emptym",
   -- center = true,
   float = true,
 })
+viewnior:set_enabled(true)
 
 hl.window_rule({
   name = "FLoat and center YouTubr",
@@ -212,13 +231,14 @@ hl.window_rule({
 })
 
 -- LUKS
-hl.window_rule({
+local luks = hl.window_rule({
   name = "LUKS float entry window etc",
   match = { class = "udiskie", title = "udiskie" },
   float = true,
   center = true,
   size = "(monitor_w*0.2) (monitor_h*0.1)",
 })
+luks:set_enabled(true)
 
 -- BROWSERS
 hl.window_rule({
@@ -248,14 +268,15 @@ local gameTear = hl.window_rule({
   immediate = true,
   content = "game",
 })
-gameTear:set_enabled(false)
+gameTear:set_enabled(true)
 
 local mpv = hl.window_rule({
-  name = "MPV emptym launch",
+  name = "MPV launch params",
   match = { class = "mpv" },
-  workspace = "emptym",
+  -- workspace = "emptym",
   content = "video",
 })
+<<<<<<< HEAD
 mpv:set_enabled(false)
 
 local steamDownloader = hl.window_rule({
@@ -265,7 +286,11 @@ local steamDownloader = hl.window_rule({
   no_focus  = true,
 })
 steamDownloader:set_enabled(true)
+=======
+mpv:set_enabled(true)
+>>>>>>> f0dfa35 (carthage)
 
+-- STEAM
 local emptymSteam = hl.window_rule({
   name      = "Main Steam Page In Emptym -- After everything is loaded",
   match     = { class = "steam", title = "Steam" },
@@ -280,17 +305,19 @@ local nofocusSteamOffers = hl.window_rule({
 })
 nofocusSteamOffers:set_enabled(true)
 
-hl.window_rule({
+local initSteam = hl.window_rule({
   name      = "Silent Sign In page --steam",
   match     = { class = "^(steam)$", title = "^(Sign in to Steam)$" },
   workspace = "emptym silent",
 })
+initSteam:set_enabled(false)
 
-hl.window_rule({
+local floatSteamFriends = hl.window_rule({
   name  = "Float my friends list on open",
   match = { class = "steam", title = "Friends List" },
   float = true,
 })
+floatSteamFriends:set_enabled(true)
 
 hl.window_rule({
   name = "Discord - Init Load up",
@@ -309,11 +336,4 @@ hl.window_rule({
 --   match = { class = "^(FreeTube)$" },
 -- })
 --[[
-
-  MOVED - Keybinds
-  ----------------
-+ FreeTube
-+ Discord
-+ Emacs
-
 ]]
