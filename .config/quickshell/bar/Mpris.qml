@@ -80,7 +80,8 @@ Item {
             implicitHeight: mprisRoot.host ? mprisRoot.host.height : 30
             implicitWidth: pillRow.implicitWidth + 12
             radius: height / 2
-            color: Qt.rgba(0.1, 0.04, 0.18, 0.4)
+            // color: Qt.rgba(0.1, 0.04, 0.18, 0.4)
+            color: "transparent"
 
             RowLayout {
                 id: pillRow
@@ -91,8 +92,8 @@ Item {
 
                 // ── album art + fallback ──
                 Item {
-                    Layout.preferredWidth: pill.height - 6
-                    Layout.preferredHeight: pill.height - 6
+                    Layout.preferredWidth: pill.height - 2
+                    Layout.preferredHeight: pill.height - 2
 
                     ClippingWrapperRectangle {
                         id: albumArt

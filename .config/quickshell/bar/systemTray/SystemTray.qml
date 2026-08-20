@@ -5,8 +5,7 @@ import QtQuick.Layouts
 import Quickshell.Services.SystemTray
 import Quickshell.Widgets
 import qs.customItems
-import qs.themes
-import qs.bar
+// import qs.themes import qs.bar
 import qs.services
 
 RowLayout {
@@ -47,6 +46,7 @@ RowLayout {
                 anchors.rightMargin: 2
 
                 Repeater {
+                    id: systemTrayRepeater
                     model: SystemTray.items
 
                     delegate: MouseArea {

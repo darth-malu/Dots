@@ -119,6 +119,7 @@ ShellRoot {
             }
 
             MouseArea {
+                id: nullspaceMA
                 acceptedButtons: Qt.NoButton
                 anchors.fill: parent
                 onWheel: wheel => {

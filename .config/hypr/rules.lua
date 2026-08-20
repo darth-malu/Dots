@@ -40,21 +40,9 @@ local xwayland_chrome_weirdness = hl.window_rule({
   },
 
   no_focus = true,
-  float    = true,
+  float    = true,                           --NOTE: changed cause might be causing issue with steam
 })
-xwayland_chrome_weirdness:set_enabled(false)
-
-hl.window_rule({
-  name  = "Virtual Box New VM - fix",
-  match = {
-    class    = "VirtualBox",
-    title    = "^New Virtual Machine$",
-    xwayland = true,
-  },
-
-  no_focus = true,
-  float    = true,
-})
+xwayland_chrome_weirdness:set_enabled(false) --NOTE: causes zero focus on steam
 
 local qt6ct = hl.window_rule({
   name  = "Select Fonts Qt6 settings",

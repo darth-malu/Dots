@@ -268,13 +268,14 @@ BarBlock {
         wifiSsidProcess.running = true;
     }
 
-    onMiddleClicked: {
+    onLeftClicked: {
         root.showQsPopup = !root.showQsPopup;
         if (root.showQsPopup)
             refreshConnections();
     }
-    onLeftClicked: MiscState.toggleVolume = !MiscState.toggleVolume
+    onMiddleClicked: MiscState.toggleVolume = !MiscState.toggleVolume
     onRightClicked: MiscState.toggleSysTray = !MiscState.toggleSysTray
+    onAltLeftClicked: MiscState.toggleSysTray = !MiscState.toggleSysTray
 
     Shortcut {
         sequence: "Escape"
@@ -388,11 +389,12 @@ BarBlock {
 
                                         Image {
                                             id: avatarImg
+                                            visible: false
                                             // anchors.fill: parent
                                             source: "file://" + root.avatarPath
                                             fillMode: Image.PreserveAspectCrop
                                             asynchronous: true
-                                            visible: status === Image.Ready
+                                            // visible: status === Image.Ready
                                         }
                                     }
 
@@ -599,12 +601,11 @@ BarBlock {
                         }
 
                         // ═══ NOW PLAYING ═══
-                        Rectangle {
+                        ClippingRectangle {
                             id: nowPlayingCard
                             Layout.fillWidth: true
                             Layout.bottomMargin: 6
                             radius: 10
-                            clip: true
                             visible: MprisState.player !== null
                             color: {
                                 if (MprisState.player?.trackArtUrl)
@@ -694,25 +695,25 @@ BarBlock {
                             Item {
                                 visible: root.compactNowPlaying
                                 anchors.fill: parent
-                                anchors.margins: 8
 
                                 RowLayout {
                                     anchors.fill: parent
-                                    spacing: 10
+                                    // spacing: 10
 
-                                    // ── Album art (full height) ──
-                                    Rectangle {
+                                    ClippingRectangle {
                                         id: compactArt
-                                        implicitWidth: 64
+
+                                        contentUnderBorder: true
+
                                         Layout.fillHeight: true
-                                        radius: 8
-                                        clip: true
+                                        Layout.minimumWidth: height
+                                        // radius: 2
                                         color: compactArtImage.status === Image.Ready ? Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.15) : "#313244"
+
                                         border {
                                             width: compactArtImage.status === Image.Ready ? 1 : 0
                                             color: Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.2)
                                         }
-                                        Layout.minimumWidth: 48
 
                                         Image {
                                             id: compactArtImage
@@ -875,10 +876,13 @@ BarBlock {
                             Item {
                                 visible: !root.compactNowPlaying
                                 anchors.fill: parent
+                                // implicitHeight: 100
+                                // implicitWidth: 100
 
                                 // ── Album art background ──
-                                Rectangle {
+                                ClippingRectangle {
                                     anchors.fill: parent
+                                    radius: 8
                                     color: {
                                         if (MprisState.player?.trackArtUrl)
                                             return Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.12);
@@ -949,8 +953,8 @@ BarBlock {
                                                     text: MprisState.player?.identity || ""
                                                     color: "#cdd6f4"
                                                     font {
-                                                        pixelSize: 8
-                                                        family: "Quicksand"
+                                                        pixelSize: 7
+                                                        family: "FantasqueSansM Nerd Font"
                                                         bold: true
                                                     }
                                                     elide: Text.ElideRight
@@ -997,13 +1001,13 @@ BarBlock {
                                             text: MprisState.player?.trackTitle || "No track"
                                             color: "#ffffff"
                                             font {
-                                                pixelSize: 20
                                                 bold: true
-                                                family: "Quicksand"
+                                                pixelSize: 18
+                                                family: "FantasqueSansM Nerd Font"
                                             }
                                             elide: Text.ElideRight
                                             maximumLineCount: 1
-                                            style: Text.Outline
+                                            style: Text.Raised
                                             styleColor: Qt.rgba(0, 0, 0, 0.7)
                                         }
 

@@ -925,6 +925,7 @@ always activating in org mode...keep it as hook in [[ORG]]
                                 ("!TODO"    error bold)
                                 ("HACK"       font-lock-constant-face bold)
                                 ("SEEKGOD"       font-lock-constant-face bold)
+                                ("UNMAINTAINED"       font-lock-constant-face bold)
                                 ("KESHO"       font-lock-constant-face bold)
                                 ("REVIEW"     font-lock-keyword-face bold)
                                 ("NOTE"       success bold)

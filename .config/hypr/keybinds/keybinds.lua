@@ -1,3 +1,6 @@
+require("keybinds/quickshell")
+require("keybinds/emacs")
+
 local emacs = "app2unit -s a -- emacsclient -c || uwsm-app -s a -- emacsclient -c"
 local emacs_restart_ico = "/home/malu/Shibuya/assets/icons/icons8-emacs-color/icons8-emacs-48.png";
 local emacs_restarting = "notify-send 'restarting emacs' -i " .. emacs_restart_ico;
@@ -80,13 +83,13 @@ hl.bind(mainMod_CTRL .. " + 2", hl.dsp.focus({ window = "class:dota2" }))
 -- SCREENSHOTS
 -- hl.bind("Print", hl.dsp.exec_cmd("grimblast --cursor --notify -e 2 copysave screen"))
 hl.bind("Print",
-  hl.dsp.exec_cmd('grim - | satty -f - --copy-command wl-copy -o "~/Pictures/Satty/%Y%m%d_%H%M%S.png"'))
+  hl.dsp.exec_cmd(
+    'grim - | satty -f - --copy-command wl-copy -o "/media/Hyogo/Pictures/Satty/%Y-%m-%d_%H:%M:%S.png" --action-on-enter "save-to-file" --notification-thumbnail screenshot --font-family nunito'))
 
-hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("grimblast --cursor --notify -e 2 copy screen"))
-hl.bind("CONTROL + Print", hl.dsp.exec_cmd("grimblast --notify -e 2 copy area"))
-hl.bind("ALT + Print", hl.dsp.exec_cmd("grimblast save area - | satty --filename -"))
+hl.bind("SHIFT + Print", hl.dsp.exec_cmd("grimblast --cursor --notify -e 2 copy screen"))
+-- hl.bind("CONTROL + Print", hl.dsp.exec_cmd("grimblast --notify -e 2 copy area"))
+hl.bind(mainMod .. "+ Print", hl.dsp.exec_cmd("grimblast save area - | satty --filename -"))
 
--- "SUPER, G, exec, sh -c 'grimblast save area - | satty --filename -'"
 hl.bind(mainMod .. " + M", hl.dsp.workspace.toggle_special("magic"))
 hl.bind(mainMod .. " + SHIFT + M", hl.dsp.window.move({ workspace = "special:magic" }))
 

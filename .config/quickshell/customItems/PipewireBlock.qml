@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import Quickshell.Services.Pipewire
 import qs.customItems
 import qs.services
+import Quickshell
 
 BarBlock {
     id: root
@@ -11,7 +12,20 @@ BarBlock {
     readonly property real vol: Pipewire.defaultAudioSink?.audio?.volume ?? 0
     readonly property bool muted: Pipewire.defaultAudioSink?.audio?.muted ?? false
 
-    readonly property color volColor: muted ? "#585b70" : vol > 0.7 ? "#f5a0d6" : vol > 0.4 ? "#c6a0f6" : "#89b4fa"
+    // readonly property color volColor: muted ? "#585b70" : vol > 0.7 ? "#f5a0d6" : vol > 0.4 ? "#c6a0f6" : "#89b4fa"
+
+    readonly property color volColor: {
+        if (root.muted)
+            return "#585b70";
+        var v = root.vol;
+        if (v > 0.8)
+            return "#f5a0d6";
+        if (v > 0.5)
+            return "#c6a0f6";
+        if (v > 0.2)
+            return "#89b4fa";
+        return "#b4befe";
+    }
 
     property bool hovering: false
     property real targetVol: vol
@@ -27,6 +41,8 @@ BarBlock {
     onClicked: mouse => {
         if (mouse.button == Qt.RightButton)
             Pipewire.defaultAudioSink.audio.muted = !Pipewire.defaultAudioSink.audio.muted;
+        else if (mouse.button == Qt.LeftButton)
+            Quickshell.execDetached(['hyprpwcenter']);
     }
 
     content: RowLayout {
@@ -49,8 +65,17 @@ BarBlock {
                     anchors.bottom: parent.bottom
                     width: parent.width * Math.min(root.vol, 1)
                     color: root.volColor
-                    Behavior on width { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on width {
+                        NumberAnimation {
+                            duration: 100
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 150
+                        }
+                    }
 
                     Rectangle {
                         anchors.right: parent.right
@@ -59,9 +84,17 @@ BarBlock {
                         height: 8
                         radius: 4
                         color: root.volColor
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 150
+                            }
+                        }
                         opacity: root.hovering ? 1 : 0
-                        Behavior on opacity { NumberAnimation { duration: 120 } }
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: 120
+                            }
+                        }
                     }
                 }
             }
@@ -88,9 +121,17 @@ BarBlock {
         Text {
             text: Math.round(root.vol * 100) + "%"
             color: root.volColor
-            font { pixelSize: 9; family: "ZedMono Nerd Font"; bold: true }
+            font {
+                pixelSize: 9
+                family: "ZedMono Nerd Font"
+                bold: true
+            }
             opacity: root.hovering ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: 120 } }
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 120
+                }
+            }
             visible: root.hovering
         }
     }
