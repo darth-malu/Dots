@@ -2,10 +2,8 @@ import QtQuick
 import QtQuick.Window
 import QtQuick.Layouts
 import QtQuick.Controls
-import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
-import Quickshell.Services.Pipewire
 import Quickshell.Services.Mpris
 import Quickshell.Widgets
 
@@ -13,6 +11,7 @@ import qs.customItems
 import qs.services
 import qs.themes
 
+// TODO: Modularize this
 BarBlock {
     id: root
 
@@ -109,15 +108,6 @@ BarBlock {
     }
 
     Process {
-        id: diskProcess
-        running: false
-        command: ["sh", "-c", "df -h -x tmpfs -x devtmpfs -x squashfs -x overlay --output=target,size,used,avail,pcent 2>/dev/null | tail -n +2"]
-        stdout: SplitParser {
-            onRead: data => root.diskDataPending += data + "\n"
-        }
-    }
-
-    Process {
         id: wifiProcess
         running: false
         command: ["sh", "-c", "nmcli radio wifi 2>/dev/null"]
@@ -159,25 +149,6 @@ BarBlock {
         command: ["sh", "-c", "nmcli -t -f ACTIVE,SSID dev wifi 2>/dev/null | grep '^yes' | head -1 | cut -d: -f2"]
         stdout: SplitParser {
             onRead: data => root.wifiSsid = data.trim()
-        }
-    }
-
-    Process {
-        id: sinkProcess
-        running: false
-        command: ["sh", "-c", "pactl list sinks 2>/dev/null | awk '/^[[:space:]]*Name:/{n=$2} /^[[:space:]]*Description:/{d=$0; sub(/^[[:space:]]*Description: /,\"\"); print n \"|\" $0}'"]
-        stdout: SplitParser {
-            onRead: data => {
-                var parts = data.trim().split("|");
-                if (parts.length >= 2) {
-                    root.sinkList = root.sinkList.concat([
-                        {
-                            name: parts[0],
-                            description: parts[1]
-                        }
-                    ]);
-                }
-            }
         }
     }
 
@@ -225,8 +196,6 @@ BarBlock {
         triggeredOnStart: true
         onTriggered: {
             root.diskDataPending = "";
-            diskProcess.running = true;
-            diskSwapTimer.restart();
             interfaceCheck.running = true;
             wifiProcess.running = true;
             btProcess.running = true;
@@ -235,17 +204,6 @@ BarBlock {
             if (BatteryState.available)
                 brightnessProcess.running = true;
             root.refreshSinks();
-        }
-    }
-
-    Timer {
-        id: diskSwapTimer
-        interval: 250
-        running: false
-        repeat: false
-        onTriggered: () => {
-            if (root.diskDataPending.trim().length > 0)
-                root.diskData = root.diskDataPending;
         }
     }
 
@@ -696,6 +654,19 @@ BarBlock {
                                 visible: root.compactNowPlaying
                                 anchors.fill: parent
 
+                                // TODO: have trackbutton here
+                                TrackButton {
+                                    text: "+"
+                                    // accentColor: "#585b70"
+                                    accentColor: nowPlayingCard.color
+                                    onClicked: root.compactNowPlaying = false
+                                    // Layout.rightMargin: 4
+                                    anchors {
+                                        right: parent.right
+                                        top: parent.top
+                                    }
+                                }
+
                                 RowLayout {
                                     anchors.fill: parent
                                     // spacing: 10
@@ -745,6 +716,7 @@ BarBlock {
                                         // ── Title + row ──
                                         RowLayout {
                                             Layout.fillWidth: true
+                                            Layout.fillHeight: true
                                             spacing: 4
 
                                             ColumnLayout {
@@ -770,18 +742,13 @@ BarBlock {
                                                     color: "#a6adc8"
                                                     font {
                                                         pixelSize: 9
-                                                        family: "ZedMono Nerd Font"
+                                                        // family: "ZedMono Nerd Font"
+                                                        family: "nunito"
                                                     }
                                                     elide: Text.ElideRight
                                                     maximumLineCount: 1
                                                     visible: text.length > 0
                                                 }
-                                            }
-
-                                            TrackButton {
-                                                text: "+"
-                                                accentColor: "#585b70"
-                                                onClicked: root.compactNowPlaying = false
                                             }
                                         }
 
@@ -793,6 +760,7 @@ BarBlock {
                                         Item {
                                             Layout.fillWidth: true
                                             Layout.preferredHeight: 6
+                                            Layout.rightMargin: 6
 
                                             readonly property real ratio: {
                                                 nowPlayingCard.progressTick;

@@ -92,8 +92,8 @@ Item {
 
                 // ── album art + fallback ──
                 Item {
-                    Layout.preferredWidth: pill.height - 2
-                    Layout.preferredHeight: pill.height - 2
+                    Layout.preferredWidth: pill.height - 4
+                    Layout.preferredHeight: pill.height - 4
 
                     ClippingWrapperRectangle {
                         id: albumArt

@@ -49,13 +49,14 @@ Rectangle {
         onClicked: mouse => {
             root.clicked(mouse);
             if (mouse.button === Qt.LeftButton)
-                root.leftClicked();
+                if (mouse.modifiers & Qt.AltModifier)
+                    root.altLeftClicked();
+                else
+                    root.leftClicked();
             else if (mouse.button === Qt.RightButton)
                 root.rightClicked();
             else if (mouse.button === Qt.MiddleButton)
                 root.middleClicked();
-            else if ((mouse.modifiers & Qt.AltModifier | Qt.ControlModifier) && (mouse.button == Qt.MiddleButton))
-                root.altLeftClicked();
         }
         onWheel: event => root.wheel(event)
         // propagateComposedEvents: true

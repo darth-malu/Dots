@@ -32,15 +32,18 @@ Singleton {
     }
 
     function isIgnored(p) {
-        if (!p) return true;
+        if (!p)
+            return true;
         return root.ignored.some(app => p.identity.includes(app) || p.desktopEntry.includes(app));
     }
 
     function refresh() {
         let playing = [];
         for (let p of Mpris.players.values) {
-            if (root.isIgnored(p)) continue;
-            if (p.isPlaying) playing.push(p);
+            if (root.isIgnored(p))
+                continue;
+            if (p.isPlaying)
+                playing.push(p);
         }
 
         root.mprisVisible = root.hideWhenIdle ? playing.length > 0 : Mpris.players.values.length > 0;
@@ -49,15 +52,20 @@ Singleton {
         let fallback = null;
         for (let p of playing) {
             fallback = p;
-            if (p.trackArtist !== "") best = p;
+            if (p.trackArtist !== "")
+                best = p;
         }
-        if (best) root.player = best;
-        else if (fallback) root.player = fallback;
-        else root.player = null;
+        if (best)
+            root.player = best;
+        else if (fallback)
+            root.player = fallback;
+        else
+            root.player = null;
     }
 
     function sendNotify() {
-        if (!root.player) return;
+        if (!root.player)
+            return;
         let title = root.player.trackTitle || "Unknown Title";
         let artist = root.player.trackArtist || "Unknown Artist";
         let album = root.player.trackAlbum || "Unknown Album";
@@ -79,7 +87,8 @@ Singleton {
     Connections {
         target: root.player
         function onPostTrackChanged() {
-            if (!root.player) return;
+            if (!root.player)
+                return;
             const isIgnored = root.ignored.some(app => root.player.identity.includes(app) || root.player.desktopEntry.includes(app));
 
             if (!isIgnored)
