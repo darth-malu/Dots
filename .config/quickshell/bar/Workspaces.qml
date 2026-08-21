@@ -27,7 +27,7 @@ RowLayout {
         delegate: BarBlock {
             id: rootBlock
 
-            property var ws: modelData
+            property HyprlandWorkspace ws: modelData
 
             property bool isActive: Hyprland.focusedMonitor?.activeWorkspace?.id === ws.id
 

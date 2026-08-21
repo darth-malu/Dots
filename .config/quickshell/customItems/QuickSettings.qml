@@ -55,7 +55,6 @@ BarBlock {
     property bool compactNowPlaying: true
     property bool shuffleOn: false
     property bool loopOn: false
-    property var sinkList: []
 
     FileView {
         id: hostFile
@@ -183,11 +182,6 @@ BarBlock {
         }
     }
 
-    function refreshSinks() {
-        root.sinkList = [];
-        sinkProcess.running = true;
-    }
-
     Timer {
         id: dataTimer
         interval: 10000
@@ -203,7 +197,6 @@ BarBlock {
             wifiSsidProcess.running = true;
             if (BatteryState.available)
                 brightnessProcess.running = true;
-            root.refreshSinks();
         }
     }
 
@@ -323,56 +316,8 @@ BarBlock {
 
                             content: RowLayout {
                                 id: avatarHeader
-                                // Layout.fillWidth: true
+                                Layout.fillWidth: true
                                 spacing: 10
-
-                                Item {
-                                    id: avatarContainer
-                                    // visible: rootMouseArea.image != ""
-                                    // implicitWidth: rootMouseArea.iconSize
-                                    // implicitHeight: rootMouseArea.iconSize
-                                    visible: false
-                                    implicitWidth: height
-                                    implicitHeight: parent.height
-                                    // Layout.topMargin: 2
-                                    // Layout.bottomMargin: 2
-                                    // Layout.leftMargin: 2
-
-                                    ClippingWrapperRectangle {
-                                        implicitWidth: parent.width
-                                        implicitHeight: parent.height
-                                        radius: height / 2
-                                        clip: true
-                                        color: "#313244"
-
-                                        Image {
-                                            id: avatarImg
-                                            visible: false
-                                            // anchors.fill: parent
-                                            source: "file://" + root.avatarPath
-                                            fillMode: Image.PreserveAspectCrop
-                                            asynchronous: true
-                                            // visible: status === Image.Ready
-                                        }
-                                    }
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: ""
-                                        color: "#585b70"
-                                        font {
-                                            pixelSize: 18
-                                            family: "Symbols Nerd Font Mono"
-                                        }
-                                        visible: avatarImg.status !== Image.Ready
-                                    }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: avatarPickProcess.running = true
-                                    }
-                                }
 
                                 ColumnLayout {
                                     spacing: 2
@@ -523,25 +468,27 @@ BarBlock {
                                     icon: ""
                                     color: "#89b4fa"
                                     label: "Lock"
-                                    cmd: "loginctl lock-session"
+                                    cmd: "hyprlock"
                                 }
                                 QsPower {
-                                    icon: ""
+                                    icon: "󱫭"
                                     color: "#a6e3a1"
-                                    label: "Sleep"
-                                    cmd: "systemctl suspend"
-                                }
-                                QsPower {
-                                    icon: ""
-                                    color: "#f5c2e7"
-                                    label: "Hibernate"
-                                    cmd: "systemctl hibernate"
+                                    label: "R-Timer"
+                                    cmd: "notify-send 'future suspend'"
                                 }
                                 QsPower {
                                     icon: ""
-                                    color: "#f9e2af"
+                                    // color: "#f9e2af"
+                                    color: "#a6e3a1"
                                     label: "Reboot"
                                     cmd: "systemctl reboot"
+                                }
+                                QsPower {
+                                    icon: "󱫖"
+                                    color: "#f38ba8"
+                                    // color: "#f5c2e7"
+                                    label: "S-Timer"
+                                    cmd: "notify-send 'future shutdown'"
                                 }
                                 QsPower {
                                     icon: ""
@@ -611,33 +558,49 @@ BarBlock {
                                     id: hiddenArt
                                     source: MprisState.player?.trackArtUrl || ""
                                     asynchronous: true
-                                    onStatusChanged: if (status === Image.Ready)
-                                        colorSampler.requestPaint()
+                                    onStatusChanged: {
+                                        if (status === Image.Ready)
+                                            colorSampler.requestPaint();
+                                        else if (status === Image.Null || status === Image.Error)
+                                            nowPlayingCard.dominantColor = "#cba6f7";
+                                    }
                                 }
 
                                 Canvas {
                                     id: colorSampler
-                                    width: 1
-                                    height: 1
+                                    width: 3
+                                    height: 3
                                     onPaint: {
                                         var ctx = getContext("2d");
-                                        if (hiddenArt.status === Image.Ready) {
-                                            try {
-                                                ctx.clearRect(0, 0, 1, 1);
-                                                ctx.drawImage(hiddenArt, 0, 0, 1, 1);
-                                                var d = ctx.getImageData(0, 0, 1, 1).data;
-                                                if (d && d.length >= 4 && d[3] > 0) {
-                                                    var r = d[0] / 255, g = d[1] / 255, b = d[2] / 255;
-                                                    var lum = 0.299 * r + 0.587 * g + 0.114 * b;
-                                                    if (lum < 0.15) {
-                                                        r = Math.min(1, r + 0.15);
-                                                        g = Math.min(1, g + 0.15);
-                                                        b = Math.min(1, b + 0.15);
-                                                    }
-                                                    nowPlayingCard.dominantColor = Qt.rgba(r, g, b, 1.0);
-                                                }
-                                            } catch (e) {}
-                                        }
+                                        if (hiddenArt.status !== Image.Ready)
+                                            return;
+                                        try {
+                                            var n = 3;
+                                            ctx.clearRect(0, 0, n, n);
+                                            ctx.drawImage(hiddenArt, 0, 0, n, n);
+                                            var d = ctx.getImageData(0, 0, n, n).data;
+                                            var r = 0, g = 0, b = 0, cnt = 0;
+                                            for (var i = 0; i < d.length; i += 4) {
+                                                if (d[i + 3] < 200)
+                                                    continue;
+                                                r += d[i];
+                                                g += d[i + 1];
+                                                b += d[i + 2];
+                                                cnt++;
+                                            }
+                                            if (cnt === 0)
+                                                return;
+                                            r = r / (cnt * 255);
+                                            g = g / (cnt * 255);
+                                            b = b / (cnt * 255);
+                                            var lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                                            if (lum < 0.15) {
+                                                r = Math.min(1, r + 0.15);
+                                                g = Math.min(1, g + 0.15);
+                                                b = Math.min(1, b + 0.15);
+                                            }
+                                            nowPlayingCard.dominantColor = Qt.rgba(r, g, b, 1.0);
+                                        } catch (e) {}
                                     }
                                 }
 
@@ -692,7 +655,8 @@ BarBlock {
                                             source: MprisState.player?.trackArtUrl || ""
                                             fillMode: Image.PreserveAspectCrop
                                             asynchronous: true
-                                            visible: status === Image.Ready
+                                            mipmap: true
+                                            visible: status === Image.Ready && !nowPlayingCard.showVolumeBadge
                                         }
 
                                         Text {
@@ -703,7 +667,22 @@ BarBlock {
                                                 pixelSize: 24
                                                 family: "Symbols Nerd Font Mono"
                                             }
-                                            visible: compactArtImage.status !== Image.Ready
+                                            visible: compactArtImage.status !== Image.Ready && !nowPlayingCard.showVolumeBadge
+                                        }
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: nowPlayingCard.currentVolume
+                                            // color: "#ffffff"
+                                            color: nowPlayingCard.dominantColor
+                                            // style: Text.Raised
+                                            // styleColor: Qt.rgba(0, 0, 0, 0.55)
+                                            font {
+                                                pixelSize: 19
+                                                bold: true
+                                                family: "monofur Nerd Font"
+                                            }
+                                            visible: nowPlayingCard.showVolumeBadge
                                         }
                                     }
 
@@ -944,12 +923,7 @@ BarBlock {
                                                 pixelSize: 7
                                                 family: "ZedMono Nerd Font"
                                             }
-                                        }
-
-                                        TrackButton {
-                                            text: "−"
-                                            accentColor: Qt.rgba(1, 1, 1, 0.6)
-                                            onClicked: root.compactNowPlaying = true
+                                            Layout.rightMargin: 24
                                         }
                                     }
 
@@ -1104,29 +1078,40 @@ BarBlock {
                                     }
                                 }
 
-                                // ── Volume badge (shows on scroll) ──
-                                Rectangle {
-                                    anchors.centerIn: parent
-                                    implicitWidth: 60
-                                    implicitHeight: 36
-                                    radius: 8
-                                    color: Qt.rgba(0, 0, 0, 0.75)
-                                    opacity: nowPlayingCard.showVolumeBadge ? 1 : 0
-                                    Behavior on opacity {
-                                        NumberAnimation {
-                                            duration: 150
-                                        }
+                                TrackButton {
+                                    text: "−"
+                                    accentColor: Qt.rgba(1, 1, 1, 0.6)
+                                    onClicked: root.compactNowPlaying = true
+                                    anchors {
+                                        right: parent.right
+                                        top: parent.top
                                     }
+                                }
+                            }
 
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: nowPlayingCard.currentVolume + "%"
-                                        color: "#ffffff"
-                                        font {
-                                            pixelSize: 14
-                                            bold: true
-                                            family: "Quicksand"
-                                        }
+                            // ── Volume badge (shows on scroll, expanded only) ──
+                            Rectangle {
+                                anchors.centerIn: parent
+                                implicitWidth: 60
+                                implicitHeight: 36
+                                radius: 8
+                                visible: !root.compactNowPlaying
+                                color: Qt.rgba(0, 0, 0, 0.75)
+                                opacity: nowPlayingCard.showVolumeBadge ? 1 : 0
+                                Behavior on opacity {
+                                    NumberAnimation {
+                                        duration: 150
+                                    }
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: nowPlayingCard.currentVolume + "%"
+                                    color: "#ffffff"
+                                    font {
+                                        pixelSize: 14
+                                        bold: true
+                                        family: "Quicksand"
                                     }
                                 }
                             }
@@ -1261,30 +1246,9 @@ BarBlock {
                                     Rectangle {
                                         Layout.fillWidth: true
                                         Layout.preferredWidth: 1
-                                        implicitHeight: 48
+                                        implicitHeight: 34
                                         radius: 10
-                                        color: wifiHover.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, root.wifiEnabled ? 0.12 : 0.06) : Qt.rgba(0.54, 0.57, 0.96, root.wifiEnabled ? 0.06 : 0.02)
-
-                                        // outer glow
-                                        Rectangle {
-                                            anchors.fill: parent
-                                            anchors.margins: -1
-                                            radius: parent.radius + 1
-                                            color: "transparent"
-                                            border.width: 2
-                                            border.color: root.wifiEnabled ? Qt.rgba(0.54, 0.57, 0.96, 0.5) : Qt.rgba(0.35, 0.35, 0.44, 0.1)
-                                            opacity: wifiHover.containsMouse ? 1 : 0.6
-                                            Behavior on border.color {
-                                                ColorAnimation {
-                                                    duration: 200
-                                                }
-                                            }
-                                            Behavior on opacity {
-                                                NumberAnimation {
-                                                    duration: 200
-                                                }
-                                            }
-                                        }
+                                        color: wifiHover.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, root.wifiEnabled ? 0.10 : 0.05) : "transparent"
 
                                         Behavior on color {
                                             ColorAnimation {
@@ -1292,18 +1256,17 @@ BarBlock {
                                             }
                                         }
 
-                                        ColumnLayout {
+                                        RowLayout {
                                             anchors.centerIn: parent
-                                            spacing: 2
+                                            spacing: 8
 
                                             Text {
                                                 text: "\uf1eb"
                                                 color: root.wifiEnabled ? "#89b4fa" : "#585b70"
                                                 font {
-                                                    pixelSize: 16
+                                                    pixelSize: 14
                                                     family: "Symbols Nerd Font Mono"
                                                 }
-                                                Layout.alignment: Qt.AlignHCenter
                                                 Behavior on color {
                                                     ColorAnimation {
                                                         duration: 200
@@ -1318,9 +1281,8 @@ BarBlock {
                                                     pixelSize: 9
                                                     family: "ZedMono Nerd Font"
                                                 }
-                                                Layout.alignment: Qt.AlignHCenter
                                                 elide: Text.ElideRight
-                                                Layout.maximumWidth: parent.parent.parent.width - 16
+                                                Layout.maximumWidth: parent.parent.width - 52
                                                 maximumLineCount: 1
                                                 Behavior on color {
                                                     ColorAnimation {
@@ -1364,30 +1326,9 @@ BarBlock {
                                     Rectangle {
                                         Layout.fillWidth: true
                                         Layout.preferredWidth: 1
-                                        implicitHeight: 48
+                                        implicitHeight: 34
                                         radius: 10
-                                        color: btHover.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, root.bluetoothEnabled ? 0.12 : 0.06) : Qt.rgba(0.54, 0.57, 0.96, root.bluetoothEnabled ? 0.06 : 0.02)
-
-                                        // outer glow
-                                        Rectangle {
-                                            anchors.fill: parent
-                                            anchors.margins: -1
-                                            radius: parent.radius + 1
-                                            color: "transparent"
-                                            border.width: 2
-                                            border.color: root.bluetoothEnabled ? Qt.rgba(0.54, 0.57, 0.96, 0.5) : Qt.rgba(0.35, 0.35, 0.44, 0.1)
-                                            opacity: btHover.containsMouse ? 1 : 0.6
-                                            Behavior on border.color {
-                                                ColorAnimation {
-                                                    duration: 200
-                                                }
-                                            }
-                                            Behavior on opacity {
-                                                NumberAnimation {
-                                                    duration: 200
-                                                }
-                                            }
-                                        }
+                                        color: btHover.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, root.bluetoothEnabled ? 0.10 : 0.05) : "transparent"
 
                                         Behavior on color {
                                             ColorAnimation {
@@ -1395,18 +1336,17 @@ BarBlock {
                                             }
                                         }
 
-                                        ColumnLayout {
+                                        RowLayout {
                                             anchors.centerIn: parent
-                                            spacing: 2
+                                            spacing: 8
 
                                             Text {
                                                 text: "\uf293"
                                                 color: root.bluetoothEnabled ? "#89b4fa" : "#585b70"
                                                 font {
-                                                    pixelSize: 16
+                                                    pixelSize: 14
                                                     family: "Symbols Nerd Font Mono"
                                                 }
-                                                Layout.alignment: Qt.AlignHCenter
                                                 Behavior on color {
                                                     ColorAnimation {
                                                         duration: 200
@@ -1421,7 +1361,6 @@ BarBlock {
                                                     pixelSize: 9
                                                     family: "ZedMono Nerd Font"
                                                 }
-                                                Layout.alignment: Qt.AlignHCenter
                                                 Behavior on color {
                                                     ColorAnimation {
                                                         duration: 200
@@ -1657,126 +1596,91 @@ BarBlock {
                                     }
                                 }
 
-                                // ── Ethernet pill ──
-                                Rectangle {
+                                // ── Brightness slider ──
+                                RowLayout {
+                                    spacing: 10
                                     Layout.fillWidth: true
-                                    implicitHeight: 42
-                                    radius: 8
-                                    visible: root.ethernetConnected
-                                    color: Qt.rgba(0.65, 0.89, 0.63, 0.08)
-                                    border {
-                                        width: 1
-                                        color: Qt.rgba(0.65, 0.89, 0.63, 0.25)
+                                    visible: BatteryState.available
+
+                                    Text {
+                                        text: "\uf185"
+                                        color: "#f9e2af"
+                                        font {
+                                            pixelSize: 14
+                                            family: "Symbols Nerd Font Mono"
+                                        }
                                     }
 
-                                    RowLayout {
-                                        anchors.fill: parent
-                                        anchors.leftMargin: 10
-                                        anchors.rightMargin: 10
-                                        spacing: 8
-
-                                        Text {
-                                            text: "\uf0e8"
-                                            color: "#a6e3a1"
-                                            font {
-                                                pixelSize: 14
-                                                family: "Symbols Nerd Font Mono"
-                                            }
-                                            Layout.preferredWidth: 18
-                                            horizontalAlignment: Text.AlignHCenter
+                                    Text {
+                                        text: Math.round(root.brightness) + "%"
+                                        color: "#cdd6f4"
+                                        font {
+                                            pixelSize: 10
+                                            family: "ZedMono Nerd Font"
+                                            bold: true
                                         }
+                                        Layout.preferredWidth: 36
+                                    }
 
-                                        Text {
-                                            text: "Ethernet"
-                                            color: "#cdd6f4"
-                                            font {
-                                                pixelSize: 11
-                                                family: "Quicksand"
-                                                bold: true
-                                            }
-                                        }
-
-                                        Item {
-                                            Layout.fillWidth: true
-                                        }
+                                    Item {
+                                        Layout.fillWidth: true
+                                        Layout.preferredHeight: 5
 
                                         Rectangle {
-                                            implicitWidth: 8
-                                            implicitHeight: 8
-                                            radius: 4
-                                            color: "#a6e3a1"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        // ═══ BRIGHTNESS ═══
-                        Card {
-                            title: "Display"
-                            icon: ""
-                            accent: "#f9e2af"
-                            visible: BatteryState.available
-
-                            RowLayout {
-                                spacing: 10
-                                Layout.fillWidth: true
-
-                                Text {
-                                    text: ""
-                                    color: "#f9e2af"
-                                    font {
-                                        pixelSize: 14
-                                        family: "Symbols Nerd Font Mono"
-                                    }
-                                }
-
-                                Text {
-                                    text: Math.round(root.brightness) + "%"
-                                    color: "#cdd6f4"
-                                    font {
-                                        pixelSize: 10
-                                        family: "ZedMono Nerd Font"
-                                        bold: true
-                                    }
-                                    Layout.preferredWidth: 36
-                                }
-
-                                Item {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: 5
-
-                                    Rectangle {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        width: parent.width
-                                        height: 5
-                                        radius: 2.5
-                                        color: "#313244"
-
-                                        Rectangle {
-                                            width: parent.width * Math.min(root.brightness / 100, 1)
-                                            height: parent.height
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: parent.width
+                                            height: 5
                                             radius: 2.5
-                                            color: "#f9e2af"
+                                            color: "#313244"
 
-                                            Behavior on width {
-                                                NumberAnimation {
-                                                    duration: 100
-                                                    easing.type: Easing.OutCubic
+                                            Rectangle {
+                                                width: parent.width * Math.min(root.brightness / 100, 1)
+                                                height: parent.height
+                                                radius: 2.5
+                                                color: "#f9e2af"
+
+                                                Behavior on width {
+                                                    NumberAnimation {
+                                                        duration: 100
+                                                        easing.type: Easing.OutCubic
+                                                    }
                                                 }
                                             }
                                         }
-                                    }
 
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: mouse => {
-                                            var pct = Math.max(0, Math.min(Math.round(mouse.x / width * 100), 100));
-                                            root.brightness = pct;
-                                            Quickshell.execDetached(["sh", "-c", "brightnessctl set " + pct + "%"]);
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+
+                                            property bool dragging: false
+
+                                            function setFromMouse(mx) {
+                                                root.brightness = Math.max(0, Math.min(Math.round(mx / width * 100), 100));
+                                                brightnessCommitTimer.restart();
+                                            }
+
+                                            onPressed: mouse => {
+                                                dragging = true;
+                                                setFromMouse(mouse.x);
+                                            }
+                                            onPositionChanged: mouse => {
+                                                if (dragging)
+                                                    setFromMouse(mouse.x);
+                                            }
+                                            onReleased: {
+                                                dragging = false;
+                                                brightnessCommitTimer.restart();
+                                            }
                                         }
                                     }
+                                }
+
+                                Timer {
+                                    id: brightnessCommitTimer
+                                    interval: 60
+                                    running: false
+                                    repeat: false
+                                    onTriggered: Quickshell.execDetached(["sh", "-c", "brightnessctl set " + Math.round(root.brightness) + "%"])
                                 }
                             }
                         }

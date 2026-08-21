@@ -72,7 +72,7 @@ Singleton {
         let art = root.player.trackArtUrl || "audio-x-generic";
         let isMpd = root.player.identity === "Music Player Daemon";
 
-        console.log(`Your current player: ${root.player?.identity}`);
+        // console.log(`Your current player: ${root.player?.identity}`);
 
         if (title.startsWith('Listen to music,'))
             return;

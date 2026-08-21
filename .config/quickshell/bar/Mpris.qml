@@ -114,7 +114,8 @@ Item {
                     // fallback when no art
                     BarText {
                         anchors.centerIn: parent
-                        visible: !albumArt.visible
+                        // visible: !albumArt.visible
+                        visible: !(albumArtImage.status == Image.Ready)
                         text: "🎵"
                         pointSize: 10
                     }

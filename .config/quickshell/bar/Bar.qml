@@ -89,7 +89,7 @@ ShellRoot {
                     Layout.leftMargin: 6
 
                     // Workspacesicons {}
-                    // Workspaces {}
+                    // Workspaces {} //FIXME: Hyprland Workspaces seem not to be working
                     ActiveWindow {}
                 }
 

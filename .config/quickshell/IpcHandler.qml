@@ -51,10 +51,6 @@ Item {
             MprisState.mprisArtVisible = !MprisState.mprisArtVisible;
         }
 
-        function toggleMprisIcon(): void {
-            MprisState.mprisArtVisible = !MprisState.mprisArtVisible;
-        }
-
         function songArt(): void {
             MprisState.sendNotify();
         }

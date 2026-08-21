@@ -29,7 +29,7 @@ BarBlock {
         running: false
         command: ["sh", "-c", "ip -4 -o addr show enp5s0 2>/dev/null | awk '{print $4}' | head -1"]
         stdout: SplitParser {
-            onRead: data => ipAddr = data
+            onRead: data => root.ipAddr = data
         }
     }
 
@@ -124,7 +124,11 @@ BarBlock {
                 Text {
                     text: root.isOnline ? "  Connected" : "  Disconnected"
                     color: root.netColor
-                    font { pixelSize: 13; bold: true; family: "Quicksand" }
+                    font {
+                        pixelSize: 13
+                        bold: true
+                        family: "Quicksand"
+                    }
                 }
 
                 Rectangle {
@@ -136,14 +140,20 @@ BarBlock {
                 Text {
                     text: "enp5s0"
                     color: "#cdd6f4"
-                    font { pixelSize: 12; family: "ZedMono Nerd Font" }
+                    font {
+                        pixelSize: 12
+                        family: "ZedMono Nerd Font"
+                    }
                 }
 
                 Text {
                     text: root.ipAddr.length > 0 ? "  " + root.ipAddr : ""
                     visible: text.length > 0
                     color: "#a6adc8"
-                    font { pixelSize: 11; family: "ZedMono Nerd Font" }
+                    font {
+                        pixelSize: 11
+                        family: "ZedMono Nerd Font"
+                    }
                 }
             }
         }

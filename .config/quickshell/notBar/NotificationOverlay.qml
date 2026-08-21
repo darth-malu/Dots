@@ -24,7 +24,7 @@ PanelWindow {
         right: true
     }
 
-    margins.right: 6
+    margins.right: 0
 
     ColumnLayout {
         id: notifs
@@ -32,12 +32,12 @@ PanelWindow {
 
         Item {
             id: spaceFromBar
-            implicitHeight: 10
+            implicitHeight: 4
         }
 
         Repeater {
             model: NotificationState.popupNotifs
-            NotificationBox {
+            delegate: NotificationBox {
                 id: notifBox
                 required property int index
                 n: NotificationState.popupNotifs[index]
@@ -45,12 +45,12 @@ PanelWindow {
                 indexPopup: index
                 onContainsMouseChanged: {
                     if (!containsMouse)
-                        notificationTimeout.restart();
+                        notifTimer.restart();
                     else
-                        notificationTimeout.stop();
+                        notifTimer.stop();
                 }
                 Timer {
-                    id: notificationTimeout
+                    id: notifTimer
                     running: true
                     interval: (notifBox.n.expireTimeout > 0 && notifBox.n.expireTimeout < 10 ? notifBox.n.expireTimeout : 4) * 1000
                     onTriggered: {
