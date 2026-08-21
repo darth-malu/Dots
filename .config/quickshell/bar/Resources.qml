@@ -20,7 +20,9 @@ Loader {
         DiskBlock {
             host: resourceLoader.host
         }
-        MemoryBlock {}
+        MemoryBlock {
+            host: resourceLoader.host
+        }
         CpuBlock {
             host: resourceLoader.host
         }

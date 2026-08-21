@@ -5,6 +5,7 @@ Item {
     property color accentColor: "#bd93f9"
     property bool active: false
     property bool flat: false
+    property bool ghost: false
     signal clicked
 
     implicitWidth: 28
@@ -22,7 +23,11 @@ Item {
         anchors.fill: parent
         radius: 6
         visible: !parent.flat
-        color: mouseArea.containsMouse ? Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.22) : parent.active ? Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.15) : Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.06)
+        color: {
+            if (!parent.ghost)
+                return mouseArea.containsMouse ? Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.22) : parent.active ? Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.15) : Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.06);
+            return mouseArea.containsMouse ? Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.22) : "transparent";
+        }
         scale: parent.scaleVal
         Behavior on color {
             ColorAnimation {
@@ -36,7 +41,13 @@ Item {
         radius: 6
         color: "transparent"
         border {
-            width: (mouseArea.containsMouse || parent.active) && !parent.flat ? 1 : 0
+            width: {
+                if (parent.flat)
+                    return 0;
+                if (parent.ghost)
+                    return mouseArea.containsMouse ? 1 : 0;
+                return mouseArea.containsMouse || parent.active ? 1 : 0;
+            }
             color: Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.3)
         }
         Behavior on border.width {

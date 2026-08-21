@@ -45,6 +45,7 @@ Singleton {
 
     property bool showGpu: false
     property bool showCpuProcs: false
+    property bool showMemProcs: false
     property bool showPlayerChooser: false
     property bool showShuffle: false
     property bool showLoop: false

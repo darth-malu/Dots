@@ -439,6 +439,7 @@ BarBlock {
                                 // TODO: have trackbutton here
                                 TrackButton {
                                     text: "+"
+                                    ghost: true
                                     // accentColor: "#6272a4"
                                     accentColor: nowPlayingCard.color
                                     onClicked: root.compactNowPlaying = false
@@ -901,6 +902,7 @@ BarBlock {
 
                                 TrackButton {
                                     text: "−"
+                                    ghost: true
                                     accentColor: Qt.rgba(1, 1, 1, 0.6)
                                     onClicked: root.compactNowPlaying = true
                                     anchors {
@@ -928,7 +930,8 @@ BarBlock {
                             }
                         }
 
-                        // ═══ VOLUME ═══                        ClippingRectangle {
+                        // ═══ VOLUME ═══
+                        ClippingRectangle {
                             Layout.fillWidth: true
                             Layout.bottomMargin: 6
                             radius: 10
@@ -1076,4 +1079,4 @@ BarBlock {
                 }
             }
         }
-    }
+}
