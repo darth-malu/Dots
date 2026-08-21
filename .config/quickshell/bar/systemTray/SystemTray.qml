@@ -57,13 +57,14 @@ RowLayout {
                     spacing: 4
                     SvgIcon {
                         icon: Network.wifiIcon
+                        color: Network.wifiColor
                     }
                 }
 
                 onClicked: mouse => {
                     // mouse.accepted = true;
                     if (mouse.button === Qt.LeftButton) {
-                        NetworkState.netspeedVisible = !NetworkState.netspeedVisible;
+                        NetworkState.netPopupVisible = !NetworkState.netPopupVisible;
                     }
                 }
             }
@@ -76,18 +77,21 @@ RowLayout {
                     spacing: 4
                     SvgIcon {
                         icon: Network.ethIcon
+                        color: Network.ethColor
                     }
                 }
 
                 onClicked: mouse => {
                     // mouse.accepted = true;
                     if (mouse.button === Qt.LeftButton) {
-                        NetworkState.netspeedVisible = !NetworkState.netspeedVisible;
+                        NetworkState.netPopupVisible = !NetworkState.netPopupVisible;
                     }
                 }
             }
 
-            Netspeed {}
+            Netspeed {
+                host: root.host
+            }
 
             BarBlock {
                 id: btBlock
@@ -105,7 +109,7 @@ RowLayout {
                 onClicked: mouse => {
                     // mouse.accepted = true;
                     if (mouse.button === Qt.LeftButton) {
-                        NetworkState.netspeedVisible = !NetworkState.netspeedVisible;
+                        NetworkState.netPopupVisible = !NetworkState.netPopupVisible;
                     }
                 }
             }

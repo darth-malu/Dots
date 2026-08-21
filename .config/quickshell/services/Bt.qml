@@ -7,14 +7,21 @@ Singleton {
     id: root
 
     readonly property BluetoothAdapter adapter: Bluetooth.defaultAdapter
+    readonly property var devices: adapter?.devices.values ?? []
 
     readonly property bool enabled: adapter?.enabled ?? false
+    readonly property bool connected: devices.some(device => device.connected)
 
-    readonly property var btDevices: adapter.devices.values
+    readonly property string btIcon:
+        !enabled ? "root:/icons/bluetooth-slash.svg"
+        : connected ? "root:/icons/bluetooth-connected.svg"
+        : "root:/icons/bluetooth.svg"
 
-    readonly property bool connected: adapter?.connected
-
-    readonly property string btIcon: !enabled ? "root:/icons/bluetooth-slash.svg" : connected ? "root:/icons/bluetooth-connected.svg" : "root:/icons/bluetooth.svg"
+    // catppuccin mocha: overlay0 / blue / pink
+    readonly property color btColor:
+        !enabled ? "#6c7086"
+        : connected ? "#f5c2e7"
+        : "#89b4fa"
 
     readonly property string btDev: {
         const dev = devices.find(device => device.connected);
@@ -27,6 +34,4 @@ Singleton {
     }
 
     readonly property bool btTrust: devices.some(device => device.trusted)
-
-    readonly property color btColor: !enabled ? "grey" : (connected ? "blue" : "pink")
 }

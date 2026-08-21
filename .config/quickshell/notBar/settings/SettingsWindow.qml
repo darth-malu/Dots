@@ -48,7 +48,7 @@ Item {
 
     FileView {
         id: netFile
-        path: `file:///sys/class/net/${root.activeInterface}/operstate`
+        path: root.activeInterface.length > 0 ? `file:///sys/class/net/${root.activeInterface}/operstate` : ""
     }
 
     Process {

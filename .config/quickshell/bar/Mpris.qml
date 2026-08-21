@@ -23,6 +23,7 @@ Item {
     property bool showVolume: false
     property bool showPlaying: MprisState.player?.isPlaying ?? false
     property bool showPopup: false
+    property bool showArtPopup: false
     readonly property bool pillVisible: MprisState.hideWhenIdle ? showPlaying : (MprisState.player !== null)
 
     Timer {
@@ -118,6 +119,14 @@ Item {
                         visible: !(albumArtImage.status == Image.Ready)
                         text: "🎵"
                         pointSize: 10
+                    }
+
+                    // left-click art → toggle art popup (other buttons pass through to pill)
+                    MouseArea {
+                        anchors.fill: parent
+                        acceptedButtons: Qt.LeftButton
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: mprisRoot.showArtPopup = !mprisRoot.showArtPopup
                     }
                 }
 
@@ -290,6 +299,64 @@ Item {
                 MprisPopup {
                     anchors.fill: parent
                     anchors.margins: 8
+                }
+            }
+        }
+    }
+
+    // ── album art popup (opened by clicking the art in the pill) ──
+    LazyLoader {
+        loading: true
+
+        PopupWindow {
+            id: artPopup
+
+            anchor.window: parentWindow
+            anchor.rect.x: {
+                let g = mprisRoot.mapToGlobal(0, 0);
+                return g.x + mprisRoot.width / 2 - width / 2;
+            }
+            anchor.rect.y: 35
+            visible: mprisRoot.showArtPopup && MprisState.player !== null
+            grabFocus: true
+            color: MiscState.popupSolidBg ? "#1e1e2e" : "transparent"
+            implicitWidth: 280
+            implicitHeight: 280
+
+            Rectangle {
+                id: artPopupRect
+                anchors.fill: parent
+                radius: 12
+                color: "#1e1e2e"
+                border.width: 1
+                border.color: "#45475a"
+
+                Shortcut {
+                    sequence: "Escape"
+                    onActivated: mprisRoot.showArtPopup = false
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: mprisRoot.showArtPopup = false
+                    z: -1
+                }
+
+                // album art fills the popup
+                Image {
+                    anchors.fill: parent
+                    source: MprisState.player?.trackArtUrl ?? ""
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    mipmap: true
+                }
+
+                // fallback when no art
+                BarText {
+                    anchors.centerIn: parent
+                    visible: !(MprisState.player?.trackArtUrl ?? "")
+                    text: "🎵"
+                    pointSize: 48
                 }
             }
         }

@@ -141,17 +141,6 @@ BarBlock {
                                         elide: Text.ElideRight
                                         Layout.fillWidth: true
                                     }
-
-                                    Text {
-                                        visible: false
-                                        text: root.ipAddr.length > 0 ? root.ipAddr : (root.isOnline ? "Connected" : "Offline")
-                                        color: root.isOnline ? "#a6e3a1" : "#f38ba8"
-                                        font {
-                                            pixelSize: 10
-                                            family: "ZedMono Nerd Font"
-                                        }
-                                        elide: Text.ElideRight
-                                    }
                                 }
 
                                 Rectangle {

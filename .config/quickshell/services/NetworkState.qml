@@ -7,4 +7,5 @@ Singleton {
     id: main
 
     property bool netspeedVisible: false
+    property bool netPopupVisible: false
 }
