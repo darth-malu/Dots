@@ -93,16 +93,16 @@ ShellRoot {
                     ActiveWindow {}
                 }
 
-                // Item {
-                //     Layout.fillWidth: true
-                // }
+                Item {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 50
+                }
 
                 RowLayout {
                     id: rightBlock
                     Layout.alignment: Qt.AlignRight
                     spacing: 7
 
-                    Netspeed {}
                     Resources {
                         host: barr
                     }

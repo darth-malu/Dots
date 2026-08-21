@@ -1,7 +1,6 @@
 import qs.themes
-// import QtMultimedia
+import QtMultimedia
 import QtQuick
-import QtQuick.Controls
 import qs.customItems
 import qs.services
 import Quickshell.Io
@@ -18,19 +17,19 @@ BarBlock {
     // anchors.verticalCenter: parent.verticalCenter
 
     // hoverEnabled: true
-    // SoundEffect {
-    //     id: beep
-    //     source: Qt.resolvedUrl("game_ready.wav")
-    // }
+    SoundEffect {
+        id: beep
+        source: Qt.resolvedUrl("../../customItems/game_ready.wav")
+    }
 
     onClicked: mouse => {
         // mouse.accepted = true;
         if (mouse.button === Qt.LeftButton) {
             ResourcesState.resourcesVisible = !ResourcesState.resourcesVisible;
             // beep.play();
-        } else if (mouse.button === Qt.RightButton)
-            NetworkState.netspeedVisible = !NetworkState.netspeedVisible;
-        else if (mouse.button === Qt.MiddleButton)
+        } else if ((mouse.modifiers & Qt.ShiftModifier) && (mouse.button === Qt.RightButton))
+            beep.play();
+        else if (mouse.button === Qt.RightButton)
             MiscState.showPopup = !MiscState.showPopup;
     }
 
@@ -75,7 +74,12 @@ BarBlock {
 
             implicitWidth: 280
             implicitHeight: clockPopup.inputVisible ? 268 : 220
-            Behavior on implicitHeight { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+            Behavior on implicitHeight {
+                NumberAnimation {
+                    duration: 150
+                    easing.type: Easing.OutCubic
+                }
+            }
 
             Rectangle {
                 radius: 10
@@ -85,7 +89,7 @@ BarBlock {
                 color: "#1e1e2e"
 
                 Shortcut {
-                    sequence: "Escape";
+                    sequence: "Escape"
                     onActivated: {
                         if (clockPopup.inputVisible)
                             clockPopup.clearSelection();
@@ -115,10 +119,7 @@ BarBlock {
                         var dt = new Date(year, month - 1, day);
                         var dayName = days[dt.getDay()];
                         var initial = "* TODO " + task + "\n  SCHEDULED: <" + key + " " + dayName + ">";
-                        Quickshell.execDetached([
-                            'emacsclient', '-c', '-n', '-e',
-                            '(progn (setq org-capture-initial "' + initial + '") (org-capture nil "t"))'
-                        ]);
+                        Quickshell.execDetached(['emacsclient', '-c', '-n', '-e', '(progn (setq org-capture-initial "' + initial + '") (org-capture nil "t"))']);
                     }
                 }
             }

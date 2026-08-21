@@ -1,10 +1,12 @@
 pragma ComponentBehavior: Bound
 import Quickshell
+import qs.bar
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Services.SystemTray
 import Quickshell.Widgets
 import qs.customItems
+import QtQuick.Effects
 // import qs.themes import qs.bar
 import qs.services
 
@@ -22,6 +24,15 @@ RowLayout {
     Loader {
         visible: active
         asynchronous: true
+        active: true
+        sourceComponent: connections
+        Layout.fillHeight: true
+        // Layout.fillWidth: true
+    }
+
+    Loader {
+        visible: active
+        asynchronous: true
         active: MiscState.toggleSysTray
 
         Layout.fillHeight: true // ENSURE THE LOADER TAKES UP SPACE- enable clicking inside it 😀
@@ -32,6 +43,76 @@ RowLayout {
     }
 
     Component {
+        id: connections
+        RowLayout {
+            // spacing: 4
+            // anchors.fill: parent
+
+            BarBlock {
+                id: wifiBlock
+                implicitWidth: 15
+                implicitHeight: 15
+                color: "transparent"
+                content: RowLayout {
+                    spacing: 4
+                    SvgIcon {
+                        icon: Network.wifiIcon
+                    }
+                }
+
+                onClicked: mouse => {
+                    // mouse.accepted = true;
+                    if (mouse.button === Qt.LeftButton) {
+                        NetworkState.netspeedVisible = !NetworkState.netspeedVisible;
+                    }
+                }
+            }
+            BarBlock {
+                id: ethernetBlock
+                implicitWidth: 10
+                implicitHeight: 10
+                color: "transparent"
+                content: RowLayout {
+                    spacing: 4
+                    SvgIcon {
+                        icon: Network.ethIcon
+                    }
+                }
+
+                onClicked: mouse => {
+                    // mouse.accepted = true;
+                    if (mouse.button === Qt.LeftButton) {
+                        NetworkState.netspeedVisible = !NetworkState.netspeedVisible;
+                    }
+                }
+            }
+
+            Netspeed {}
+
+            BarBlock {
+                id: btBlock
+                implicitWidth: 10
+                implicitHeight: 10
+                color: "transparent"
+                content: RowLayout {
+                    spacing: 4
+                    SvgIcon {
+                        icon: Bt.btIcon
+                        color: Bt.btColor
+                    }
+                }
+
+                onClicked: mouse => {
+                    // mouse.accepted = true;
+                    if (mouse.button === Qt.LeftButton) {
+                        NetworkState.netspeedVisible = !NetworkState.netspeedVisible;
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
         id: sysBlock
         BarBlock {
             implicitWidth: tray.implicitWidth
@@ -39,7 +120,7 @@ RowLayout {
 
             color: Qt.rgba(1, 1, 1, 0.19)
 
-            RowLayout {
+            content: RowLayout {
                 id: tray
                 anchors.fill: parent
                 anchors.leftMargin: 2
