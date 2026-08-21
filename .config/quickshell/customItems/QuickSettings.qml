@@ -27,6 +27,25 @@ BarBlock {
     property bool shuffleOn: false
     property bool loopOn: false
 
+    // ── volume OSD ──
+    property bool osdShown: false
+    property string osdGlyph: "\uf028"
+    property int osdValue: 0
+
+    function showOsd(glyph, value) {
+        root.osdGlyph = glyph;
+        root.osdValue = value;
+        root.osdShown = true;
+        osdTimer.restart();
+    }
+
+    Timer {
+        id: osdTimer
+        interval: 900
+        running: false
+        onTriggered: root.osdShown = false
+    }
+
     onLeftClicked: {
         root.showQsPopup = !root.showQsPopup;
     }
@@ -427,6 +446,8 @@ BarBlock {
                                     anchors {
                                         right: parent.right
                                         top: parent.top
+                                        rightMargin: 2
+                                        topMargin: 2
                                     }
                                 }
 
@@ -885,35 +906,12 @@ BarBlock {
                                     anchors {
                                         right: parent.right
                                         top: parent.top
+                                        rightMargin: 2
+                                        topMargin: 2
                                     }
                                 }
                             }
 
-                            // ── Volume badge (shows on scroll, expanded only) ──
-                            Rectangle {
-                                anchors.centerIn: parent
-                                implicitWidth: 60
-                                implicitHeight: 36
-                                radius: 8
-                                visible: !root.compactNowPlaying
-                                color: Qt.rgba(0, 0, 0, 0.75)
-                                opacity: nowPlayingCard.showVolumeBadge ? 1 : 0
-                                Behavior on opacity {
-                                    NumberAnimation {
-                                        duration: 150
-                                    }
-                                }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: nowPlayingCard.currentVolume + "%"
-                                    color: "#ffffff"
-                                    font {
-                                        pixelSize: 14
-                                        bold: true
-                                        family: "Quicksand"
-                                    }
-                                }
                             }
 
                             // ── Mouse area for scroll volume ──
@@ -924,15 +922,13 @@ BarBlock {
                                     var p = MprisState.player;
                                     if (p?.canControl && p?.volumeSupported) {
                                         p.volume = Math.max(0, Math.min(p.volume + (wheel.angleDelta.y > 0 ? 0.05 : -0.05), 1));
-                                        nowPlayingCard.showVolumeBadge = true;
-                                        volumeBadgeTimer.restart();
+                                        root.showOsd("\uf028", Math.round(p.volume * 100));
                                     }
                                 }
                             }
                         }
 
-                        // ═══ VOLUME ═══
-                        ClippingRectangle {
+                        // ═══ VOLUME ═══                        ClippingRectangle {
                             Layout.fillWidth: true
                             Layout.bottomMargin: 6
                             radius: 10
@@ -951,20 +947,10 @@ BarBlock {
                                     required property PwNode node
                                     required property string fallback
                                     required property color accent
-                                    required property string glyph
                                     property string displayName
 
                                     Layout.fillWidth: true
                                     spacing: 6
-
-                                    Text {
-                                        text: parent.glyph
-                                        color: parent.accent
-                                        font {
-                                            pixelSize: 11
-                                            family: "Symbols Nerd Font Mono"
-                                        }
-                                    }
 
                                     Text {
                                         text: {
@@ -999,15 +985,17 @@ BarBlock {
                                     node: PipewireState.outputSink
                                     fallback: "output"
                                     accent: "#bd93f9"
-                                    glyph: "\uf028"
                                     displayName: PipewireState.outputDisplayName
                                 }
 
                                 VolumeSlider {
+                                    id: outVol
                                     node: PipewireState.outputSink
                                     glyph: "\uf028"
                                     glyphMuted: "\uf026"
                                     accent: "#bd93f9"
+
+                                    onAdjusted: level => root.showOsd("\uf028", Math.round(level * 100))
                                 }
 
                                 Item {
@@ -1018,14 +1006,69 @@ BarBlock {
                                     node: PipewireState.inputSink
                                     fallback: "input"
                                     accent: "#8be9fd"
-                                    glyph: "\uf130"
                                 }
 
                                 VolumeSlider {
+                                    id: inVol
                                     node: PipewireState.inputSink
                                     glyph: "\uf130"
                                     glyphMuted: "\uf131"
                                     accent: "#8be9fd"
+
+                                    onAdjusted: level => root.showOsd("\uf130", Math.round(level * 100))
+                                }
+                            }
+
+                            // ── Volume OSD ──
+                            Rectangle {
+                                anchors.right: parent.right
+                                anchors.bottom: parent.bottom
+                                anchors.margins: 8
+                                implicitWidth: osdRow.implicitWidth + 20
+                                implicitHeight: 24
+                                radius: 12
+                                color: Qt.rgba(0, 0, 0, 0.72)
+                                border.width: 1
+                                border.color: Qt.rgba(1, 1, 1, 0.09)
+                                opacity: root.osdShown ? 1 : 0
+                                scale: root.osdShown ? 1 : 0.85
+
+                                Behavior on opacity {
+                                    NumberAnimation {
+                                        duration: 150
+                                    }
+                                }
+
+                                Behavior on scale {
+                                    NumberAnimation {
+                                        duration: 150
+                                        easing.type: Easing.OutCubic
+                                    }
+                                }
+
+                                RowLayout {
+                                    id: osdRow
+                                    anchors.centerIn: parent
+                                    spacing: 6
+
+                                    Text {
+                                        text: root.osdGlyph
+                                        color: "#bd93f9"
+                                        font {
+                                            pixelSize: 11
+                                            family: "Symbols Nerd Font Mono"
+                                        }
+                                    }
+
+                                    Text {
+                                        text: root.osdValue + "%"
+                                        color: "#f8f8f2"
+                                        font {
+                                            pixelSize: 11
+                                            bold: true
+                                            family: "ZedMono Nerd Font"
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1034,4 +1077,3 @@ BarBlock {
             }
         }
     }
-}

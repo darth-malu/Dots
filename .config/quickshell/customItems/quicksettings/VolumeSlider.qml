@@ -16,6 +16,8 @@ RowLayout {
     readonly property bool muted: root.node?.audio?.muted ?? false
     readonly property real level: root.node?.audio?.volume ?? 0
 
+    signal adjusted(real level)
+
     spacing: 10
     Layout.fillWidth: true
     visible: ready
@@ -138,11 +140,13 @@ RowLayout {
                 anchors.fill: parent
                 anchors.margins: -4
                 cursorShape: Qt.PointingHandCursor
+                hoverEnabled: true
                 function setFromMouse(mx) {
                     if (!root.ready)
                         return;
                     const r = mapToItem(parent, 0, 0);
                     root.node.audio.volume = Math.max(0, Math.min((mx - r.x) / parent.width, 1));
+                    root.adjusted(root.node.audio.volume);
                 }
                 onPressed: mouse => setFromMouse(mouse.x)
                 onPositionChanged: mouse => {
@@ -154,20 +158,9 @@ RowLayout {
                         return;
                     const step = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
                     root.node.audio.volume = Math.max(0, Math.min(root.node.audio.volume + step, 1));
+                    root.adjusted(root.node.audio.volume);
                 }
             }
         }
-    }
-
-    Text {
-        text: root.muted ? "--%" : Math.round(root.level * 100) + "%"
-        color: root.muted ? "#6272a4" : "#f8f8f2"
-        font {
-            pixelSize: 11
-            bold: true
-            family: "ZedMono Nerd Font"
-        }
-        Layout.preferredWidth: 38
-        Layout.alignment: Qt.AlignVCenter
     }
 }

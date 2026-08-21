@@ -1,11 +1,15 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
+import Quickshell.Io
 import qs.services
 import qs.customItems
 
 BarBlock {
     id: cpu
     border.width: 0
+
+    required property var host
 
     property bool showPercent: false
 
@@ -14,7 +18,9 @@ BarBlock {
     readonly property int cpuPercent: ResourcesState.cpuUsageString
     readonly property real cpuTemp: ResourcesState.cpuTemp
 
-    readonly property color cpuColor: cpuPercent > 80 ? "#ff5370" : cpuPercent > 60 ? "#ffcb6b" : "#82aaff"
+    readonly property color cpuColor: cpuPercent > 80 ? "#ff5555" : cpuPercent > 60 ? "#f1fa8c" : "#bd93f9"
+
+    property var topProcs: []
 
     onClicked: mouse => {
         if (mouse.button === Qt.LeftButton)
@@ -22,7 +28,7 @@ BarBlock {
         else if (mouse.button === Qt.RightButton)
             showTemp = !showTemp;
         else if (mouse.button === Qt.MiddleButton)
-            MiscState.showGpu = !MiscState.showGpu;
+            MiscState.showCpuProcs = !MiscState.showCpuProcs;
     }
 
     content: RowLayout {
@@ -85,6 +91,173 @@ BarBlock {
             symbolText: `${cpu.cpuTemp}°`
             baseColor: cpu.cpuColor
             pointSize: 11
+        }
+    }
+
+    Process {
+        id: procsProc
+        command: ["sh", "-c", "ps -eo pcpu,pmem,comm --sort=-pcpu --no-headers | head -5"]
+        property string buf: ""
+        running: false
+
+        stdout: SplitParser {
+            onRead: data => procsProc.buf += data + "\n"
+        }
+
+        onExited: {
+            const rows = [];
+            for (const line of procsProc.buf.trim().split("\n")) {
+                const p = line.trim().split(/\s+/);
+                if (p.length >= 3)
+                    rows.push({
+                        c: parseFloat(p[0]) || 0,
+                        m: parseFloat(p[1]) || 0,
+                        n: p.slice(2).join(" ")
+                    });
+            }
+            cpu.topProcs = rows;
+            procsProc.buf = "";
+        }
+    }
+
+    Timer {
+        interval: 2000
+        running: MiscState.showCpuProcs
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: procsProc.running = true
+    }
+
+    LazyLoader {
+        loading: true
+
+        PopupWindow {
+            id: procPopup
+            visible: MiscState.showCpuProcs
+            grabFocus: true
+            color: "transparent"
+
+            anchor.window: cpu.host
+            anchor.rect.x: {
+                let g = cpu.mapToGlobal(0, 0);
+                return g.x + (cpu.width / 2) - (width / 2);
+            }
+            anchor.rect.y: 33
+
+            implicitWidth: 320
+            implicitHeight: procCol.implicitHeight + 28
+
+            Rectangle {
+                anchors.fill: parent
+                radius: 12
+                color: "#282a36"
+                border.width: 1
+                border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
+
+                Shortcut {
+                    sequence: "Escape"
+                    onActivated: MiscState.showCpuProcs = false
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    z: -1
+                    onClicked: MiscState.showCpuProcs = false
+                }
+
+                ColumnLayout {
+                    id: procCol
+                    anchors.fill: parent
+                    anchors.margins: 14
+                    spacing: 9
+
+                    Repeater {
+                        model: cpu.topProcs
+
+                        ColumnLayout {
+                            id: prow
+                            required property var modelData
+
+                            readonly property real cval: modelData?.c ?? 0
+                            readonly property color accent: cval > 80 ? "#ff5555" : cval > 40 ? "#f1fa8c" : "#bd93f9"
+
+                            spacing: 4
+                            Layout.fillWidth: true
+
+                            RowLayout {
+                                spacing: 8
+                                Layout.fillWidth: true
+
+                                Text {
+                                    text: Number(prow.cval.toFixed(1)) + "%"
+                                    color: prow.accent
+                                    font {
+                                        pixelSize: 11
+                                        bold: true
+                                        family: "ZedMono Nerd Font"
+                                    }
+                                    Layout.preferredWidth: 44
+                                }
+
+                                Text {
+                                    text: prow.modelData?.n ?? ""
+                                    color: "#f8f8f2"
+                                    elide: Text.ElideRight
+                                    font {
+                                        pixelSize: 11
+                                        family: "Quicksand"
+                                    }
+                                    Layout.fillWidth: true
+                                }
+
+                                Text {
+                                    text: Number(prow.modelData?.m?.toFixed(1) ?? 0) + "% mem"
+                                    color: "#6272a4"
+                                    font {
+                                        pixelSize: 9
+                                        family: "ZedMono Nerd Font"
+                                    }
+                                    Layout.preferredWidth: 52
+                                    Layout.alignment: Qt.AlignRight
+                                }
+                            }
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                implicitHeight: 3
+                                radius: 1.5
+                                color: Qt.rgba(1, 1, 1, 0.06)
+
+                                Rectangle {
+                                    width: parent.width * Math.min(prow.cval / 100, 1)
+                                    height: parent.height
+                                    radius: 1.5
+                                    color: prow.accent
+
+                                    Behavior on width {
+                                        NumberAnimation {
+                                            duration: 250
+                                            easing.type: Easing.OutQuad
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Text {
+                        visible: cpu.topProcs.length === 0
+                        text: "sampling…"
+                        color: "#6272a4"
+                        font {
+                            pixelSize: 10
+                            italic: true
+                            family: "Quicksand"
+                        }
+                        Layout.alignment: Qt.AlignHCenter
+                    }
+                }
+            }
         }
     }
 }
