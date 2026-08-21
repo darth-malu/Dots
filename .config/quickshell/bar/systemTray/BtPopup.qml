@@ -145,56 +145,6 @@ BarBlock {
 
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 6
-
-                        Text {
-                            text: "\uf294"
-                            color: root.adapter ? "#bd93f9" : "#6272a4"
-                            font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
-                        }
-
-                        Text {
-                            text: "Bluetooth"
-                            color: "#f8f8f2"
-                            font { pixelSize: 12; bold: true; family: "Quicksand" }
-                        }
-
-                        Item { Layout.fillWidth: true }
-
-                        Rectangle {
-                            Layout.alignment: Qt.AlignVCenter
-                            implicitWidth: pillText.implicitWidth + 16
-                            implicitHeight: 18
-                            radius: 9
-                            color: !root.adapter ? Qt.rgba(98 / 255, 114 / 255, 164 / 255, 0.14)
-                                : Bt.connected ? Qt.rgba(80 / 255, 250 / 255, 123 / 255, 0.14)
-                                : Bt.enabled ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.14)
-                                : Qt.rgba(98 / 255, 114 / 255, 164 / 255, 0.14)
-
-                            Text {
-                                id: pillText
-                                anchors.centerIn: parent
-                                text: !root.adapter ? "no adapter"
-                                    : Bt.connected ? "connected"
-                                    : Bt.enabled ? "idle"
-                                    : "off"
-                                color: !root.adapter ? "#6272a4"
-                                    : Bt.connected ? "#50fa7b"
-                                    : Bt.enabled ? "#bd93f9"
-                                    : "#6272a4"
-                                font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
-                            }
-                        }
-                    }
-
-                    Rectangle {
-                        Layout.fillWidth: true
-                        implicitHeight: 1
-                        color: "#343746"
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
                         spacing: 8
 
                         Text {

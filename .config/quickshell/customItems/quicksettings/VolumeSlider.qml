@@ -107,11 +107,19 @@ RowLayout {
                 height: 12
                 radius: 6
                 x: Math.max(0, Math.min(parent.width * Math.min(root.level, 1) - width / 2, parent.width - width))
-                color: "#f8f8f2"
-                border.width: 2
-                border.color: root.muted ? "#6272a4" : root.accent
+                color: root.muted ? "#6272a4" : root.accent
+                border.width: 1
+                border.color: Qt.rgba(0, 0, 0, 0.4)
+                scale: drag.dragging || drag.containsMouse ? 1.15 : 1.0
 
-                Behavior on border.color {
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 80
+                        easing.type: Easing.OutCubic
+                    }
+                }
+
+                Behavior on color {
                     ColorAnimation {
                         duration: 120
                     }

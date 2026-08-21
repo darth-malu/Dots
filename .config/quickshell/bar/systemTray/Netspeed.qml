@@ -336,61 +336,6 @@ Loader {
                         anchors.margins: 14
                         spacing: 7
 
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 6
-
-                            Text {
-                                text: "\uf6ff"
-                                color: "#bd93f9"
-                                font {
-                                    pixelSize: 13
-                                    family: "Symbols Nerd Font Mono"
-                                }
-                            }
-
-                            Text {
-                                text: "Network"
-                                color: "#f8f8f2"
-                                font {
-                                    pixelSize: 12
-                                    bold: true
-                                    family: "Quicksand"
-                                }
-                            }
-
-                            Item {
-                                Layout.fillWidth: true
-                            }
-
-                            Rectangle {
-                                Layout.alignment: Qt.AlignVCenter
-                                implicitWidth: pillText.implicitWidth + 16
-                                implicitHeight: 18
-                                radius: 9
-                                color: root.ethUp ? Qt.rgba(80 / 255, 250 / 255, 123 / 255, 0.14) : Qt.rgba(255 / 255, 85 / 255, 85 / 255, 0.14)
-
-                                Text {
-                                    id: pillText
-                                    anchors.centerIn: parent
-                                    text: root.ethUp ? "connected" : "no link"
-                                    color: root.ethUp ? "#50fa7b" : "#ff5555"
-                                    font {
-                                        pixelSize: 9
-                                        bold: true
-                                        family: "Quicksand"
-                                        letterSpacing: 1
-                                    }
-                                }
-                            }
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            implicitHeight: 1
-                            color: "#343746"
-                        }
-
                         InfoRow {
                             label: "iface"
                             value: root.ethIfName.length > 0 ? root.ethIfName : "-"
@@ -509,6 +454,20 @@ Loader {
 
         onTickChanged: paintCanvas.requestPaint()
         onWidthChanged: paintCanvas.requestPaint()
+
+        Text {
+            z: 1
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.topMargin: 1
+            text: root.fmtRate(graph.peak)
+            color: Qt.rgba(graph.accent.r, graph.accent.g, graph.accent.b, 0.75)
+            font {
+                pixelSize: 8
+                bold: true
+                family: "ZedMono Nerd Font"
+            }
+        }
 
         Canvas {
             id: paintCanvas

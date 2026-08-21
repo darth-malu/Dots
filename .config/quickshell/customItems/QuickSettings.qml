@@ -5,6 +5,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris
+import Quickshell.Services.Pipewire
 import Quickshell.Widgets
 
 import qs.customItems
@@ -946,10 +947,60 @@ BarBlock {
                                 anchors.margins: 10
                                 spacing: 8
 
-                                SectionHeader {
-                                    icon: "\uf028"
-                                    text: "output"
-                                    color: "#bd93f9"
+                                component SinkHeader: RowLayout {
+                                    required property PwNode node
+                                    required property string fallback
+                                    required property color accent
+                                    required property string glyph
+                                    property string displayName
+
+                                    Layout.fillWidth: true
+                                    spacing: 6
+
+                                    Text {
+                                        text: parent.glyph
+                                        color: parent.accent
+                                        font {
+                                            pixelSize: 11
+                                            family: "Symbols Nerd Font Mono"
+                                        }
+                                    }
+
+                                    Text {
+                                        text: {
+                                            if (parent.displayName && parent.displayName.length > 0)
+                                                return parent.displayName;
+                                            const d = parent.node?.description;
+                                            return d && d.length > 0 ? d : parent.fallback;
+                                        }
+                                        color: parent.accent
+                                        elide: Text.ElideRight
+                                        font {
+                                            pixelSize: 10
+                                            bold: true
+                                            family: "Quicksand"
+                                            letterSpacing: 1
+                                        }
+                                        Layout.fillWidth: true
+                                    }
+
+                                    Text {
+                                        visible: parent.node === null
+                                        text: "unavailable"
+                                        color: "#6272a4"
+                                        font {
+                                            pixelSize: 9
+                                            family: "ZedMono Nerd Font"
+                                        }
+                                    }
+                                }
+
+                                SinkHeader {
+                                    node: PipewireState.outputSink
+                                    fallback: "output"
+                                    accent: "#bd93f9"
+                                    glyph: "\uf028"
+                                    displayName: PipewireState.outputDisplayName
                                 }
 
                                 VolumeSlider {
@@ -959,10 +1010,15 @@ BarBlock {
                                     accent: "#bd93f9"
                                 }
 
-                                SectionHeader {
-                                    icon: "\uf130"
-                                    text: "input"
-                                    color: "#8be9fd"
+                                Item {
+                                    Layout.preferredHeight: 2
+                                }
+
+                                SinkHeader {
+                                    node: PipewireState.inputSink
+                                    fallback: "input"
+                                    accent: "#8be9fd"
+                                    glyph: "\uf130"
                                 }
 
                                 VolumeSlider {
