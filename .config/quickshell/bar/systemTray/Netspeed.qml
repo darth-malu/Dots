@@ -11,11 +11,14 @@ Loader {
     required property var host
 
     Layout.alignment: Qt.AlignVCenter
-    active: NetworkState.netspeedVisible || NetworkState.netPopupVisible
-    visible: NetworkState.netspeedVisible
+    active: true
+    visible: true
 
     sourceComponent: BarBlock {
         id: root
+
+        implicitWidth: content.implicitWidth
+        implicitHeight: content.implicitHeight
 
         color: 'transparent'
 
@@ -47,6 +50,26 @@ Loader {
             if (v < 100)
                 return v.toFixed(1);
             return Math.round(v).toString();
+        }
+
+        function resetRates() {
+            rxPrev = 0;
+            txPrev = 0;
+            rxRate = 0;
+            txRate = 0;
+        }
+
+        Connections {
+            target: NetworkState
+
+            function onNetspeedVisibleChanged() {
+                root.resetRates();
+            }
+
+            function onNetPopupVisibleChanged() {
+                if (NetworkState.netPopupVisible)
+                    root.resetRates();
+            }
         }
 
         Process {
@@ -115,7 +138,7 @@ Loader {
 
         Timer {
             interval: root.refreshInterval
-            running: true
+            running: NetworkState.netspeedVisible || NetworkState.netPopupVisible
             repeat: true
             triggeredOnStart: true
             onTriggered: () => {
@@ -124,40 +147,57 @@ Loader {
             }
         }
 
+        Timer {
+            interval: 10000
+            running: NetworkState.netspeedVisible || NetworkState.netPopupVisible
+            repeat: true
+            triggeredOnStart: true
+            onTriggered: addrProc.running = true
+        }
+
         onClicked: mouse => {
             if (mouse.button === Qt.LeftButton)
                 NetworkState.netPopupVisible = !NetworkState.netPopupVisible;
         }
 
+        onRightClicked: NetworkState.netspeedVisible = !NetworkState.netspeedVisible
+
         content: RowLayout {
-            spacing: 6
+            spacing: 3
+
+            SvgIcon {
+                icon: Network.wifiIcon
+                color: Network.wifiColor
+                width: 14
+                height: 14
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            SvgIcon {
+                icon: Network.ethIcon
+                color: Network.ethColor
+                width: 11
+                height: 11
+                Layout.alignment: Qt.AlignVCenter
+            }
 
             RowLayout {
-                spacing: 4
-                Text {
-                    text: "\uf063"
-                    color: "#89b4fa"
-                    font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
-                }
+                visible: NetworkState.netspeedVisible
+                spacing: 5
+
+                Item { Layout.preferredWidth: 4 }
+
                 BarText {
                     text: root.rxRate === 0 ? "-" : root.fmtRate(root.rxRate)
                     color: "#89b4fa"
                     font { pixelSize: 10; family: "ZedMono Nerd Font" }
                 }
-            }
 
-            Rectangle {
-                implicitWidth: 1; implicitHeight: 10
-                color: "#45475a"
-            }
-
-            RowLayout {
-                spacing: 4
-                Text {
-                    text: "\uf062"
-                    color: "#f5a0d6"
-                    font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                Rectangle {
+                    implicitWidth: 1; implicitHeight: 10
+                    color: "#45475a"
                 }
+
                 BarText {
                     text: root.txRate === 0 ? "-" : root.fmtRate(root.txRate)
                     color: "#f5a0d6"

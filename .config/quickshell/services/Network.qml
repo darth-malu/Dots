@@ -8,10 +8,10 @@ Singleton {
     id: root
 
     readonly property WifiDevice adapter: Networking.devices.values.find(d => d.type === DeviceType.Wifi) ?? null
+    readonly property WifiNetwork activeNetwork: root.adapter ? root.adapter.networks.values.find(network => network.connected) : null
     readonly property bool wifiEnabled: Networking.wifiEnabled
     readonly property WiredDevice ethernet: Networking.devices.values.find(d => d.type === DeviceType.Wired) ?? null
     readonly property bool wifiConnected: root.adapter?.connected ?? false
-    readonly property WifiNetwork activeNetwork: root.adapter ? root.adapter.networks.values.find(network => network.connected) : null
 
     readonly property string wifiIcon: {
         if (root.adapter) {
@@ -44,9 +44,7 @@ Singleton {
             return "#f38ba8";
 
         const s = root.activeNetwork.signalStrength;
-        return s < 0.34 ? "#fab387"
-             : s < 0.67 ? "#f9e2af"
-             : "#a6e3a1";
+        return s < 0.34 ? "#fab387" : s < 0.67 ? "#f9e2af" : "#a6e3a1";
     }
 
     // catppuccin mocha: overlay0 / teal

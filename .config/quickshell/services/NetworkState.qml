@@ -8,4 +8,5 @@ Singleton {
 
     property bool netspeedVisible: false
     property bool netPopupVisible: false
+    property bool btPopupVisible: false
 }

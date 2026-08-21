@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import Quickshell
-import qs.bar
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Services.SystemTray
@@ -45,73 +44,12 @@ RowLayout {
     Component {
         id: connections
         RowLayout {
-            // spacing: 4
-            // anchors.fill: parent
-
-            BarBlock {
-                id: wifiBlock
-                implicitWidth: 15
-                implicitHeight: 15
-                color: "transparent"
-                content: RowLayout {
-                    spacing: 4
-                    SvgIcon {
-                        icon: Network.wifiIcon
-                        color: Network.wifiColor
-                    }
-                }
-
-                onClicked: mouse => {
-                    // mouse.accepted = true;
-                    if (mouse.button === Qt.LeftButton) {
-                        NetworkState.netPopupVisible = !NetworkState.netPopupVisible;
-                    }
-                }
-            }
-            BarBlock {
-                id: ethernetBlock
-                implicitWidth: 10
-                implicitHeight: 10
-                color: "transparent"
-                content: RowLayout {
-                    spacing: 4
-                    SvgIcon {
-                        icon: Network.ethIcon
-                        color: Network.ethColor
-                    }
-                }
-
-                onClicked: mouse => {
-                    // mouse.accepted = true;
-                    if (mouse.button === Qt.LeftButton) {
-                        NetworkState.netPopupVisible = !NetworkState.netPopupVisible;
-                    }
-                }
-            }
-
             Netspeed {
                 host: root.host
             }
 
-            BarBlock {
-                id: btBlock
-                implicitWidth: 10
-                implicitHeight: 10
-                color: "transparent"
-                content: RowLayout {
-                    spacing: 4
-                    SvgIcon {
-                        icon: Bt.btIcon
-                        color: Bt.btColor
-                    }
-                }
-
-                onClicked: mouse => {
-                    // mouse.accepted = true;
-                    if (mouse.button === Qt.LeftButton) {
-                        NetworkState.netPopupVisible = !NetworkState.netPopupVisible;
-                    }
-                }
+            BtPopup {
+                host: root.host
             }
         }
     }
@@ -202,6 +140,6 @@ RowLayout {
     }
 
     QuickSettings {
-        host: barr
+        host: root.host
     }
 }
