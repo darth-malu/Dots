@@ -34,11 +34,11 @@ Loader {
 
         property string ipAddr: ""
 
-        readonly property bool wifiUp: Network.wifiConnected
-        readonly property bool ethUp: Network.ethernet?.hasLink ?? false
+        readonly property bool wifiUp: NetworkState.wifiConnected
+        readonly property bool ethUp: NetworkState.ethernet?.hasLink ?? false
         readonly property bool online: wifiUp || ethUp
-        readonly property string ssid: Network.activeNetwork?.ssid ?? ""
-        readonly property real signalStrength: Network.activeNetwork?.signalStrength ?? 0
+        readonly property string ssid: NetworkState.activeNetwork?.ssid ?? ""
+        readonly property real signalStrength: NetworkState.activeNetwork?.signalStrength ?? 0
 
         function fmtRate(v) {
             if (v <= 0)
@@ -166,16 +166,16 @@ Loader {
             spacing: 3
 
             SvgIcon {
-                icon: Network.wifiIcon
-                color: Network.wifiColor
+                icon: NetworkState.wifiIcon
+                color: NetworkState.wifiColor
                 width: 14
                 height: 14
                 Layout.alignment: Qt.AlignVCenter
             }
 
             SvgIcon {
-                icon: Network.ethIcon
-                color: Network.ethColor
+                icon: NetworkState.ethIcon
+                color: NetworkState.ethColor
                 width: 11
                 height: 11
                 Layout.alignment: Qt.AlignVCenter
@@ -185,112 +185,31 @@ Loader {
                 visible: NetworkState.netspeedVisible
                 spacing: 5
 
-                Item { Layout.preferredWidth: 4 }
+                Item {
+                    Layout.preferredWidth: 4
+                }
 
                 BarText {
                     text: root.rxRate === 0 ? "-" : root.fmtRate(root.rxRate)
                     color: "#89b4fa"
-                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                    font {
+                        pixelSize: 10
+                        family: "ZedMono Nerd Font"
+                    }
                 }
 
                 Rectangle {
-                    implicitWidth: 1; implicitHeight: 10
+                    implicitWidth: 1
+                    implicitHeight: 10
                     color: "#45475a"
                 }
 
                 BarText {
                     text: root.txRate === 0 ? "-" : root.fmtRate(root.txRate)
                     color: "#f5a0d6"
-                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                }
-            }
-        }
-
-        component InfoRow: RowLayout {
-            id: irow
-            property string label
-            property string value
-            property color valueColor: "#cdd6f4"
-
-            spacing: 8
-            Layout.fillWidth: true
-
-            Text {
-                text: irow.label
-                color: "#6c7086"
-                font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
-                Layout.preferredWidth: 56
-            }
-
-            Text {
-                text: irow.value
-                color: irow.valueColor
-                elide: Text.ElideRight
-                font { pixelSize: 11; family: "ZedMono Nerd Font" }
-                Layout.fillWidth: true
-            }
-        }
-
-        component SpeedBar: ColumnLayout {
-            id: sbar
-            property string label
-            property string glyph
-            property color accent
-            property real rate
-            property real peak
-
-            spacing: 4
-            Layout.fillWidth: true
-
-            RowLayout {
-                spacing: 6
-                Layout.fillWidth: true
-
-                Text {
-                    text: sbar.glyph
-                    color: sbar.accent
-                    font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
-                }
-
-                Text {
-                    text: sbar.label
-                    color: "#a6adc8"
-                    font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
-                }
-
-                Item { Layout.fillWidth: true }
-
-                Text {
-                    text: root.fmtRate(sbar.rate)
-                    color: sbar.accent
-                    font { pixelSize: 12; bold: true; family: "ZedMono Nerd Font" }
-                }
-
-                Text {
-                    text: sbar.rate >= 1000 ? "Gbps" : "Mbps"
-                    color: "#6c7086"
-                    font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                }
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: 4
-                radius: 2
-                color: "#313244"
-
-                Rectangle {
-                    anchors.left: parent.left
-                    anchors.top: parent.top
-                    anchors.bottom: parent.bottom
-                    radius: 2
-                    width: parent.width * Math.min(1, sbar.rate / Math.max(sbar.peak, sbar.rate))
-
-                    Behavior on width {
-                        NumberAnimation {
-                            duration: 250
-                            easing.type: Easing.OutQuad
-                        }
+                    font {
+                        pixelSize: 10
+                        family: "ZedMono Nerd Font"
                     }
                 }
             }
@@ -348,16 +267,25 @@ Loader {
                             Text {
                                 text: "\uf1eb"
                                 color: "#89b4fa"
-                                font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
+                                font {
+                                    pixelSize: 13
+                                    family: "Symbols Nerd Font Mono"
+                                }
                             }
 
                             Text {
-                                text: "Network"
+                                text: "NetworkState"
                                 color: "#cdd6f4"
-                                font { pixelSize: 12; bold: true; family: "Quicksand" }
+                                font {
+                                    pixelSize: 12
+                                    bold: true
+                                    family: "Quicksand"
+                                }
                             }
 
-                            Item { Layout.fillWidth: true }
+                            Item {
+                                Layout.fillWidth: true
+                            }
 
                             Rectangle {
                                 Layout.alignment: Qt.AlignVCenter
@@ -371,7 +299,12 @@ Loader {
                                     anchors.centerIn: parent
                                     text: root.online ? "connected" : "offline"
                                     color: root.online ? "#a6e3a1" : "#f38ba8"
-                                    font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                                    font {
+                                        pixelSize: 9
+                                        bold: true
+                                        family: "Quicksand"
+                                        letterSpacing: 1
+                                    }
                                 }
                             }
                         }
@@ -394,9 +327,9 @@ Loader {
                         }
 
                         InfoRow {
-                            visible: Network.adapter !== null
+                            visible: NetworkState.adapter !== null
                             label: "wifi"
-                            value: root.ssid.length > 0 ? root.ssid : (Network.wifiEnabled ? "not associated" : "disabled")
+                            value: root.ssid.length > 0 ? root.ssid : (NetworkState.wifiEnabled ? "not associated" : "disabled")
                             valueColor: root.wifiUp ? "#cdd6f4" : "#585b70"
                         }
 
@@ -405,9 +338,13 @@ Loader {
                             spacing: 8
                             Layout.fillWidth: true
 
-                            Item { Layout.preferredWidth: 56 }
+                            Item {
+                                Layout.preferredWidth: 56
+                            }
 
-                            Item { Layout.fillWidth: true }
+                            Item {
+                                Layout.fillWidth: true
+                            }
 
                             Row {
                                 spacing: 2
@@ -420,7 +357,7 @@ Loader {
                                         height: 4 + index * 2.5
                                         radius: 1
                                         anchors.bottom: parent.bottom
-                                        color: index < Math.round(root.signalStrength * 4) ? Network.wifiColor : "#45475a"
+                                        color: index < Math.round(root.signalStrength * 4) ? NetworkState.wifiColor : "#45475a"
                                     }
                                 }
                             }
@@ -428,12 +365,15 @@ Loader {
                             Text {
                                 text: Math.round(root.signalStrength * 100) + "%"
                                 color: "#a6adc8"
-                                font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                font {
+                                    pixelSize: 9
+                                    family: "ZedMono Nerd Font"
+                                }
                             }
                         }
 
                         InfoRow {
-                            visible: Network.ethernet !== null
+                            visible: NetworkState.ethernet !== null
                             label: "eth"
                             value: root.ethUp ? "linked" : "no link"
                             valueColor: root.ethUp ? "#94e2d5" : "#585b70"
@@ -460,6 +400,121 @@ Loader {
                             rate: root.online ? root.txRate : 0
                             peak: root.peakTx
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    component InfoRow: RowLayout {
+        id: irow
+        property string label
+        property string value
+        property color valueColor: "#cdd6f4"
+
+        spacing: 8
+        Layout.fillWidth: true
+
+        Text {
+            text: irow.label
+            color: "#6c7086"
+            font {
+                pixelSize: 9
+                bold: true
+                family: "Quicksand"
+                letterSpacing: 1
+            }
+            Layout.preferredWidth: 56
+        }
+
+        Text {
+            text: irow.value
+            color: irow.valueColor
+            elide: Text.ElideRight
+            font {
+                pixelSize: 11
+                family: "ZedMono Nerd Font"
+            }
+            Layout.fillWidth: true
+        }
+    }
+
+    component SpeedBar: ColumnLayout {
+        id: sbar
+        property string label
+        property string glyph
+        property color accent
+        property real rate
+        property real peak
+
+        spacing: 4
+        Layout.fillWidth: true
+
+        RowLayout {
+            spacing: 6
+            Layout.fillWidth: true
+
+            Text {
+                text: sbar.glyph
+                color: sbar.accent
+                font {
+                    pixelSize: 11
+                    family: "Symbols Nerd Font Mono"
+                }
+            }
+
+            Text {
+                text: sbar.label
+                color: "#a6adc8"
+                font {
+                    pixelSize: 9
+                    bold: true
+                    family: "Quicksand"
+                    letterSpacing: 1
+                }
+            }
+
+            Item {
+                Layout.fillWidth: true
+            }
+
+            Text {
+                text: root.fmtRate(sbar.rate)
+                color: sbar.accent
+                font {
+                    pixelSize: 12
+                    bold: true
+                    family: "ZedMono Nerd Font"
+                }
+            }
+
+            Text {
+                text: sbar.rate >= 1000 ? "Gbps" : "Mbps"
+                color: "#6c7086"
+                font {
+                    pixelSize: 9
+                    family: "ZedMono Nerd Font"
+                }
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 4
+            radius: 2
+            color: "#313244"
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                radius: 2
+                width: parent.width * Math.min(1, sbar.rate / Math.max(sbar.peak, sbar.rate))
+
+                Behavior on width {
+                    NumberAnimation {
+                        duration: 250
+                        easing.type: Easing.OutQuad
                     }
                 }
             }
