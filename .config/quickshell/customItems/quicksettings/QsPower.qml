@@ -47,7 +47,7 @@ Item {
         Text {
             Layout.alignment: Qt.AlignHCenter
             text: parent.parent.label
-            color: mouseArea.containsMouse ? parent.parent.color : "#585b70"
+            color: mouseArea.containsMouse ? parent.parent.color : "#6272a4"
             font {
                 pixelSize: 8
                 family: "Quicksand"

@@ -15,15 +15,15 @@ Scope {
 
     readonly property color volColor: {
         if (root.isMuted)
-            return "#585b70";
+            return "#6272a4";
         var v = ifAudioNode?.volume ?? 0;
         if (v > 0.8)
-            return "#f5a0d6";
+            return "#ff79c6";
         if (v > 0.5)
             return "#c6a0f6";
         if (v > 0.2)
-            return "#89b4fa";
-        return "#b4befe";
+            return "#bd93f9";
+        return "#bd93f9";
     }
 
     PwObjectTracker {

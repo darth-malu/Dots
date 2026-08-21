@@ -49,7 +49,7 @@ BarBlock {
         Text {
             anchors.centerIn: parent
             text: ""
-            color: "#cba6f7"
+            color: "#bd93f9"
             font {
                 pixelSize: 16
                 family: "Symbols Nerd Font Mono"
@@ -61,7 +61,7 @@ BarBlock {
         id: qsPopup
         visible: root.showQsPopup
         grabFocus: true
-        color: MiscState.popupSolidBg ? "#1e1e2e" : "transparent"
+        color: MiscState.popupSolidBg ? "#282a36" : "transparent"
 
         anchor.window: root.host
         anchor.rect.x: {
@@ -78,8 +78,8 @@ BarBlock {
             radius: 12
             layer.enabled: true
             layer.samples: 8
-            color: "#1e1e2e"
-            border.color: "#45475a"
+            color: "#282a36"
+            border.color: "#44475a"
 
             Shortcut {
                 sequence: "Escape"
@@ -132,7 +132,7 @@ BarBlock {
                                     Text {
                                         visible: false
                                         text: root.hostName
-                                        color: "#cdd6f4"
+                                        color: "#f8f8f2"
                                         font {
                                             pixelSize: 13
                                             family: "Quicksand"
@@ -154,7 +154,7 @@ BarBlock {
                                     Text {
                                         anchors.centerIn: parent
                                         text: CaffeineService.enabled ? "" : "󰾪"
-                                        color: CaffeineService.enabled ? "#fab387" : "#585b70"
+                                        color: CaffeineService.enabled ? "#ffb86c" : "#6272a4"
                                         font {
                                             pixelSize: 16
                                             family: "Symbols Nerd Font Mono"
@@ -205,7 +205,7 @@ BarBlock {
                                     Text {
                                         anchors.centerIn: parent
                                         text: ""
-                                        color: "#89b4fa"
+                                        color: "#bd93f9"
                                         font {
                                             pixelSize: 16
                                             family: "Symbols Nerd Font Mono"
@@ -233,7 +233,7 @@ BarBlock {
                                     Text {
                                         anchors.centerIn: parent
                                         text: ""
-                                        color: root.showPowerPopup ? "#f38ba8" : "#585b70"
+                                        color: root.showPowerPopup ? "#ff5555" : "#6272a4"
                                         font {
                                             pixelSize: 16
                                             family: "Symbols Nerd Font Mono"
@@ -265,39 +265,39 @@ BarBlock {
 
                                 QsPower {
                                     icon: ""
-                                    color: "#89b4fa"
+                                    color: "#bd93f9"
                                     label: "Lock"
                                     cmd: "hyprlock"
                                 }
                                 QsPower {
                                     icon: "󱫭"
-                                    color: "#a6e3a1"
+                                    color: "#50fa7b"
                                     label: "R-Timer"
                                     cmd: "notify-send 'future suspend'"
                                 }
                                 QsPower {
                                     icon: ""
-                                    // color: "#f9e2af"
-                                    color: "#a6e3a1"
+                                    // color: "#f1fa8c"
+                                    color: "#50fa7b"
                                     label: "Reboot"
                                     cmd: "systemctl reboot"
                                 }
                                 QsPower {
                                     icon: "󱫖"
-                                    color: "#f38ba8"
-                                    // color: "#f5c2e7"
+                                    color: "#ff5555"
+                                    // color: "#ff79c6"
                                     label: "S-Timer"
                                     cmd: "notify-send 'future shutdown'"
                                 }
                                 QsPower {
                                     icon: ""
-                                    color: "#f38ba8"
+                                    color: "#ff5555"
                                     label: "Off"
                                     cmd: "systemctl poweroff"
                                 }
                                 QsPower {
                                     icon: ""
-                                    color: "#cba6f7"
+                                    color: "#bd93f9"
                                     label: "Exit"
                                     cmd: "loginctl terminate-user $USER"
                                 }
@@ -314,7 +314,7 @@ BarBlock {
                             color: {
                                 if (MprisState.player?.trackArtUrl)
                                     return Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.12);
-                                return "#181825";
+                                return "#21222c";
                             }
                             implicitHeight: root.compactNowPlaying ? 82 : 260
                             Behavior on implicitHeight {
@@ -324,7 +324,7 @@ BarBlock {
                                 }
                             }
 
-                            property color dominantColor: "#cba6f7"
+                            property color dominantColor: "#bd93f9"
                             border {
                                 width: 1
                                 color: Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.35)
@@ -361,7 +361,7 @@ BarBlock {
                                         if (status === Image.Ready)
                                             colorSampler.requestPaint();
                                         else if (status === Image.Null || status === Image.Error)
-                                            nowPlayingCard.dominantColor = "#cba6f7";
+                                            nowPlayingCard.dominantColor = "#bd93f9";
                                     }
                                 }
 
@@ -419,7 +419,7 @@ BarBlock {
                                 // TODO: have trackbutton here
                                 TrackButton {
                                     text: "+"
-                                    // accentColor: "#585b70"
+                                    // accentColor: "#6272a4"
                                     accentColor: nowPlayingCard.color
                                     onClicked: root.compactNowPlaying = false
                                     // Layout.rightMargin: 4
@@ -441,7 +441,7 @@ BarBlock {
                                         Layout.fillHeight: true
                                         Layout.minimumWidth: height
                                         // radius: 2
-                                        color: compactArtImage.status === Image.Ready ? Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.15) : "#313244"
+                                        color: compactArtImage.status === Image.Ready ? Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.15) : "#343746"
 
                                         border {
                                             width: compactArtImage.status === Image.Ready ? 1 : 0
@@ -461,7 +461,7 @@ BarBlock {
                                         Text {
                                             anchors.centerIn: parent
                                             text: ""
-                                            color: "#585b70"
+                                            color: "#6272a4"
                                             font {
                                                 pixelSize: 24
                                                 family: "Symbols Nerd Font Mono"
@@ -504,7 +504,7 @@ BarBlock {
                                                 Text {
                                                     Layout.fillWidth: true
                                                     text: MprisState.player?.trackTitle || "No track"
-                                                    color: "#cdd6f4"
+                                                    color: "#f8f8f2"
                                                     font {
                                                         pixelSize: 11
                                                         bold: true
@@ -517,7 +517,7 @@ BarBlock {
                                                 Text {
                                                     Layout.fillWidth: true
                                                     text: MprisState.player?.trackArtist || ""
-                                                    color: "#a6adc8"
+                                                    color: "#b8bfcb"
                                                     font {
                                                         pixelSize: 9
                                                         // family: "ZedMono Nerd Font"
@@ -632,7 +632,7 @@ BarBlock {
                                     color: {
                                         if (MprisState.player?.trackArtUrl)
                                             return Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.12);
-                                        return "#181825";
+                                        return "#21222c";
                                     }
 
                                     Image {
@@ -647,7 +647,7 @@ BarBlock {
                                     Text {
                                         anchors.centerIn: parent
                                         text: ""
-                                        color: "#585b70"
+                                        color: "#6272a4"
                                         font {
                                             pixelSize: 56
                                             family: "Symbols Nerd Font Mono"
@@ -693,11 +693,11 @@ BarBlock {
                                                     implicitWidth: 5
                                                     implicitHeight: 5
                                                     radius: 2.5
-                                                    color: MprisState.player?.isPlaying ? "#88FF00" : "#585b70"
+                                                    color: MprisState.player?.isPlaying ? "#88FF00" : "#6272a4"
                                                 }
                                                 Text {
                                                     text: MprisState.player?.identity || ""
-                                                    color: "#cdd6f4"
+                                                    color: "#f8f8f2"
                                                     font {
                                                         pixelSize: 7
                                                         family: "FantasqueSansM Nerd Font"
@@ -717,7 +717,7 @@ BarBlock {
                                         Text {
                                             visible: MiscState.showPlayerChooser
                                             text: Mpris.players.length + " player(s)"
-                                            color: "#585b70"
+                                            color: "#6272a4"
                                             font {
                                                 pixelSize: 7
                                                 family: "ZedMono Nerd Font"
@@ -831,7 +831,7 @@ BarBlock {
                                             text: ""
                                             visible: MiscState.showShuffle
                                             active: MprisState.player?.shuffle ?? false
-                                            accentColor: MprisState.player?.shuffle ? "#f9e2af" : Qt.rgba(1, 1, 1, 0.6)
+                                            accentColor: MprisState.player?.shuffle ? "#f1fa8c" : Qt.rgba(1, 1, 1, 0.6)
                                             onClicked: {
                                                 var p = MprisState.player;
                                                 if (p?.canControl && p?.shuffleSupported)
@@ -857,7 +857,7 @@ BarBlock {
                                             text: ""
                                             visible: MiscState.showLoop
                                             active: MprisState.player?.loopState !== MprisLoopState.None
-                                            accentColor: MprisState.player?.loopState === MprisLoopState.Track ? "#f9e2af" : MprisState.player?.loopState === MprisLoopState.Playlist ? "#89b4fa" : Qt.rgba(1, 1, 1, 0.6)
+                                            accentColor: MprisState.player?.loopState === MprisLoopState.Track ? "#f1fa8c" : MprisState.player?.loopState === MprisLoopState.Playlist ? "#bd93f9" : Qt.rgba(1, 1, 1, 0.6)
                                             onClicked: {
                                                 var p = MprisState.player;
                                                 if (!p?.canControl || !p?.loopSupported)
@@ -926,6 +926,50 @@ BarBlock {
                                         nowPlayingCard.showVolumeBadge = true;
                                         volumeBadgeTimer.restart();
                                     }
+                                }
+                            }
+                        }
+
+                        // ═══ VOLUME ═══
+                        ClippingRectangle {
+                            Layout.fillWidth: true
+                            Layout.bottomMargin: 6
+                            radius: 10
+                            color: "#21222c"
+                            border.width: 1
+                            border.color: Qt.rgba(0.74, 0.58, 0.98, 0.25)
+                            implicitHeight: volumeCol.implicitHeight + 20
+
+                            ColumnLayout {
+                                id: volumeCol
+                                anchors.fill: parent
+                                anchors.margins: 10
+                                spacing: 8
+
+                                SectionHeader {
+                                    icon: "\uf028"
+                                    text: "output"
+                                    color: "#bd93f9"
+                                }
+
+                                VolumeSlider {
+                                    node: PipewireState.outputSink
+                                    glyph: "\uf028"
+                                    glyphMuted: "\uf026"
+                                    accent: "#bd93f9"
+                                }
+
+                                SectionHeader {
+                                    icon: "\uf130"
+                                    text: "input"
+                                    color: "#8be9fd"
+                                }
+
+                                VolumeSlider {
+                                    node: PipewireState.inputSink
+                                    glyph: "\uf130"
+                                    glyphMuted: "\uf131"
+                                    accent: "#8be9fd"
                                 }
                             }
                         }

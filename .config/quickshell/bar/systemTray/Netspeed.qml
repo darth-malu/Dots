@@ -20,7 +20,7 @@ Loader {
         implicitWidth: content.implicitWidth
         implicitHeight: content.implicitHeight
 
-        color: 'transparent'
+        color: NetworkState.netspeedVisible ? Qt.rgba(0.74, 0.58, 0.98, 0.15) : "transparent"
 
         property int refreshInterval: 1000
         property string iface
@@ -32,13 +32,24 @@ Loader {
         property real peakRx: 1
         property real peakTx: 1
 
+        readonly property int historyMax: 60
+        property var rxHistory: []
+        property var txHistory: []
+        property int graphTick: 0
+
         property string ipAddr: ""
+        property string gateway: ""
 
         readonly property bool wifiUp: NetworkState.wifiConnected
         readonly property bool ethUp: NetworkState.ethernet?.hasLink ?? false
         readonly property bool online: wifiUp || ethUp
-        readonly property string ssid: NetworkState.activeNetwork?.ssid ?? ""
-        readonly property real signalStrength: NetworkState.activeNetwork?.signalStrength ?? 0
+
+        readonly property string ethIfName: NetworkState.ethernet?.name ?? ""
+        property real ethRxTotal: 0
+        property real ethTxTotal: 0
+
+        readonly property real totalDown: ethRxTotal
+        readonly property real totalUp: ethTxTotal
 
         function fmtRate(v) {
             if (v <= 0)
@@ -52,11 +63,37 @@ Loader {
             return Math.round(v).toString();
         }
 
+        function fmtBytes(b) {
+            if (!(b > 0))
+                return "0 B";
+            const units = ["B", "KB", "MB", "GB", "TB"];
+            let i = 0;
+            let v = b;
+            while (v >= 1024 && i < units.length - 1) {
+                v /= 1024;
+                i++;
+            }
+            return (i === 0 ? Math.round(v) : v.toFixed(2)) + " " + units[i];
+        }
+
         function resetRates() {
             rxPrev = 0;
             txPrev = 0;
             rxRate = 0;
             txRate = 0;
+            rxHistory = [];
+            txHistory = [];
+            graphTick++;
+        }
+
+        function pushSample(rx, tx) {
+            rxHistory.push(rx);
+            txHistory.push(tx);
+            if (rxHistory.length > historyMax)
+                rxHistory.shift();
+            if (txHistory.length > historyMax)
+                txHistory.shift();
+            graphTick++;
         }
 
         Connections {
@@ -82,8 +119,12 @@ Loader {
                     if (data.startsWith("default via")) {
                         let line = data.split(/\s/);
                         let devIndex = line.indexOf("dev");
-                        if (devIndex !== -1)
-                            root.iface = line[devIndex + 1];
+                        let viaIndex = line.indexOf("via");
+                        if (devIndex === -1)
+                            return;
+                        root.iface = line[devIndex + 1];
+                        if (root.ethIfName.length > 0 && line[devIndex + 1] === root.ethIfName)
+                            root.gateway = viaIndex !== -1 ? line[viaIndex + 1] : "";
                     }
                 }
             }
@@ -97,6 +138,7 @@ Loader {
             stdout: SplitParser {
                 onRead: data => {
                     data = data.trim();
+
                     if (data.startsWith(root.iface + ":")) {
                         const parts = data.split(/\s+/);
 
@@ -108,10 +150,17 @@ Loader {
                             root.txRate = ((tx - root.txPrev) * 8) / 1000000;
                             root.peakRx = Math.max(root.peakRx * 0.995, root.rxRate, 1);
                             root.peakTx = Math.max(root.peakTx * 0.995, root.txRate, 1);
+                            root.pushSample(root.rxRate, root.txRate);
                         }
 
                         root.rxPrev = rx;
                         root.txPrev = tx;
+                    }
+
+                    if (root.ethIfName.length > 0 && data.startsWith(root.ethIfName + ":")) {
+                        const parts = data.split(/\s+/);
+                        root.ethRxTotal = parseInt(parts[1]);
+                        root.ethTxTotal = parseInt(parts[9]);
                     }
                 }
             }
@@ -119,20 +168,23 @@ Loader {
 
         Process {
             id: addrProc
-            command: ["sh", "-c", "ip -4 -o addr show scope global"]
+            command: ["sh", "-c", "ip -o addr show scope global"]
             running: false
 
             stdout: SplitParser {
                 onRead: data => {
                     const parts = data.trim().split(/\s+/);
-                    if (parts[1] === root.iface)
+                    if (parts[1] !== root.ethIfName)
+                        return;
+                    if (parts[2] === "inet")
                         root.ipAddr = parts[3].split("/")[0];
                 }
             }
         }
 
-        onIfaceChanged: {
+        onEthIfNameChanged: {
             ipAddr = "";
+            gateway = "";
             addrProc.running = true;
         }
 
@@ -155,17 +207,39 @@ Loader {
             onTriggered: addrProc.running = true
         }
 
-        onClicked: mouse => {
-            if (mouse.button === Qt.LeftButton)
-                NetworkState.netPopupVisible = !NetworkState.netPopupVisible;
+        onRightClicked: NetworkState.netspeedVisible = !NetworkState.netspeedVisible
+
+        MouseArea {
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            x: {
+                root.width;
+                NetworkState.netspeedVisible;
+                return wifiIco.mapToItem(root, 0, 0).x - 4;
+            }
+            width: 22
+            cursorShape: Qt.PointingHandCursor
+            onClicked: NetworkState.wifiPopupVisible = !NetworkState.wifiPopupVisible
         }
 
-        onRightClicked: NetworkState.netspeedVisible = !NetworkState.netspeedVisible
+        MouseArea {
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            x: {
+                root.width;
+                NetworkState.netspeedVisible;
+                return ethIco.mapToItem(root, 0, 0).x - 5;
+            }
+            width: 21
+            cursorShape: Qt.PointingHandCursor
+            onClicked: NetworkState.netPopupVisible = !NetworkState.netPopupVisible
+        }
 
         content: RowLayout {
             spacing: 3
 
             SvgIcon {
+                id: wifiIco
                 icon: NetworkState.wifiIcon
                 color: NetworkState.wifiColor
                 width: 14
@@ -174,6 +248,7 @@ Loader {
             }
 
             SvgIcon {
+                id: ethIco
                 icon: NetworkState.ethIcon
                 color: NetworkState.ethColor
                 width: 11
@@ -191,7 +266,7 @@ Loader {
 
                 BarText {
                     text: root.rxRate === 0 ? "-" : root.fmtRate(root.rxRate)
-                    color: "#89b4fa"
+                    color: "#bd93f9"
                     font {
                         pixelSize: 10
                         family: "ZedMono Nerd Font"
@@ -199,14 +274,15 @@ Loader {
                 }
 
                 Rectangle {
+                    visible: false
                     implicitWidth: 1
                     implicitHeight: 10
-                    color: "#45475a"
+                    color: "#44475a"
                 }
 
                 BarText {
                     text: root.txRate === 0 ? "-" : root.fmtRate(root.txRate)
-                    color: "#f5a0d6"
+                    color: "#ff79c6"
                     font {
                         pixelSize: 10
                         family: "ZedMono Nerd Font"
@@ -216,7 +292,7 @@ Loader {
         }
 
         LazyLoader {
-            loading: NetworkState.netPopupVisible
+            loading: true
 
             PopupWindow {
                 id: netPopup
@@ -232,16 +308,16 @@ Loader {
 
                 anchor.rect.y: 33
 
-                implicitWidth: 256
+                implicitWidth: 268
                 implicitHeight: card.implicitHeight + 28
 
                 Rectangle {
                     id: cardBg
                     anchors.fill: parent
                     radius: 12
-                    color: "#1e1e2e"
+                    color: "#282a36"
                     border.width: 1
-                    border.color: Qt.rgba(0.80, 0.65, 0.97, 0.3)
+                    border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
 
                     Shortcut {
                         sequence: "Escape"
@@ -265,8 +341,8 @@ Loader {
                             spacing: 6
 
                             Text {
-                                text: "\uf1eb"
-                                color: "#89b4fa"
+                                text: "\uf6ff"
+                                color: "#bd93f9"
                                 font {
                                     pixelSize: 13
                                     family: "Symbols Nerd Font Mono"
@@ -274,8 +350,8 @@ Loader {
                             }
 
                             Text {
-                                text: "NetworkState"
-                                color: "#cdd6f4"
+                                text: "Network"
+                                color: "#f8f8f2"
                                 font {
                                     pixelSize: 12
                                     bold: true
@@ -292,13 +368,13 @@ Loader {
                                 implicitWidth: pillText.implicitWidth + 16
                                 implicitHeight: 18
                                 radius: 9
-                                color: root.online ? Qt.rgba(166 / 255, 227 / 255, 161 / 255, 0.14) : Qt.rgba(243 / 255, 139 / 255, 168 / 255, 0.14)
+                                color: root.ethUp ? Qt.rgba(80 / 255, 250 / 255, 123 / 255, 0.14) : Qt.rgba(255 / 255, 85 / 255, 85 / 255, 0.14)
 
                                 Text {
                                     id: pillText
                                     anchors.centerIn: parent
-                                    text: root.online ? "connected" : "offline"
-                                    color: root.online ? "#a6e3a1" : "#f38ba8"
+                                    text: root.ethUp ? "connected" : "no link"
+                                    color: root.ethUp ? "#50fa7b" : "#ff5555"
                                     font {
                                         pixelSize: 9
                                         bold: true
@@ -312,97 +388,77 @@ Loader {
                         Rectangle {
                             Layout.fillWidth: true
                             implicitHeight: 1
-                            color: "#313244"
+                            color: "#343746"
                         }
 
                         InfoRow {
                             label: "iface"
-                            value: root.iface.length > 0 ? root.iface : "-"
+                            value: root.ethIfName.length > 0 ? root.ethIfName : "-"
                         }
 
                         InfoRow {
                             label: "ipv4"
                             value: root.ipAddr.length > 0 ? root.ipAddr : "unavailable"
-                            valueColor: root.ipAddr.length > 0 ? "#cdd6f4" : "#585b70"
+                            valueColor: root.ipAddr.length > 0 ? "#f8f8f2" : "#6272a4"
                         }
 
                         InfoRow {
-                            visible: NetworkState.adapter !== null
-                            label: "wifi"
-                            value: root.ssid.length > 0 ? root.ssid : (NetworkState.wifiEnabled ? "not associated" : "disabled")
-                            valueColor: root.wifiUp ? "#cdd6f4" : "#585b70"
-                        }
-
-                        RowLayout {
-                            visible: root.wifiUp
-                            spacing: 8
-                            Layout.fillWidth: true
-
-                            Item {
-                                Layout.preferredWidth: 56
-                            }
-
-                            Item {
-                                Layout.fillWidth: true
-                            }
-
-                            Row {
-                                spacing: 2
-                                Repeater {
-                                    model: 4
-
-                                    Rectangle {
-                                        required property int index
-                                        width: 3
-                                        height: 4 + index * 2.5
-                                        radius: 1
-                                        anchors.bottom: parent.bottom
-                                        color: index < Math.round(root.signalStrength * 4) ? NetworkState.wifiColor : "#45475a"
-                                    }
-                                }
-                            }
-
-                            Text {
-                                text: Math.round(root.signalStrength * 100) + "%"
-                                color: "#a6adc8"
-                                font {
-                                    pixelSize: 9
-                                    family: "ZedMono Nerd Font"
-                                }
-                            }
+                            label: "gateway"
+                            value: root.gateway.length > 0 ? root.gateway : "-"
                         }
 
                         InfoRow {
                             visible: NetworkState.ethernet !== null
                             label: "eth"
-                            value: root.ethUp ? "linked" : "no link"
-                            valueColor: root.ethUp ? "#94e2d5" : "#585b70"
+                            value: root.ethUp ? (NetworkState.ethernet?.linkSpeed ? "linked · " + NetworkState.ethernet.linkSpeed + " Mb/s" : "linked") : "no link"
+                            valueColor: root.ethUp ? "#8be9fd" : "#6272a4"
                         }
 
                         Rectangle {
                             Layout.fillWidth: true
                             implicitHeight: 1
-                            color: "#313244"
+                            color: "#343746"
+                        }
+
+                        InfoRow {
+                            label: "total ↓"
+                            value: root.fmtBytes(root.totalDown)
+                            valueColor: "#bd93f9"
+                        }
+
+                        InfoRow {
+                            label: "total ↑"
+                            value: root.fmtBytes(root.totalUp)
+                            valueColor: "#ff79c6"
                         }
 
                         SpeedBar {
                             label: "download"
                             glyph: "\uf063"
-                            accent: "#89b4fa"
+                            accent: "#bd93f9"
                             rate: root.online ? root.rxRate : 0
                             peak: root.peakRx
+                            history: root.rxHistory
+                            tick: root.graphTick
                         }
 
                         SpeedBar {
                             label: "upload"
                             glyph: "\uf062"
-                            accent: "#f5a0d6"
+                            accent: "#ff79c6"
                             rate: root.online ? root.txRate : 0
                             peak: root.peakTx
+                            history: root.txHistory
+                            tick: root.graphTick
                         }
                     }
                 }
             }
+        }
+
+        WifiPopup {
+            host: loaderBig.host
+            anchorItem: root
         }
     }
 
@@ -410,14 +466,14 @@ Loader {
         id: irow
         property string label
         property string value
-        property color valueColor: "#cdd6f4"
+        property color valueColor: "#f8f8f2"
 
         spacing: 8
         Layout.fillWidth: true
 
         Text {
             text: irow.label
-            color: "#6c7086"
+            color: "#6272a4"
             font {
                 pixelSize: 9
                 bold: true
@@ -439,6 +495,73 @@ Loader {
         }
     }
 
+    component RateGraph: Item {
+        id: graph
+
+        property var history
+        property real peak: 1
+        property color accent: "#bd93f9"
+        property int tick
+
+        Layout.fillWidth: true
+        implicitHeight: 38
+        clip: true
+
+        onTickChanged: paintCanvas.requestPaint()
+        onWidthChanged: paintCanvas.requestPaint()
+
+        Canvas {
+            id: paintCanvas
+            anchors.fill: parent
+            antialiasing: true
+            renderStrategy: Canvas.Immediate
+
+            onPaint: {
+                const ctx = getContext("2d");
+                ctx.clearRect(0, 0, width, height);
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = Qt.rgba(1, 1, 1, 0.06);
+                for (let i = 1; i <= 3; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, Math.round(height * i / 4));
+                    ctx.lineTo(width, Math.round(height * i / 4));
+                    ctx.stroke();
+                }
+                const h = graph.history ?? [];
+                if (h.length < 2)
+                    return;
+                const stepX = width / (root.historyMax - 1);
+                const baseY = height;
+                const scale = Math.max(graph.peak, 0.001);
+                const yAt = i => height - Math.min(1, h[i] / scale) * (height - 2) - 1;
+
+                ctx.beginPath();
+                ctx.moveTo(0, baseY);
+                for (let i = 0; i < h.length; i++)
+                    ctx.lineTo(i * stepX, yAt(i));
+                ctx.lineTo((h.length - 1) * stepX, baseY);
+                ctx.closePath();
+
+                const grad = ctx.createLinearGradient(0, 0, 0, height);
+                grad.addColorStop(0, Qt.rgba(graph.accent.r, graph.accent.g, graph.accent.b, 0.32));
+                grad.addColorStop(1, Qt.rgba(graph.accent.r, graph.accent.g, graph.accent.b, 0.02));
+                ctx.fillStyle = grad;
+                ctx.fill();
+
+                ctx.beginPath();
+                for (let i = 0; i < h.length; i++) {
+                    if (i === 0)
+                        ctx.moveTo(0, yAt(i));
+                    else
+                        ctx.lineTo(i * stepX, yAt(i));
+                }
+                ctx.strokeStyle = graph.accent;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+        }
+    }
+
     component SpeedBar: ColumnLayout {
         id: sbar
         property string label
@@ -446,8 +569,10 @@ Loader {
         property color accent
         property real rate
         property real peak
+        property var history
+        property int tick
 
-        spacing: 4
+        spacing: 5
         Layout.fillWidth: true
 
         RowLayout {
@@ -465,7 +590,7 @@ Loader {
 
             Text {
                 text: sbar.label
-                color: "#a6adc8"
+                color: "#b8bfcb"
                 font {
                     pixelSize: 9
                     bold: true
@@ -490,7 +615,7 @@ Loader {
 
             Text {
                 text: sbar.rate >= 1000 ? "Gbps" : "Mbps"
-                color: "#6c7086"
+                color: "#6272a4"
                 font {
                     pixelSize: 9
                     family: "ZedMono Nerd Font"
@@ -498,26 +623,11 @@ Loader {
             }
         }
 
-        Rectangle {
-            Layout.fillWidth: true
-            implicitHeight: 4
-            radius: 2
-            color: "#313244"
-
-            Rectangle {
-                anchors.left: parent.left
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                radius: 2
-                width: parent.width * Math.min(1, sbar.rate / Math.max(sbar.peak, sbar.rate))
-
-                Behavior on width {
-                    NumberAnimation {
-                        duration: 250
-                        easing.type: Easing.OutQuad
-                    }
-                }
-            }
+        RateGraph {
+            history: sbar.history
+            peak: sbar.peak
+            accent: sbar.accent
+            tick: sbar.tick
         }
     }
 }

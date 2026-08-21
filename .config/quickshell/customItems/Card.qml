@@ -6,10 +6,10 @@ Rectangle {
 
     property string title
     property string icon
-    property color accent: "#cdd6f4"
+    property color accent: "#f8f8f2"
     property int cardRadius: 10
     property int cardPadding: 10
-    property color cardColor: "#181825"
+    property color cardColor: "#21222c"
     property real cardSpacing: 6
 
     Layout.fillWidth: true

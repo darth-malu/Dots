@@ -14,7 +14,7 @@ RowLayout {
 
     Text {
         text: "\uf185"
-        color: "#f9e2af"
+        color: "#f1fa8c"
         font {
             pixelSize: 14
             family: "Symbols Nerd Font Mono"
@@ -23,7 +23,7 @@ RowLayout {
 
     Text {
         text: Math.round(root.brightness) + "%"
-        color: "#cdd6f4"
+        color: "#f8f8f2"
         font {
             pixelSize: 10
             family: "ZedMono Nerd Font"
@@ -41,13 +41,13 @@ RowLayout {
             width: parent.width
             height: 5
             radius: 2.5
-            color: "#313244"
+            color: "#343746"
 
             Rectangle {
                 width: parent.width * Math.min(root.brightness / 100, 1)
                 height: parent.height
                 radius: 2.5
-                color: "#f9e2af"
+                color: "#f1fa8c"
 
                 Behavior on width {
                     NumberAnimation {

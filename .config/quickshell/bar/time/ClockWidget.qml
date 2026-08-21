@@ -62,7 +62,7 @@ BarBlock {
             id: popup
             visible: MiscState.showPopup
             grabFocus: true
-            color: MiscState.popupSolidBg ? "#1e1e2e" : "transparent"
+            color: MiscState.popupSolidBg ? "#282a36" : "transparent"
 
             anchor.window: root.host
             anchor.rect.x: {
@@ -85,8 +85,8 @@ BarBlock {
                 radius: 10
                 anchors.fill: parent
                 border.width: 1
-                border.color: Qt.rgba(0.80, 0.65, 0.97, 0.3)
-                color: "#1e1e2e"
+                border.color: Qt.rgba(0.74, 0.58, 0.98, 0.35)
+                color: "#282a36"
 
                 Shortcut {
                     sequence: "Escape"

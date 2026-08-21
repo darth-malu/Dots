@@ -62,7 +62,7 @@ ShellRoot {
                         }
                         GradientStop {
                             position: 0.5
-                            color: Qt.rgba(203 / 255, 166 / 255, 247 / 255, 0.35)
+                            color: Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.35)
                         }
                         GradientStop {
                             position: 1.0

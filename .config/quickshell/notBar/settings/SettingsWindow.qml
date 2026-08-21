@@ -166,8 +166,8 @@ Item {
                 anchors.centerIn: parent
 
                 radius: 16
-                color: "#1e1e2e"
-                border.color: "#45475a"
+                color: "#282a36"
+                border.color: "#44475a"
 
                 MouseArea {
                     anchors.fill: parent
@@ -183,7 +183,7 @@ Item {
                         Layout.preferredWidth: 200
                         Layout.fillHeight: true
                         radius: 16
-                        color: "#181825"
+                        color: "#21222c"
 
                         ColumnLayout {
                             anchors {
@@ -198,7 +198,7 @@ Item {
                                 Layout.leftMargin: 12
                                 Layout.bottomMargin: 12
                                 text: "Settings"
-                                color: "#cdd6f4"
+                                color: "#f8f8f2"
                                 font {
                                     pixelSize: 16
                                     bold: true
@@ -224,7 +224,7 @@ Item {
                                         implicitWidth: 44
                                         implicitHeight: 44
                                         radius: 22
-                                        color: "#313244"
+                                        color: "#343746"
 
                                         Image {
                                             id: avatarImg
@@ -238,7 +238,7 @@ Item {
                                         Text {
                                             anchors.centerIn: parent
                                             text: ""
-                                            color: "#585b70"
+                                            color: "#6272a4"
                                             font { pixelSize: 20; family: "Symbols Nerd Font Mono" }
                                             visible: avatarImg.status !== Image.Ready
                                         }
@@ -256,7 +256,7 @@ Item {
 
                                         Text {
                                             text: root.hostName
-                                            color: "#cdd6f4"
+                                            color: "#f8f8f2"
                                             font { pixelSize: 12; family: "Quicksand"; bold: true }
                                             elide: Text.ElideRight
                                             Layout.fillWidth: true
@@ -266,7 +266,7 @@ Item {
                                             text: root.ipAddr.length > 0
                                                 ? root.ipAddr
                                                 : (root.isOnline ? "Connected" : "Offline")
-                                            color: root.isOnline ? "#a6e3a1" : "#f38ba8"
+                                            color: root.isOnline ? "#50fa7b" : "#ff5555"
                                             font { pixelSize: 10; family: "ZedMono Nerd Font" }
                                             elide: Text.ElideRight
                                             Layout.fillWidth: true
@@ -309,7 +309,7 @@ Item {
 
                                         Text {
                                             text: modelData.icon
-                                            color: root.currentCategory === index ? "#89b4fa" : "#585b70"
+                                            color: root.currentCategory === index ? "#bd93f9" : "#6272a4"
                                             font {
                                                 pixelSize: 14
                                                 family: "Symbols Nerd Font Mono"
@@ -318,7 +318,7 @@ Item {
 
                                         Text {
                                             text: modelData.label
-                                            color: root.currentCategory === index ? "#cdd6f4" : "#a6adc8"
+                                            color: root.currentCategory === index ? "#f8f8f2" : "#b8bfcb"
                                             font {
                                                 pixelSize: 12
                                                 family: "Quicksand"
@@ -342,7 +342,7 @@ Item {
                                 Layout.leftMargin: 12
                                 Layout.rightMargin: 12
                                 height: 1
-                                color: "#313244"
+                                color: "#343746"
                                 Layout.bottomMargin: 8
                             }
 
@@ -364,7 +364,7 @@ Item {
 
                                     Text {
                                         text: ""
-                                        color: "#f38ba8"
+                                        color: "#ff5555"
                                         font {
                                             pixelSize: 14
                                             family: "Symbols Nerd Font Mono"
@@ -373,7 +373,7 @@ Item {
 
                                     Text {
                                         text: "Close"
-                                        color: "#f38ba8"
+                                        color: "#ff5555"
                                         font {
                                             pixelSize: 12
                                             family: "Quicksand"
@@ -431,7 +431,7 @@ Item {
 
                 Text {
                     text: "General"
-                    color: "#cdd6f4"
+                    color: "#f8f8f2"
                     font {
                         pixelSize: 20
                         bold: true
@@ -441,7 +441,7 @@ Item {
 
                 Text {
                     text: "General system preferences and information."
-                    color: "#a6adc8"
+                    color: "#b8bfcb"
                     font {
                         pixelSize: 11
                         family: "ZedMono Nerd Font"
@@ -452,7 +452,7 @@ Item {
                 Card {
                     title: "System"
                     icon: ""
-                    accent: "#89b4fa"
+                    accent: "#bd93f9"
 
                     ColumnLayout {
                         spacing: 10
@@ -460,12 +460,12 @@ Item {
 
                         Text {
                             text: "Hostname"
-                            color: "#585b70"
+                            color: "#6272a4"
                             font { pixelSize: 9; family: "ZedMono Nerd Font"; bold: true }
                         }
                         Text {
                             text: root.hostName
-                            color: "#cdd6f4"
+                            color: "#f8f8f2"
                             font { pixelSize: 13; family: "Quicksand" }
                         }
                     }
@@ -474,7 +474,7 @@ Item {
                 Card {
                     title: "MPRIS"
                     icon: ""
-                    accent: "#cba6f7"
+                    accent: "#bd93f9"
 
                     ColumnLayout {
                         spacing: 0
@@ -487,7 +487,7 @@ Item {
 
                             Text {
                                 text: ""
-                                color: "#cba6f7"
+                                color: "#bd93f9"
                                 font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
                                 Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
                             }
@@ -498,13 +498,13 @@ Item {
 
                                 Text {
                                     text: "Progress Ring"
-                                    color: "#cdd6f4"
+                                    color: "#f8f8f2"
                                     font { pixelSize: 12; family: "Quicksand"; bold: true }
                                 }
 
                                 Text {
                                     text: "Visible on pill"
-                                    color: "#585b70"
+                                    color: "#6272a4"
                                     font { pixelSize: 10; family: "ZedMono Nerd Font" }
                                 }
                             }
@@ -514,12 +514,12 @@ Item {
                             Rectangle {
                                 Layout.alignment: Qt.AlignVCenter
                                 implicitWidth: 36; implicitHeight: 20; radius: 10
-                                color: MprisState.showMprisProgress ? "#89b4fa" : "#45475a"
+                                color: MprisState.showMprisProgress ? "#bd93f9" : "#44475a"
                                 Behavior on color { ColorAnimation { duration: 120 } }
 
                                 Rectangle {
                                     width: 16; height: 16; radius: 8
-                                    color: "#1e1e2e"
+                                    color: "#282a36"
                                     x: MprisState.showMprisProgress ? parent.width - width - 2 : 2
                                     y: (parent.height - height) / 2
                                     Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
@@ -533,7 +533,7 @@ Item {
                         }
 
                         // Separator
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#313244"; Layout.leftMargin: 28 }
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 28 }
 
                         RowLayout {
                             spacing: 10
@@ -542,7 +542,7 @@ Item {
 
                             Text {
                                 text: ""
-                                color: "#cba6f7"
+                                color: "#bd93f9"
                                 font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
                                 Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
                             }
@@ -553,13 +553,13 @@ Item {
 
                                 Text {
                                     text: "Hide when idle"
-                                    color: "#cdd6f4"
+                                    color: "#f8f8f2"
                                     font { pixelSize: 12; family: "Quicksand"; bold: true }
                                 }
 
                                 Text {
                                     text: MprisState.hideWhenIdle ? "Pill hides when paused" : "Always show pill"
-                                    color: "#585b70"
+                                    color: "#6272a4"
                                     font { pixelSize: 10; family: "ZedMono Nerd Font" }
                                 }
                             }
@@ -569,12 +569,12 @@ Item {
                             Rectangle {
                                 Layout.alignment: Qt.AlignVCenter
                                 implicitWidth: 36; implicitHeight: 20; radius: 10
-                                color: MprisState.hideWhenIdle ? "#89b4fa" : "#45475a"
+                                color: MprisState.hideWhenIdle ? "#bd93f9" : "#44475a"
                                 Behavior on color { ColorAnimation { duration: 120 } }
 
                                 Rectangle {
                                     width: 16; height: 16; radius: 8
-                                    color: "#1e1e2e"
+                                    color: "#282a36"
                                     x: MprisState.hideWhenIdle ? parent.width - width - 2 : 2
                                     y: (parent.height - height) / 2
                                     Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
@@ -599,7 +599,7 @@ Item {
 
                 Text {
                     text: "Bar"
-                    color: "#cdd6f4"
+                    color: "#f8f8f2"
                     font {
                         pixelSize: 20
                         bold: true
@@ -609,7 +609,7 @@ Item {
 
                 Text {
                     text: "Customize the appearance and behavior of the top bar."
-                    color: "#a6adc8"
+                    color: "#b8bfcb"
                     font {
                         pixelSize: 11
                         family: "ZedMono Nerd Font"
@@ -620,7 +620,7 @@ Item {
                 Card {
                     title: "Style"
                     icon: ""
-                    accent: "#89b4fa"
+                    accent: "#bd93f9"
 
                     ColumnLayout {
                         spacing: 0
@@ -633,7 +633,7 @@ Item {
 
                             Text {
                                 text: ""
-                                color: "#89b4fa"
+                                color: "#bd93f9"
                                 font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
                                 Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
                             }
@@ -644,13 +644,13 @@ Item {
 
                                 Text {
                                     text: "Bar Style"
-                                    color: "#cdd6f4"
+                                    color: "#f8f8f2"
                                     font { pixelSize: 12; family: "Quicksand"; bold: true }
                                 }
 
                                 Text {
                                     text: BarState.modernBarStyle ? "Rounded · 28px" : "Flat · 24px"
-                                    color: "#585b70"
+                                    color: "#6272a4"
                                     font { pixelSize: 10; family: "ZedMono Nerd Font" }
                                 }
                             }
@@ -660,13 +660,13 @@ Item {
                             Rectangle {
                                 Layout.alignment: Qt.AlignVCenter
                                 implicitWidth: 36; implicitHeight: 20; radius: 10
-                                color: BarState.modernBarStyle ? "#89b4fa" : "#45475a"
+                                color: BarState.modernBarStyle ? "#bd93f9" : "#44475a"
 
                                 Behavior on color { ColorAnimation { duration: 120 } }
 
                                 Rectangle {
                                     width: 16; height: 16; radius: 8
-                                    color: "#1e1e2e"
+                                    color: "#282a36"
                                     x: BarState.modernBarStyle ? parent.width - width - 2 : 2
                                     y: (parent.height - height) / 2
 
@@ -682,7 +682,7 @@ Item {
                         }
 
                         // Separator
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#313244"; Layout.leftMargin: 28 }
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 28 }
 
                         RowLayout {
                             spacing: 10
@@ -691,7 +691,7 @@ Item {
 
                             Text {
                                 text: ""
-                                color: "#89b4fa"
+                                color: "#bd93f9"
                                 font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
                                 Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
                             }
@@ -702,13 +702,13 @@ Item {
 
                                 Text {
                                     text: "Popup Background"
-                                    color: "#cdd6f4"
+                                    color: "#f8f8f2"
                                     font { pixelSize: 12; family: "Quicksand"; bold: true }
                                 }
 
                                 Text {
                                     text: MiscState.popupSolidBg ? "Solid" : "Transparent"
-                                    color: "#585b70"
+                                    color: "#6272a4"
                                     font { pixelSize: 10; family: "ZedMono Nerd Font" }
                                 }
                             }
@@ -718,13 +718,13 @@ Item {
                             Rectangle {
                                 Layout.alignment: Qt.AlignVCenter
                                 implicitWidth: 36; implicitHeight: 20; radius: 10
-                                color: MiscState.popupSolidBg ? "#89b4fa" : "#45475a"
+                                color: MiscState.popupSolidBg ? "#bd93f9" : "#44475a"
 
                                 Behavior on color { ColorAnimation { duration: 120 } }
 
                                 Rectangle {
                                     width: 16; height: 16; radius: 8
-                                    color: "#1e1e2e"
+                                    color: "#282a36"
                                     x: MiscState.popupSolidBg ? parent.width - width - 2 : 2
                                     y: (parent.height - height) / 2
 
@@ -751,7 +751,7 @@ Item {
 
                 Text {
                     text: "Audio"
-                    color: "#cdd6f4"
+                    color: "#f8f8f2"
                     font {
                         pixelSize: 20
                         bold: true
@@ -761,7 +761,7 @@ Item {
 
                 Text {
                     text: "Manage audio volume, outputs, and per-application levels."
-                    color: "#a6adc8"
+                    color: "#b8bfcb"
                     font {
                         pixelSize: 11
                         family: "ZedMono Nerd Font"
@@ -786,12 +786,12 @@ Item {
 
                         readonly property color volColor: {
                             var a = Pipewire.defaultAudioSink?.audio;
-                            if (!a || a.muted) return "#585b70";
+                            if (!a || a.muted) return "#6272a4";
                             var v = a.volume;
-                            if (v > 0.8) return "#f5a0d6";
+                            if (v > 0.8) return "#ff79c6";
                             if (v > 0.5) return "#c6a0f6";
-                            if (v > 0.2) return "#89b4fa";
-                            return "#b4befe";
+                            if (v > 0.2) return "#bd93f9";
+                            return "#bd93f9";
                         }
 
                         // Master volume row
@@ -819,7 +819,7 @@ Item {
                                 text: Pipewire.ready
                                     ? Math.floor((Pipewire.defaultAudioSink?.audio?.volume ?? 0) * 100) + "%"
                                     : ""
-                                color: parent.parent.isMuted ? "#585b70" : "#cdd6f4"
+                                color: parent.parent.isMuted ? "#6272a4" : "#f8f8f2"
                                 font { pixelSize: 14; bold: true; family: "ZedMono Nerd Font" }
                                 Layout.preferredWidth: 44
                             }
@@ -835,7 +835,7 @@ Item {
                                     width: parent.width
                                     height: 6
                                     radius: 3
-                                    color: "#313244"
+                                    color: "#343746"
 
                                     Rectangle {
                                         width: parent.width * Math.min(parent.parent.normVol, 1)
@@ -892,7 +892,7 @@ Item {
 
                             Text {
                                 text: "Mute"
-                                color: parent.parent.isMuted ? "#f38ba8" : "#585b70"
+                                color: parent.parent.isMuted ? "#ff5555" : "#6272a4"
                                 font { pixelSize: 10; family: "Quicksand"; bold: true }
 
                                 MouseArea {
@@ -910,7 +910,7 @@ Item {
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
-                            color: "#313244"
+                            color: "#343746"
                             Layout.topMargin: 4
                             Layout.bottomMargin: 2
                         }
@@ -930,7 +930,7 @@ Item {
 
                                 Text {
                                     text: audioCol.showPlayerVolumes ? "\uf078" : "\uf054"
-                                    color: "#cba6f7"
+                                    color: "#bd93f9"
                                     font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
                                     Layout.preferredWidth: 14
                                     horizontalAlignment: Text.AlignHCenter
@@ -938,7 +938,7 @@ Item {
 
                                 Text {
                                     text: "Player Volumes"
-                                    color: "#cdd6f4"
+                                    color: "#f8f8f2"
                                     font { pixelSize: 11; family: "Quicksand"; bold: true }
                                 }
 
@@ -951,7 +951,7 @@ Item {
                                         } catch (e) {}
                                         return count > 0 ? "(" + count + ")" : "";
                                     }
-                                    color: "#585b70"
+                                    color: "#6272a4"
                                     font { pixelSize: 9; family: "ZedMono Nerd Font" }
                                 }
 
@@ -992,7 +992,7 @@ Item {
 
                                     Text {
                                         text: modelData.identity
-                                        color: "#585b70"
+                                        color: "#6272a4"
                                         font { pixelSize: 10; family: "ZedMono Nerd Font" }
                                         elide: Text.ElideRight
                                         Layout.preferredWidth: 80
@@ -1008,13 +1008,13 @@ Item {
                                             width: parent.width
                                             height: 4
                                             radius: 2
-                                            color: "#313244"
+                                            color: "#343746"
 
                                             Rectangle {
                                                 width: parent.width * Math.min(modelData.volume, 1)
                                                 height: parent.height
                                                 radius: 2
-                                                color: "#cba6f7"
+                                                color: "#bd93f9"
 
                                                 Behavior on width {
                                                     NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
@@ -1061,7 +1061,7 @@ Item {
 
                             Text {
                                 text: "No active players"
-                                color: "#585b70"
+                                color: "#6272a4"
                                 font { pixelSize: 10; family: "ZedMono Nerd Font" }
                                 Layout.topMargin: 2
                                 Layout.leftMargin: 2
@@ -1080,7 +1080,7 @@ Item {
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
-                            color: "#313244"
+                            color: "#343746"
                             Layout.topMargin: 2
                             Layout.bottomMargin: 2
                         }
@@ -1091,7 +1091,7 @@ Item {
 
                             Text {
                                 text: "Output"
-                                color: "#585b70"
+                                color: "#6272a4"
                                 font { pixelSize: 10; family: "Quicksand"; bold: true }
                             }
 
@@ -1159,7 +1159,7 @@ Item {
                                     Layout.fillWidth: true
                                     implicitHeight: 24
                                     radius: 4
-                                    color: sinkMA.containsMouse ? "#313244" : "transparent"
+                                    color: sinkMA.containsMouse ? "#343746" : "transparent"
 
                                     Behavior on color {
                                         ColorAnimation { duration: 80 }
@@ -1178,7 +1178,7 @@ Item {
 
                                         Text {
                                             text: modelData.description || modelData.name
-                                            color: modelData.name === Pipewire.defaultAudioSink?.name ? "#cdd6f4" : "#585b70"
+                                            color: modelData.name === Pipewire.defaultAudioSink?.name ? "#f8f8f2" : "#6272a4"
                                             font { pixelSize: 11; family: "Quicksand"; bold: true }
                                             elide: Text.ElideRight
                                             Layout.fillWidth: true
@@ -1207,7 +1207,7 @@ Item {
 
                 Text {
                     text: "Now Playing"
-                    color: "#cdd6f4"
+                    color: "#f8f8f2"
                     font {
                         pixelSize: 20
                         bold: true
@@ -1217,7 +1217,7 @@ Item {
 
                 Text {
                     text: "Configure now playing controls visibility."
-                    color: "#a6adc8"
+                    color: "#b8bfcb"
                     font {
                         pixelSize: 11
                         family: "ZedMono Nerd Font"
@@ -1228,7 +1228,7 @@ Item {
                 Card {
                     title: "Now Playing"
                     icon: ""
-                    accent: "#cba6f7"
+                    accent: "#bd93f9"
 
                     ColumnLayout {
                         spacing: 0
@@ -1241,7 +1241,7 @@ Item {
 
                             Text {
                                 text: ""
-                                color: MiscState.showShuffle ? "#89b4fa" : "#585b70"
+                                color: MiscState.showShuffle ? "#bd93f9" : "#6272a4"
                                 font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
                                 Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
                             }
@@ -1251,12 +1251,12 @@ Item {
                                 Layout.fillWidth: true
                                 Text {
                                     text: "Shuffle"
-                                    color: "#cdd6f4"
+                                    color: "#f8f8f2"
                                     font { pixelSize: 12; family: "Quicksand"; bold: true }
                                 }
                                 Text {
                                     text: "Show shuffle button in controls"
-                                    color: "#585b70"
+                                    color: "#6272a4"
                                     font { pixelSize: 10; family: "ZedMono Nerd Font" }
                                 }
                             }
@@ -1266,12 +1266,12 @@ Item {
                             Rectangle {
                                 Layout.alignment: Qt.AlignVCenter
                                 implicitWidth: 36; implicitHeight: 20; radius: 10
-                                color: MiscState.showShuffle ? "#89b4fa" : "#45475a"
+                                color: MiscState.showShuffle ? "#bd93f9" : "#44475a"
                                 Behavior on color { ColorAnimation { duration: 120 } }
 
                                 Rectangle {
                                     width: 16; height: 16; radius: 8
-                                    color: "#1e1e2e"
+                                    color: "#282a36"
                                     x: MiscState.showShuffle ? parent.width - width - 2 : 2
                                     y: (parent.height - height) / 2
                                     Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
@@ -1284,7 +1284,7 @@ Item {
                             }
                         }
 
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#313244"; Layout.leftMargin: 28 }
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 28 }
 
                         RowLayout {
                             spacing: 10
@@ -1293,7 +1293,7 @@ Item {
 
                             Text {
                                 text: ""
-                                color: MiscState.showLoop ? "#89b4fa" : "#585b70"
+                                color: MiscState.showLoop ? "#bd93f9" : "#6272a4"
                                 font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
                                 Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
                             }
@@ -1303,12 +1303,12 @@ Item {
                                 Layout.fillWidth: true
                                 Text {
                                     text: "Loop"
-                                    color: "#cdd6f4"
+                                    color: "#f8f8f2"
                                     font { pixelSize: 12; family: "Quicksand"; bold: true }
                                 }
                                 Text {
                                     text: "Show loop button in controls"
-                                    color: "#585b70"
+                                    color: "#6272a4"
                                     font { pixelSize: 10; family: "ZedMono Nerd Font" }
                                 }
                             }
@@ -1318,12 +1318,12 @@ Item {
                             Rectangle {
                                 Layout.alignment: Qt.AlignVCenter
                                 implicitWidth: 36; implicitHeight: 20; radius: 10
-                                color: MiscState.showLoop ? "#89b4fa" : "#45475a"
+                                color: MiscState.showLoop ? "#bd93f9" : "#44475a"
                                 Behavior on color { ColorAnimation { duration: 120 } }
 
                                 Rectangle {
                                     width: 16; height: 16; radius: 8
-                                    color: "#1e1e2e"
+                                    color: "#282a36"
                                     x: MiscState.showLoop ? parent.width - width - 2 : 2
                                     y: (parent.height - height) / 2
                                     Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
@@ -1336,7 +1336,7 @@ Item {
                             }
                         }
 
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#313244"; Layout.leftMargin: 28 }
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 28 }
 
                         RowLayout {
                             spacing: 10
@@ -1345,7 +1345,7 @@ Item {
 
                             Text {
                                 text: ""
-                                color: MiscState.showPlayerChooser ? "#89b4fa" : "#585b70"
+                                color: MiscState.showPlayerChooser ? "#bd93f9" : "#6272a4"
                                 font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
                                 Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
                             }
@@ -1355,12 +1355,12 @@ Item {
                                 Layout.fillWidth: true
                                 Text {
                                     text: "Player Chooser"
-                                    color: "#cdd6f4"
+                                    color: "#f8f8f2"
                                     font { pixelSize: 12; family: "Quicksand"; bold: true }
                                 }
                                 Text {
                                     text: "Show player switcher in now playing"
-                                    color: "#585b70"
+                                    color: "#6272a4"
                                     font { pixelSize: 10; family: "ZedMono Nerd Font" }
                                 }
                             }
@@ -1370,12 +1370,12 @@ Item {
                             Rectangle {
                                 Layout.alignment: Qt.AlignVCenter
                                 implicitWidth: 36; implicitHeight: 20; radius: 10
-                                color: MiscState.showPlayerChooser ? "#89b4fa" : "#45475a"
+                                color: MiscState.showPlayerChooser ? "#bd93f9" : "#44475a"
                                 Behavior on color { ColorAnimation { duration: 120 } }
 
                                 Rectangle {
                                     width: 16; height: 16; radius: 8
-                                    color: "#1e1e2e"
+                                    color: "#282a36"
                                     x: MiscState.showPlayerChooser ? parent.width - width - 2 : 2
                                     y: (parent.height - height) / 2
                                     Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }

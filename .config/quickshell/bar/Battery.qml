@@ -38,7 +38,7 @@ RowLayout {
         readonly property real percentage: BatteryState.batPercentage
         readonly property bool isFull: BatteryState.isFullyCharged
 
-        readonly property color fillColor: isCharging ? "#a6e3a1" : isLow ? "#f38ba8" : Themes.mprisTextColor
+        readonly property color fillColor: isCharging ? "#50fa7b" : isLow ? "#ff5555" : Themes.mprisTextColor
 
         implicitWidth: batteryBody.width
         implicitHeight: batteryBody.height
@@ -55,8 +55,8 @@ RowLayout {
             width: 26
             height: 14
             radius: 3
-            color: "#313244"
-            border.color: "#585b70"
+            color: "#343746"
+            border.color: "#6272a4"
             border.width: 1
             clip: true
 
@@ -66,7 +66,7 @@ RowLayout {
 
                 Rectangle {
                     anchors.fill: parent
-                    color: "#313244"
+                    color: "#343746"
                 }
 
                 Rectangle {
@@ -182,7 +182,7 @@ RowLayout {
         id: batteryPopup
         visible: batteryBlock.showPopup
         grabFocus: true
-        color: MiscState.popupSolidBg ? "#1e1e2e" : "transparent"
+        color: MiscState.popupSolidBg ? "#282a36" : "transparent"
 
         anchor.window: batteryBlock.host
         anchor.rect.x: {
@@ -199,8 +199,8 @@ RowLayout {
             radius: 10
             layer.enabled: true
             layer.samples: 8
-            color: "#1e1e2e"
-            border.color: "#45475a"
+            color: "#282a36"
+            border.color: "#44475a"
 
             Shortcut {
                 sequence: "Escape"
@@ -221,7 +221,7 @@ RowLayout {
 
                     Text {
                         text: `${Math.floor(BatteryState.batPercentage * 100)}%`
-                        color: BatteryState.isLow ? "#f38ba8" : BatteryState.isCharging ? "#a6e3a1" : "#cdd6f4"
+                        color: BatteryState.isLow ? "#ff5555" : BatteryState.isCharging ? "#50fa7b" : "#f8f8f2"
                         font {
                             pixelSize: 28
                             bold: true
@@ -234,7 +234,7 @@ RowLayout {
 
                         Text {
                             text: BatteryState.isCharging ? "Charging" : BatteryState.isFullyCharged ? "Full" : "Discharging"
-                            color: BatteryState.isCharging ? "#a6e3a1" : BatteryState.isFullyCharged ? "#f9e2af" : "#cdd6f4"
+                            color: BatteryState.isCharging ? "#50fa7b" : BatteryState.isFullyCharged ? "#f1fa8c" : "#f8f8f2"
                             font { pixelSize: 12; bold: true; family: "Quicksand" }
                         }
 
@@ -243,7 +243,7 @@ RowLayout {
                                 const chg = batteryBlock.bat.changeRate;
                                 return (chg && !isNaN(chg) && chg > 0) ? `${chg.toFixed(1)} W` : "";
                             }
-                            color: "#585b70"
+                            color: "#6272a4"
                             font { pixelSize: 10; family: "ZedMono Nerd Font" }
                             visible: text !== ""
                         }
@@ -253,7 +253,7 @@ RowLayout {
 
                     Text {
                         text: BatteryState.batPercentage < 0.5 ? "" : BatteryState.batPercentage < 0.75 ? "" : BatteryState.batPercentage < 0.95 ? "" : ""
-                        color: BatteryState.isLow ? "#f38ba8" : BatteryState.isCharging ? "#a6e3a1" : "#cdd6f4"
+                        color: BatteryState.isLow ? "#ff5555" : BatteryState.isCharging ? "#50fa7b" : "#f8f8f2"
                         font { pixelSize: 28; family: "Symbols Nerd Font Mono" }
                     }
                 }
@@ -261,7 +261,7 @@ RowLayout {
                 Rectangle {
                     Layout.fillWidth: true
                     height: 1
-                    color: "#313244"
+                    color: "#343746"
                 }
 
                 ColumnLayout {
@@ -294,7 +294,7 @@ RowLayout {
 
                             Text {
                                 text: stat.label
-                                color: "#585b70"
+                                color: "#6272a4"
                                 font { pixelSize: 10; family: "Quicksand" }
                             }
 
@@ -302,7 +302,7 @@ RowLayout {
 
                             Text {
                                 text: stat.value
-                                color: "#a6adc8"
+                                color: "#b8bfcb"
                                 font { pixelSize: 10; family: "ZedMono Nerd Font" }
                             }
                         }
@@ -312,12 +312,12 @@ RowLayout {
                 Rectangle {
                     Layout.fillWidth: true
                     height: 1
-                    color: "#313244"
+                    color: "#343746"
                 }
 
                 Text {
                     text: "Power Profile"
-                    color: "#585b70"
+                    color: "#6272a4"
                     font { pixelSize: 10; family: "Quicksand" }
                 }
 
@@ -329,8 +329,8 @@ RowLayout {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 32
                         radius: 6
-                        color: PowerProfiles.profile === PowerProfile.PowerSaver ? "#313244" : "transparent"
-                        border.color: PowerProfiles.profile === PowerProfile.PowerSaver ? "#585b70" : "#313244"
+                        color: PowerProfiles.profile === PowerProfile.PowerSaver ? "#343746" : "transparent"
+                        border.color: PowerProfiles.profile === PowerProfile.PowerSaver ? "#6272a4" : "#343746"
                         border.width: 1
 
                         Behavior on color { ColorAnimation { duration: 120 } }
@@ -338,8 +338,8 @@ RowLayout {
                         ColumnLayout {
                             anchors.centerIn: parent
                             spacing: 1
-                            Text { Layout.alignment: Qt.AlignHCenter; text: "🍀"; color: PowerProfiles.profile === PowerProfile.PowerSaver ? "#cdd6f4" : "#585b70"; font { pixelSize: 14; family: "Symbols Nerd Font Mono" } }
-                            Text { Layout.alignment: Qt.AlignHCenter; text: "Saver"; color: PowerProfiles.profile === PowerProfile.PowerSaver ? "#cdd6f4" : "#585b70"; font { pixelSize: 9; family: "Quicksand"; bold: true } }
+                            Text { Layout.alignment: Qt.AlignHCenter; text: "🍀"; color: PowerProfiles.profile === PowerProfile.PowerSaver ? "#f8f8f2" : "#6272a4"; font { pixelSize: 14; family: "Symbols Nerd Font Mono" } }
+                            Text { Layout.alignment: Qt.AlignHCenter; text: "Saver"; color: PowerProfiles.profile === PowerProfile.PowerSaver ? "#f8f8f2" : "#6272a4"; font { pixelSize: 9; family: "Quicksand"; bold: true } }
                         }
 
                         MouseArea {
@@ -354,8 +354,8 @@ RowLayout {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 32
                         radius: 6
-                        color: PowerProfiles.profile === PowerProfile.Balanced ? "#313244" : "transparent"
-                        border.color: PowerProfiles.profile === PowerProfile.Balanced ? "#585b70" : "#313244"
+                        color: PowerProfiles.profile === PowerProfile.Balanced ? "#343746" : "transparent"
+                        border.color: PowerProfiles.profile === PowerProfile.Balanced ? "#6272a4" : "#343746"
                         border.width: 1
 
                         Behavior on color { ColorAnimation { duration: 120 } }
@@ -363,8 +363,8 @@ RowLayout {
                         ColumnLayout {
                             anchors.centerIn: parent
                             spacing: 1
-                            Text { Layout.alignment: Qt.AlignHCenter; text: "☯"; color: PowerProfiles.profile === PowerProfile.Balanced ? "#cdd6f4" : "#585b70"; font { pixelSize: 14; family: "Symbols Nerd Font Mono" } }
-                            Text { Layout.alignment: Qt.AlignHCenter; text: "Balanced"; color: PowerProfiles.profile === PowerProfile.Balanced ? "#cdd6f4" : "#585b70"; font { pixelSize: 9; family: "Quicksand"; bold: true } }
+                            Text { Layout.alignment: Qt.AlignHCenter; text: "☯"; color: PowerProfiles.profile === PowerProfile.Balanced ? "#f8f8f2" : "#6272a4"; font { pixelSize: 14; family: "Symbols Nerd Font Mono" } }
+                            Text { Layout.alignment: Qt.AlignHCenter; text: "Balanced"; color: PowerProfiles.profile === PowerProfile.Balanced ? "#f8f8f2" : "#6272a4"; font { pixelSize: 9; family: "Quicksand"; bold: true } }
                         }
 
                         MouseArea {
@@ -379,8 +379,8 @@ RowLayout {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 32
                         radius: 6
-                        color: PowerProfiles.profile === PowerProfile.Performance ? "#313244" : "transparent"
-                        border.color: PowerProfiles.profile === PowerProfile.Performance ? "#585b70" : "#313244"
+                        color: PowerProfiles.profile === PowerProfile.Performance ? "#343746" : "transparent"
+                        border.color: PowerProfiles.profile === PowerProfile.Performance ? "#6272a4" : "#343746"
                         border.width: 1
 
                         Behavior on color { ColorAnimation { duration: 120 } }
@@ -388,8 +388,8 @@ RowLayout {
                         ColumnLayout {
                             anchors.centerIn: parent
                             spacing: 1
-                            Text { Layout.alignment: Qt.AlignHCenter; text: "⚡"; color: PowerProfiles.profile === PowerProfile.Performance ? "#cdd6f4" : "#585b70"; font { pixelSize: 14; family: "Symbols Nerd Font Mono" } }
-                            Text { Layout.alignment: Qt.AlignHCenter; text: "Perf"; color: PowerProfiles.profile === PowerProfile.Performance ? "#cdd6f4" : "#585b70"; font { pixelSize: 9; family: "Quicksand"; bold: true } }
+                            Text { Layout.alignment: Qt.AlignHCenter; text: "⚡"; color: PowerProfiles.profile === PowerProfile.Performance ? "#f8f8f2" : "#6272a4"; font { pixelSize: 14; family: "Symbols Nerd Font Mono" } }
+                            Text { Layout.alignment: Qt.AlignHCenter; text: "Perf"; color: PowerProfiles.profile === PowerProfile.Performance ? "#f8f8f2" : "#6272a4"; font { pixelSize: 9; family: "Quicksand"; bold: true } }
                         }
 
                         MouseArea {

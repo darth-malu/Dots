@@ -2,7 +2,7 @@ import QtQuick
 
 Item {
     property string text
-    property color accentColor: "#cba6f7"
+    property color accentColor: "#bd93f9"
     property bool active: false
     property bool flat: false
     signal clicked

@@ -7,7 +7,7 @@ ProgressBar {
     property int valueBarWidth: 23
     property int valueBarHeight: 12
     property color highlightColor: "yellow"
-    property color trackColor: "#313244"
+    property color trackColor: "#343746"
     property alias radius: barBg.radius
     property string text
 

@@ -10,6 +10,7 @@ Singleton {
     property bool netspeedVisible: false
     property bool netPopupVisible: false
     property bool btPopupVisible: false
+    property bool wifiPopupVisible: false
 
     readonly property WifiDevice adapter: Networking.devices.values.find(d => d.type === DeviceType.Wifi) ?? null
     readonly property WifiNetwork activeNetwork: root.adapter ? root.adapter.networks.values.find(network => network.connected) : null
@@ -40,17 +41,17 @@ Singleton {
         return "root:/icons/ethernet-x.svg";
     }
 
-    // catppuccin mocha: surface2 / red / peach→yellow→green by signal
+    // dracula: surface2 / red / peach→yellow→green by signal
     readonly property color wifiColor: {
         if (!Networking.wifiEnabled)
-            return "#6c7086";
+            return "#6272a4";
         if (!root.activeNetwork)
-            return "#f38ba8";
+            return "#ff5555";
 
         const s = root.activeNetwork.signalStrength;
-        return s < 0.34 ? "#fab387" : s < 0.67 ? "#f9e2af" : "#a6e3a1";
+        return s < 0.34 ? "#ffb86c" : s < 0.67 ? "#f1fa8c" : "#50fa7b";
     }
 
-    // catppuccin mocha: overlay0 / teal
-    readonly property color ethColor: !root.ethernet?.hasLink ? "#6c7086" : "#94e2d5"
+    // dracula: overlay0 / teal
+    readonly property color ethColor: !root.ethernet?.hasLink ? "#6272a4" : "#8be9fd"
 }

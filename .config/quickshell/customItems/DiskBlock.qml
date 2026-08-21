@@ -16,10 +16,10 @@ BarBlock {
     property bool showPercent: false
     property bool showUsage: false
 
-    property color colorLow: "#a6e3a1"
-    property color colorMid: "#f5c2e7"
-    property color colorHigh: "#89dceb"
-    property color colorDanger: "#f38ba8"
+    property color colorLow: "#50fa7b"
+    property color colorMid: "#ff79c6"
+    property color colorHigh: "#8be9fd"
+    property color colorDanger: "#ff5555"
     property int dangerThreshold: 90
 
     readonly property int diskUsageValue: ResourcesState.diskUsagePercent
@@ -112,7 +112,7 @@ BarBlock {
         id: allDisksPopup
         visible: false
         grabFocus: true
-        color: MiscState.popupSolidBg ? "#1e1e2e" : "transparent"
+        color: MiscState.popupSolidBg ? "#282a36" : "transparent"
 
         anchor.window: disk.host
         anchor.rect.x: {
@@ -132,8 +132,8 @@ BarBlock {
             radius: 10
             layer.enabled: true
             layer.samples: 8
-            color: "#1e1e2e"
-            border.color: "#45475a"
+            color: "#282a36"
+            border.color: "#44475a"
 
             Rectangle {
                 anchors {
@@ -186,7 +186,7 @@ BarBlock {
                     rightMargin: 14
                 }
                 height: 1
-                color: "#313244"
+                color: "#343746"
             }
 
             Flickable {
@@ -236,7 +236,7 @@ BarBlock {
                                 Layout.preferredWidth: 44
                                 horizontalAlignment: Text.AlignRight
                                 text: parent.parts[1] || ""
-                                color: "#585b70"
+                                color: "#6272a4"
                                 font {
                                     pixelSize: 9
                                     family: "ZedMono Nerd Font"
@@ -247,7 +247,7 @@ BarBlock {
                                 Layout.preferredWidth: 44
                                 horizontalAlignment: Text.AlignRight
                                 text: parent.parts[3] || ""
-                                color: "#a6adc8"
+                                color: "#b8bfcb"
                                 font {
                                     pixelSize: 9
                                     family: "ZedMono Nerd Font"
@@ -258,13 +258,13 @@ BarBlock {
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 8
                                 radius: 4
-                                color: "#313244"
+                                color: "#343746"
 
                                 Rectangle {
                                     width: parent.width * Math.min(parent.parent.pct / 100, 1)
                                     height: parent.height
                                     radius: 4
-                                    color: parent.parent.pct > 90 ? "#f38ba8" : parent.parent.pct > 70 ? "#f9e2af" : Themes.toxicGreen
+                                    color: parent.parent.pct > 90 ? "#ff5555" : parent.parent.pct > 70 ? "#f1fa8c" : Themes.toxicGreen
 
                                     Behavior on width {
                                         NumberAnimation {
@@ -279,7 +279,7 @@ BarBlock {
                                 Layout.preferredWidth: 32
                                 horizontalAlignment: Text.AlignRight
                                 text: `${parent.pct}%`
-                                color: parent.parent.pct > 90 ? "#f38ba8" : "#a6adc8"
+                                color: parent.parent.pct > 90 ? "#ff5555" : "#b8bfcb"
                                 font {
                                     pixelSize: 9
                                     family: "ZedMono Nerd Font"
@@ -291,7 +291,7 @@ BarBlock {
 
                     Text {
                         text: "No mounts found"
-                        color: "#585b70"
+                        color: "#6272a4"
                         font {
                             pixelSize: 10
                             family: "ZedMono Nerd Font"

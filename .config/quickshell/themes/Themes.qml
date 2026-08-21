@@ -53,12 +53,12 @@ Singleton {
         pointSize: 11
     })
 
-    // Calendar (pastel)
-    readonly property color calendarHeader: '#cba6f7'
-    readonly property color calendarDayRow: '#a6e3a1'
-    readonly property color calendarInactiveMonth: "#6c7086"
-    readonly property color calendarActiveMonth: '#f5c2e7'
-    readonly property color calendarToday: '#ff79c6'
+    // Calendar (dracula)
+    readonly property color calendarHeader: '#bd93f9'
+    readonly property color calendarDayRow: '#8be9fd'
+    readonly property color calendarInactiveMonth: "#6272a4"
+    readonly property color calendarActiveMonth: '#f8f8f2'
+    readonly property color calendarToday: '#bd93f9'
     readonly property color clockColor: '#ff79c6'
 
     // Soft organic inactive state (Everforest 'Background Soft')

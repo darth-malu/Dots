@@ -15,8 +15,8 @@ BarBlock {
     readonly property string memoryDetail: `${ResourcesState.memUsed.toFixed(1)}G / ${ResourcesState.memTotal.toFixed(1)}G`
     readonly property string swapInfo: ResourcesState.swapTotal > 0 ? ` ${ResourcesState.swapUsed.toFixed(1)}Gi` : ""
 
-    readonly property color memoryColor: memoryPercent > 90 ? "#f38ba8" : memoryPercent > 80 ? "#f9e2af" : "#cba6f7"
-    readonly property color swapColor: ResourcesState.swapPercent > 80 ? "#f38ba8" : "#89dceb"
+    readonly property color memoryColor: memoryPercent > 90 ? "#ff5555" : memoryPercent > 80 ? "#f1fa8c" : "#bd93f9"
+    readonly property color swapColor: ResourcesState.swapPercent > 80 ? "#ff5555" : "#8be9fd"
 
     onClicked: mouse => {
         if (mouse.button === Qt.LeftButton) {

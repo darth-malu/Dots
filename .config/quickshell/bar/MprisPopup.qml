@@ -49,12 +49,12 @@ ColumnLayout {
 
                 Rectangle {
                     implicitWidth: 6; implicitHeight: 6; radius: 3
-                    color: parent.parent.isPlaying ? "#88FF00" : "#585b70"
+                    color: parent.parent.isPlaying ? "#88FF00" : "#6272a4"
                 }
 
                 Text {
                     text: parent.parent.playerId
-                    color: parent.parent.isPlaying ? "#88FF00" : "#cdd6f4"
+                    color: parent.parent.isPlaying ? "#88FF00" : "#f8f8f2"
                     font { pixelSize: 11; bold: true; family: "Quicksand" }
                     elide: Text.ElideRight
                     Layout.fillWidth: true
@@ -62,7 +62,7 @@ ColumnLayout {
 
                 Text {
                     text: parent.parent.trackTitle
-                    color: "#a6adc8"
+                    color: "#b8bfcb"
                     font { pixelSize: 9; family: "ZedMono Nerd Font" }
                     elide: Text.ElideRight
                     Layout.preferredWidth: 120

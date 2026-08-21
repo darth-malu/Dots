@@ -17,7 +17,7 @@ BarBlock {
     }
 
     readonly property bool isOnline: root.netState === "up"
-    readonly property color netColor: root.isOnline ? "#a6e3a1" : "#585b70"
+    readonly property color netColor: root.isOnline ? "#50fa7b" : "#6272a4"
 
     FileView {
         id: netFile
@@ -111,8 +111,8 @@ BarBlock {
             id: netCol
             anchors.fill: parent
             radius: 8
-            color: "#1e1e2e"
-            border.color: "#313244"
+            color: "#282a36"
+            border.color: "#343746"
 
             ColumnLayout {
                 anchors {
@@ -134,12 +134,12 @@ BarBlock {
                 Rectangle {
                     Layout.fillWidth: true
                     height: 1
-                    color: "#313244"
+                    color: "#343746"
                 }
 
                 Text {
                     text: "enp5s0"
-                    color: "#cdd6f4"
+                    color: "#f8f8f2"
                     font {
                         pixelSize: 12
                         family: "ZedMono Nerd Font"
@@ -149,7 +149,7 @@ BarBlock {
                 Text {
                     text: root.ipAddr.length > 0 ? "  " + root.ipAddr : ""
                     visible: text.length > 0
-                    color: "#a6adc8"
+                    color: "#b8bfcb"
                     font {
                         pixelSize: 11
                         family: "ZedMono Nerd Font"

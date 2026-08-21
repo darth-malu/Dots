@@ -273,7 +273,7 @@ Item {
             anchor.rect.y: 35
             visible: mprisRoot.showPopup
             grabFocus: true
-            color: MiscState.popupSolidBg ? "#1e1e2e" : "transparent"
+            color: MiscState.popupSolidBg ? "#282a36" : "transparent"
             implicitWidth: 280
             implicitHeight: Math.min(mprisPopupRect.implicitHeight, 300)
 
@@ -281,9 +281,9 @@ Item {
                 id: mprisPopupRect
                 anchors.fill: parent
                 radius: 10
-                color: "#1e1e2e"
+                color: "#282a36"
                 border.width: 1
-                border.color: "#45475a"
+                border.color: "#44475a"
 
                 Shortcut {
                     sequence: "Escape"
@@ -319,7 +319,7 @@ Item {
             anchor.rect.y: 35
             visible: mprisRoot.showArtPopup && MprisState.player !== null
             grabFocus: true
-            color: MiscState.popupSolidBg ? "#1e1e2e" : "transparent"
+            color: MiscState.popupSolidBg ? "#282a36" : "transparent"
             implicitWidth: 280
             implicitHeight: 280
 
@@ -327,9 +327,9 @@ Item {
                 id: artPopupRect
                 anchors.fill: parent
                 radius: 12
-                color: "#1e1e2e"
+                color: "#282a36"
                 border.width: 1
-                border.color: "#45475a"
+                border.color: "#44475a"
 
                 Shortcut {
                     sequence: "Escape"

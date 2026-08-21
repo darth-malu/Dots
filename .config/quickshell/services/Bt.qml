@@ -17,11 +17,11 @@ Singleton {
         : connected ? "root:/icons/bluetooth-connected.svg"
         : "root:/icons/bluetooth.svg"
 
-    // catppuccin mocha: overlay0 / blue / pink
+    // dracula: overlay0 / blue / pink
     readonly property color btColor:
-        !enabled ? "#6c7086"
-        : connected ? "#f5c2e7"
-        : "#89b4fa"
+        !enabled ? "#6272a4"
+        : connected ? "#ff79c6"
+        : "#bd93f9"
 
     readonly property string btDev: {
         const dev = devices.find(device => device.connected);

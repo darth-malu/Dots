@@ -7,7 +7,7 @@ Item {
     width: 16
     height: 16
     required property string icon
-    property color color: "#f5c2e7"
+    property color color: "#ff79c6"
 
     Image {
         id: svg

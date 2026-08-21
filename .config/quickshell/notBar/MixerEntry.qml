@@ -29,7 +29,7 @@ ColumnLayout {
                 const media = node.properties["media.name"];
                 return media != undefined ? `${app} - ${media}` : app;
             }
-            color: "#cdd6f4"
+            color: "#f8f8f2"
             font {
                 pixelSize: 11
                 family: "Quicksand"
@@ -45,8 +45,8 @@ ColumnLayout {
             background: Rectangle {
                 radius: 6
                 color: muteBtn.hovered
-                    ? (node.audio.muted ? Qt.lighter("#a6e3a1", 1.1) : Qt.lighter("#585b70", 1.1))
-                    : (node.audio.muted ? "#a6e3a1" : "#585b70")
+                    ? (node.audio.muted ? Qt.lighter("#50fa7b", 1.1) : Qt.lighter("#6272a4", 1.1))
+                    : (node.audio.muted ? "#50fa7b" : "#6272a4")
                 implicitWidth: muteBtn.implicitWidth + 16
                 implicitHeight: 24
 
@@ -55,7 +55,7 @@ ColumnLayout {
 
             contentItem: Text {
                 text: muteBtn.text
-                color: node.audio.muted ? "#1e1e2e" : "#cdd6f4"
+                color: node.audio.muted ? "#282a36" : "#f8f8f2"
                 font {
                     pixelSize: 10
                     bold: true
@@ -73,7 +73,7 @@ ColumnLayout {
         Label {
             Layout.preferredWidth: 50
             text: `${Math.floor(node.audio.volume * 100)}%`
-            color: "#a6adc8"
+            color: "#b8bfcb"
             font {
                 pixelSize: 10
                 family: "ZedMono Nerd Font"
@@ -93,13 +93,13 @@ ColumnLayout {
                 width: volSlider.availableWidth
                 height: 4
                 radius: 2
-                color: "#313244"
+                color: "#343746"
 
                 Rectangle {
                     width: volSlider.visualPosition * parent.width
                     height: parent.height
                     radius: 2
-                    color: node.audio.muted ? "#585b70" : "#c6a0f6"
+                    color: node.audio.muted ? "#6272a4" : "#c6a0f6"
                 }
             }
 
@@ -109,8 +109,8 @@ ColumnLayout {
                 width: 12
                 height: 12
                 radius: 6
-                color: node.audio.muted ? "#585b70" : "#c6a0f6"
-                border.color: "#1e1e2e"
+                color: node.audio.muted ? "#6272a4" : "#c6a0f6"
+                border.color: "#282a36"
                 border.width: 2
             }
         }

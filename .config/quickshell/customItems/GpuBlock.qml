@@ -14,7 +14,7 @@ BarBlock {
     readonly property int gpuPercent: ResourcesState.gpuPercent
     readonly property real gpuTemp: ResourcesState.gpuTemp
 
-    readonly property color gpuColor: gpuPercent > 80 ? "#f5a0d6" : gpuPercent > 60 ? "#c6a0f6" : "#a6e3a1"
+    readonly property color gpuColor: gpuPercent > 80 ? "#ff79c6" : gpuPercent > 60 ? "#c6a0f6" : "#50fa7b"
 
     onClicked: mouse => {
         if (mouse.button === Qt.LeftButton)

@@ -92,12 +92,12 @@ BarBlock {
 
             ctx.beginPath();
             ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * 0.999);
-            ctx.strokeStyle = "#89b4fa";
+            ctx.strokeStyle = "#bd93f9";
             ctx.lineWidth = lw;
             ctx.lineCap = "round";
             ctx.stroke();
 
-            ctx.fillStyle = "#89b4fa";
+            ctx.fillStyle = "#bd93f9";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.font = `11px "Symbols Nerd Font Mono"`;
@@ -127,8 +127,8 @@ BarBlock {
             id: menuCol
             anchors.fill: parent
             radius: 10
-            color: "#1e1e2e"
-            border.color: "#313244"
+            color: "#282a36"
+            border.color: "#343746"
 
             ColumnLayout {
                 anchors {
@@ -144,7 +144,7 @@ BarBlock {
 
                     Text {
                         text: ""
-                        color: "#89b4fa"
+                        color: "#bd93f9"
                         font { pixelSize: 28; family: "Symbols Nerd Font Mono" }
                     }
 
@@ -152,12 +152,12 @@ BarBlock {
                         spacing: 2
                         Text {
                             text: root.hostName
-                            color: "#cdd6f4"
+                            color: "#f8f8f2"
                             font { pixelSize: 13; bold: true; family: "Quicksand" }
                         }
                         Text {
                             text: root.airplaneOn ? "  Airplane Mode" : "  Online"
-                            color: root.airplaneOn ? "#f9e2af" : "#a6e3a1"
+                            color: root.airplaneOn ? "#f1fa8c" : "#50fa7b"
                             font { pixelSize: 11; family: "Quicksand" }
                         }
                     }
@@ -168,7 +168,7 @@ BarBlock {
                 Rectangle {
                     Layout.fillWidth: true
                     height: 1
-                    color: "#313244"
+                    color: "#343746"
                 }
 
                 // ── Volume section ──
@@ -181,12 +181,12 @@ BarBlock {
 
                         Text {
                             text: Pipewire.defaultAudioSink?.audio?.muted ? "" : ""
-                            color: Pipewire.defaultAudioSink?.audio?.muted ? "#585b70" : "#cdd6f4"
+                            color: Pipewire.defaultAudioSink?.audio?.muted ? "#6272a4" : "#f8f8f2"
                             font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
                         }
                         Text {
                             text: "Volume"
-                            color: "#cdd6f4"
+                            color: "#f8f8f2"
                             font { pixelSize: 12; family: "Quicksand" }
                         }
                         Item { Layout.fillWidth: true }
@@ -194,7 +194,7 @@ BarBlock {
                             text: Pipewire.ready
                                 ? Math.floor((Pipewire.defaultAudioSink?.audio?.volume ?? 0) * 100) + "%"
                                 : ""
-                            color: "#a6adc8"
+                            color: "#b8bfcb"
                             font { pixelSize: 11; family: "ZedMono Nerd Font" }
                         }
                     }
@@ -218,13 +218,13 @@ BarBlock {
                             width: volSlider.availableWidth
                             height: 4
                             radius: 2
-                            color: "#313244"
+                            color: "#343746"
 
                             Rectangle {
                                 width: volSlider.visualPosition * parent.width
                                 height: parent.height
                                 radius: 2
-                                color: Pipewire.defaultAudioSink?.audio?.muted ? "#585b70" : "#89b4fa"
+                                color: Pipewire.defaultAudioSink?.audio?.muted ? "#6272a4" : "#bd93f9"
                             }
                         }
 
@@ -234,8 +234,8 @@ BarBlock {
                             width: 14
                             height: 14
                             radius: 7
-                            color: Pipewire.defaultAudioSink?.audio?.muted ? "#585b70" : "#89b4fa"
-                            border.color: "#1e1e2e"
+                            color: Pipewire.defaultAudioSink?.audio?.muted ? "#6272a4" : "#bd93f9"
+                            border.color: "#282a36"
                             border.width: 2
                         }
 
@@ -254,7 +254,7 @@ BarBlock {
 
                     Text {
                         text: "  Mute"
-                        color: "#585b70"
+                        color: "#6272a4"
                         font { pixelSize: 11; family: "Quicksand" }
                         MouseArea {
                             anchors.fill: parent
@@ -270,7 +270,7 @@ BarBlock {
                 Rectangle {
                     Layout.fillWidth: true
                     height: 1
-                    color: "#313244"
+                    color: "#343746"
                 }
 
                 // ── Toggles section ──
@@ -278,7 +278,7 @@ BarBlock {
                     icon: ""
                     label: "Wi-Fi"
                     active: !root.airplaneOn
-                    accent: "#a6e3a1"
+                    accent: "#50fa7b"
                     onSwitched: newVal => {
                         root.airplaneOn = !newVal;
                         Quickshell.execDetached(["sh", "-c", "nmcli radio wifi " + (newVal ? "on" : "off")]);
@@ -289,7 +289,7 @@ BarBlock {
                 Rectangle {
                     Layout.fillWidth: true
                     height: 1
-                    color: "#313244"
+                    color: "#343746"
                 }
 
                 // ── Power section ──
@@ -297,12 +297,12 @@ BarBlock {
                     Layout.fillWidth: true
                     spacing: 6
 
-                    PowerBtn { iconText: ""; label: "Lock";     color: "#89b4fa"; cmd: "loginctl lock-session" }
-                    PowerBtn { iconText: ""; label: "Sleep";    color: "#a6e3a1"; cmd: "systemctl suspend" }
-                    PowerBtn { iconText: ""; label: "Hibernate"; color: "#f5c2e7"; cmd: "systemctl hibernate" }
-                    PowerBtn { iconText: ""; label: "Reboot";  color: "#f9e2af"; cmd: "systemctl reboot" }
-                    PowerBtn { iconText: ""; label: "Power";   color: "#f38ba8"; cmd: "systemctl poweroff" }
-                    PowerBtn { iconText: ""; label: "Logout";  color: "#cba6f7"; cmd: "loginctl terminate-user $USER" }
+                    PowerBtn { iconText: ""; label: "Lock";     color: "#bd93f9"; cmd: "loginctl lock-session" }
+                    PowerBtn { iconText: ""; label: "Sleep";    color: "#50fa7b"; cmd: "systemctl suspend" }
+                    PowerBtn { iconText: ""; label: "Hibernate"; color: "#ff79c6"; cmd: "systemctl hibernate" }
+                    PowerBtn { iconText: ""; label: "Reboot";  color: "#f1fa8c"; cmd: "systemctl reboot" }
+                    PowerBtn { iconText: ""; label: "Power";   color: "#ff5555"; cmd: "systemctl poweroff" }
+                    PowerBtn { iconText: ""; label: "Logout";  color: "#bd93f9"; cmd: "loginctl terminate-user $USER" }
                 }
             }
         }
@@ -312,20 +312,20 @@ BarBlock {
         required property string icon
         required property string label
         property bool active: false
-        property color accent: "#89b4fa"
+        property color accent: "#bd93f9"
         signal switched(bool newVal)
 
         spacing: 8
 
         Text {
             text: parent.icon
-            color: parent.active ? parent.accent : "#585b70"
+            color: parent.active ? parent.accent : "#6272a4"
             font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
         }
 
         Text {
             text: parent.label
-            color: "#cdd6f4"
+            color: "#f8f8f2"
             font { pixelSize: 12; family: "Quicksand" }
         }
 
@@ -335,8 +335,8 @@ BarBlock {
             width: 40
             height: 22
             radius: 11
-            color: parent.active ? parent.accent : "#45475a"
-            border.color: parent.active ? parent.accent : "#585b70"
+            color: parent.active ? parent.accent : "#44475a"
+            border.color: parent.active ? parent.accent : "#6272a4"
             border.width: 1
 
             Rectangle {
@@ -345,7 +345,7 @@ BarBlock {
                 width: 16
                 height: 16
                 radius: 8
-                color: "#1e1e2e"
+                color: "#282a36"
 
                 Behavior on x { NumberAnimation { duration: 120 } }
             }
@@ -398,7 +398,7 @@ BarBlock {
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: parent.parent.label
-                color: mouseArea.containsMouse ? parent.parent.color : "#585b70"
+                color: mouseArea.containsMouse ? parent.parent.color : "#6272a4"
                 font { pixelSize: 10; family: "Quicksand"; bold: true }
 
                 Behavior on color {

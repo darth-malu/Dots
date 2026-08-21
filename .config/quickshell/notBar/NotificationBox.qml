@@ -174,7 +174,7 @@ WrapperMouseArea {
                             implicitHeight: 24
                             Layout.fillWidth: true
                             radius: 6
-                            color: actionMA.containsMouse ? Qt.lighter("#313244", 1.2) : "#313244"
+                            color: actionMA.containsMouse ? Qt.lighter("#343746", 1.2) : "#343746"
 
                             Behavior on color {
                                 ColorAnimation {
@@ -185,7 +185,7 @@ WrapperMouseArea {
                             Text {
                                 anchors.centerIn: parent
                                 text: actionBtn.modelData.text
-                                color: actionMA.containsMouse ? "#cdd6f4" : "#a6adc8"
+                                color: actionMA.containsMouse ? "#f8f8f2" : "#b8bfcb"
                                 font {
                                     pixelSize: 10
                                     bold: true
@@ -234,7 +234,7 @@ WrapperMouseArea {
                 implicitWidth: 20
                 implicitHeight: 20
                 radius: 4
-                color: expandMA.containsMouse ? Qt.lighter("#313244", 1.3) : "#313244"
+                color: expandMA.containsMouse ? Qt.lighter("#343746", 1.3) : "#343746"
 
                 Behavior on color {
                     ColorAnimation {
@@ -263,7 +263,7 @@ WrapperMouseArea {
                 implicitWidth: 20
                 implicitHeight: 20
                 radius: 4
-                color: closeMA.containsMouse ? Qt.lighter("#f38ba8", 1.3) : "#313244"
+                color: closeMA.containsMouse ? Qt.lighter("#ff5555", 1.3) : "#343746"
 
                 Behavior on color {
                     ColorAnimation {

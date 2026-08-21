@@ -42,10 +42,10 @@ BarBlock {
         required property var modelData
 
         readonly property bool isConnected: modelData?.connected === true
-        readonly property color stateColor: modelData?.blocked === true ? "#f38ba8"
-            : isConnected ? "#a6e3a1"
-            : modelData?.pairing === true ? "#f9e2af"
-            : "#6c7086"
+        readonly property color stateColor: modelData?.blocked === true ? "#ff5555"
+            : isConnected ? "#50fa7b"
+            : modelData?.pairing === true ? "#f1fa8c"
+            : "#6272a4"
 
         spacing: 7
         Layout.fillWidth: true
@@ -73,7 +73,7 @@ BarBlock {
 
         Text {
             text: drow.modelData?.name || drow.modelData?.deviceName || drow.modelData?.address || "?"
-            color: drow.isConnected ? "#cdd6f4" : "#a6adc8"
+            color: drow.isConnected ? "#f8f8f2" : "#b8bfcb"
             elide: Text.ElideRight
             font { pixelSize: 11; family: "Quicksand" }
             Layout.fillWidth: true
@@ -85,22 +85,22 @@ BarBlock {
 
             Text {
                 text: "\uf240"
-                color: drow.modelData && drow.modelData.battery > 0.5 ? "#a6e3a1"
-                    : drow.modelData && drow.modelData.battery > 0.2 ? "#f9e2af"
-                    : "#f38ba8"
+                color: drow.modelData && drow.modelData.battery > 0.5 ? "#50fa7b"
+                    : drow.modelData && drow.modelData.battery > 0.2 ? "#f1fa8c"
+                    : "#ff5555"
                 font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
             }
 
             Text {
                 text: Math.round((drow.modelData?.battery ?? 0) * 100) + "%"
-                color: "#a6adc8"
+                color: "#b8bfcb"
                 font { pixelSize: 9; family: "ZedMono Nerd Font" }
             }
         }
     }
 
     LazyLoader {
-        loading: NetworkState.btPopupVisible
+        loading: true
 
         PopupWindow {
             id: btPopup
@@ -122,9 +122,9 @@ BarBlock {
             Rectangle {
                 anchors.fill: parent
                 radius: 12
-                color: "#1e1e2e"
+                color: "#282a36"
                 border.width: 1
-                border.color: Qt.rgba(0.80, 0.65, 0.97, 0.3)
+                border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
 
                 Shortcut {
                     sequence: "Escape"
@@ -149,13 +149,13 @@ BarBlock {
 
                         Text {
                             text: "\uf294"
-                            color: root.adapter ? "#89b4fa" : "#585b70"
+                            color: root.adapter ? "#bd93f9" : "#6272a4"
                             font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
                         }
 
                         Text {
                             text: "Bluetooth"
-                            color: "#cdd6f4"
+                            color: "#f8f8f2"
                             font { pixelSize: 12; bold: true; family: "Quicksand" }
                         }
 
@@ -166,10 +166,10 @@ BarBlock {
                             implicitWidth: pillText.implicitWidth + 16
                             implicitHeight: 18
                             radius: 9
-                            color: !root.adapter ? Qt.rgba(108 / 255, 112 / 255, 134 / 255, 0.14)
-                                : Bt.connected ? Qt.rgba(166 / 255, 227 / 255, 161 / 255, 0.14)
-                                : Bt.enabled ? Qt.rgba(137 / 255, 180 / 255, 250 / 255, 0.14)
-                                : Qt.rgba(108 / 255, 112 / 255, 134 / 255, 0.14)
+                            color: !root.adapter ? Qt.rgba(98 / 255, 114 / 255, 164 / 255, 0.14)
+                                : Bt.connected ? Qt.rgba(80 / 255, 250 / 255, 123 / 255, 0.14)
+                                : Bt.enabled ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.14)
+                                : Qt.rgba(98 / 255, 114 / 255, 164 / 255, 0.14)
 
                             Text {
                                 id: pillText
@@ -178,10 +178,10 @@ BarBlock {
                                     : Bt.connected ? "connected"
                                     : Bt.enabled ? "idle"
                                     : "off"
-                                color: !root.adapter ? "#6c7086"
-                                    : Bt.connected ? "#a6e3a1"
-                                    : Bt.enabled ? "#89b4fa"
-                                    : "#6c7086"
+                                color: !root.adapter ? "#6272a4"
+                                    : Bt.connected ? "#50fa7b"
+                                    : Bt.enabled ? "#bd93f9"
+                                    : "#6272a4"
                                 font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
                             }
                         }
@@ -190,7 +190,7 @@ BarBlock {
                     Rectangle {
                         Layout.fillWidth: true
                         implicitHeight: 1
-                        color: "#313244"
+                        color: "#343746"
                     }
 
                     RowLayout {
@@ -199,14 +199,14 @@ BarBlock {
 
                         Text {
                             text: "adapter"
-                            color: "#6c7086"
+                            color: "#6272a4"
                             font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
                             Layout.preferredWidth: 56
                         }
 
                         Text {
                             text: root.adapter ? (Bt.enabled ? "powered" : "disabled") : "unavailable"
-                            color: root.adapter ? (Bt.enabled ? "#cdd6f4" : "#585b70") : "#585b70"
+                            color: root.adapter ? (Bt.enabled ? "#f8f8f2" : "#6272a4") : "#6272a4"
                             elide: Text.ElideRight
                             font { pixelSize: 11; family: "ZedMono Nerd Font" }
                             Layout.fillWidth: true
@@ -218,7 +218,7 @@ BarBlock {
                             implicitWidth: 26
                             implicitHeight: 14
                             radius: 7
-                            color: Bt.enabled ? Qt.rgba(137 / 255, 180 / 255, 250 / 255, 0.35) : "#313244"
+                            color: Bt.enabled ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.35) : "#343746"
 
                             Rectangle {
                                 x: Bt.enabled ? parent.width - width - 2 : 2
@@ -226,7 +226,7 @@ BarBlock {
                                 implicitWidth: 10
                                 implicitHeight: 10
                                 radius: 5
-                                color: Bt.enabled ? "#89b4fa" : "#6c7086"
+                                color: Bt.enabled ? "#bd93f9" : "#6272a4"
 
                                 Behavior on x {
                                     NumberAnimation {
@@ -251,7 +251,7 @@ BarBlock {
                         Layout.fillWidth: true
                         implicitHeight: 1
                         visible: root.devices.length > 0
-                        color: "#313244"
+                        color: "#343746"
                     }
 
                     Repeater {
@@ -262,7 +262,7 @@ BarBlock {
                     Text {
                         visible: root.devices.length === 0
                         text: !root.adapter ? "no bluetooth adapter found" : (Bt.enabled ? "no known devices" : "bluetooth is off")
-                        color: "#585b70"
+                        color: "#6272a4"
                         font { pixelSize: 10; family: "Quicksand"; italic: true }
                         Layout.alignment: Qt.AlignHCenter
                     }

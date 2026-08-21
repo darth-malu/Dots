@@ -12,19 +12,19 @@ BarBlock {
     readonly property real vol: Pipewire.defaultAudioSink?.audio?.volume ?? 0
     readonly property bool muted: Pipewire.defaultAudioSink?.audio?.muted ?? false
 
-    // readonly property color volColor: muted ? "#585b70" : vol > 0.7 ? "#f5a0d6" : vol > 0.4 ? "#c6a0f6" : "#89b4fa"
+    // readonly property color volColor: muted ? "#6272a4" : vol > 0.7 ? "#ff79c6" : vol > 0.4 ? "#c6a0f6" : "#bd93f9"
 
     readonly property color volColor: {
         if (root.muted)
-            return "#585b70";
+            return "#6272a4";
         var v = root.vol;
         if (v > 0.8)
-            return "#f5a0d6";
+            return "#ff79c6";
         if (v > 0.5)
             return "#c6a0f6";
         if (v > 0.2)
-            return "#89b4fa";
-        return "#b4befe";
+            return "#bd93f9";
+        return "#bd93f9";
     }
 
     property bool hovering: false
@@ -56,7 +56,7 @@ BarBlock {
             Rectangle {
                 anchors.fill: parent
                 radius: 3
-                color: "#313244"
+                color: "#343746"
 
                 Rectangle {
                     radius: 3

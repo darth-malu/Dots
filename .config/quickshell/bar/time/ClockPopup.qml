@@ -147,7 +147,7 @@ ColumnLayout {
                 font: Themes.quicksand
                 color: {
                     if (parent.isSelected) return Themes.calendarToday;
-                    if (model.today) return "#1e1e2e";
+                    if (model.today) return "#282a36";
                     if (parent.hovered) return Themes.calendarToday;
                     if (model.month === grid.month) return Themes.calendarActiveMonth;
                     return Themes.calendarInactiveMonth;
@@ -212,7 +212,7 @@ ColumnLayout {
                         var dt = new Date(root.selectedYear, root.selectedMonth, root.selectedDay);
                         return days[dt.getDay()] + ", " + months[root.selectedMonth] + " " + root.selectedDay;
                     }
-                    color: "#cdd6f4"
+                    color: "#f8f8f2"
                     font { pixelSize: 10; family: "Quicksand"; bold: true }
                 }
 
@@ -220,7 +220,7 @@ ColumnLayout {
 
                 Text {
                     text: "\uf00d"
-                    color: "#585b70"
+                    color: "#6272a4"
                     font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
                     MouseArea {
                         anchors.fill: parent
@@ -235,13 +235,13 @@ ColumnLayout {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 26
                 placeholderText: "Add a task..."
-                color: "#cdd6f4"
-                placeholderTextColor: "#585b70"
+                color: "#f8f8f2"
+                placeholderTextColor: "#6272a4"
                 font { pixelSize: 11; family: "Quicksand" }
                 background: Rectangle {
                     radius: 6
-                    color: "#313244"
-                    border.color: taskField.activeFocus ? Themes.calendarToday : "#45475a"
+                    color: "#44475a"
+                    border.color: taskField.activeFocus ? Themes.calendarToday : "#6272a4"
                     border.width: 1
                 }
                 leftPadding: 8

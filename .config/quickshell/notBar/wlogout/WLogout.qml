@@ -6,9 +6,9 @@ import Quickshell.Wayland
 Variants {
     id: root
     property color backgroundColor: "#e60c0c0c"
-    property color buttonColor: "#1e1e2e"
-    property color buttonHoverColor: "#cba6f7"
-    property color buttonTextColor: "#cdd6f4"
+    property color buttonColor: "#282a36"
+    property color buttonHoverColor: "#bd93f9"
+    property color buttonTextColor: "#f8f8f2"
     default property list<LogoutButton> buttons
 
     model: Quickshell.screens
@@ -61,7 +61,7 @@ Variants {
 
                     Text {
                         text: ""
-                        color: "#f38ba8"
+                        color: "#ff5555"
                         font {
                             pixelSize: 32
                             family: "Symbols Nerd Font Mono"
@@ -87,7 +87,7 @@ Variants {
 
                                 radius: 12
                                 color: ma.containsMouse ? buttonHoverColor : buttonColor
-                                border.color: ma.containsMouse ? Qt.lighter(buttonHoverColor, 1.2) : "#313244"
+                                border.color: ma.containsMouse ? Qt.lighter(buttonHoverColor, 1.2) : "#343746"
                                 border.width: 1
 
                                 Behavior on color { ColorAnimation { duration: 120 } }
@@ -100,7 +100,7 @@ Variants {
                                     Text {
                                         Layout.alignment: Qt.AlignHCenter
                                         text: modelData.icon
-                                        color: ma.containsMouse ? "#1e1e2e" : buttonTextColor
+                                        color: ma.containsMouse ? "#282a36" : buttonTextColor
                                         font {
                                             pixelSize: 28
                                             family: "Symbols Nerd Font Mono"
@@ -111,7 +111,7 @@ Variants {
                                     Text {
                                         Layout.alignment: Qt.AlignHCenter
                                         text: modelData.text
-                                        color: ma.containsMouse ? "#1e1e2e" : buttonTextColor
+                                        color: ma.containsMouse ? "#282a36" : buttonTextColor
                                         font {
                                             pointSize: 12
                                             bold: true

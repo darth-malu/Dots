@@ -15,8 +15,8 @@ ShellRoot {
         Rectangle {
             anchors.fill: parent
             radius: 12
-            color: "#1e1e2e"
-            border.color: "#45475a"
+            color: "#282a36"
+            border.color: "#44475a"
 
             ScrollView {
                 anchors.fill: parent
@@ -42,7 +42,7 @@ ShellRoot {
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
-                        color: "#313244"
+                        color: "#343746"
                     }
 
                     PwNodeLinkTracker {
@@ -57,7 +57,7 @@ ShellRoot {
 
                     Rectangle {
                         Layout.fillWidth: true
-                        color: "#313244"
+                        color: "#343746"
                         implicitHeight: 1
                     }
 
