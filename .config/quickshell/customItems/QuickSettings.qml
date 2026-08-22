@@ -52,7 +52,6 @@ BarBlock {
         root.showQsPopup = !root.showQsPopup;
     }
 
-    onMiddleClicked: MiscState.toggleVolume = !MiscState.toggleVolume
     onRightClicked: MiscState.toggleSysTray = !MiscState.toggleSysTray
     onAltLeftClicked: MiscState.toggleSysTray = !MiscState.toggleSysTray
 
@@ -167,10 +166,11 @@ BarBlock {
                                         visible: text.length > 0
                                         horizontalAlignment: Text.AlignLeft
                                         font {
-                                            pixelSize: 9
+                                            pixelSize: 11
                                             family: "ZedMono Nerd Font"
+                                            weight: Font.Medium
                                         }
-                                        color: "#6272a4"
+                                        color: "#b8bfcb"
                                         elide: Text.ElideRight
                                     }
                                 }

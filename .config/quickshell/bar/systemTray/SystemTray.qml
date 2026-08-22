@@ -16,10 +16,6 @@ RowLayout {
 
     required property var host
 
-    PipewireBlock {
-        visible: MiscState.toggleVolume
-    }
-
     Loader {
         visible: active
         asynchronous: true

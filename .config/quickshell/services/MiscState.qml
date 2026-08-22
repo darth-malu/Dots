@@ -17,7 +17,6 @@ Singleton {
     property bool toggleRofi: false
 
     property bool toggleSysTray: false
-    property bool toggleVolume: false
     property bool toggleSettings: false
 
     property date currentDate: new Date()

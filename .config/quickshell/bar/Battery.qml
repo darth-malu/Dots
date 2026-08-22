@@ -79,8 +79,8 @@ RowLayout {
         Rectangle {
             id: batteryBody
 
-            width: 34
-            height: 16
+            width: 27
+            height: 15
             radius: 5
             color: "#343746"
             border.width: 1
@@ -127,7 +127,7 @@ RowLayout {
                     visible: batteryBlock.isFullyCharged
                     anchors.centerIn: parent
                     text: "\uf0e7"
-                    font { pixelSize: 14; family: "Symbols Nerd Font Mono"; weight: Font.Bold }
+                    font { pixelSize: 12; family: "Symbols Nerd Font Mono"; weight: Font.Bold }
                     color: "#f8f8f2"
                     style: Text.Outline
                     styleColor: Qt.rgba(0, 0, 0, 0.7)
@@ -418,8 +418,8 @@ RowLayout {
                         Repeater {
                             model: [
                                 { glyph: "\uf06c", name: "Saver", profile: PowerProfile.PowerSaver, tint: "#96e6a1" },
-                                { glyph: "\uf24e", name: "Balanced", profile: PowerProfile.Balanced, tint: "#f5dfa0" },
-                                { glyph: "\uf0e7", name: "Perf", profile: PowerProfile.Performance, tint: "#ff9aa9" }
+                                { glyph: "\uf24e", name: "Balanced", profile: PowerProfile.Balanced, tint: "#c3b8f5" },
+                                { glyph: "\uf0e7", name: "Perf", profile: PowerProfile.Performance, tint: "#8fd8e8" }
                             ]
 
                             delegate: Rectangle {

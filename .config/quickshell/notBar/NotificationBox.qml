@@ -30,15 +30,14 @@ WrapperMouseArea {
 
     property int indexAll: -1
 
-    property real iconSize: ifMusic ? 90 : 44
+    property real iconSize: ifMusic ? 90 : 50
 
-    property bool showTime: false
+    property real iconRadius: iconSize / 5
 
-    property real iconRadius: iconSize / 4
-
-    // critical notifications get a red accent strip, everything else purple
+    // critical notifications keep a red border; wifi connects tint to the current signal color
     readonly property bool urgent: n.urgency == NotificationUrgency.Critical
-    readonly property color accent: urgent ? "#ff5555" : "#bd93f9"
+    readonly property bool isWifiConnect: n.summary == "Connection established" && n.appName == "Shell"
+    readonly property color accent: isWifiConnect ? NetworkState.wifiColor : urgent ? "#ff5555" : "#bd93f9"
 
     property bool expanded: false
 
@@ -53,10 +52,6 @@ WrapperMouseArea {
         } else if (mouse.button == Qt.MiddleButton) {
             NotificationState.dismissAll();
         }
-    }
-
-    ElapsedTimer {
-        id: elapsedTimer
     }
 
     Rectangle {
@@ -75,18 +70,6 @@ WrapperMouseArea {
             }
         }
 
-        // urgency accent strip
-        Rectangle {
-            anchors.left: parent.left
-            anchors.leftMargin: 8
-            anchors.verticalCenter: parent.verticalCenter
-            implicitWidth: 3
-            implicitHeight: parent.height - 24
-            radius: 1.5
-            color: rootMouseArea.accent
-            opacity: 0.9
-        }
-
         RowLayout {
             id: mainLayout
 
@@ -99,12 +82,14 @@ WrapperMouseArea {
                 visible: rootMouseArea.image != ""
                 implicitWidth: rootMouseArea.iconSize
                 implicitHeight: rootMouseArea.iconSize
-                Layout.alignment: Qt.AlignVCenter
+                Layout.topMargin: 2
+                Layout.bottomMargin: 2
+                Layout.leftMargin: 2
 
                 ClippingWrapperRectangle {
                     id: songArt
                     visible: rootMouseArea.image != ""
-                    radius: outerBox.radius - 4
+                    radius: rootMouseArea.iconRadius
                     color: "#343746"
                     anchors.fill: songArtContainer
                     IconImage {
@@ -138,15 +123,6 @@ WrapperMouseArea {
                             bold: true
                         }
                     }
-
-                    Text {
-                        id: currentTime
-                        visible: rootMouseArea.showTime
-                        Layout.alignment: Qt.AlignVCenter
-                        text: NotificationState.humanTime(rootMouseArea.timestamp, rootMouseArea.elapsed)
-                        color: "#6272a4"
-                        font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                    }
                 }
 
                 Text {
@@ -156,8 +132,8 @@ WrapperMouseArea {
                     wrapMode: Text.Wrap
                     maximumLineCount: rootMouseArea.expanded ? 20 : (rootMouseArea.n.actions.length > 1 ? 1 : 2)
                     text: rootMouseArea.n.body
-                    color: "#b8bfcb"
-                    font { pixelSize: 10; family: "Quicksand" }
+                    color: rootMouseArea.isWifiConnect ? "#f8f8f2" : "#b8bfcb"
+                    font { pixelSize: rootMouseArea.isWifiConnect ? 12 : 10; family: rootMouseArea.isWifiConnect ? "ZedMono Nerd Font" : "Quicksand" }
                 }
 
                 RowLayout {
