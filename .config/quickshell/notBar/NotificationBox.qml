@@ -32,6 +32,8 @@ WrapperMouseArea {
 
     property real iconSize: ifMusic ? 90 : 44
 
+    property bool showTime: false
+
     property real iconRadius: iconSize / 4
 
     // critical notifications get a red accent strip, everything else purple

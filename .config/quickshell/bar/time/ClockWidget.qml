@@ -73,7 +73,8 @@ BarBlock {
             anchor.rect.y: 33
 
             implicitWidth: 280
-            implicitHeight: clockPopup.yearView ? 462 : (clockPopup.inputVisible ? 268 : 220)
+            // size to actual content so the year view fits its grid without dead space
+            implicitHeight: clockPopup.implicitHeight + 16
             Behavior on implicitHeight {
                 NumberAnimation {
                     duration: 150

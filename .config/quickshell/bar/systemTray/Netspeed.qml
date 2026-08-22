@@ -45,8 +45,20 @@ Loader {
         readonly property bool online: wifiUp || ethUp
 
         readonly property string ethIfName: NetworkState.ethernet?.name ?? ""
+        readonly property bool ethConnected: NetworkState.ethernet?.network?.connected ?? false
         property real ethRxTotal: 0
         property real ethTxTotal: 0
+
+        function esc(s) {
+            return String(s).replace(/'/g, "'\\''");
+        }
+
+        // ethernet connectivity toggle (header switch)
+        function setEthPower(on) {
+            if (root.ethIfName.length === 0)
+                return;
+            Quickshell.execDetached(["sh", "-c", `nmcli dev ${on ? "connect" : "disconnect"} '${root.esc(root.ethIfName)}'`]);
+        }
 
         // byte counters of whichever interface is currently routed (wifi or eth)
         property real ifaceRxTotal: 0
@@ -362,66 +374,41 @@ Loader {
                         anchors.margins: 14
                         spacing: 7
 
-                        Rectangle {
-                            Layout.fillWidth: true
-                            implicitHeight: 1
-                            color: "#343746"
-                        }
-
-                        InfoRow {
-                            label: "iface"
-                            value: root.ethIfName.length > 0 ? root.ethIfName : "-"
-                        }
-
-                        InfoRow {
-                            label: "ipv4"
-                            value: root.ipAddr.length > 0 ? root.ipAddr : "unavailable"
-                            valueColor: root.ipAddr.length > 0 ? "#f8f8f2" : "#6272a4"
-                        }
-
-                        InfoRow {
-                            label: "gateway"
-                            value: root.gateway.length > 0 ? root.gateway : "-"
-                        }
-
-                        InfoRow {
-                            visible: NetworkState.ethernet !== null
-                            label: "eth"
-                            value: root.ethUp ? (NetworkState.ethernet?.linkSpeed ? "linked · " + NetworkState.ethernet.linkSpeed + " Mb/s" : "linked") : "no link"
-                            valueColor: root.ethUp ? "#8be9fd" : "#6272a4"
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            implicitHeight: 1
-                            color: "#343746"
-                        }
-
-                        // totals with the graphs toggle button (same style as the wifi popup)
-                        InfoRow {
-                            label: "total ↓"
-                            value: root.fmtBytes(root.totalDown)
-                            valueColor: "#bd93f9"
-                        }
-
+                        // ── Header: link details left · graph toggle + connectivity switch right ──
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 8
 
-                            Text {
-                                text: "total ↑"
-                                color: "#6272a4"
-                                font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
-                                Layout.preferredWidth: 56
+                            ColumnLayout {
+                                spacing: 2
+
+                                RowLayout {
+                                    spacing: 6
+
+                                    Rectangle {
+                                        implicitWidth: 6
+                                        implicitHeight: 6
+                                        radius: 3
+                                        color: root.ethUp ? "#50fa7b" : "#6272a4"
+                                    }
+
+                                    Text {
+                                        text: root.ethIfName.length > 0 ? root.ethIfName : "no device"
+                                        color: "#f8f8f2"
+                                        font { pixelSize: 11; bold: true; family: "Quicksand" }
+                                    }
+                                }
+
+                                Text {
+                                    text: root.ethUp
+                                        ? (NetworkState.ethernet?.linkSpeed ? `linked · ${NetworkState.ethernet.linkSpeed} Mb/s` : "linked")
+                                        : root.ethConnected ? "connecting…" : "no link"
+                                    color: root.ethUp ? "#8be9fd" : "#6272a4"
+                                    font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                }
                             }
 
-                            Text {
-                                text: root.fmtBytes(root.totalUp)
-                                color: "#ff79c6"
-                                elide: Text.ElideRight
-                                font { pixelSize: 11; family: "ZedMono Nerd Font" }
-                                Layout.fillWidth: true
-                            }
+                            Item { Layout.fillWidth: true }
 
                             Rectangle {
                                 Layout.alignment: Qt.AlignVCenter
@@ -445,6 +432,72 @@ Loader {
                                     onClicked: NetworkState.ethGraphsEnabled = !NetworkState.ethGraphsEnabled
                                 }
                             }
+
+                            Rectangle {
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: 26
+                                implicitHeight: 14
+                                radius: 7
+                                color: root.ethConnected ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.35) : "#343746"
+
+                                Rectangle {
+                                    x: root.ethConnected ? parent.width - width - 2 : 2
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    implicitWidth: 10
+                                    implicitHeight: 10
+                                    radius: 5
+                                    color: root.ethConnected ? "#bd93f9" : "#6272a4"
+
+                                    Behavior on x {
+                                        NumberAnimation {
+                                            duration: 120
+                                            easing.type: Easing.OutQuad
+                                        }
+                                    }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.setEthPower(!root.ethConnected)
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 1
+                            color: "#343746"
+                        }
+
+                        InfoRow {
+                            label: "ipv4"
+                            value: root.ipAddr.length > 0 ? root.ipAddr : "unavailable"
+                            valueColor: root.ipAddr.length > 0 ? "#f8f8f2" : "#6272a4"
+                        }
+
+                        InfoRow {
+                            label: "gateway"
+                            value: root.gateway.length > 0 ? root.gateway : "-"
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 1
+                            color: "#343746"
+                        }
+
+                        // totals — the graphs toggle lives in the popup header now
+                        InfoRow {
+                            label: "total ↓"
+                            value: root.fmtBytes(root.totalDown)
+                            valueColor: "#bd93f9"
+                        }
+
+                        InfoRow {
+                            label: "total ↑"
+                            value: root.fmtBytes(root.totalUp)
+                            valueColor: "#ff79c6"
                         }
 
                         // ── Live traffic graphs (no separator / label above, wifi-style) ──

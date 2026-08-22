@@ -582,6 +582,7 @@ Item {
                     Rectangle {
                         Layout.fillWidth: true
                         implicitHeight: 1
+                        visible: root.adapter !== null
                         color: "#44475a"
                     }
 
@@ -626,6 +627,14 @@ Item {
                         Layout.fillWidth: true
                         implicitHeight: 1
                         visible: root.showDetails && NetworkState.wifiConnected
+                        color: "#44475a"
+                    }
+
+                    // separators hug the graph section — only visible while it is
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 1
+                        visible: NetworkState.wifiGraphEnabled && root.netRoot !== null
                         color: "#44475a"
                     }
 
@@ -687,7 +696,14 @@ Item {
                     Rectangle {
                         Layout.fillWidth: true
                         implicitHeight: 1
-                        visible: Networking.wifiEnabled && root.networks.length > 0
+                        visible: NetworkState.wifiGraphEnabled && root.netRoot !== null
+                        color: "#44475a"
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 1
+                        visible: Networking.wifiEnabled && root.networks.length > 0 && !NetworkState.wifiGraphEnabled
                         color: "#44475a"
                     }
 
@@ -763,14 +779,6 @@ Item {
                     Text {
                         visible: Networking.wifiEnabled && root.networks.length === 0 && root.adapter !== null
                         text: "scanning for networks…"
-                        color: "#6272a4"
-                        font { pixelSize: 10; family: "Quicksand"; italic: true }
-                        Layout.alignment: Qt.AlignHCenter
-                    }
-
-                    Text {
-                        visible: !root.adapter
-                        text: "no wifi adapter found"
                         color: "#6272a4"
                         font { pixelSize: 10; family: "Quicksand"; italic: true }
                         Layout.alignment: Qt.AlignHCenter
