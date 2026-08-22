@@ -17,6 +17,9 @@ RowLayout {
 
     property bool showPopup: false
 
+    // percentage readout lives OUTSIDE the battery — toggled with left click
+    property bool showPct: false
+
     readonly property UPowerDevice bat: UPower.displayDevice
 
     readonly property bool isCharging: BatteryState.isCharging
@@ -43,18 +46,32 @@ RowLayout {
         : percentage < 0.90 ? "\uf241"
         : "\uf240"
 
+    // ── Percentage readout (outside the battery, left click toggles) ──
+    StyledText {
+        visible: batteryBlock.showPct && !batteryBlock.isFullyCharged
+        text: `${batteryBlock.pctDisplay}%`
+        horizontalAlignment: Text.AlignLeft
+        color: "#f8f8f2"
+        font {
+            pixelSize: 10
+            family: "ZedMono Nerd Font"
+            weight: Font.Bold
+        }
+    }
+
     MouseArea {
         id: root
 
-        implicitWidth: batteryBody.width + cap.width + 1
+        implicitWidth: batteryBody.width + 4 + cap.width
         implicitHeight: batteryBody.height
         cursorShape: Qt.PointingHandCursor
-        hoverEnabled: true
 
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 
         onClicked: mouse => {
-            if (mouse.button == Qt.MiddleButton || mouse.button == Qt.LeftButton)
+            if (mouse.button == Qt.LeftButton)
+                batteryBlock.showPct = !batteryBlock.showPct;
+            else if (mouse.button == Qt.MiddleButton || mouse.button == Qt.RightButton)
                 batteryBlock.showPopup = !batteryBlock.showPopup;
         }
 
@@ -63,8 +80,8 @@ RowLayout {
             id: batteryBody
 
             width: 34
-            height: 17
-            radius: 4
+            height: 16
+            radius: 5
             color: "#343746"
             border.width: 1
             border.color: Qt.rgba(batteryBlock.accentColor.r, batteryBlock.accentColor.g, batteryBlock.accentColor.b, 0.55)
@@ -117,46 +134,31 @@ RowLayout {
                 }
             }
 
-            // ── Readout: charge glyph always visible; percentage appears only on hover ──
-            RowLayout {
+            // ── Charge status icon — always visible, centered in the body ──
+            Text {
                 anchors.centerIn: parent
-                spacing: 2
-
-                Text {
-                    visible: batteryBlock.isCharging || batteryBlock.isPendingCharge
-                    text: batteryBlock.isPendingCharge ? "\uf1e6" : "\uf0e7"
-                    font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
-                    color: "#f8f8f2"
-                    style: Text.Outline
-                    styleColor: Qt.rgba(0, 0, 0, 0.65)
-                }
-
-                Text {
-                    visible: root.containsMouse && !batteryBlock.isFullyCharged
-                    text: batteryBlock.pctDisplay
-                    font {
-                        pixelSize: 11
-                        family: "ZedMono Nerd Font"
-                        weight: Font.Bold
-                    }
-                    color: "#f8f8f2"
-                }
+                visible: batteryBlock.isCharging || batteryBlock.isPendingCharge
+                text: batteryBlock.isPendingCharge ? "\uf1e6" : "\uf0e7"
+                font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                color: "#f8f8f2"
+                style: Text.Outline
+                styleColor: Qt.rgba(0, 0, 0, 0.65)
             }
         }
 
-        // ── Cap nub ──
+        // ── Cap nub — separated from the body by a small gap (macOS style) ──
         Rectangle {
             id: cap
 
             anchors {
                 verticalCenter: parent.verticalCenter
                 left: batteryBody.right
-                leftMargin: -0.5
+                leftMargin: 1.5
             }
 
             implicitWidth: 2.5
-            implicitHeight: 7
-            radius: 1
+            implicitHeight: 8
+            radius: 1.25
             color: batteryBlock.accentColor
 
             Behavior on color {
@@ -242,19 +244,33 @@ RowLayout {
                             font { pixelSize: 13; bold: true; family: "Quicksand" }
                             visible: text !== ""
                         }
-
-                        Text {
-                            text: {
-                                const chg = batteryBlock.bat.changeRate;
-                                return (chg && !isNaN(chg) && chg > 0.1) ? `${chg.toFixed(1)} W` : "";
-                            }
-                            color: "#6272a4"
-                            font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                            visible: text !== ""
-                        }
                     }
 
                     Item { Layout.fillWidth: true }
+
+                    // graph toggle (same style as the network popups)
+                    Rectangle {
+                        Layout.alignment: Qt.AlignVCenter
+                        implicitWidth: 22
+                        implicitHeight: 18
+                        radius: 6
+                        color: batGraphMa.containsMouse || BatteryState.graphEnabled ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.16) : "transparent"
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "\uf1fe"
+                            color: BatteryState.graphEnabled ? "#bd93f9" : "#6272a4"
+                            font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+                        }
+
+                        MouseArea {
+                            id: batGraphMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: BatteryState.graphEnabled = !BatteryState.graphEnabled
+                        }
+                    }
 
                     Text {
                         text: batteryBlock.batteryGlyph
@@ -269,36 +285,9 @@ RowLayout {
                     }
                 }
 
-                // ── Level bar ──
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: 6
-                    radius: 3
-                    color: "#343746"
-
-                    Rectangle {
-                        anchors.fill: parent
-                        anchors.rightMargin: parent.width * (1 - Math.min(Math.max(batteryBlock.percentage, 0), 1))
-                        radius: 3
-                        color: batteryBlock.accentColor
-
-                        Behavior on anchors.rightMargin {
-                            NumberAnimation {
-                                duration: 300
-                                easing.type: Easing.OutCubic
-                            }
-                        }
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: 200
-                            }
-                        }
-                    }
-                }
-
                 // ── Charge history graph ──
                 ColumnLayout {
+                    visible: BatteryState.graphEnabled
                     Layout.fillWidth: true
                     spacing: 4
 
@@ -428,9 +417,9 @@ RowLayout {
 
                         Repeater {
                             model: [
-                                { glyph: "\uf06c", name: "Saver", profile: PowerProfile.PowerSaver, tint: "#50fa7b" },
-                                { glyph: "\uf24e", name: "Balanced", profile: PowerProfile.Balanced, tint: "#f1fa8c" },
-                                { glyph: "\uf0e7", name: "Performance", profile: PowerProfile.Performance, tint: "#ff5555" }
+                                { glyph: "\uf06c", name: "Saver", profile: PowerProfile.PowerSaver, tint: "#96e6a1" },
+                                { glyph: "\uf24e", name: "Balanced", profile: PowerProfile.Balanced, tint: "#f5dfa0" },
+                                { glyph: "\uf0e7", name: "Perf", profile: PowerProfile.Performance, tint: "#ff9aa9" }
                             ]
 
                             delegate: Rectangle {

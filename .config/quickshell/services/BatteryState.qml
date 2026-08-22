@@ -62,6 +62,7 @@ Singleton {
     property int pctDisplay: Math.round(batPercentage * 100)
 
     // rolling charge history for the popup graph (~1h window at 30s samples)
+    property bool graphEnabled: true
     property var levelHistory: []
 
     Timer {
