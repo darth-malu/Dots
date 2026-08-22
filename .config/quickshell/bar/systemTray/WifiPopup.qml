@@ -181,9 +181,20 @@ Item {
         // stored password fetched from NetworkManager for the reveal button
         property string savedPw: ""
 
-        radius: 8
+        // quickshell's WifiNetwork has no connectWithPsk — join secured networks via nmcli
+        function submitPw() {
+            const psk = pwField.text.trim();
+            if (!netrow.modelData || psk.length < 8)
+                return;
+            root.passwordNetwork = null;
+            pwField.clear();
+            Quickshell.execDetached(["sh", "-c", `nmcli dev wifi connect '${root.esc(netrow.ssidName)}' password '${root.esc(psk)}'`]);
+        }
+
+        radius: 3
         Layout.fillWidth: true
-        implicitHeight: netCol.implicitHeight
+        // extra vertical breathing room for a comfortable list
+        implicitHeight: netCol.implicitHeight + 12
         // the row being edited is isolated behind a purple tint; plain hover gets a subtle wash
         color: editing ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.14) : rowHover.containsMouse ? Qt.rgba(1, 1, 1, 0.05) : "transparent"
         opacity: isConnected ? 1 : 0.85
@@ -214,6 +225,7 @@ Item {
 
             anchors.left: parent.left
             anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
             spacing: 4
 
         RowLayout {
@@ -252,8 +264,9 @@ Item {
                 font.italic: netrow.hiddenNet
                 elide: Text.ElideRight
                 font {
-                    pixelSize: 11
+                    pixelSize: 12
                     family: "Quicksand"
+                    weight: Font.Medium
                 }
                 Layout.fillWidth: true
             }
@@ -300,6 +313,59 @@ Item {
                         root.passwordNetwork = null;
                         root.editSsid = netrow.editing ? "" : netrow.ssidName;
                     }
+                }
+            }
+        }
+
+        // ── Password entry, encapsulated right below the clicked network ──
+        Rectangle {
+            visible: root.passwordNetwork === netrow.modelData
+            Layout.fillWidth: true
+            implicitHeight: pwCol.implicitHeight + 16
+            radius: 4
+            color: "#343746"
+
+            ColumnLayout {
+                id: pwCol
+
+                anchors.fill: parent
+                anchors.margins: 8
+                spacing: 6
+
+                Text {
+                    text: `password · ${netrow.hiddenNet ? "hidden network" : netrow.ssidName}`
+                    color: "#bd93f9"
+                    elide: Text.ElideMiddle
+                    font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                    Layout.fillWidth: true
+                }
+
+                TextField {
+                    id: pwField
+
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 26
+                    echoMode: TextInput.Password
+                    placeholderText: "enter password… (⏎ to connect)"
+                    color: "#f8f8f2"
+                    placeholderTextColor: "#6272a4"
+                    font { pixelSize: 11; family: "Quicksand" }
+                    background: Rectangle {
+                        radius: 4
+                        color: "#282a36"
+                        border.color: pwField.activeFocus ? "#bd93f9" : "#6272a4"
+                        border.width: 1
+                    }
+                    leftPadding: 8
+                    rightPadding: 8
+                    topPadding: 0
+                    bottomPadding: 0
+                    verticalAlignment: Text.AlignVCenter
+                    selectByMouse: true
+
+                    Keys.onReturnPressed: netrow.submitPw()
+                    Keys.onEnterPressed: netrow.submitPw()
+                    Keys.onEscapePressed: root.passwordNetwork = null
                 }
             }
         }
@@ -711,6 +777,12 @@ Item {
                             Layout.fillWidth: true
                             spacing: 8
 
+                            Text {
+                                text: `total ↓ ${root.netRoot.fmtBytes(root.netRoot.ifaceRxTotal)}`
+                                color: "#6272a4"
+                                font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                            }
+
                             Item { Layout.fillWidth: true }
 
                             Text {
@@ -741,13 +813,6 @@ Item {
                             tick: root.netRoot.graphTick
                             maxLen: root.netRoot.historyMax
                         }
-
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: `total ↓ ${root.netRoot.fmtBytes(root.netRoot.ifaceRxTotal)} · ↑ ${root.netRoot.fmtBytes(root.netRoot.ifaceTxTotal)}`
-                            color: "#6272a4"
-                            font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                        }
                     }
 
 
@@ -777,49 +842,6 @@ Item {
                     Repeater {
                         model: Networking.wifiEnabled ? root.unknownNets : []
                         delegate: NetRow {}
-                    }
-
-                    // ── Inline password entry for secured networks ──
-                    ColumnLayout {
-                        visible: root.passwordNetwork !== null
-                        Layout.fillWidth: true
-                        spacing: 4
-
-                        Text {
-                            text: `password for ${root.passwordNetwork?.name?.length > 0 ? root.passwordNetwork.name : "hidden network"}`
-                            color: "#bd93f9"
-                            elide: Text.ElideMiddle
-                            font { pixelSize: 9; bold: true; family: "Quicksand" }
-                            Layout.fillWidth: true
-                        }
-
-                        TextField {
-                            id: pwField
-
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 26
-                            echoMode: TextInput.Password
-                            placeholderText: "enter password…"
-                            color: "#f8f8f2"
-                            placeholderTextColor: "#6272a4"
-                            font { pixelSize: 11; family: "Quicksand" }
-                            background: Rectangle {
-                                radius: 6
-                                color: "#44475a"
-                                border.color: pwField.activeFocus ? "#bd93f9" : "#6272a4"
-                                border.width: 1
-                            }
-                            leftPadding: 8
-                            rightPadding: 8
-                            topPadding: 0
-                            bottomPadding: 0
-                            verticalAlignment: Text.AlignVCenter
-                            selectByMouse: true
-
-                            Keys.onReturnPressed: root.submitPassword()
-                            Keys.onEnterPressed: root.submitPassword()
-                            Keys.onEscapePressed: root.passwordNetwork = null
-                        }
                     }
 
                     Text {
@@ -910,18 +932,5 @@ Item {
     function forgetNetwork(net) {
         root.editSsid = "";
         net?.forget();
-    }
-
-    function submitPassword() {
-        if (!root.passwordNetwork)
-            return;
-        const target = root.passwordNetwork;
-        const psk = pwField.text;
-        root.passwordNetwork = null;
-        pwField.text = "";
-        if (psk.length > 0)
-            target.connectWithPsk(psk);
-        else
-            target.connect();
     }
 }

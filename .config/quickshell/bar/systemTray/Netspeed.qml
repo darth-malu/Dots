@@ -474,12 +474,17 @@ Loader {
                         }
 
 
-                        // totals — the graphs toggle lives in the popup header now
-                        // ── Live traffic graphs — same design as the wifi popup ──
+                        // ── Live traffic graphs — total on the left, live rates on the right ──
                         RowLayout {
                             visible: root.ethGraphs
                             Layout.fillWidth: true
                             spacing: 8
+
+                            Text {
+                                text: `total ↓ ${root.fmtBytes(root.ethRxTotal)}`
+                                color: "#6272a4"
+                                font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                            }
 
                             Item { Layout.fillWidth: true }
 

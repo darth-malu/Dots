@@ -208,16 +208,22 @@ BarBlock {
                                     Layout.preferredWidth: 32
                                     Layout.preferredHeight: 32
                                     radius: 6
-                                    color: nasBtnMouse.containsMouse ? Qt.rgba(0.66, 0.84, 0.72, 0.15) : "transparent"
+                                    color: nasBtnMouse.containsMouse ? Qt.rgba(1, 0.72, 0.42, 0.16) : Qt.rgba(1, 0.72, 0.42, 0.07)
 
                                     Text {
                                         anchors.centerIn: parent
                                         // text: "\uf4a6"
-                                        text: ""
-                                        color: "pink"
+                                        text: ""
+                                        color: nasBtnMouse.containsMouse ? "#ffd9a8" : "#ffb86c"
                                         font {
                                             pixelSize: 16
                                             family: "Symbols Nerd Font Mono"
+                                        }
+                                    }
+
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: 120
                                         }
                                     }
 
