@@ -32,6 +32,21 @@ Singleton {
 
     property int pctDisplay: Math.round(batPercentage * 100)
 
+    // rolling charge history for the popup graph (~1h window at 30s samples)
+    property var levelHistory: []
+
+    Timer {
+        interval: 30000
+        running: root.available
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            const h = root.levelHistory.slice(-119);
+            h.push(root.batPercentage);
+            root.levelHistory = h;
+        }
+    }
+
     // one-shot warning flags, re-armed whenever the charger is connected
     property bool warnedLow: false
     property bool warnedCritical: false

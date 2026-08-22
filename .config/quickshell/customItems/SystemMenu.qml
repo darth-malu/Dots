@@ -16,15 +16,7 @@ BarBlock {
     property bool airplaneOn: false
     property string ipAddr: ""
 
-    readonly property string hostName: {
-        var raw = hostFile.text.trim();
-        return raw.length > 0 ? raw : "unknown";
-    }
-
-    FileView {
-        id: hostFile
-        path: "file:///proc/sys/kernel/hostname"
-    }
+    readonly property string hostName: QuickState.hostName
 
     Process {
         id: airplaneCheck

@@ -151,26 +151,26 @@ BarBlock {
                                     spacing: 2
                                     Layout.fillWidth: true
 
-                                    Text {
+                                    StyledText {
                                         text: root.hostName
-                                        color: "#f8f8f2"
                                         font {
-                                            pixelSize: 13
+                                            pixelSize: 11
                                             family: "Quicksand"
                                             bold: true
                                         }
+                                        color: "#f8f8f2"
                                         elide: Text.ElideRight
                                         Layout.fillWidth: true
                                     }
 
-                                    Text {
-                                        text: ResourcesState.uptimeText.length > 0 ? "up " + ResourcesState.uptimeText : ""
-                                        visible: text !== ""
-                                        color: "#6272a4"
+                                    StyledText {
+                                        text: ResourcesState.uptimeText
+                                        visible: text.length > 0
                                         font {
-                                            pixelSize: 10
-                                            family: "Quicksand"
+                                            pixelSize: 9
+                                            family: "ZedMono Nerd Font"
                                         }
+                                        color: "#6272a4"
                                         elide: Text.ElideRight
                                         Layout.fillWidth: true
                                     }
@@ -204,6 +204,8 @@ BarBlock {
                                 }
 
                                 Rectangle {
+                                    // NAS remount shortcut only makes sense on carthage
+                                    visible: root.hostName === "carthage"
                                     Layout.preferredWidth: 32
                                     Layout.preferredHeight: 32
                                     radius: 6

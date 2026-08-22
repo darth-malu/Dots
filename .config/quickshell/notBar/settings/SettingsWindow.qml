@@ -22,15 +22,7 @@ Item {
 
     property var sinkList: []
 
-    readonly property string hostName: {
-        var raw = hostFile.text().trim();
-        return raw.length > 0 ? raw : "unknown";
-    }
-
-    FileView {
-        id: hostFile
-        path: "file:///proc/sys/kernel/hostname"
-    }
+    readonly property string hostName: QuickState.hostName
 
     property string avatarPath: {
         var home = Quickshell.env("HOME") || "/home/" + root.hostName;
