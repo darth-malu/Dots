@@ -1,16 +1,15 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import qs.services
 import qs.customItems
 import Quickshell
 import Quickshell.Services.UPower
 import qs.themes
 
-RowLayout {
+BarBlock {
     id: batteryBlock
+
     Layout.alignment: Qt.AlignVCenter
-    spacing: 6
     visible: BatteryState.available
 
     required property var host
@@ -19,162 +18,73 @@ RowLayout {
 
     readonly property UPowerDevice bat: UPower.displayDevice
 
-    function fmtTime(secs) {
-        if (isNaN(secs) || secs < 0) return "—";
-        const h = Math.floor(secs / 3600);
-        const m = Math.floor((secs % 3600) / 60);
-        if (h > 0) return `${h}h ${m}m`;
-        return `${m}m`;
+    readonly property bool isCharging: BatteryState.isCharging
+    readonly property bool isPendingCharge: BatteryState.isPendingCharge
+    readonly property bool isLow: BatteryState.isLow
+    readonly property bool isCritical: BatteryState.isCritical
+    readonly property bool isFullyCharged: BatteryState.isFullyCharged
+    readonly property real percentage: BatteryState.batPercentage
+    readonly property int pctDisplay: BatteryState.pctDisplay
+
+    // dracula palette: green = charging/full · yellow = pending · orange = low · red = critical
+    readonly property color accentColor: isCharging ? "#50fa7b"
+        : isPendingCharge ? "#f1fa8c"
+        : isCritical ? "#ff5555"
+        : isLow ? "#ffb86c"
+        : "#bd93f9"
+
+    readonly property string batteryGlyph:
+        isCharging ? "\uf0e7"
+        : isPendingCharge ? "\uf1e6"
+        : percentage < 0.10 ? "\uf244"
+        : percentage < 0.35 ? "\uf243"
+        : percentage < 0.60 ? "\uf242"
+        : percentage < 0.90 ? "\uf241"
+        : "\uf240"
+
+    onClicked: mouse => {
+        if (mouse.button == Qt.LeftButton)
+            showPopup = !showPopup;
     }
+    onMiddleClicked: showPopup = !showPopup
 
-    MouseArea {
-        id: root
+    content: RowLayout {
+        spacing: 6
 
-        readonly property bool isCharging: BatteryState.isCharging
-        readonly property bool isLow: BatteryState.isLow
-        readonly property bool isPluggedIn: BatteryState.isPluggedIn
-        readonly property bool isPendingCharge: BatteryState.isPendingCharge
-        readonly property bool isPendingDischarge: BatteryState.isPendingDischarge
-        readonly property real percentage: BatteryState.batPercentage
-        readonly property bool isFull: BatteryState.isFullyCharged
-
-        readonly property color fillColor: isCharging ? "#50fa7b" : isLow ? "#ff5555" : Themes.mprisTextColor
-
-        implicitWidth: batteryBody.width
-        implicitHeight: batteryBody.height
-
-        acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
-
-        onClicked: mouse => {
-            if (mouse.button == Qt.MiddleButton)
-                batteryBlock.showPopup = !batteryBlock.showPopup;
+        Item {
+            Layout.preferredWidth: 2
         }
 
-        Rectangle {
-            id: batteryBody
-            width: 26
-            height: 14
-            radius: 3
-            color: "#343746"
-            border.color: "#6272a4"
-            border.width: 1
-            clip: true
+        MaterialSymbol {
+            text: batteryBlock.batteryGlyph
+            iconSize: 13
+            color: batteryBlock.accentColor
 
-            Item {
-                id: shaderSourceItem
-                anchors.fill: parent
-
-                Rectangle {
-                    anchors.fill: parent
-                    color: "#343746"
-                }
-
-                Rectangle {
-                    id: batteryFill
-                    anchors {
-                        top: parent.top
-                        left: parent.left
-                        bottom: parent.bottom
-                        margins: 1
-                    }
-                    width: Math.max(0, (parent.width - 2) * root.percentage)
-                    radius: 2
-                    color: root.fillColor
-                }
-
-                layer.enabled: true
-                layer.effect: MultiEffect {
-                    maskEnabled: true
-                    maskInverted: true
-                    maskSource: textMaskItem
-                }
-            }
-
-            Item {
-                id: textMaskItem
-                visible: false
-                anchors.fill: parent
-
-                RowLayout {
-                    anchors.centerIn: parent
-                    spacing: 4
-
-                    Text {
-                        text: "⚡"
-                        font { family: "JetBrainsMono Nerd Font"; pixelSize: 9 }
-                        color: "white"
-                        visible: root.isCharging
-                    }
-
-                    Text {
-                        text: "🔌"
-                        font { family: "JetBrainsMono Nerd Font"; pixelSize: 8 }
-                        color: "white"
-                        visible: root.isPendingCharge
-                    }
-
-                    Text {
-                        text: root.isFull ? "⚡" : Math.round(root.percentage * 100)
-                        color: "white"
-                        font {
-                            pixelSize: 11
-                            family: "VictorMono Nerd Font"
-                            weight: Font.Bold
-                        }
-                    }
-                }
-            }
-
-            Item {
-                anchors.fill: parent
-
-                RowLayout {
-                    anchors.centerIn: parent
-                    spacing: 4
-
-                    MaterialSymbol {
-                        Layout.leftMargin: 1
-                        Layout.rightMargin: -3
-                        text: "⚡"
-                        iconSize: 9
-                        visible: root.isCharging
-                        color: root.fillColor
-                    }
-
-                    MaterialSymbol {
-                        Layout.leftMargin: 1
-                        Layout.rightMargin: -2
-                        text: "🔌"
-                        iconSize: 8
-                        visible: root.isPendingCharge
-                        color: root.fillColor
-                    }
-
-                    StyledText {
-                        font {
-                            pixelSize: 11
-                            family: "VictorMono Nerd Font"
-                            weight: Font.Bold
-                        }
-                        text: root.isFull ? "⚡" : Math.round(root.percentage * 100)
-                        color: root.fillColor
-                    }
+            Behavior on color {
+                ColorAnimation {
+                    duration: 200
                 }
             }
         }
 
-        Rectangle {
-            id: cap
-            implicitHeight: 6
-            implicitWidth: 2
-            color: root.fillColor
-            topRightRadius: 999
-            bottomRightRadius: 999
-            anchors {
-                verticalCenter: parent.verticalCenter
-                left: batteryBody.right
-                leftMargin: 1
+        StyledText {
+            font {
+                pixelSize: 12
+                family: "ZedMono Nerd Font"
+                weight: Font.Bold
             }
+            text: batteryBlock.pctDisplay + "%"
+            color: batteryBlock.isCritical || batteryBlock.isLow ? batteryBlock.accentColor : "#f8f8f2"
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: 200
+                }
+            }
+        }
+
+        Item {
+            Layout.preferredWidth: 2
         }
     }
 
@@ -186,8 +96,8 @@ RowLayout {
 
         anchor.window: batteryBlock.host
         anchor.rect.x: {
-            let g = root.mapToGlobal(0, 0);
-            return g.x + (root.width / 2) - (width / 2);
+            let g = batteryBlock.mapToGlobal(0, 0);
+            return g.x + (batteryBlock.width / 2) - (width / 2);
         }
         anchor.rect.y: 33
 
@@ -196,15 +106,22 @@ RowLayout {
 
         Rectangle {
             anchors.fill: parent
-            radius: 10
+            radius: 12
             layer.enabled: true
             layer.samples: 8
             color: "#282a36"
-            border.color: "#44475a"
+            border.width: 1
+            border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
 
             Shortcut {
                 sequence: "Escape"
                 onActivated: batteryBlock.showPopup = false
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                z: -1
+                onClicked: batteryBlock.showPopup = false
             }
 
             ColumnLayout {
@@ -213,38 +130,55 @@ RowLayout {
                     fill: parent
                     margins: 14
                 }
-                spacing: 8
+                spacing: 10
 
+                // ── Header ──
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 10
-
-                    Text {
-                        text: `${Math.floor(BatteryState.batPercentage * 100)}%`
-                        color: BatteryState.isLow ? "#ff5555" : BatteryState.isCharging ? "#50fa7b" : "#f8f8f2"
-                        font {
-                            pixelSize: 28
-                            bold: true
-                            family: "ZedMono Nerd Font"
-                        }
-                    }
 
                     ColumnLayout {
                         spacing: 2
 
                         Text {
-                            text: BatteryState.isCharging ? "Charging" : BatteryState.isFullyCharged ? "Full" : "Discharging"
-                            color: BatteryState.isCharging ? "#50fa7b" : BatteryState.isFullyCharged ? "#f1fa8c" : "#f8f8f2"
-                            font { pixelSize: 12; bold: true; family: "Quicksand" }
+                            text: `${batteryBlock.pctDisplay}%`
+                            color: batteryBlock.accentColor
+                            font {
+                                pixelSize: 28
+                                bold: true
+                                family: "ZedMono Nerd Font"
+                            }
+                        }
+
+                        Text {
+                            text: {
+                                const b = batteryBlock.bat;
+                                if (batteryBlock.isCharging) {
+                                    const t = BatteryState.fmtTime(b.timeToFull);
+                                    return t ? `Charging · ${t} to full` : "Charging";
+                                }
+                                if (batteryBlock.isPendingCharge)
+                                    return "Plugged in";
+                                if (batteryBlock.isFullyCharged)
+                                    return "Fully charged";
+                                if (BatteryState.isDischarging) {
+                                    const t = BatteryState.fmtTime(b.timeToEmpty);
+                                    return t ? `${t} remaining` : "Discharging";
+                                }
+                                return "";
+                            }
+                            color: "#b8bfcb"
+                            font { pixelSize: 10; family: "Quicksand" }
+                            visible: text !== ""
                         }
 
                         Text {
                             text: {
                                 const chg = batteryBlock.bat.changeRate;
-                                return (chg && !isNaN(chg) && chg > 0) ? `${chg.toFixed(1)} W` : "";
+                                return (chg && !isNaN(chg) && chg > 0.1) ? `${chg.toFixed(1)} W` : "";
                             }
                             color: "#6272a4"
-                            font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                            font { pixelSize: 9; family: "ZedMono Nerd Font" }
                             visible: text !== ""
                         }
                     }
@@ -252,9 +186,43 @@ RowLayout {
                     Item { Layout.fillWidth: true }
 
                     Text {
-                        text: BatteryState.batPercentage < 0.5 ? "" : BatteryState.batPercentage < 0.75 ? "" : BatteryState.batPercentage < 0.95 ? "" : ""
-                        color: BatteryState.isLow ? "#ff5555" : BatteryState.isCharging ? "#50fa7b" : "#f8f8f2"
-                        font { pixelSize: 28; family: "Symbols Nerd Font Mono" }
+                        text: batteryBlock.batteryGlyph
+                        color: batteryBlock.accentColor
+                        font { pixelSize: 34; family: "Symbols Nerd Font Mono" }
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 200
+                            }
+                        }
+                    }
+                }
+
+                // ── Level bar ──
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 6
+                    radius: 3
+                    color: "#343746"
+
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.rightMargin: parent.width * (1 - Math.min(Math.max(batteryBlock.percentage, 0), 1))
+                        radius: 3
+                        color: batteryBlock.accentColor
+
+                        Behavior on anchors.rightMargin {
+                            NumberAnimation {
+                                duration: 300
+                                easing.type: Easing.OutCubic
+                            }
+                        }
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 200
+                            }
+                        }
                     }
                 }
 
@@ -264,47 +232,52 @@ RowLayout {
                     color: "#343746"
                 }
 
+                // ── Stats (energy + time) ──
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 4
+                    spacing: 6
 
-                    readonly property var stats: {
-                        const b = batteryBlock.bat;
-                        const e = b.energy;
-                        const ec = b.energyCapacity;
-                        const te = b.timeToEmpty;
-                        const tf = b.timeToFull;
-                        return [
-                            { label: "Energy", value: (e && ec && !isNaN(e) && !isNaN(ec)) ? `${e.toFixed(1)} / ${ec.toFixed(1)} Wh` : "—" },
-                            { label: "Health", value: (b.healthSupported && b.healthPercentage != null) ? `${Math.round(b.healthPercentage * 100)}%` : "—" },
-                            { label: "Time", value: BatteryState.isCharging && tf >= 0 ? `${batteryBlock.fmtTime(tf)} to full` : BatteryState.isDischarging && te >= 0 ? `${batteryBlock.fmtTime(te)} remaining` : "—" },
-                            { label: "Model", value: b.model || "—" },
-                        ];
+                    component StatRow: RowLayout {
+                        id: srow
+                        required property string label
+                        required property string value
+                        spacing: 8
+                        Layout.fillWidth: true
+
+                        Text {
+                            text: srow.label
+                            color: "#6272a4"
+                            font { pixelSize: 10; family: "Quicksand" }
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        Text {
+                            text: srow.value
+                            color: "#f8f8f2"
+                            font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                        }
                     }
 
-                    Repeater {
-                        model: parent.stats.length
+                    StatRow {
+                        label: "Energy"
+                        value: {
+                            const b = batteryBlock.bat;
+                            const e = b.energy;
+                            const ec = b.energyCapacity;
+                            return (e && ec && !isNaN(e) && !isNaN(ec)) ? `${e.toFixed(1)} / ${ec.toFixed(1)} Wh` : "—";
+                        }
+                    }
 
-                        RowLayout {
-                            required property int index
-                            spacing: 8
-                            Layout.fillWidth: true
-
-                            readonly property var stat: parent.stats[index]
-
-                            Text {
-                                text: stat.label
-                                color: "#6272a4"
-                                font { pixelSize: 10; family: "Quicksand" }
-                            }
-
-                            Item { Layout.fillWidth: true }
-
-                            Text {
-                                text: stat.value
-                                color: "#b8bfcb"
-                                font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                            }
+                    StatRow {
+                        label: "Time"
+                        value: {
+                            const b = batteryBlock.bat;
+                            if (batteryBlock.isCharging)
+                                return BatteryState.fmtTime(b.timeToFull) ?? "—";
+                            if (BatteryState.isDischarging)
+                                return BatteryState.fmtTime(b.timeToEmpty) ?? "—";
+                            return "—";
                         }
                     }
                 }
@@ -318,86 +291,83 @@ RowLayout {
                 Text {
                     text: "Power Profile"
                     color: "#6272a4"
-                    font { pixelSize: 10; family: "Quicksand" }
+                    font { pixelSize: 10; bold: true; family: "Quicksand"; letterSpacing: 1 }
                 }
 
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 6
 
-                    Rectangle {
+                    component ProfileButton: Rectangle {
+                        id: pbtn
+                        required property string glyph
+                        required property string name
+                        required property int profile
+                        property bool active: PowerProfiles.profile === pbtn.profile
+
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 32
-                        radius: 6
-                        color: PowerProfiles.profile === PowerProfile.PowerSaver ? "#343746" : "transparent"
-                        border.color: PowerProfiles.profile === PowerProfile.PowerSaver ? "#6272a4" : "#343746"
+                        Layout.preferredHeight: 36
+                        radius: 8
+                        color: active ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : hover.hovered ? Qt.rgba(1, 1, 1, 0.05) : "transparent"
+                        border.color: active ? "#bd93f9" : "#343746"
                         border.width: 1
 
-                        Behavior on color { ColorAnimation { duration: 120 } }
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 120
+                            }
+                        }
+
+                        Behavior on border.color {
+                            ColorAnimation {
+                                duration: 120
+                            }
+                        }
 
                         ColumnLayout {
                             anchors.centerIn: parent
                             spacing: 1
-                            Text { Layout.alignment: Qt.AlignHCenter; text: "🍀"; color: PowerProfiles.profile === PowerProfile.PowerSaver ? "#f8f8f2" : "#6272a4"; font { pixelSize: 14; family: "Symbols Nerd Font Mono" } }
-                            Text { Layout.alignment: Qt.AlignHCenter; text: "Saver"; color: PowerProfiles.profile === PowerProfile.PowerSaver ? "#f8f8f2" : "#6272a4"; font { pixelSize: 9; family: "Quicksand"; bold: true } }
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: pbtn.glyph
+                                color: pbtn.active ? "#bd93f9" : "#6272a4"
+                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                            }
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: pbtn.name
+                                color: pbtn.active ? "#f8f8f2" : "#6272a4"
+                                font { pixelSize: 9; family: "Quicksand"; bold: true }
+                            }
                         }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            hoverEnabled: true
-                            onClicked: Quickshell.execDetached(["sh", "-c", `powerprofilesctl set power-saver && notify-send "Power Profile" "🍀 power-saver" -u low -a Shell`])
+                        HoverHandler {
+                            id: hover
+                        }
+
+                        TapHandler {
+                            onTapped: PowerProfiles.profile = pbtn.profile
                         }
                     }
 
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 32
-                        radius: 6
-                        color: PowerProfiles.profile === PowerProfile.Balanced ? "#343746" : "transparent"
-                        border.color: PowerProfiles.profile === PowerProfile.Balanced ? "#6272a4" : "#343746"
-                        border.width: 1
-
-                        Behavior on color { ColorAnimation { duration: 120 } }
-
-                        ColumnLayout {
-                            anchors.centerIn: parent
-                            spacing: 1
-                            Text { Layout.alignment: Qt.AlignHCenter; text: "☯"; color: PowerProfiles.profile === PowerProfile.Balanced ? "#f8f8f2" : "#6272a4"; font { pixelSize: 14; family: "Symbols Nerd Font Mono" } }
-                            Text { Layout.alignment: Qt.AlignHCenter; text: "Balanced"; color: PowerProfiles.profile === PowerProfile.Balanced ? "#f8f8f2" : "#6272a4"; font { pixelSize: 9; family: "Quicksand"; bold: true } }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            hoverEnabled: true
-                            onClicked: Quickshell.execDetached(["sh", "-c", `powerprofilesctl set balanced && notify-send "Power Profile" "☯ balanced" -u low -a Shell`])
-                        }
+                    ProfileButton {
+                        glyph: "\uf06c"
+                        name: "Saver"
+                        profile: PowerProfile.PowerSaver
                     }
 
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 32
-                        radius: 6
-                        color: PowerProfiles.profile === PowerProfile.Performance ? "#343746" : "transparent"
-                        border.color: PowerProfiles.profile === PowerProfile.Performance ? "#6272a4" : "#343746"
-                        border.width: 1
+                    ProfileButton {
+                        glyph: "\uf24e"
+                        name: "Balanced"
+                        profile: PowerProfile.Balanced
+                    }
 
-                        Behavior on color { ColorAnimation { duration: 120 } }
-
-                        ColumnLayout {
-                            anchors.centerIn: parent
-                            spacing: 1
-                            Text { Layout.alignment: Qt.AlignHCenter; text: "⚡"; color: PowerProfiles.profile === PowerProfile.Performance ? "#f8f8f2" : "#6272a4"; font { pixelSize: 14; family: "Symbols Nerd Font Mono" } }
-                            Text { Layout.alignment: Qt.AlignHCenter; text: "Perf"; color: PowerProfiles.profile === PowerProfile.Performance ? "#f8f8f2" : "#6272a4"; font { pixelSize: 9; family: "Quicksand"; bold: true } }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            hoverEnabled: true
-                            onClicked: Quickshell.execDetached(["sh", "-c", `powerprofilesctl set performance && notify-send "Power Profile" "⚡ performance" -u low -a Shell`])
-                        }
+                    ProfileButton {
+                        glyph: "\uf0e7"
+                        name: "Performance"
+                        profile: PowerProfile.Performance
                     }
                 }
             }

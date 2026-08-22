@@ -29,12 +29,14 @@ BarBlock {
 
     // ── volume OSD ──
     property bool osdShown: false
+    property bool osdInCard: false
     property string osdGlyph: "\uf028"
     property int osdValue: 0
 
-    function showOsd(glyph, value) {
+    function showOsd(glyph, value, inCard = false) {
         root.osdGlyph = glyph;
         root.osdValue = value;
+        root.osdInCard = inCard;
         root.osdShown = true;
         osdTimer.restart();
     }
@@ -916,6 +918,59 @@ BarBlock {
 
                             }
 
+                            // ── Volume HUD (bottom-left of card) ──
+                            Rectangle {
+                                anchors.left: parent.left
+                                anchors.bottom: parent.bottom
+                                anchors.margins: 8
+                                implicitWidth: cardOsdRow.implicitWidth + 20
+                                implicitHeight: 24
+                                radius: 12
+                                color: Qt.rgba(0, 0, 0, 0.72)
+                                border.width: 1
+                                border.color: Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.35)
+                                opacity: root.osdShown && root.osdInCard ? 1 : 0
+                                scale: root.osdShown && root.osdInCard ? 1 : 0.85
+
+                                Behavior on opacity {
+                                    NumberAnimation {
+                                        duration: 150
+                                    }
+                                }
+
+                                Behavior on scale {
+                                    NumberAnimation {
+                                        duration: 150
+                                        easing.type: Easing.OutCubic
+                                    }
+                                }
+
+                                RowLayout {
+                                    id: cardOsdRow
+                                    anchors.centerIn: parent
+                                    spacing: 6
+
+                                    Text {
+                                        text: root.osdGlyph
+                                        color: nowPlayingCard.dominantColor
+                                        font {
+                                            pixelSize: 11
+                                            family: "Symbols Nerd Font Mono"
+                                        }
+                                    }
+
+                                    Text {
+                                        text: root.osdValue + "%"
+                                        color: "#f8f8f2"
+                                        font {
+                                            pixelSize: 11
+                                            bold: true
+                                            family: "ZedMono Nerd Font"
+                                        }
+                                    }
+                                }
+                            }
+
                             // ── Mouse area for scroll volume ──
                             MouseArea {
                                 anchors.fill: parent
@@ -924,7 +979,7 @@ BarBlock {
                                     var p = MprisState.player;
                                     if (p?.canControl && p?.volumeSupported) {
                                         p.volume = Math.max(0, Math.min(p.volume + (wheel.angleDelta.y > 0 ? 0.05 : -0.05), 1));
-                                        root.showOsd("\uf028", Math.round(p.volume * 100));
+                                        root.showOsd("\uf028", Math.round(p.volume * 100), true);
                                     }
                                 }
                             }
@@ -1033,8 +1088,8 @@ BarBlock {
                                 color: Qt.rgba(0, 0, 0, 0.72)
                                 border.width: 1
                                 border.color: Qt.rgba(1, 1, 1, 0.09)
-                                opacity: root.osdShown ? 1 : 0
-                                scale: root.osdShown ? 1 : 0.85
+                                opacity: root.osdShown && !root.osdInCard ? 1 : 0
+                                scale: root.osdShown && !root.osdInCard ? 1 : 0.85
 
                                 Behavior on opacity {
                                     NumberAnimation {

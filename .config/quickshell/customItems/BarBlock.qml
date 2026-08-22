@@ -16,6 +16,10 @@ Rectangle {
 
     property Item mouseArea: mouseArea
 
+    // when false, clicks pass through to content children instead of being
+    // swallowed by the block-level MouseArea
+    property bool interactive: true
+
     property string text
 
     property bool dim: false
@@ -45,7 +49,7 @@ Rectangle {
         id: mouseArea
         anchors.fill: root
         hoverEnabled: true
-        acceptedButtons: Qt.RightButton | Qt.LeftButton | Qt.MiddleButton | Qt.ForwardButton | Qt.BackButton | Qt.NoButton
+        acceptedButtons: root.interactive ? (Qt.RightButton | Qt.LeftButton | Qt.MiddleButton | Qt.ForwardButton | Qt.BackButton) : Qt.NoButton
         onClicked: mouse => {
             root.clicked(mouse);
             if (mouse.button === Qt.LeftButton)

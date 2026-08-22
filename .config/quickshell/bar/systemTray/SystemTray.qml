@@ -57,6 +57,8 @@ RowLayout {
     Component {
         id: sysBlock
         BarBlock {
+            interactive: false
+
             implicitWidth: tray.implicitWidth
             implicitHeight: tray.implicitHeight
 

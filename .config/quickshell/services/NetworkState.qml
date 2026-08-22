@@ -41,12 +41,12 @@ Singleton {
         return "root:/icons/ethernet-x.svg";
     }
 
-    // dracula: surface2 / red / peach→yellow→green by signal
+    // gray = disabled/no adapter · purple = idle · peach→yellow→green by signal
     readonly property color wifiColor: {
-        if (!Networking.wifiEnabled)
+        if (!root.adapter || !Networking.wifiEnabled)
             return "#6272a4";
         if (!root.activeNetwork)
-            return "#ff5555";
+            return "#bd93f9";
 
         const s = root.activeNetwork.signalStrength;
         return s < 0.34 ? "#ffb86c" : s < 0.67 ? "#f1fa8c" : "#50fa7b";

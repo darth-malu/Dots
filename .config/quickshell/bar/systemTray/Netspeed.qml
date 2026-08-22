@@ -209,51 +209,54 @@ Loader {
 
         onRightClicked: NetworkState.netspeedVisible = !NetworkState.netspeedVisible
 
-        MouseArea {
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            x: {
-                root.width;
-                NetworkState.netspeedVisible;
-                return wifiIco.mapToItem(root, 0, 0).x - 4;
-            }
-            width: 22
-            cursorShape: Qt.PointingHandCursor
-            onClicked: NetworkState.wifiPopupVisible = !NetworkState.wifiPopupVisible
-        }
-
-        MouseArea {
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            x: {
-                root.width;
-                NetworkState.netspeedVisible;
-                return ethIco.mapToItem(root, 0, 0).x - 5;
-            }
-            width: 21
-            cursorShape: Qt.PointingHandCursor
-            onClicked: NetworkState.netPopupVisible = !NetworkState.netPopupVisible
-        }
-
         content: RowLayout {
-            spacing: 3
+            id: netRow
+            spacing: 6
 
-            SvgIcon {
-                id: wifiIco
-                icon: NetworkState.wifiIcon
-                color: NetworkState.wifiColor
-                width: 14
-                height: 14
+            // ── Wifi icon + own click zone ──
+            Item {
+                implicitWidth: wifiIco.width
+                implicitHeight: wifiIco.height
                 Layout.alignment: Qt.AlignVCenter
+
+                SvgIcon {
+                    id: wifiIco
+                    anchors.centerIn: parent
+                    icon: NetworkState.wifiIcon
+                    color: NetworkState.wifiColor
+                    width: 16
+                    height: 16
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    anchors.margins: -3
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: NetworkState.wifiPopupVisible = !NetworkState.wifiPopupVisible
+                }
             }
 
-            SvgIcon {
-                id: ethIco
-                icon: NetworkState.ethIcon
-                color: NetworkState.ethColor
-                width: 11
-                height: 11
+            // ── Ethernet icon + own click zone ──
+            Item {
+                implicitWidth: ethIco.width
+                implicitHeight: ethIco.height
                 Layout.alignment: Qt.AlignVCenter
+
+                SvgIcon {
+                    id: ethIco
+                    anchors.centerIn: parent
+                    icon: NetworkState.ethIcon
+                    color: NetworkState.ethColor
+                    width: 14
+                    height: 14
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    anchors.margins: -3
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: NetworkState.netPopupVisible = !NetworkState.netPopupVisible
+                }
             }
 
             RowLayout {
@@ -261,7 +264,7 @@ Loader {
                 spacing: 5
 
                 Item {
-                    Layout.preferredWidth: 4
+                    Layout.preferredWidth: 2
                 }
 
                 BarText {

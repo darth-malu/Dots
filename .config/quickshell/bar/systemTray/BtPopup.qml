@@ -16,9 +16,6 @@ BarBlock {
         return list;
     }
 
-    implicitWidth: 15
-    implicitHeight: 15
-
     onClicked: mouse => {
         if (mouse.button === Qt.LeftButton)
             NetworkState.btPopupVisible = !NetworkState.btPopupVisible;
@@ -27,13 +24,13 @@ BarBlock {
     onRightClicked: NetworkState.netspeedVisible = !NetworkState.netspeedVisible
 
     content: RowLayout {
-        spacing: 0
+        spacing: 6
 
         SvgIcon {
             icon: Bt.btIcon
             color: Bt.btColor
-            width: 13
-            height: 13
+            width: 16
+            height: 16
         }
     }
 

@@ -5,6 +5,7 @@ import Quickshell.Services.UPower
 
 Singleton {
     id: root
+
     readonly property UPowerDevice battery: UPower.displayDevice
 
     readonly property var powerProfile: PowerProfiles.profile
@@ -24,42 +25,86 @@ Singleton {
     property bool isPendingDischarge: chargeState == UPowerDeviceState.PendingDischarge
     property bool isFullyCharged: chargeState == UPowerDeviceState.FullyCharged
 
-    property bool isLow: available && (batPercentage <= 18 / 100)
-    property bool isCritical: available && (batPercentage <= 7 / 100)
+    readonly property int lowThreshold: 20
+    readonly property int criticalThreshold: 10
+    readonly property bool isLow: available && !isPluggedIn && pctDisplay <= lowThreshold
+    readonly property bool isCritical: available && !isPluggedIn && pctDisplay <= criticalThreshold
 
     property int pctDisplay: Math.round(batPercentage * 100)
 
-    function notify(summary, body, icon, urgency = "low") {
+    // one-shot warning flags, re-armed whenever the charger is connected
+    property bool warnedLow: false
+    property bool warnedCritical: false
+    property string lastChargeNotify: ""
+
+    function fmtTime(secs) {
+        if (secs == null || isNaN(secs) || secs < 0)
+            return null;
+        const h = Math.floor(secs / 3600);
+        const m = Math.floor((secs % 3600) / 60);
+        if (h > 0)
+            return `${h}h ${m}m`;
+        return `${m}m`;
+    }
+
+    function timeLeftText() {
+        return root.fmtTime(root.isCharging ? root.battery.timeToFull : root.battery.timeToEmpty);
+    }
+
+    function notify(summary, body, icon, urgency = "normal", sound = false) {
         const safeSummary = summary.replace(/'/g, "'\\''");
         const safeBody = body.replace(/'/g, "'\\''");
         const assetPath = `/home/malu/.config/quickshell/assets/battery/${icon}.png`;
-        const cmd = `notify-send '${safeSummary}' '${safeBody}' -u ${urgency} -i ${assetPath} -a Shell && canberra-gtk-play -i bell`;
+        const bell = sound ? " && canberra-gtk-play -i bell" : "";
+        const cmd = `notify-send '${safeSummary}' '${safeBody}' -u ${urgency} -t 8000 -i ${assetPath} -a Shell${bell}`;
         Quickshell.execDetached(["sh", "-c", cmd]);
     }
 
+    function resetWarnings() {
+        root.warnedLow = false;
+        root.warnedCritical = false;
+    }
+
     onChargeStateChanged: {
+        if (!root.available)
+            return;
+
+        // plugging in re-arms the low/critical warnings for the next discharge
+        if (root.isPluggedIn || root.isFullyCharged)
+            resetWarnings();
+
+        // one notification per actual transition (UPower flaps pending states)
+        const key = String(chargeState);
+        if (key === root.lastChargeNotify)
+            return;
+        root.lastChargeNotify = key;
+
         const pct = root.pctDisplay;
         switch (chargeState) {
         case UPowerDeviceState.Charging:
-            notify("🔌 Charging", `Battery at ${pct}%`, "plug");
+            notify("Charging", `Battery at ${pct}% · ${timeLeftText() ?? "estimating…"}`, "plug");
             break;
         case UPowerDeviceState.Discharging:
-            notify("🔋 Discharging", `Battery at ${pct}%`, "unplug");
+            notify("Discharging", `Running on battery · ${pct}%`, "unplug");
             break;
         case UPowerDeviceState.FullyCharged:
-            notify("✅ Fully Charged", `Battery is full at ${pct}%`, "full-battery");
+            notify("Battery full", `${pct}% — you can unplug`, "full-battery");
             break;
         }
     }
 
     onBatPercentageChanged: {
-        if (!isDischarging)
+        if (!root.available || root.isPluggedIn)
             return;
         const pct = root.pctDisplay;
-        if (isCritical) {
-            notify("🚨 Critical Battery!", `Battery at ${pct}% — plug in now!`, "warning-battery", "critical");
-        } else if (isLow) {
-            notify("⚠️ Low Battery", `Battery at ${pct}%`, "low-battery");
+        const left = timeLeftText();
+        if (pct <= criticalThreshold && !warnedCritical) {
+            warnedLow = true;
+            warnedCritical = true;
+            notify("Critical battery", `${pct}%${left ? ` · ~${left} left` : ""} — plug in now`, "warning-battery", "critical", true);
+        } else if (pct <= lowThreshold && !warnedLow) {
+            warnedLow = true;
+            notify("Low battery", `${pct}%${left ? ` · ~${left} remaining` : ""}`, "low-battery", "normal", true);
         }
     }
 }
