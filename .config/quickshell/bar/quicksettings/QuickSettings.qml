@@ -369,37 +369,23 @@ BarBlock {
                                     cmd: "hyprlock"
                                 }
                                 QsPower {
-                                    icon: "󱫭"
+                                    icon: ""
                                     color: "#50fa7b"
-                                    label: PowerTimer.mode === "reboot" ? PowerTimer.formatTime(PowerTimer.remaining) : "R-Timer"
+                                    label: PowerTimer.mode === "reboot" ? PowerTimer.formatTime(PowerTimer.remaining) : "Reboot"
                                     highlighted: PowerTimer.mode === "reboot"
                                     cmd: ""
                                     onActivated: root.timerPicker = root.timerPicker === 1 ? 0 : 1
                                 }
                                 QsPower {
-                                    icon: ""
-                                    // color: "#f1fa8c"
-                                    color: "#50fa7b"
-                                    label: "Reboot"
-                                    cmd: "systemctl reboot"
-                                }
-                                QsPower {
-                                    icon: "󱫖"
+                                    icon: "\uf011"
                                     color: "#ff5555"
-                                    // color: "#ff79c6"
-                                    label: PowerTimer.mode === "poweroff" ? PowerTimer.formatTime(PowerTimer.remaining) : "S-Timer"
+                                    label: PowerTimer.mode === "poweroff" ? PowerTimer.formatTime(PowerTimer.remaining) : "Shutdown"
                                     highlighted: PowerTimer.mode === "poweroff"
                                     cmd: ""
                                     onActivated: root.timerPicker = root.timerPicker === 2 ? 0 : 2
                                 }
                                 QsPower {
-                                    icon: ""
-                                    color: "#ff5555"
-                                    label: "Off"
-                                    cmd: "systemctl poweroff"
-                                }
-                                QsPower {
-                                    icon: ""
+                                    icon: "\uf08b"
                                     color: "#bd93f9"
                                     label: "Exit"
                                     cmd: "loginctl terminate-user $USER"
@@ -407,7 +393,7 @@ BarBlock {
                             }
                         }
 
-                        // ═══ TIMER PRESETS ═══
+                        // ═══ REBOOT / SHUTDOWN MENU ═══
                         Card {
                             id: timerCard
 
@@ -417,14 +403,21 @@ BarBlock {
                             Layout.topMargin: -4
                             cardPadding: 8
 
-                            readonly property string modeName: root.timerPicker === 1 ? "Reboot" : "Shutdown"
+                            readonly property bool isReboot: root.timerPicker === 1
+                            readonly property string modeName: isReboot ? "Reboot" : "Shutdown"
+                            // a matching timer is armed; menu stays open as live confirmation
+                            readonly property bool live: PowerTimer.active && PowerTimer.mode === (isReboot ? "reboot" : "poweroff")
 
                             function pick(minutes) {
-                                if (root.timerPicker === 1)
+                                if (minutes <= 0) {
+                                    root.showQsPopup = false;
+                                    Quickshell.execDetached(["systemctl", isReboot ? "reboot" : "poweroff"]);
+                                    return;
+                                }
+                                if (isReboot)
                                     PowerTimer.scheduleReboot(minutes * 60);
-                                else if (root.timerPicker === 2)
+                                else
                                     PowerTimer.schedulePoweroff(minutes * 60);
-                                root.timerPicker = 0;
                             }
 
                             ColumnLayout {
@@ -432,9 +425,8 @@ BarBlock {
                                 spacing: 5
 
                                 Text {
-                                    readonly property bool live: PowerTimer.active && PowerTimer.mode === (root.timerPicker === 1 ? "reboot" : "poweroff")
-                                    text: live ? timerCard.modeName + " in " + PowerTimer.formatTime(PowerTimer.remaining) : timerCard.modeName + " after:"
-                                    color: live ? (root.timerPicker === 1 ? "#50fa7b" : "#ff5555") : "#6272a4"
+                                    text: timerCard.live ? timerCard.modeName + " in " + PowerTimer.formatTime(PowerTimer.remaining) : timerCard.modeName + " after:"
+                                    color: timerCard.live ? (timerCard.isReboot ? "#50fa7b" : "#ff5555") : "#6272a4"
                                     font {
                                         pixelSize: 9
                                         bold: true
@@ -448,13 +440,28 @@ BarBlock {
                                     spacing: 4
 
                                     TimerChip {
+                                        txt: "now"
+                                        danger: true
+                                        onPicked: timerCard.pick(0)
+                                    }
+                                    TimerChip {
                                         txt: "5m"
                                         onPicked: timerCard.pick(5)
+                                    }
+                                    TimerChip {
+                                        txt: "10m"
+                                        onPicked: timerCard.pick(10)
                                     }
                                     TimerChip {
                                         txt: "15m"
                                         onPicked: timerCard.pick(15)
                                     }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 4
+
                                     TimerChip {
                                         txt: "30m"
                                         onPicked: timerCard.pick(30)
@@ -467,16 +474,17 @@ BarBlock {
                                         txt: "2h"
                                         onPicked: timerCard.pick(120)
                                     }
+                                    TimerChip {
+                                        txt: "4h"
+                                        onPicked: timerCard.pick(240)
+                                    }
                                 }
 
                                 TimerChip {
-                                    visible: PowerTimer.active
+                                    visible: timerCard.live
                                     txt: "cancel " + (PowerTimer.mode === "reboot" ? "reboot" : "shutdown") + " · " + PowerTimer.formatTime(PowerTimer.remaining)
                                     danger: true
-                                    onPicked: {
-                                        PowerTimer.cancel();
-                                        root.timerPicker = 0;
-                                    }
+                                    onPicked: PowerTimer.cancel()
                                 }
                             }
                         }
@@ -1146,20 +1154,19 @@ BarBlock {
                             color: "#21222c"
                             border.width: 1
                             border.color: Qt.rgba(0.74, 0.58, 0.98, 0.25)
-                            implicitHeight: volumeCol.implicitHeight + 20
+                            implicitHeight: volumeCol.implicitHeight + 16
 
                             ColumnLayout {
                                 id: volumeCol
                                 anchors.fill: parent
-                                // right strip reserved for the pw-center button
-                                anchors.leftMargin: 10
-                                anchors.topMargin: 10
-                                anchors.bottomMargin: 10
-                                anchors.rightMargin: 32
-                                spacing: 8
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
+                                anchors.topMargin: 8
+                                anchors.bottomMargin: 8
+                                spacing: 5
 
                                 Brightness {
-                                    Layout.topMargin: 2
+                                    Layout.fillWidth: true
                                 }
 
                                 Rectangle {
@@ -1169,131 +1176,84 @@ BarBlock {
                                     color: "#343746"
                                 }
 
-                                SinkName {
-                                    node: PipewireState.outputSink
-                                    fallback: "output"
-                                    accent: "#bd93f9"
-                                    displayName: PipewireState.outputDisplayName
-                                }
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 3
 
-                                VolumeSlider {
-                                    id: outVol
-                                    node: PipewireState.outputSink
-                                    glyph: "\uf028"
-                                    glyphMuted: "\uf026"
-                                    accent: "#bd93f9"
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 6
 
-                                    onAdjusted: level => root.showOsd("\uf028", Math.round(level * 100))
-                                }
+                                        SinkName {
+                                            node: PipewireState.outputSink
+                                            fallback: "output"
+                                            accent: "#bd93f9"
+                                            displayName: PipewireState.outputDisplayName
+                                        }
 
-                                Item {
-                                    Layout.preferredHeight: 2
-                                }
+                                        Rectangle {
+                                            id: pwBtn
 
-                                SinkName {
-                                    node: PipewireState.inputSink
-                                    fallback: "input"
-                                    accent: "#8be9fd"
-                                }
+                                            // pw management shortcut (hyprpwcenter)
+                                            implicitWidth: 18
+                                            implicitHeight: 18
+                                            radius: 5
+                                            color: pwMouse.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "transparent"
 
-                                VolumeSlider {
-                                    id: inVol
-                                    node: PipewireState.inputSink
-                                    glyph: "\uf130"
-                                    glyphMuted: "\uf131"
-                                    accent: "#8be9fd"
+                                            Behavior on color {
+                                                ColorAnimation {
+                                                    duration: 120
+                                                }
+                                            }
 
-                                    onAdjusted: level => root.showOsd("\uf130", Math.round(level * 100))
-                                }
-                            }
+                                            Text {
+                                                anchors.centerIn: parent
+                                                text: "\uf013"
+                                                color: pwMouse.containsMouse ? "#bd93f9" : "#6272a4"
+                                                font {
+                                                    pixelSize: 10
+                                                    family: "Symbols Nerd Font Mono"
+                                                }
+                                            }
 
-                            // ── pw management shortcut (hyprpwcenter) ──
-                            Rectangle {
-                                anchors.top: parent.top
-                                anchors.right: parent.right
-                                anchors.margins: 7
-                                implicitWidth: 20
-                                implicitHeight: 20
-                                radius: 5
-                                color: pwMouse.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "transparent"
-
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: 120
-                                    }
-                                }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "\uf013"
-                                    color: pwMouse.containsMouse ? "#bd93f9" : "#6272a4"
-                                    font {
-                                        pixelSize: 10
-                                        family: "Symbols Nerd Font Mono"
-                                    }
-                                }
-
-                                MouseArea {
-                                    id: pwMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        root.showQsPopup = false;
-                                        Quickshell.execDetached(["sh", "-c", "exec hyprpwcenter 2>/dev/null || exec pwvucontrol"]);
-                                    }
-                                }
-                            }
-
-                            // ── Volume OSD ──
-                            Rectangle {
-                                anchors.right: parent.right
-                                anchors.bottom: parent.bottom
-                                anchors.margins: 8
-                                implicitWidth: osdRow.implicitWidth + 20
-                                implicitHeight: 24
-                                radius: 12
-                                color: Qt.rgba(0, 0, 0, 0.72)
-                                border.width: 1
-                                border.color: Qt.rgba(1, 1, 1, 0.09)
-                                opacity: root.osdShown && !root.osdInCard ? 1 : 0
-                                scale: root.osdShown && !root.osdInCard ? 1 : 0.85
-
-                                Behavior on opacity {
-                                    NumberAnimation {
-                                        duration: 150
-                                    }
-                                }
-
-                                Behavior on scale {
-                                    NumberAnimation {
-                                        duration: 150
-                                        easing.type: Easing.OutCubic
-                                    }
-                                }
-
-                                RowLayout {
-                                    id: osdRow
-                                    anchors.centerIn: parent
-                                    spacing: 6
-
-                                    Text {
-                                        text: root.osdGlyph
-                                        color: "#bd93f9"
-                                        font {
-                                            pixelSize: 11
-                                            family: "Symbols Nerd Font Mono"
+                                            MouseArea {
+                                                id: pwMouse
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: {
+                                                    root.showQsPopup = false;
+                                                    Quickshell.execDetached(["sh", "-c", "exec hyprpwcenter 2>/dev/null || exec pwvucontrol"]);
+                                                }
+                                            }
                                         }
                                     }
 
-                                    Text {
-                                        text: root.osdValue + "%"
-                                        color: "#f8f8f2"
-                                        font {
-                                            pixelSize: 11
-                                            bold: true
-                                            family: "ZedMono Nerd Font"
-                                        }
+                                    VolumeSlider {
+                                        id: outVol
+                                        node: PipewireState.outputSink
+                                        glyph: "\uf028"
+                                        glyphMuted: "\uf026"
+                                        accent: "#bd93f9"
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 3
+
+                                    SinkName {
+                                        node: PipewireState.inputSink
+                                        fallback: "input"
+                                        accent: "#8be9fd"
+                                    }
+
+                                    VolumeSlider {
+                                        id: inVol
+                                        node: PipewireState.inputSink
+                                        glyph: "\uf130"
+                                        glyphMuted: "\uf131"
+                                        accent: "#8be9fd"
                                     }
                                 }
                             }

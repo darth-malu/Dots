@@ -22,8 +22,8 @@ RowLayout {
     visible: ready
 
     Rectangle {
-        implicitWidth: 28
-        implicitHeight: 28
+        implicitWidth: 24
+        implicitHeight: 24
         radius: 6
         color: muteMouse.containsMouse ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.22) : root.muted ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.15) : Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.06)
 
@@ -52,7 +52,7 @@ RowLayout {
             }
 
             font {
-                pixelSize: 13
+                pixelSize: 12
                 family: "Symbols Nerd Font Mono"
             }
 

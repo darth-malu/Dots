@@ -25,6 +25,21 @@ Item {
         color: mouseArea.containsMouse ? Qt.rgba(parent.color.r, parent.color.g, parent.color.b, 0.12) : parent.highlighted ? Qt.rgba(parent.color.r, parent.color.g, parent.color.b, 0.10) : "transparent"
         scale: parent.scaleVal
 
+        // gentle breathing while a matching timer is pending
+        SequentialAnimation on opacity {
+            running: parent.highlighted
+            loops: Animation.Infinite
+            alwaysRunToEnd: true
+            NumberAnimation {
+                to: 0.35
+                duration: 650
+            }
+            NumberAnimation {
+                to: 1
+                duration: 650
+            }
+        }
+
         Behavior on color {
             ColorAnimation {
                 duration: 120

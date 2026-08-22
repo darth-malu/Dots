@@ -17,8 +17,8 @@ RowLayout {
     visible: root.ready
 
     Rectangle {
-        implicitWidth: 28
-        implicitHeight: 28
+        implicitWidth: 24
+        implicitHeight: 24
         radius: 6
         color: sunMouse.containsMouse ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.18) : Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.06)
 
@@ -33,7 +33,7 @@ RowLayout {
             text: BrightnessState.pctDisplay <= 15 ? "\uf186" : "\uf185"
             color: sunMouse.containsMouse ? root.accent : Qt.rgba(1, 1, 1, 0.75)
             font {
-                pixelSize: 13
+                pixelSize: 12
                 family: "Symbols Nerd Font Mono"
             }
 
