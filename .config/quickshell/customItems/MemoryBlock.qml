@@ -10,7 +10,9 @@ BarBlock {
 
     required property var host
 
-    property bool showUsage: false
+    // distinct pill background so this block stands out from its neighbours
+    color: mouseArea.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.18) : Qt.rgba(0.741, 0.576, 0.976, 0.10)
+
     property bool showSwap: false
 
     property var topProcs: []
@@ -30,12 +32,10 @@ BarBlock {
     readonly property color swapColor: ResourcesState.swapPercent > 80 ? "#ff5555" : "#8be9fd"
 
     onClicked: mouse => {
-        if (mouse.button === Qt.LeftButton) {
-            showUsage = !showUsage;
-        } else if (mouse.button === Qt.RightButton)
-            showSwap = !showSwap;
-        else if (mouse.button === Qt.MiddleButton)
+        if (mouse.button === Qt.LeftButton)
             MiscState.showMemProcs = !MiscState.showMemProcs;
+        else if (mouse.button === Qt.RightButton)
+            showSwap = !showSwap;
     }
 
     content: RowLayout {
@@ -82,14 +82,6 @@ BarBlock {
                 ctx.font = `11px "Symbols Nerd Font Mono"`;
                 ctx.fillText("", cx, cy + 0.5);
             }
-        }
-
-        BarText {
-            id: usageText
-            visible: memory.showUsage
-            symbolText: `${memory.memoryUsed} Gi`
-            baseColor: memory.memoryColor
-            pointSize: 11
         }
 
         BarText {

@@ -64,6 +64,7 @@ Item {
                 NetworkState.wifiGraphEnabled = false;
             } else {
                 connListProc.running = true;
+                bandProc.running = true;
             }
             if (root.adapter)
                 root.adapter.scannerEnabled = NetworkState.wifiPopupVisible;
@@ -221,6 +222,14 @@ Item {
                     family: "Quicksand"
                 }
                 Layout.fillWidth: true
+            }
+
+            // wifi band tag (2.4G / 5G / 6G) from nmcli scan data
+            Text {
+                visible: !netrow.hiddenNet && root.bandFor(netrow.ssidName).length > 0
+                text: root.bandFor(netrow.ssidName)
+                color: "#6272a4"
+                font { pixelSize: 8; bold: true; family: "ZedMono Nerd Font" }
             }
 
             // connected dot, then padlock for secured networks
@@ -595,6 +604,7 @@ Item {
                         Repeater {
                             model: [
                                 { label: "ssid", value: NetworkState.activeNetwork?.name ?? "-" },
+                                { label: "band", value: root.bandFor(NetworkState.activeNetwork?.name ?? "") || "-" },
                                 { label: "signal", value: Math.round((NetworkState.activeNetwork?.signalStrength ?? 0) * 100) + "%" },
                                 { label: "security", value: NetworkState.activeNetwork != null ? root.secLabel(NetworkState.activeNetwork.security) : "-" },
                                 { label: "device", value: root.adapter?.name ?? "-" }
@@ -796,6 +806,42 @@ Item {
                 const m = Object.assign({}, root.autoconnMap);
                 m[data.slice(0, i)] = data.slice(i + 1).trim().toLowerCase() === "yes";
                 root.autoconnMap = m;
+            }
+        }
+    }
+
+    // ssid -> band ("2.4G" / "5G" / "6G") parsed from the last wifi scan
+    property var bandMap: ({})
+
+    function bandFor(ssid) {
+        return root.bandMap[ssid] ?? "";
+    }
+
+    function bandLabel(mhz) {
+        const f = parseInt(mhz) || 0;
+        if (f >= 5945)
+            return "6G";
+        if (f >= 3000)
+            return "5G";
+        return "2.4G";
+    }
+
+    Process {
+        id: bandProc
+        command: ["sh", "-c", "nmcli -t -f SSID,FREQ dev wifi list --rescan no"]
+        running: false
+
+        stdout: SplitParser {
+            onRead: data => {
+                const i = data.lastIndexOf(":");
+                if (i <= 0)
+                    return;
+                const ssid = data.slice(0, i);
+                if (ssid.length === 0 || root.bandMap[ssid] != null)
+                    return;
+                const m = Object.assign({}, root.bandMap);
+                m[ssid] = root.bandLabel(data.slice(i + 1));
+                root.bandMap = m;
             }
         }
     }

@@ -17,9 +17,6 @@ RowLayout {
 
     property bool showPopup: false
 
-    // percentage readout lives OUTSIDE the battery — toggled with left click
-    property bool showPct: false
-
     readonly property UPowerDevice bat: UPower.displayDevice
 
     readonly property bool isCharging: BatteryState.isCharging
@@ -46,19 +43,6 @@ RowLayout {
         : percentage < 0.90 ? "\uf241"
         : "\uf240"
 
-    // ── Percentage readout (outside the battery, left click toggles) ──
-    StyledText {
-        visible: batteryBlock.showPct && !batteryBlock.isFullyCharged
-        text: `${batteryBlock.pctDisplay}%`
-        horizontalAlignment: Text.AlignLeft
-        color: "#f8f8f2"
-        font {
-            pixelSize: 10
-            family: "ZedMono Nerd Font"
-            weight: Font.Bold
-        }
-    }
-
     MouseArea {
         id: root
 
@@ -66,14 +50,9 @@ RowLayout {
         implicitHeight: batteryBody.height
         cursorShape: Qt.PointingHandCursor
 
-        acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
+        acceptedButtons: Qt.LeftButton | Qt.MiddleButton
 
-        onClicked: mouse => {
-            if (mouse.button == Qt.LeftButton || mouse.button == Qt.MiddleButton)
-                batteryBlock.showPopup = !batteryBlock.showPopup;
-            else if (mouse.button == Qt.RightButton)
-                batteryBlock.showPct = !batteryBlock.showPct;
-        }
+        onClicked: mouse => batteryBlock.showPopup = !batteryBlock.showPopup
 
         // ── Battery body (fixed width — never resizes with the value) ──
         Rectangle {
@@ -134,7 +113,7 @@ RowLayout {
                 }
             }
 
-            // ── Charge status icon — always visible, centered in the body ──
+            // ── Charge status icon — centered in the body while plugged in ──
             Text {
                 anchors.centerIn: parent
                 visible: batteryBlock.isCharging || batteryBlock.isPendingCharge
@@ -143,6 +122,17 @@ RowLayout {
                 color: "#f8f8f2"
                 style: Text.Outline
                 styleColor: Qt.rgba(0, 0, 0, 0.65)
+            }
+
+            // ── Percentage — inside the body, outlined for legibility over the fill ──
+            Text {
+                anchors.centerIn: parent
+                visible: !batteryBlock.isCharging && !batteryBlock.isPendingCharge && !batteryBlock.isFullyCharged
+                text: `${batteryBlock.pctDisplay}`
+                color: "#f8f8f2"
+                style: Text.Outline
+                styleColor: Qt.rgba(0, 0, 0, 0.75)
+                font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
             }
         }
 
@@ -226,17 +216,18 @@ RowLayout {
                         Text {
                             text: {
                                 const b = batteryBlock.bat;
+                                const p = ` · ${batteryBlock.pctDisplay}%`;
                                 if (batteryBlock.isCharging) {
                                     const t = BatteryState.fmtTime(b.timeToFull);
-                                    return t ? `Charging · ${t} to full` : "Charging";
+                                    return t ? `Charging · ${t} to full${p}` : `Charging${p}`;
                                 }
                                 if (batteryBlock.isPendingCharge)
-                                    return "Plugged in";
+                                    return `Plugged in${p}`;
                                 if (batteryBlock.isFullyCharged)
-                                    return "Fully charged";
+                                    return `Fully charged${p}`;
                                 if (BatteryState.isDischarging) {
                                     const t = BatteryState.fmtTime(b.timeToEmpty);
-                                    return t ? `${t} remaining` : "Discharging";
+                                    return t ? `${t} remaining${p}` : `Discharging${p}`;
                                 }
                                 return "";
                             }
