@@ -11,9 +11,8 @@ BarBlock {
     required property var host
 
     property string mountPoint: "/"
-    property string diskIcon: ""
+    property string diskIcon: ""
     property string diskLabel: ""
-    property bool showPercent: false
     property bool showUsage: false
 
     property color colorLow: "#50fa7b"
@@ -41,9 +40,8 @@ BarBlock {
         return raw.length > 0 ? raw.split("\n") : [];
     }
 
-    onLeftClicked: showUsage = !showUsage
-    onRightClicked: showPercent = !showPercent
-    onMiddleClicked: allDisksPopup.visible = !allDisksPopup.visible
+    onLeftClicked: allDisksPopup.visible = !allDisksPopup.visible
+    onRightClicked: showUsage = !showUsage
 
     content: RowLayout {
         spacing: 4
@@ -89,14 +87,6 @@ BarBlock {
                 ctx.font = `11px "Symbols Nerd Font Mono"`;
                 ctx.fillText(disk.diskIcon, cx, cy + 0.5);
             }
-        }
-
-        BarText {
-            id: percentText
-            visible: disk.showPercent
-            symbolText: `${disk.diskUsageValue}%`
-            baseColor: disk.diskColor
-            pointSize: 11
         }
 
         BarText {

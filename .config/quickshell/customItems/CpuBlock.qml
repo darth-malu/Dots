@@ -11,8 +11,6 @@ BarBlock {
 
     required property var host
 
-    property bool showPercent: false
-
     property bool showTemp: false
 
     readonly property int cpuPercent: ResourcesState.cpuUsageString
@@ -30,10 +28,8 @@ BarBlock {
 
     onClicked: mouse => {
         if (mouse.button === Qt.LeftButton)
-            showPercent = !showPercent;
-        else if (mouse.button === Qt.RightButton)
             showTemp = !showTemp;
-        else if (mouse.button === Qt.MiddleButton)
+        else if (mouse.button === Qt.RightButton)
             MiscState.showCpuProcs = !MiscState.showCpuProcs;
     }
 
@@ -81,14 +77,6 @@ BarBlock {
                 ctx.font = `11px "Symbols Nerd Font Mono"`;
                 ctx.fillText("", cx, cy + 0.5);
             }
-        }
-
-        BarText {
-            id: percentText
-            visible: cpu.showPercent
-            symbolText: `${cpu.cpuPercent}%`
-            baseColor: cpu.cpuColor
-            pointSize: 11
         }
 
         BarText {

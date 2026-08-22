@@ -241,9 +241,10 @@ Item {
                 color: "#50fa7b"
             }
 
+            // open lock marks open (unsecured) networks; secured ones stay unmarked
             Text {
-                text: "\uf023"
-                visible: root.needsPsk(netrow.modelData?.security ?? 11)
+                text: "\uf09c"
+                visible: !netrow.hiddenNet && !root.needsPsk(netrow.modelData?.security ?? 11)
                 color: "#6272a4"
                 font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
             }
