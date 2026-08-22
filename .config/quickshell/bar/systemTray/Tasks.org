@@ -1,0 +1,31 @@
+#+title: Tasks
+
+I have organized tasks you should tackle and ensure functionality correctness after you handle Pending Section:
+
+a) Check why mpris songart ipc is shown on click quicksettings but not from IPC like it was before.
+
+b) Have Battery states SoundEffect and Notification thats modern and mac inspired
+
+   a) Should consider all states and have a soundeffect
+
+c) Remove volume hud in the input/output tile since the osd shows it hence its reduntant
+
+d) USe https://github.com/basecamp/omarchy/tree/quattro/shell as inspiration to:
+   * create a clipboard manager
+   * Reminder system
+   * wallpaper service
+
+* Pending
+why does clicking quicksettings show songart first...it should just open quicksettings
+
+The connections in settings should be autonomus to their counterparts in bar but using the same data....such that i can see available devices/networks without leaving the settings toplevel
+
+Instead of having volume hud inside now playing...make is so the pause track button shows volume if wheel event detected
+
+Check my systemtray on why my menuAnchor is not being deployed on rightclick
+
+It seems the mouse area is not recognizing events inside it...fix it.
+
+Increase calenda year view text size and match styling to its compact mode
+
+During your testing of the calendar popup there were times when it was okay but now months are not evenly aligned along the grid..fix it 
