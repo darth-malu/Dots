@@ -49,6 +49,7 @@ RowLayout {
         implicitWidth: batteryBody.width + cap.width + 1
         implicitHeight: batteryBody.height
         cursorShape: Qt.PointingHandCursor
+        hoverEnabled: true
 
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 
@@ -105,8 +106,7 @@ RowLayout {
                 }
             }
 
-            // ── Readout: charge glyph + bare number, dark outline keeps both readable over any fill.
-            // Fully charged shows only the bolt — the number is dropped entirely. ──
+            // ── Readout: charge glyph always visible; percentage appears only on hover ──
             RowLayout {
                 anchors.centerIn: parent
                 spacing: 2
@@ -121,7 +121,7 @@ RowLayout {
                 }
 
                 Text {
-                    visible: !batteryBlock.isFullyCharged
+                    visible: root.containsMouse && !batteryBlock.isFullyCharged
                     text: batteryBlock.pctDisplay
                     font {
                         pixelSize: 11
@@ -129,8 +129,6 @@ RowLayout {
                         weight: Font.Bold
                     }
                     color: "#f8f8f2"
-                    style: Text.Outline
-                    styleColor: Qt.rgba(0, 0, 0, 0.65)
                 }
             }
         }

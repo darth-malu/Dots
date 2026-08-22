@@ -22,7 +22,7 @@ WrapperMouseArea {
 
     readonly property bool isImageIcon: n.image == "" && n.appIcon != ""
 
-    readonly property string image: ifMusic ? (MprisState.player?.trackArtUrl) : isImageIcon ? n.appIcon : n.image
+    readonly property string image: ifMusic ? (MprisState.player?.trackArtUrl ?? "") : isImageIcon ? n.appIcon : (n.image ?? "")
 
     property bool hasAppIcon: !(n.image == "" && n.appIcon != "")
 

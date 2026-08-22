@@ -129,7 +129,7 @@ BarBlock {
     }
 
     Timer {
-        interval: 5000
+        interval: 2000
         running: MiscState.showCpuProcs
         repeat: true
         triggeredOnStart: true

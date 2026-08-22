@@ -104,7 +104,7 @@ Loader {
 
         // graphs only accumulate samples while one of the popup graphs is actually shown
         readonly property bool wifiGraphs: NetworkState.wifiPopupVisible && NetworkState.wifiGraphEnabled
-        readonly property bool ethGraphs: NetworkState.netPopupVisible && NetworkState.ethMonitorEnabled && NetworkState.ethGraphsEnabled
+        readonly property bool ethGraphs: NetworkState.netPopupVisible && NetworkState.ethGraphsEnabled
         readonly property bool graphsLive: wifiGraphs || ethGraphs
 
         onGraphsLiveChanged: {
@@ -112,16 +112,6 @@ Loader {
                 rxHistory = [];
                 txHistory = [];
                 graphTick++;
-            }
-        }
-
-        readonly property bool ethMonitor: NetworkState.ethMonitorEnabled
-
-        onEthMonitorChanged: {
-            if (ethMonitor) {
-                resetRates();
-                defaultInterface.running = true;
-                getRxTxBytes.running = true;
             }
         }
 
@@ -217,16 +207,13 @@ Loader {
         onEthIfNameChanged: {
             ipAddr = "";
             gateway = "";
-            if (NetworkState.ethMonitorEnabled)
-                addrProc.running = true;
+            addrProc.running = true;
         }
 
         Timer {
             interval: root.refreshInterval
-            // bar mode polls whenever shown; popups only sample once their toggles are enabled
-            running: NetworkState.netspeedVisible
-                || (NetworkState.netPopupVisible && NetworkState.ethMonitorEnabled)
-                || root.wifiGraphs
+            // bar mode polls whenever shown; popups poll while open (graphs gate history only)
+            running: NetworkState.netspeedVisible || NetworkState.netPopupVisible || root.wifiGraphs
             repeat: true
             triggeredOnStart: true
             onTriggered: () => {
@@ -237,7 +224,7 @@ Loader {
 
         Timer {
             interval: 10000
-            running: NetworkState.netspeedVisible || (NetworkState.netPopupVisible && NetworkState.ethMonitorEnabled)
+            running: NetworkState.netspeedVisible || NetworkState.netPopupVisible
             repeat: true
             triggeredOnStart: true
             onTriggered: addrProc.running = true
@@ -375,58 +362,6 @@ Loader {
                         anchors.margins: 14
                         spacing: 7
 
-                        // ── Monitor toggle: sampling only starts once enabled ──
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 8
-
-                            Text {
-                                text: "monitor"
-                                color: "#6272a4"
-                                font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
-                                Layout.preferredWidth: 56
-                            }
-
-                            Item { Layout.fillWidth: true }
-
-                            Text {
-                                visible: !root.ethMonitor
-                                text: "off — enable to sample"
-                                color: "#6272a4"
-                                font { pixelSize: 9; family: "ZedMono Nerd Font"; italic: true }
-                            }
-
-                            Rectangle {
-                                Layout.alignment: Qt.AlignVCenter
-                                implicitWidth: 26
-                                implicitHeight: 14
-                                radius: 7
-                                color: root.ethMonitor ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.35) : "#343746"
-
-                                Rectangle {
-                                    x: root.ethMonitor ? parent.width - width - 2 : 2
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    implicitWidth: 10
-                                    implicitHeight: 10
-                                    radius: 5
-                                    color: root.ethMonitor ? "#bd93f9" : "#6272a4"
-
-                                    Behavior on x {
-                                        NumberAnimation {
-                                            duration: 120
-                                            easing.type: Easing.OutQuad
-                                        }
-                                    }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: NetworkState.ethMonitorEnabled = !NetworkState.ethMonitorEnabled
-                                }
-                            }
-                        }
-
                         Rectangle {
                             Layout.fillWidth: true
                             implicitHeight: 1
@@ -462,91 +397,73 @@ Loader {
                             color: "#343746"
                         }
 
+                        // totals with the graphs toggle button (same style as the wifi popup)
                         InfoRow {
                             label: "total ↓"
                             value: root.fmtBytes(root.totalDown)
                             valueColor: "#bd93f9"
                         }
 
-                        InfoRow {
-                            label: "total ↑"
-                            value: root.fmtBytes(root.totalUp)
-                            valueColor: "#ff79c6"
-                        }
-
-                        // ── Graphs switch: controls live sampling AND visibility of both bars ──
                         RowLayout {
-                            visible: root.ethMonitor
                             Layout.fillWidth: true
                             spacing: 8
 
                             Text {
-                                text: "graphs"
+                                text: "total ↑"
                                 color: "#6272a4"
                                 font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
                                 Layout.preferredWidth: 56
                             }
 
-                            Item { Layout.fillWidth: true }
-
                             Text {
-                                visible: !NetworkState.ethGraphsEnabled
-                                text: "off"
-                                color: "#6272a4"
-                                font { pixelSize: 9; family: "ZedMono Nerd Font"; italic: true }
+                                text: root.fmtBytes(root.totalUp)
+                                color: "#ff79c6"
+                                elide: Text.ElideRight
+                                font { pixelSize: 11; family: "ZedMono Nerd Font" }
+                                Layout.fillWidth: true
                             }
 
                             Rectangle {
                                 Layout.alignment: Qt.AlignVCenter
-                                implicitWidth: 26
-                                implicitHeight: 14
-                                radius: 7
-                                color: NetworkState.ethGraphsEnabled ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.35) : "#343746"
+                                implicitWidth: 22
+                                implicitHeight: 18
+                                radius: 6
+                                color: graphBtnMouse.containsMouse || NetworkState.ethGraphsEnabled ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.16) : "transparent"
 
-                                Rectangle {
-                                    x: NetworkState.ethGraphsEnabled ? parent.width - width - 2 : 2
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    implicitWidth: 10
-                                    implicitHeight: 10
-                                    radius: 5
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "\uf1fe"
                                     color: NetworkState.ethGraphsEnabled ? "#bd93f9" : "#6272a4"
-
-                                    Behavior on x {
-                                        NumberAnimation {
-                                            duration: 120
-                                            easing.type: Easing.OutQuad
-                                        }
-                                    }
+                                    font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
                                 }
 
                                 MouseArea {
+                                    id: graphBtnMouse
                                     anchors.fill: parent
+                                    hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: NetworkState.ethGraphsEnabled = !NetworkState.ethGraphsEnabled
                                 }
                             }
                         }
 
-                        SpeedBar {
+                        // ── Live traffic graphs (no separator / label above, wifi-style) ──
+                        TrafficGraph {
                             visible: root.ethGraphs
-                            label: "download"
-                            glyph: "\uf063"
                             accent: "#bd93f9"
-                            rate: root.online ? root.rxRate : 0
-                            peak: root.peakRx
                             history: root.rxHistory
+                            peak: root.peakRx
                             tick: root.graphTick
+                            maxLen: root.historyMax
                         }
 
-                        SpeedBar {
+                        TrafficGraph {
                             visible: root.ethGraphs
-                            label: "upload"
-                            glyph: "\uf062"
                             accent: "#ff79c6"
-                            rate: root.online ? root.txRate : 0
-                            peak: root.peakTx
                             history: root.txHistory
+                            peak: root.peakTx
                             tick: root.graphTick
+                            maxLen: root.historyMax
                         }
                     }
                 }
@@ -593,70 +510,63 @@ Loader {
         }
     }
 
-    component RateGraph: Item {
-        id: graph
+    component TrafficGraph: Rectangle {
+        id: tgraph
 
         property var history
         property real peak: 1
         property color accent: "#bd93f9"
         property int tick
+        property int maxLen: 60
 
         Layout.fillWidth: true
-        implicitHeight: 38
+        implicitHeight: 34
+        radius: 8
+        color: Qt.rgba(1, 1, 1, 0.03)
         clip: true
 
-        onTickChanged: paintCanvas.requestPaint()
-        onWidthChanged: paintCanvas.requestPaint()
-
-        Text {
-            z: 1
-            anchors.top: parent.top
-            anchors.right: parent.right
-            anchors.topMargin: 1
-            text: root.fmtRate(graph.peak)
-            color: Qt.rgba(graph.accent.r, graph.accent.g, graph.accent.b, 0.75)
-            font {
-                pixelSize: 8
-                bold: true
-                family: "ZedMono Nerd Font"
-            }
-        }
+        onTickChanged: tcanvas.requestPaint()
+        onWidthChanged: tcanvas.requestPaint()
 
         Canvas {
-            id: paintCanvas
+            id: tcanvas
+
             anchors.fill: parent
+            anchors.margins: 4
             antialiasing: true
             renderStrategy: Canvas.Immediate
 
             onPaint: {
                 const ctx = getContext("2d");
                 ctx.clearRect(0, 0, width, height);
+
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.06)";
                 ctx.lineWidth = 1;
-                ctx.strokeStyle = Qt.rgba(1, 1, 1, 0.06);
-                for (let i = 1; i <= 3; i++) {
+                for (let i = 1; i <= 2; i++) {
                     ctx.beginPath();
-                    ctx.moveTo(0, Math.round(height * i / 4));
-                    ctx.lineTo(width, Math.round(height * i / 4));
+                    ctx.moveTo(0, Math.round(height * i / 3));
+                    ctx.lineTo(width, Math.round(height * i / 3));
                     ctx.stroke();
                 }
-                const h = graph.history ?? [];
+
+                const h = tgraph.history ?? [];
                 if (h.length < 2)
                     return;
-                const stepX = width / (root.historyMax - 1);
-                const baseY = height;
-                const scale = Math.max(graph.peak, 0.001);
+
+                const stepX = width / (Math.max(tgraph.maxLen, 2) - 1);
+                const scale = Math.max(tgraph.peak, 0.001);
                 const yAt = i => height - Math.min(1, h[i] / scale) * (height - 2) - 1;
 
+                const grad = ctx.createLinearGradient(0, 0, 0, height);
+                grad.addColorStop(0, Qt.rgba(tgraph.accent.r, tgraph.accent.g, tgraph.accent.b, 0.32));
+                grad.addColorStop(1, Qt.rgba(tgraph.accent.r, tgraph.accent.g, tgraph.accent.b, 0.02));
+
                 ctx.beginPath();
-                ctx.moveTo(0, baseY);
+                ctx.moveTo(0, height);
                 for (let i = 0; i < h.length; i++)
                     ctx.lineTo(i * stepX, yAt(i));
-                ctx.lineTo((h.length - 1) * stepX, baseY);
+                ctx.lineTo((h.length - 1) * stepX, height);
                 ctx.closePath();
-
-                const grad = ctx.createLinearGradient(0, 0, 0, height);
-                grad.addColorStop(0, Qt.rgba(graph.accent.r, graph.accent.g, graph.accent.b, 0.32));
-                grad.addColorStop(1, Qt.rgba(graph.accent.r, graph.accent.g, graph.accent.b, 0.02));
                 ctx.fillStyle = grad;
                 ctx.fill();
 
@@ -667,79 +577,10 @@ Loader {
                     else
                         ctx.lineTo(i * stepX, yAt(i));
                 }
-                ctx.strokeStyle = graph.accent;
+                ctx.strokeStyle = tgraph.accent;
                 ctx.lineWidth = 1.5;
                 ctx.stroke();
             }
-        }
-    }
-
-    component SpeedBar: ColumnLayout {
-        id: sbar
-        property string label
-        property string glyph
-        property color accent
-        property real rate
-        property real peak
-        property var history
-        property int tick
-
-        spacing: 5
-        Layout.fillWidth: true
-
-        RowLayout {
-            spacing: 6
-            Layout.fillWidth: true
-
-            Text {
-                text: sbar.glyph
-                color: sbar.accent
-                font {
-                    pixelSize: 11
-                    family: "Symbols Nerd Font Mono"
-                }
-            }
-
-            Text {
-                text: sbar.label
-                color: "#b8bfcb"
-                font {
-                    pixelSize: 9
-                    bold: true
-                    family: "Quicksand"
-                    letterSpacing: 1
-                }
-            }
-
-            Item {
-                Layout.fillWidth: true
-            }
-
-            Text {
-                text: root.fmtRate(sbar.rate)
-                color: sbar.accent
-                font {
-                    pixelSize: 12
-                    bold: true
-                    family: "ZedMono Nerd Font"
-                }
-            }
-
-            Text {
-                text: sbar.rate >= 1000 ? "Gbps" : "Mbps"
-                color: "#6272a4"
-                font {
-                    pixelSize: 9
-                    family: "ZedMono Nerd Font"
-                }
-            }
-        }
-
-        RateGraph {
-            history: sbar.history
-            peak: sbar.peak
-            accent: sbar.accent
-            tick: sbar.tick
         }
     }
 }

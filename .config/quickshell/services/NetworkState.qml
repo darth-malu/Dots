@@ -55,10 +55,7 @@ Singleton {
     // dracula: overlay0 / teal
     readonly property color ethColor: !root.ethernet?.hasLink ? "#6272a4" : "#8be9fd"
 
-    // popup traffic graphs — each toggle makes its graph section visible AND starts live sampling
+    // popup traffic graphs — each toggle makes its graph section visible AND starts history sampling
     property bool wifiGraphEnabled: false
     property bool ethGraphsEnabled: false
-
-    // ethernet details are only sampled once the user explicitly enables monitoring
-    property bool ethMonitorEnabled: false
 }

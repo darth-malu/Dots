@@ -23,7 +23,7 @@ Item {
         const list = [...(root.adapter?.networks.values ?? [])];
         list.sort((a, b) => ((b.connected === true) - (a.connected === true))
             || ((b.signalStrength ?? 0) - (a.signalStrength ?? 0))
-            || String(a.ssid ?? "").localeCompare(String(b.ssid ?? "")));
+            || String(a.name ?? "").localeCompare(String(b.name ?? "")));
         return list;
     }
 
@@ -208,15 +208,11 @@ Item {
                         Layout.fillWidth: true
                         spacing: 6
 
-                        Rectangle {
+                        // status text (no background) — click to inspect the current connection
+                        Item {
                             Layout.alignment: Qt.AlignVCenter
-                            implicitWidth: wifiPillText.implicitWidth + 16
-                            implicitHeight: 18
-                            radius: 9
-                            color: !root.adapter ? Qt.rgba(98 / 255, 114 / 255, 164 / 255, 0.18)
-                                : NetworkState.wifiConnected ? Qt.rgba(80 / 255, 250 / 255, 123 / 255, 0.16)
-                                : Networking.wifiEnabled ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.16)
-                                : Qt.rgba(98 / 255, 114 / 255, 164 / 255, 0.18)
+                            implicitWidth: wifiPillText.implicitWidth
+                            implicitHeight: wifiPillText.implicitHeight
 
                             Text {
                                 id: wifiPillText
@@ -232,9 +228,9 @@ Item {
                                 font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
                             }
 
-                            // click the status to inspect the current connection
                             MouseArea {
                                 anchors.fill: parent
+                                anchors.margins: -6
                                 cursorShape: Qt.PointingHandCursor
                                 enabled: NetworkState.wifiConnected
                                 onClicked: root.showDetails = !root.showDetails
@@ -313,7 +309,7 @@ Item {
 
                         Repeater {
                             model: [
-                                { label: "ssid", value: NetworkState.activeNetwork?.ssid ?? "-" },
+                                { label: "ssid", value: NetworkState.activeNetwork?.name ?? "-" },
                                 { label: "signal", value: Math.round((NetworkState.activeNetwork?.signalStrength ?? 0) * 100) + "%" },
                                 { label: "security", value: NetworkState.activeNetwork != null ? root.secLabel(NetworkState.activeNetwork.security) : "-" },
                                 { label: "device", value: root.adapter?.name ?? "-" }
@@ -421,7 +417,7 @@ Item {
 
                             readonly property bool isConnected: modelData?.connected === true
                             readonly property bool isKnown: modelData?.known === true
-                            readonly property string ssidName: modelData?.ssid ?? ""
+                            readonly property string ssidName: modelData?.name ?? ""
                             readonly property bool hiddenNet: ssidName.length === 0
 
                             spacing: 7
@@ -465,30 +461,20 @@ Item {
                                 Layout.fillWidth: true
                             }
 
+                            // connected dot, then padlock for secured networks
+                            Rectangle {
+                                visible: netrow.isConnected
+                                implicitWidth: 5
+                                implicitHeight: 5
+                                radius: 2.5
+                                color: "#50fa7b"
+                            }
+
                             Text {
                                 text: "\uf023"
                                 visible: root.needsPsk(netrow.modelData?.security ?? 11)
                                 color: "#6272a4"
                                 font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
-                            }
-
-                            // circular indicator for the connected network
-                            Rectangle {
-                                visible: netrow.isConnected
-                                implicitWidth: 10
-                                implicitHeight: 10
-                                radius: 5
-                                color: "transparent"
-                                border.width: 2
-                                border.color: "#50fa7b"
-
-                                Rectangle {
-                                    anchors.centerIn: parent
-                                    implicitWidth: 3
-                                    implicitHeight: 3
-                                    radius: 1.5
-                                    color: "#50fa7b"
-                                }
                             }
                         }
                     }
@@ -500,7 +486,7 @@ Item {
                         spacing: 4
 
                         Text {
-                            text: `password for ${root.passwordNetwork?.ssid?.length > 0 ? root.passwordNetwork.ssid : "hidden network"}`
+                            text: `password for ${root.passwordNetwork?.name?.length > 0 ? root.passwordNetwork.name : "hidden network"}`
                             color: "#bd93f9"
                             elide: Text.ElideMiddle
                             font { pixelSize: 9; bold: true; family: "Quicksand" }
