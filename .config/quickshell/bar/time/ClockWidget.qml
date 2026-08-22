@@ -73,7 +73,7 @@ BarBlock {
             anchor.rect.y: 33
 
             implicitWidth: 280
-            implicitHeight: clockPopup.inputVisible ? 268 : 220
+            implicitHeight: clockPopup.yearView ? 462 : (clockPopup.inputVisible ? 268 : 220)
             Behavior on implicitHeight {
                 NumberAnimation {
                     duration: 150
@@ -91,7 +91,9 @@ BarBlock {
                 Shortcut {
                     sequence: "Escape"
                     onActivated: {
-                        if (clockPopup.inputVisible)
+                        if (clockPopup.yearView)
+                            clockPopup.yearView = false;
+                        else if (clockPopup.inputVisible)
                             clockPopup.clearSelection();
                         else
                             MiscState.showPopup = false;
@@ -120,6 +122,25 @@ BarBlock {
                         var dayName = days[dt.getDay()];
                         var initial = "* TODO " + task + "\n  SCHEDULED: <" + key + " " + dayName + ">";
                         Quickshell.execDetached(['emacsclient', '-c', '-n', '-e', '(progn (setq org-capture-initial "' + initial + '") (org-capture nil "t"))']);
+                    }
+                }
+
+                // scroll anywhere on the popup to navigate months
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.NoButton
+                    onWheel: w => {
+                        if (w.angleDelta.y > 0) {
+                            if (clockPopup.yearView)
+                                clockPopup.shiftYear(-1);
+                            else
+                                clockPopup.prevMonth();
+                        } else if (w.angleDelta.y < 0) {
+                            if (clockPopup.yearView)
+                                clockPopup.shiftYear(1);
+                            else
+                                clockPopup.nextMonth();
+                        }
                     }
                 }
             }

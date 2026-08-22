@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects
 import qs.services
 import qs.customItems
 import Quickshell
@@ -61,7 +62,9 @@ RowLayout {
     MouseArea {
         id: root
 
-        implicitWidth: batteryBody.width + cap.width + 1
+        readonly property color fillColor: batteryBlock.isCharging ? "#50fa7b" : batteryBlock.isLow ? "#ff5555" : Themes.mprisTextColor
+
+        implicitWidth: batteryBody.width
         implicitHeight: batteryBody.height
         cursorShape: Qt.PointingHandCursor
 
@@ -72,99 +75,98 @@ RowLayout {
                 batteryBlock.showPopup = !batteryBlock.showPopup;
         }
 
-        // ── Battery body (fixed width — never resizes with the value) ──
         Rectangle {
             id: batteryBody
-
-            width: 34
-            height: 17
-            radius: 4
+            width: 26
+            height: 14
+            radius: 3
             color: "#343746"
+            border.color: "#6272a4"
             border.width: 1
-            border.color: Qt.rgba(batteryBlock.accentColor.r, batteryBlock.accentColor.g, batteryBlock.accentColor.b, 0.55)
-
-            Behavior on border.color {
-                ColorAnimation {
-                    duration: 200
-                }
-            }
-
             clip: true
 
-            // ── Fill level ──
-            Rectangle {
-                id: batteryFill
+            Item {
+                id: shaderSourceItem
+                anchors.fill: parent
 
-                anchors {
-                    top: parent.top
-                    left: parent.left
-                    bottom: parent.bottom
-                    margins: 2
+                Rectangle {
+                    anchors.fill: parent
+                    color: "#343746"
                 }
 
-                width: Math.max(0, (parent.width - 4) * Math.min(Math.max(batteryBlock.percentage, 0), 1))
-                radius: 2
-                color: batteryBlock.accentColor
-
-                Behavior on width {
-                    NumberAnimation {
-                        duration: 300
-                        easing.type: Easing.OutCubic
+                Rectangle {
+                    id: batteryFill
+                    anchors {
+                        top: parent.top
+                        left: parent.left
+                        bottom: parent.bottom
+                        margins: 1
                     }
+                    width: Math.max(0, (parent.width - 2) * Math.min(Math.max(batteryBlock.percentage, 0), 1))
+                    radius: 2
+                    color: root.fillColor
                 }
 
-                Behavior on color {
-                    ColorAnimation {
-                        duration: 200
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    maskEnabled: true
+                    maskInverted: true
+                    maskSource: textMaskItem
+                }
+            }
+
+            Item {
+                id: textMaskItem
+                visible: false
+                anchors.fill: parent
+
+                RowLayout {
+                    anchors.centerIn: parent
+                    spacing: 4
+
+                    Text {
+                        text: batteryBlock.pctDisplay
+                        color: "white"
+                        font {
+                            pixelSize: 11
+                            family: "VictorMono Nerd Font"
+                            weight: Font.Bold
+                        }
                     }
                 }
             }
 
-            // ── Readout chip: dark scrim + white number stays readable over any fill ──
-            Rectangle {
-                id: scrimChip
+            Item {
+                anchors.fill: parent
 
-                anchors.centerIn: parent
-                implicitWidth: pctText.implicitWidth + 10
-                implicitHeight: 13
-                radius: 6.5
-                color: Qt.rgba(0, 0, 0, 0.45)
-
-                Text {
-                    id: pctText
-
+                RowLayout {
                     anchors.centerIn: parent
-                    // bare number — no "%"
-                    text: batteryBlock.pctDisplay
-                    font {
-                        pixelSize: 11
-                        family: "ZedMono Nerd Font"
-                        weight: Font.Bold
+                    spacing: 4
+
+                    StyledText {
+                        font {
+                            pixelSize: 11
+                            family: "VictorMono Nerd Font"
+                            weight: Font.Bold
+                        }
+                        text: batteryBlock.pctDisplay
+                        color: root.fillColor
                     }
-                    color: "#f8f8f2"
                 }
             }
         }
 
-        // ── Cap nub ──
         Rectangle {
             id: cap
-
+            implicitHeight: 6
+            implicitWidth: 2
+            color: root.fillColor
+            topRightRadius: 999
+            bottomRightRadius: 999
             anchors {
                 verticalCenter: parent.verticalCenter
                 left: batteryBody.right
-                leftMargin: -0.5
-            }
-
-            implicitWidth: 2.5
-            implicitHeight: 7
-            radius: 1
-            color: batteryBlock.accentColor
-
-            Behavior on color {
-                ColorAnimation {
-                    duration: 200
-                }
+                leftMargin: 1
             }
         }
     }

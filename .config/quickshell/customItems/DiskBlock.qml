@@ -153,6 +153,8 @@ BarBlock {
                 anchors.margins: 14
                 spacing: 7
 
+                // header mirrors the data-row column widths below:
+                // mount(140) · size(44) · free(44) · bar(fills) · use(32)
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 6
@@ -166,7 +168,8 @@ BarBlock {
                             family: "Quicksand"
                             letterSpacing: 1
                         }
-                        Layout.fillWidth: true
+                        Layout.preferredWidth: 140
+                        elide: Text.ElideRight
                     }
 
                     Text {
@@ -191,6 +194,7 @@ BarBlock {
                         Layout.alignment: Qt.AlignRight
                     }
 
+                    // spacer standing in for the usage-bar column
                     Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 1

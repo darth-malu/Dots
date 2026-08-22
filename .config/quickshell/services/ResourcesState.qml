@@ -36,6 +36,30 @@ Singleton {
     property string allDisks: ""
     property string allDisksPending: ""
     property bool resourcesVisible: false
+    property string uptimeText: ""
+
+    FileView {
+        id: uptimeFile
+        path: "file:///proc/uptime"
+    }
+
+    Timer {
+        id: uptimeTimer
+        interval: 30000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: () => {
+            uptimeFile.reload();
+            const secs = parseFloat(uptimeFile.text());
+            if (!isNaN(secs)) {
+                const d = Math.floor(secs / 86400);
+                const h = Math.floor((secs % 86400) / 3600);
+                const m = Math.floor((secs % 3600) / 60);
+                root.uptimeText = d > 0 ? `${d}d ${h}h` : h > 0 ? `${h}h ${m}m` : `${m}m`;
+            }
+        }
+    }
 
     FileView {
         id: cpuUsageFile

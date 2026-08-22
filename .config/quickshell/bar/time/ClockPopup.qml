@@ -18,6 +18,7 @@ ColumnLayout {
     property int selectedMonth: -1
     property int selectedYear: -1
     property bool inputVisible: false
+    property bool yearView: false
 
     function clearSelection() {
         selectedDay = -1;
@@ -25,6 +26,31 @@ ColumnLayout {
         selectedYear = -1;
         inputVisible = false;
         taskField.text = "";
+    }
+
+    function prevMonth() {
+        clearSelection();
+        if (displayMonth === 0) {
+            displayMonth = 11;
+            displayYear -= 1;
+        } else {
+            displayMonth -= 1;
+        }
+    }
+
+    function nextMonth() {
+        clearSelection();
+        if (displayMonth === 11) {
+            displayMonth = 0;
+            displayYear += 1;
+        } else {
+            displayMonth += 1;
+        }
+    }
+
+    function shiftYear(dir) {
+        clearSelection();
+        displayYear += dir;
     }
 
     RowLayout {
@@ -38,29 +64,39 @@ ColumnLayout {
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    root.clearSelection();
-                    if (root.displayMonth === 0) {
-                        root.displayMonth = 11;
-                        root.displayYear -= 1;
-                    } else {
-                        root.displayMonth -= 1;
-                    }
-                }
+                onClicked: root.yearView ? root.shiftYear(-1) : root.prevMonth()
             }
         }
 
         Item { Layout.fillWidth: true }
 
-        BarText {
+        Item {
             Layout.alignment: Qt.AlignHCenter
-            font: Themes.quicksand
-            color: Themes.calendarHeader
-            text: Qt.formatDateTime(
-                new Date(root.displayYear, root.displayMonth, 1),
-                "MMMM yyyy"
-            )
-            pointSize: 13
+            implicitWidth: periodLabel.implicitWidth
+            implicitHeight: periodLabel.implicitHeight
+
+            BarText {
+                id: periodLabel
+                anchors.centerIn: parent
+                font: Themes.quicksand
+                color: Themes.calendarHeader
+                text: root.yearView ? `${root.displayYear}` : Qt.formatDateTime(
+                    new Date(root.displayYear, root.displayMonth, 1),
+                    "MMMM yyyy"
+                )
+                pointSize: 13
+            }
+
+            // click the title to switch between month and full-year view
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    root.clearSelection();
+                    root.yearView = !root.yearView;
+                }
+            }
         }
 
         Item { Layout.fillWidth: true }
@@ -72,20 +108,13 @@ ColumnLayout {
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    root.clearSelection();
-                    if (root.displayMonth === 11) {
-                        root.displayMonth = 0;
-                        root.displayYear += 1;
-                    } else {
-                        root.displayMonth += 1;
-                    }
-                }
+                onClicked: root.yearView ? root.shiftYear(1) : root.nextMonth()
             }
         }
     }
 
     DayOfWeekRow {
+        visible: !root.yearView
         Layout.fillWidth: true
         font: Themes.quicksand
         delegate: Text {
@@ -100,6 +129,7 @@ ColumnLayout {
 
     MonthGrid {
         id: grid
+        visible: !root.yearView
         Layout.fillWidth: true
         Layout.fillHeight: true
         month: root.displayMonth
@@ -177,6 +207,79 @@ ColumnLayout {
                     root.selectedYear = model.year;
                     root.inputVisible = true;
                     taskField.forceActiveFocus();
+                }
+            }
+        }
+    }
+
+    // ── Full-year view (toggle via the title) ──
+    GridLayout {
+        visible: root.yearView
+        Layout.fillWidth: true
+        columns: 3
+        columnSpacing: 8
+        rowSpacing: 10
+
+        Repeater {
+            model: 12
+
+            ColumnLayout {
+                id: miniMonth
+
+                required property int index
+
+                spacing: 1
+
+                Text {
+                    text: Qt.formatDateTime(new Date(2000, miniMonth.index, 1), "MMM")
+                    color: root.displayMonth === miniMonth.index ? Themes.calendarToday : Themes.calendarHeader
+                    font { pixelSize: 9; bold: true; family: "Quicksand" }
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                MonthGrid {
+                    month: miniMonth.index
+                    year: root.displayYear
+                    spacing: 0
+                    Layout.fillWidth: true
+
+                    delegate: Item {
+                        implicitWidth: 11
+                        implicitHeight: 12
+
+                        readonly property bool isTrackedMini: {
+                            MiscState.trackedDatesRev;
+                            return MiscState.isTrackedDate(model.year, model.month, model.day);
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: model.day
+                            font { pixelSize: 7; family: "Quicksand" }
+                            color: model.today ? Themes.calendarToday : model.month === miniMonth.index ? Themes.calendarActiveMonth : Themes.calendarInactiveMonth
+                        }
+
+                        Rectangle {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.bottom: parent.bottom
+                            width: 3
+                            height: 3
+                            radius: 1.5
+                            color: Themes.calendarActiveMonth
+                            visible: parent.isTrackedMini
+                        }
+                    }
+                }
+
+                // click a mini month to open it in month view
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        root.clearSelection();
+                        root.displayMonth = miniMonth.index;
+                        root.yearView = false;
+                    }
                 }
             }
         }

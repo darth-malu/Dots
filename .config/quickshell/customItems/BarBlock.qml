@@ -37,14 +37,9 @@ Rectangle {
 
     color: "transparent"
 
-    Item {
-        id: contentContainer
-        implicitWidth: root.content.implicitWidth
-        implicitHeight: root.content.implicitHeight
-        anchors.centerIn: parent
-        children: root.content
-    }
-
+    // declared BEFORE contentContainer so it sits BEHIND the content:
+    // interactive children (tray delegates, per-icon areas) get events first,
+    // clicks on empty/text regions still fall through to here
     MouseArea {
         id: mouseArea
         anchors.fill: root
@@ -63,7 +58,14 @@ Rectangle {
                 root.middleClicked();
         }
         onWheel: event => root.wheel(event)
-        // propagateComposedEvents: true
+    }
+
+    Item {
+        id: contentContainer
+        implicitWidth: root.content.implicitWidth
+        implicitHeight: root.content.implicitHeight
+        anchors.centerIn: parent
+        children: root.content
     }
 
     // While line underneath workspace

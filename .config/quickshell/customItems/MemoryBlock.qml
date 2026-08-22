@@ -15,6 +15,12 @@ BarBlock {
 
     property var topProcs: []
 
+    // converts a memory percentage into an absolute figure based on total RAM
+    function fmtMem(pct) {
+        const mib = pct / 100 * ResourcesState.memTotal * 1024;
+        return mib >= 1024 ? (mib / 1024).toFixed(1) + "G" : Math.round(mib) + "M";
+    }
+
     readonly property int memoryPercent: ResourcesState.memPercent
     readonly property real memoryUsed: ResourcesState.memUsed
     readonly property string memoryDetail: `${ResourcesState.memUsed.toFixed(1)}G / ${ResourcesState.memTotal.toFixed(1)}G`
@@ -97,7 +103,8 @@ BarBlock {
 
     Process {
         id: memProcsProc
-        command: ["sh", "-c", "ps -eo pmem,comm --sort=-pmem --no-headers | head -10"]
+        // aggregate memory usage by process name (all subprocesses summed into one entry)
+        command: ["sh", "-c", "ps -eo pmem,comm --no-headers | awk '{m=$1; $1=\"\"; sub(/^ +/, \"\"); k=$0; mm[k]+=m; cnt[k]++} END {for (k in mm) printf \"%.1f %d %s\\n\", mm[k], cnt[k], k}' | sort -rn | head -10"]
         property string buf: ""
         running: false
 
@@ -109,10 +116,11 @@ BarBlock {
             const rows = [];
             for (const line of memProcsProc.buf.trim().split("\n")) {
                 const p = line.trim().split(/\s+/);
-                if (p.length >= 2)
+                if (p.length >= 3)
                     rows.push({
                         m: parseFloat(p[0]) || 0,
-                        n: p.slice(1).join(" ")
+                        c: parseInt(p[1]) || 1,
+                        n: p.slice(2).join(" ")
                     });
             }
             memory.topProcs = rows;
@@ -144,7 +152,7 @@ BarBlock {
             }
             anchor.rect.y: 33
 
-            implicitWidth: 270
+            implicitWidth: 300
             implicitHeight: Math.min(memCol.implicitHeight + 28, 240)
 
             Rectangle {
@@ -178,6 +186,39 @@ BarBlock {
                         width: parent.width
                         spacing: 5
 
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
+
+                            Text {
+                                text: "memory"
+                                color: "#6272a4"
+                                font {
+                                    pixelSize: 9
+                                    bold: true
+                                    family: "Quicksand"
+                                    letterSpacing: 1
+                                }
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Text {
+                                text: `${memory.memoryDetail} · ${memory.memoryPercent}%`
+                                color: memory.memoryColor
+                                font {
+                                    pixelSize: 9
+                                    family: "ZedMono Nerd Font"
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 1
+                            color: "#343746"
+                        }
+
                         Repeater {
                             model: memory.topProcs
 
@@ -186,6 +227,7 @@ BarBlock {
                                 required property var modelData
 
                                 readonly property real mval: modelData?.m ?? 0
+                                readonly property int pcount: modelData?.c ?? 1
                                 readonly property color accent: mval > 25 ? "#ff5555" : mval > 10 ? "#f1fa8c" : "#bd93f9"
 
                                 spacing: 8
@@ -202,15 +244,41 @@ BarBlock {
                                     Layout.preferredWidth: 40
                                 }
 
+                                RowLayout {
+                                    spacing: 4
+                                    Layout.fillWidth: true
+
+                                    Text {
+                                        text: mrow.modelData?.n ?? ""
+                                        color: "#f8f8f2"
+                                        elide: Text.ElideRight
+                                        font {
+                                            pixelSize: 10
+                                            family: "Quicksand"
+                                        }
+                                        Layout.fillWidth: true
+                                    }
+
+                                    Text {
+                                        visible: mrow.pcount > 1
+                                        text: "×" + mrow.pcount
+                                        color: "#6272a4"
+                                        font {
+                                            pixelSize: 9
+                                            family: "ZedMono Nerd Font"
+                                        }
+                                    }
+                                }
+
                                 Text {
-                                    text: mrow.modelData?.n ?? ""
-                                    color: "#f8f8f2"
-                                    elide: Text.ElideRight
+                                    text: memory.fmtMem(mrow.mval)
+                                    color: "#b8bfcb"
                                     font {
                                         pixelSize: 10
-                                        family: "Quicksand"
+                                        family: "ZedMono Nerd Font"
                                     }
-                                    Layout.fillWidth: true
+                                    Layout.preferredWidth: 44
+                                    Layout.alignment: Qt.AlignRight
                                 }
                             }
                         }

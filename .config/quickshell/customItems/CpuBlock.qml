@@ -22,6 +22,12 @@ BarBlock {
 
     property var topProcs: []
 
+    // converts a memory percentage into an absolute figure based on total RAM
+    function fmtMem(pct) {
+        const mib = pct / 100 * ResourcesState.memTotal * 1024;
+        return mib >= 1024 ? (mib / 1024).toFixed(1) + "G" : Math.round(mib) + "M";
+    }
+
     onClicked: mouse => {
         if (mouse.button === Qt.LeftButton)
             showPercent = !showPercent;
@@ -96,7 +102,8 @@ BarBlock {
 
     Process {
         id: procsProc
-        command: ["sh", "-c", "ps -eo pcpu,pmem,comm --sort=-pcpu --no-headers | head -5"]
+        // aggregate cpu/memory usage by process name (all subprocesses summed into one entry)
+        command: ["sh", "-c", "ps -eo pcpu,pmem,comm --no-headers | awk '{c=$1; m=$2; $1=$2=\"\"; sub(/^ +/, \"\"); k=$0; cc[k]+=c; mm[k]+=m; cnt[k]++} END {for (k in cc) printf \"%.1f %.1f %d %s\\n\", cc[k], mm[k], cnt[k], k}' | sort -rn | head -5"]
         property string buf: ""
         running: false
 
@@ -108,11 +115,12 @@ BarBlock {
             const rows = [];
             for (const line of procsProc.buf.trim().split("\n")) {
                 const p = line.trim().split(/\s+/);
-                if (p.length >= 3)
+                if (p.length >= 4)
                     rows.push({
                         c: parseFloat(p[0]) || 0,
                         m: parseFloat(p[1]) || 0,
-                        n: p.slice(2).join(" ")
+                        n: parseInt(p[2]) || 1,
+                        name: p.slice(3).join(" ")
                     });
             }
             cpu.topProcs = rows;
@@ -200,7 +208,7 @@ BarBlock {
                                 }
 
                                 Text {
-                                    text: prow.modelData?.n ?? ""
+                                    text: prow.modelData?.name ?? ""
                                     color: "#f8f8f2"
                                     elide: Text.ElideRight
                                     font {
@@ -211,13 +219,23 @@ BarBlock {
                                 }
 
                                 Text {
-                                    text: Number(prow.modelData?.m?.toFixed(1) ?? 0) + "% mem"
+                                    visible: (prow.modelData?.n ?? 1) > 1
+                                    text: "×" + (prow.modelData?.n ?? 1)
                                     color: "#6272a4"
                                     font {
                                         pixelSize: 9
                                         family: "ZedMono Nerd Font"
                                     }
-                                    Layout.preferredWidth: 52
+                                }
+
+                                Text {
+                                    text: cpu.fmtMem(prow.modelData?.m ?? 0)
+                                    color: "#6272a4"
+                                    font {
+                                        pixelSize: 9
+                                        family: "ZedMono Nerd Font"
+                                    }
+                                    Layout.preferredWidth: 44
                                     Layout.alignment: Qt.AlignRight
                                 }
                             }
