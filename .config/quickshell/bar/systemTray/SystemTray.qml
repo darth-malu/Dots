@@ -1,13 +1,13 @@
 pragma ComponentBehavior: Bound
+
 import Quickshell
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Services.SystemTray
 import Quickshell.Widgets
 import qs.customItems
-import QtQuick.Effects
-// import qs.themes import qs.bar
 import qs.services
+import qs.bar.quicksettings
 
 RowLayout {
     id: root

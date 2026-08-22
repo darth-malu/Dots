@@ -10,6 +10,8 @@ Singleton {
 
     property MprisPlayer player: null
 
+    property string albumArt: player?.trackArtUrl ?? ""
+
     property MprisPlayer lastPlayer: null
 
     property bool mprisVisible: false
@@ -55,49 +57,66 @@ Singleton {
             if (p.trackArtist !== "")
                 best = p;
         }
-    if (best) {
-        root.player = best;
-        root.lastPlayer = best;
-    } else if (fallback) {
-        root.player = fallback;
-        root.lastPlayer = fallback;
-    } else {
-        root.player = null;
-        // nothing playing — still remember an idle (paused) player so
-        // songart / now-playing keep working right after shell startup
-        for (let p of Mpris.players.values) {
-            if (!root.isIgnored(p)) {
-                root.lastPlayer = p;
-                break;
+        if (best) {
+            root.player = best;
+            root.lastPlayer = best;
+        } else if (fallback) {
+            root.player = fallback;
+            root.lastPlayer = fallback;
+        } else {
+            root.player = null;
+            // nothing playing — still remember an idle (paused) player so
+            // songart / now-playing keep working right after shell startup
+            for (let p of Mpris.players.values) {
+                if (!root.isIgnored(p)) {
+                    root.lastPlayer = p;
+                    break;
+                }
             }
         }
     }
-}
 
-function sendNotify() {
-    // fall back to the last active player so the songart toast also works while nothing is playing
-    let p = root.player && !root.isIgnored(root.player) ? root.player : null;
-    if (!p)
-        p = root.lastPlayer && !root.isIgnored(root.lastPlayer) ? root.lastPlayer : null;
-    console.log("[songart] called · player=" + (root.player?.identity ?? "null") + " lastPlayer=" + (root.lastPlayer?.identity ?? "null") + " chosen=" + (p?.identity ?? "null"));
-    if (!p)
-        return;
-    let title = p.trackTitle || "Unknown Title";
-    let artist = p.trackArtist || "Unknown Artist";
-    let album = p.trackAlbum || "Unknown Album";
-    let art = p.trackArtUrl || "audio-x-generic";
-    let isMpd = p.identity === "Music Player Daemon";
+    function sendNotify() {
+        // fall back to the last active player so the songart toast also works while nothing is playing
+        let p = root.player && !root.isIgnored(root.player) ? root.player : null;
+        if (!p)
+            p = root.lastPlayer && !root.isIgnored(root.lastPlayer) ? root.lastPlayer : null;
+        console.log("[songart] called · player=" + (root.player?.identity ?? "null") + " lastPlayer=" + (root.lastPlayer?.identity ?? "null") + " chosen=" + (p?.identity ?? "null"));
+        if (!p)
+            return;
+
+        let title = p.trackTitle || "Unknown Title";
+        let artist = p.trackArtist || "Unknown Artist";
+        let album = p.trackAlbum || "Unknown Album";
+        let art = p.trackArtUrl || "audio-x-generic";
+        // let len = p.length;
+        let uid = p.uniqueId;
+        let dEntry = p.desktopEntry;
+        let vol = p.volumeSupported ? p.volume.toFixed(2) * 100 + "%" : "Volume Unsupported";
+
+        // let isMpd = p.identity === "Music Player Daemon";
+        // let isMusic = (p.identity === "Music Player Daemon") || (p.identity === "spotify");
 
         // console.log(`Your current player: ${root.player?.identity}`);
 
         if (title.startsWith('Listen to music,'))
             return;
 
-        if (isMpd) {
-            Quickshell.execDetached(["bash", "-c", `pos=$(awk '/#/ {print $2}' <(mpc)); notify-send -a ncmpcpp -i "${art}" "$(mpc --format "[[󰎍    %title% \n] [     %audioformat%   $pos\n    %artist%  \n    %album%]] | [%file%]" current)"`]);
-        } else {
-            Quickshell.execDetached(["notify-send", "-a", "mzichi", "-i", art, `󰎍    ${title}`, `    ${artist}\n    ${album}`]);
-        }
+        // if (isMusic)
+        //     Quickshell.execDetached(["notify-send", "-a", "mzichi", "-i", art, `󰎍    ${title}`, `      ${uid} \n󰥓    ${artist}\n    ${album}`]);
+        // else
+        //     Quickshell.execDetached(["notify-send", "-a", "mzichi", "-i", art, `󰎍    ${title}`, `󰥓    ${artist}\n    ${album}`]);
+
+        Quickshell.execDetached(["notify-send", "-a", "mzichi", "-i", art, `󰎍    ${title}`, `      ${dEntry}   ${vol} \n󰥓    ${artist}\n    ${album}`]);
+        Quickshell.execDetached(["notify-send", "Your metadata is", `${p.metadata}`]);
+
+        /* NOTE xesam
+        + genre
+        + disc_number
+        + audio_bpm
+        + user_rating
+        + trackid || track_number
+        */
     }
 
     Connections {

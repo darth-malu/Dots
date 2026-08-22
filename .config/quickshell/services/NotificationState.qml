@@ -1,4 +1,5 @@
 pragma Singleton
+
 import Quickshell
 import Quickshell.Services.Notifications
 import QtQml                         // resolvedUrl
@@ -23,6 +24,7 @@ Singleton {
 
     function onNewNotif(notif) {
         console.log("[notif] app=" + notif.appName + " summary=" + notif.summary);
+
         let isMusic = (notif.appName == 'mzichi' || notif.appName == 'ncmpcpp' || notif.appName == 'spotifY');
 
         // nm-applet's stock connect popup is replaced by our themed one (emitted by NetworkState)
