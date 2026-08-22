@@ -272,10 +272,12 @@ RowLayout {
                         }
                     }
 
+                    // compact status glyph — matches the header text scale
                     Text {
+                        Layout.alignment: Qt.AlignVCenter
                         text: batteryBlock.batteryGlyph
                         color: batteryBlock.accentColor
-                        font { pixelSize: 34; family: "Symbols Nerd Font Mono" }
+                        font { pixelSize: 15; family: "Symbols Nerd Font Mono" }
 
                         Behavior on color {
                             ColorAnimation {

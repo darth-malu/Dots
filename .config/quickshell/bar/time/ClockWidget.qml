@@ -54,6 +54,13 @@ BarBlock {
         }
     }
 
+    IpcHandler {
+        target: "calendar"
+        function toggle(): void {
+            MiscState.showPopup = !MiscState.showPopup;
+        }
+    }
+
     LazyLoader {
         id: lazyClock
         loading: true

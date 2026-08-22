@@ -131,7 +131,8 @@ ColumnLayout {
         id: grid
         visible: !root.yearView
         Layout.fillWidth: true
-        Layout.fillHeight: true
+        // MonthGrid has no useful implicit size — pin it to 6 week rows of ~32px
+        Layout.preferredHeight: 196
         month: root.displayMonth
         year: root.displayYear
 
@@ -242,6 +243,8 @@ ColumnLayout {
                     year: root.displayYear
                     spacing: 0
                     Layout.fillWidth: true
+                    // 6 week rows of ~12px — implicit size must be explicit here too
+                    Layout.preferredHeight: 76
 
                     delegate: Item {
                         implicitWidth: 11
