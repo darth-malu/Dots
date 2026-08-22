@@ -103,7 +103,7 @@ BarBlock {
     Process {
         id: procsProc
         // aggregate cpu/memory usage by process name (all subprocesses summed into one entry)
-        command: ["sh", "-c", "ps -eo pcpu,pmem,comm --no-headers | awk '{c=$1; m=$2; $1=$2=\"\"; sub(/^ +/, \"\"); k=$0; cc[k]+=c; mm[k]+=m; cnt[k]++} END {for (k in cc) printf \"%.1f %.1f %d %s\\n\", cc[k], mm[k], cnt[k], k}' | sort -rn | head -5"]
+        command: ["sh", "-c", "ps -eo pcpu,pmem,comm --no-headers | awk '{c=$1; m=$2; $1=$2=\"\"; sub(/^ +/, \"\"); k=$0; cc[k]+=c; mm[k]+=m; cnt[k]++} END {for (k in cc) printf \"%.1f %.1f %d %s\\n\", cc[k], mm[k], cnt[k], k}' | sort -rn | head -10"]
         property string buf: ""
         running: false
 

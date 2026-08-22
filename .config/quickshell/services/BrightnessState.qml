@@ -19,8 +19,12 @@ Singleton {
     function setLevel(pct) {
         const v = Math.max(0, Math.min(Math.round(pct), 100));
         // optimistic update so sliders/OSD react instantly; sysfs watch corrects it
-        root.rawBrightness = Math.round(v / 100 * root.maxBrightness);
-        Quickshell.execDetached(["sh", "-c", `command -v brightnessctl >/dev/null && brightnessctl set ${v}%`]);
+        const raw = Math.round(v / 100 * root.maxBrightness);
+        root.rawBrightness = raw;
+        // write sysfs directly; fall back to brightnessctl when not permitted
+        Quickshell.execDetached(["sh", "-c",
+            `if ! echo ${raw} > '${root.devicePath}/brightness' 2>/dev/null; then command -v brightnessctl >/dev/null && brightnessctl set ${v}%; fi`
+        ]);
     }
 
     Process {

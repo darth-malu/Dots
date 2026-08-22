@@ -149,10 +149,10 @@ BarBlock {
 
                                 ColumnLayout {
                                     spacing: 2
-                                    Layout.fillWidth: true
 
                                     StyledText {
                                         text: root.hostName
+                                        horizontalAlignment: Text.AlignLeft
                                         font {
                                             pixelSize: 11
                                             family: "Quicksand"
@@ -160,21 +160,23 @@ BarBlock {
                                         }
                                         color: "#f8f8f2"
                                         elide: Text.ElideRight
-                                        Layout.fillWidth: true
                                     }
 
                                     StyledText {
                                         text: ResourcesState.uptimeText
                                         visible: text.length > 0
+                                        horizontalAlignment: Text.AlignLeft
                                         font {
                                             pixelSize: 9
                                             family: "ZedMono Nerd Font"
                                         }
                                         color: "#6272a4"
                                         elide: Text.ElideRight
-                                        Layout.fillWidth: true
                                     }
                                 }
+
+                                // gap between the identity block and the control icons
+                                Item { Layout.fillWidth: true }
 
                                 Rectangle {
                                     id: controls
@@ -1009,7 +1011,11 @@ BarBlock {
                             ColumnLayout {
                                 id: volumeCol
                                 anchors.fill: parent
-                                anchors.margins: 10
+                                // right strip reserved for the pw-center button
+                                anchors.leftMargin: 10
+                                anchors.topMargin: 10
+                                anchors.bottomMargin: 10
+                                anchors.rightMargin: 32
                                 spacing: 8
 
                                 component SinkHeader: RowLayout {
@@ -1096,6 +1102,38 @@ BarBlock {
                                     accent: "#8be9fd"
 
                                     onAdjusted: level => root.showOsd("\uf130", Math.round(level * 100))
+                                }
+                            }
+
+                            // ── pw management shortcut (hyprpwcenter) ──
+                            Rectangle {
+                                anchors.top: parent.top
+                                anchors.right: parent.right
+                                anchors.margins: 7
+                                implicitWidth: 20
+                                implicitHeight: 20
+                                radius: 5
+                                color: pwMouse.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "transparent"
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: 120
+                                    }
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "\uf013"
+                                    color: pwMouse.containsMouse ? "#bd93f9" : "#6272a4"
+                                    font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                }
+
+                                MouseArea {
+                                    id: pwMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: Quickshell.execDetached(["sh", "-c", "exec hyprpwcenter 2>/dev/null || exec pwvucontrol"])
                                 }
                             }
 

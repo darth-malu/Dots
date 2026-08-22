@@ -120,29 +120,19 @@ RowLayout {
                 }
             }
 
-            // ── Readout chip: dark scrim + white number stays readable over any fill ──
-            Rectangle {
-                id: scrimChip
-
+            // ── Readout: bare number, dark outline keeps it readable over any fill ──
+            Text {
                 anchors.centerIn: parent
-                implicitWidth: pctText.implicitWidth + 10
-                implicitHeight: 13
-                radius: 6.5
-                color: Qt.rgba(0, 0, 0, 0.45)
-
-                Text {
-                    id: pctText
-
-                    anchors.centerIn: parent
-                    // bare number — no "%"
-                    text: batteryBlock.pctDisplay
-                    font {
-                        pixelSize: 11
-                        family: "ZedMono Nerd Font"
-                        weight: Font.Bold
-                    }
-                    color: "#f8f8f2"
+                // bare number — no "%"
+                text: batteryBlock.pctDisplay
+                font {
+                    pixelSize: 11
+                    family: "ZedMono Nerd Font"
+                    weight: Font.Bold
                 }
+                color: "#f8f8f2"
+                style: Text.Outline
+                styleColor: Qt.rgba(0, 0, 0, 0.65)
             }
         }
 
@@ -430,9 +420,9 @@ RowLayout {
 
                         Repeater {
                             model: [
-                                { glyph: "\uf06c", name: "Saver", profile: PowerProfile.PowerSaver },
-                                { glyph: "\uf24e", name: "Balanced", profile: PowerProfile.Balanced },
-                                { glyph: "\uf0e7", name: "Performance", profile: PowerProfile.Performance }
+                                { glyph: "\uf06c", name: "Saver", profile: PowerProfile.PowerSaver, tint: "#50fa7b" },
+                                { glyph: "\uf24e", name: "Balanced", profile: PowerProfile.Balanced, tint: "#f1fa8c" },
+                                { glyph: "\uf0e7", name: "Performance", profile: PowerProfile.Performance, tint: "#ff5555" }
                             ]
 
                             delegate: Rectangle {
@@ -445,7 +435,7 @@ RowLayout {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
                                 radius: 7
-                                color: seg.active ? "#bd93f9" : segHover.hovered ? Qt.rgba(1, 1, 1, 0.07) : "transparent"
+                                color: seg.active ? seg.modelData.tint : segHover.hovered ? Qt.rgba(1, 1, 1, 0.07) : "transparent"
 
                                 Behavior on color {
                                     ColorAnimation {
@@ -459,7 +449,7 @@ RowLayout {
 
                                     Text {
                                         text: seg.modelData.glyph
-                                        color: seg.active ? "#282a36" : "#6272a4"
+                                        color: seg.active ? "#282a36" : seg.modelData.tint
                                         font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
                                     }
 

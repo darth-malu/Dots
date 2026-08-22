@@ -273,7 +273,8 @@ ColumnLayout {
 
                 // click a mini month to open it in month view
                 MouseArea {
-                    anchors.fill: parent
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
                         root.clearSelection();

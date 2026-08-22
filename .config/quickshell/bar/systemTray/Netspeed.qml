@@ -96,6 +96,16 @@ Loader {
             graphTick++;
         }
 
+        readonly property bool ethMonitor: NetworkState.ethMonitorEnabled
+
+        onEthMonitorChanged: {
+            if (ethMonitor) {
+                resetRates();
+                defaultInterface.running = true;
+                getRxTxBytes.running = true;
+            }
+        }
+
         Connections {
             target: NetworkState
 
@@ -185,12 +195,14 @@ Loader {
         onEthIfNameChanged: {
             ipAddr = "";
             gateway = "";
-            addrProc.running = true;
+            if (NetworkState.ethMonitorEnabled)
+                addrProc.running = true;
         }
 
         Timer {
             interval: root.refreshInterval
-            running: NetworkState.netspeedVisible || NetworkState.netPopupVisible
+            // bar mode polls whenever shown; popup only samples after the monitor toggle is enabled
+            running: NetworkState.netspeedVisible || (NetworkState.netPopupVisible && NetworkState.ethMonitorEnabled)
             repeat: true
             triggeredOnStart: true
             onTriggered: () => {
@@ -201,7 +213,7 @@ Loader {
 
         Timer {
             interval: 10000
-            running: NetworkState.netspeedVisible || NetworkState.netPopupVisible
+            running: NetworkState.netspeedVisible || (NetworkState.netPopupVisible && NetworkState.ethMonitorEnabled)
             repeat: true
             triggeredOnStart: true
             onTriggered: addrProc.running = true
@@ -338,6 +350,64 @@ Loader {
                         anchors.fill: parent
                         anchors.margins: 14
                         spacing: 7
+
+                        // ── Monitor toggle: sampling only starts once enabled ──
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Text {
+                                text: "monitor"
+                                color: "#6272a4"
+                                font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                                Layout.preferredWidth: 56
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Text {
+                                visible: !root.ethMonitor
+                                text: "off — enable to sample"
+                                color: "#6272a4"
+                                font { pixelSize: 9; family: "ZedMono Nerd Font"; italic: true }
+                            }
+
+                            Rectangle {
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: 26
+                                implicitHeight: 14
+                                radius: 7
+                                color: root.ethMonitor ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.35) : "#343746"
+
+                                Rectangle {
+                                    x: root.ethMonitor ? parent.width - width - 2 : 2
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    implicitWidth: 10
+                                    implicitHeight: 10
+                                    radius: 5
+                                    color: root.ethMonitor ? "#bd93f9" : "#6272a4"
+
+                                    Behavior on x {
+                                        NumberAnimation {
+                                            duration: 120
+                                            easing.type: Easing.OutQuad
+                                        }
+                                    }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: NetworkState.ethMonitorEnabled = !NetworkState.ethMonitorEnabled
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 1
+                            color: "#343746"
+                        }
 
                         InfoRow {
                             label: "iface"
