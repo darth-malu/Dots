@@ -92,6 +92,12 @@ RowLayout {
                 radius: 2
                 color: batteryBlock.accentColor
 
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 200
+                    }
+                }
+
                 Behavior on width {
                     NumberAnimation {
                         duration: 300
@@ -99,10 +105,15 @@ RowLayout {
                     }
                 }
 
-                Behavior on color {
-                    ColorAnimation {
-                        duration: 200
-                    }
+                // full-charge bolt badge — centered over the body, overlapping its border
+                Text {
+                    visible: batteryBlock.isFullyCharged
+                    anchors.centerIn: parent
+                    text: "\uf0e7"
+                    font { pixelSize: 14; family: "Symbols Nerd Font Mono"; weight: Font.Bold }
+                    color: "#f8f8f2"
+                    style: Text.Outline
+                    styleColor: Qt.rgba(0, 0, 0, 0.7)
                 }
             }
 
@@ -112,7 +123,7 @@ RowLayout {
                 spacing: 2
 
                 Text {
-                    visible: batteryBlock.isCharging || batteryBlock.isPendingCharge || batteryBlock.isFullyCharged
+                    visible: batteryBlock.isCharging || batteryBlock.isPendingCharge
                     text: batteryBlock.isPendingCharge ? "\uf1e6" : "\uf0e7"
                     font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
                     color: "#f8f8f2"
