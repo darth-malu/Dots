@@ -34,10 +34,10 @@ WrapperMouseArea {
 
     property real iconRadius: iconSize / 5
 
-    // critical notifications keep a red border; wifi connects tint to the current signal color
+    // critical notifications keep a red border; wifi connects show a signal-tinted wifi glyph
     readonly property bool urgent: n.urgency == NotificationUrgency.Critical
     readonly property bool isWifiConnect: n.summary == "Connection established" && n.appName == "Shell"
-    readonly property color accent: isWifiConnect ? NetworkState.wifiColor : urgent ? "#ff5555" : "#bd93f9"
+    readonly property color accent: urgent ? "#ff5555" : "#bd93f9"
 
     property bool expanded: false
 
@@ -57,9 +57,9 @@ WrapperMouseArea {
     Rectangle {
         id: outerBox
 
-        implicitWidth: Math.min(360, Math.max(240, mainLayout.implicitWidth + 30))
-        implicitHeight: mainLayout.implicitHeight + 20
-        radius: 12
+        implicitWidth: Math.max(120, mainLayout.implicitWidth + 16)
+        implicitHeight: mainLayout.implicitHeight
+        radius: rootMouseArea.ifMusic ? 12 : 8
         color: "#f0282a36"
         border.width: 1
         border.color: rootMouseArea.urgent ? Qt.rgba(1, 0.33, 0.33, 0.45) : Qt.rgba(0.74, 0.58, 0.98, 0.32)
@@ -73,23 +73,30 @@ WrapperMouseArea {
         RowLayout {
             id: mainLayout
 
-            anchors.centerIn: parent
-            width: parent.width - 30
-            spacing: 12
+            spacing: 10
 
             Item {
                 id: songArtContainer
-                visible: rootMouseArea.image != ""
+                visible: rootMouseArea.image != "" || rootMouseArea.isWifiConnect
                 implicitWidth: rootMouseArea.iconSize
                 implicitHeight: rootMouseArea.iconSize
                 Layout.topMargin: 2
                 Layout.bottomMargin: 2
                 Layout.leftMargin: 2
 
+                // signal-strength tinted wifi glyph for connect notifications
+                Text {
+                    visible: rootMouseArea.isWifiConnect && rootMouseArea.image == ""
+                    anchors.centerIn: parent
+                    text: "\uf1eb"
+                    color: NetworkState.wifiColor
+                    font { pixelSize: Math.round(rootMouseArea.iconSize * 0.6); family: "Symbols Nerd Font Mono" }
+                }
+
                 ClippingWrapperRectangle {
                     id: songArt
                     visible: rootMouseArea.image != ""
-                    radius: rootMouseArea.iconRadius
+                    radius: outerBox.radius - 2
                     color: "#343746"
                     anchors.fill: songArtContainer
                     IconImage {
@@ -114,7 +121,6 @@ WrapperMouseArea {
                         text: rootMouseArea.n.summary
                         elide: Text.ElideRight
                         Layout.fillWidth: true
-                        Layout.maximumWidth: 260
                         color: rootMouseArea.accent
                         font {
                             pixelSize: 12
@@ -128,12 +134,18 @@ WrapperMouseArea {
                 Text {
                     id: body
                     Layout.fillWidth: true
+                    Layout.maximumWidth: 500
+                    Layout.preferredWidth: implicitWidth
                     elide: Text.ElideRight
                     wrapMode: Text.Wrap
                     maximumLineCount: rootMouseArea.expanded ? 20 : (rootMouseArea.n.actions.length > 1 ? 1 : 2)
                     text: rootMouseArea.n.body
-                    color: rootMouseArea.isWifiConnect ? "#f8f8f2" : "#b8bfcb"
-                    font { pixelSize: rootMouseArea.isWifiConnect ? 12 : 10; family: rootMouseArea.isWifiConnect ? "ZedMono Nerd Font" : "Quicksand" }
+                    color: "#b8bfcb"
+                    font {
+                        pixelSize: 10
+                        family: "Quicksand"
+                        weight: Font.Medium
+                    }
                 }
 
                 RowLayout {

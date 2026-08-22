@@ -648,12 +648,6 @@ Item {
                             Layout.fillWidth: true
                             spacing: 8
 
-                            Text {
-                                text: "traffic · live"
-                                color: "#6272a4"
-                                font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
-                            }
-
                             Item { Layout.fillWidth: true }
 
                             Text {

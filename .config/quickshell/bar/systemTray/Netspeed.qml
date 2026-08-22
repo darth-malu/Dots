@@ -64,9 +64,6 @@ Loader {
         property real ifaceRxTotal: 0
         property real ifaceTxTotal: 0
 
-        readonly property real totalDown: ethRxTotal
-        readonly property real totalUp: ethTxTotal
-
         function fmtRate(v) {
             if (v <= 0)
                 return "0.0";
@@ -488,19 +485,27 @@ Loader {
                         }
 
                         // totals — the graphs toggle lives in the popup header now
-                        InfoRow {
-                            label: "total ↓"
-                            value: root.fmtBytes(root.totalDown)
-                            valueColor: "#bd93f9"
+                        // ── Live traffic graphs — same design as the wifi popup ──
+                        RowLayout {
+                            visible: root.ethGraphs
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Item { Layout.fillWidth: true }
+
+                            Text {
+                                text: `↓ ${root.fmtRate(root.rxRate)}`
+                                color: "#bd93f9"
+                                font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                            }
+
+                            Text {
+                                text: `↑ ${root.fmtRate(root.txRate)}`
+                                color: "#ff79c6"
+                                font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                            }
                         }
 
-                        InfoRow {
-                            label: "total ↑"
-                            value: root.fmtBytes(root.totalUp)
-                            valueColor: "#ff79c6"
-                        }
-
-                        // ── Live traffic graphs (no separator / label above, wifi-style) ──
                         TrafficGraph {
                             visible: root.ethGraphs
                             accent: "#bd93f9"

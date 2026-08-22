@@ -81,7 +81,7 @@ RowLayout {
 
             width: 27
             height: 15
-            radius: 5
+            radius: 3
             color: "#343746"
             border.width: 1
             border.color: Qt.rgba(batteryBlock.accentColor.r, batteryBlock.accentColor.g, batteryBlock.accentColor.b, 0.55)
@@ -106,7 +106,7 @@ RowLayout {
                 }
 
                 width: Math.max(0, (parent.width - 4) * Math.min(Math.max(batteryBlock.percentage, 0), 1))
-                radius: 4
+                radius: 2.5
                 color: batteryBlock.accentColor
 
                 Behavior on color {
@@ -158,7 +158,7 @@ RowLayout {
 
             implicitWidth: 2.5
             implicitHeight: 8
-            radius: 1.25
+            radius: 1
             color: batteryBlock.accentColor
 
             Behavior on color {
@@ -418,7 +418,7 @@ RowLayout {
                         Repeater {
                             model: [
                                 { glyph: "\uf06c", name: "Saver", profile: PowerProfile.PowerSaver, tint: "#96e6a1" },
-                                { glyph: "\uf24e", name: "Balanced", profile: PowerProfile.Balanced, tint: "#c3b8f5" },
+                                { glyph: "\uf24e", name: "Balanced", profile: PowerProfile.Balanced, tint: "#f0a6ca" },
                                 { glyph: "\uf0e7", name: "Perf", profile: PowerProfile.Performance, tint: "#8fd8e8" }
                             ]
 
