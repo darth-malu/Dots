@@ -74,8 +74,6 @@ BarBlock {
             asynchronous: true
         }
     }
-        }
-    }
 
     PopupWindow {
         id: qsPopup

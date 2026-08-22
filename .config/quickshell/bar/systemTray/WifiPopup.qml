@@ -166,7 +166,7 @@ Item {
         }
     }
 
-    component NetRow: ColumnLayout {
+    component NetRow: Rectangle {
         id: netrow
 
         required property var modelData
@@ -178,9 +178,43 @@ Item {
         readonly property bool editing: root.editSsid.length > 0 && root.editSsid === ssidName
         property bool showPw: false
 
-        spacing: 4
+        // stored password fetched from NetworkManager for the reveal button
+        property string savedPw: ""
+
+        radius: 8
         Layout.fillWidth: true
+        implicitHeight: netCol.implicitHeight
+        // the row being edited is isolated behind a purple tint; plain hover gets a subtle wash
+        color: editing ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.14) : rowHover.containsMouse ? Qt.rgba(1, 1, 1, 0.05) : "transparent"
         opacity: isConnected ? 1 : 0.85
+
+        Behavior on color {
+            ColorAnimation {
+                duration: 120
+            }
+        }
+
+        onEditingChanged: {
+            pskEdit.clear();
+            showPw = false;
+            savedPw = "";
+        }
+
+        // hover tracking that never steals clicks from the row's controls
+        MouseArea {
+            id: rowHover
+            anchors.fill: parent
+            hoverEnabled: true
+            acceptedButtons: Qt.NoButton
+            z: -1
+        }
+
+        ColumnLayout {
+            id: netCol
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+            spacing: 4
 
         RowLayout {
             spacing: 7
@@ -338,7 +372,8 @@ Item {
                         Layout.preferredHeight: 24
                         echoMode: netrow.showPw ? TextInput.Normal : TextInput.Password
                         placeholderText: "change password…"
-                        color: "#f8f8f2"
+                        // cyan while displaying the network's stored password
+                        color: netrow.savedPw.length > 0 && pskEdit.text === netrow.savedPw ? "#8be9fd" : "#f8f8f2"
                         placeholderTextColor: "#6272a4"
                         font { pixelSize: 10; family: "Quicksand" }
                         background: Rectangle {
@@ -358,7 +393,8 @@ Item {
                         Keys.onEnterPressed: applyBtn.applyClicked()
                     }
 
-                    // reveal / hide the typed password
+                    // reveal / hide the typed password — with an empty field it
+                    // pulls the CURRENT stored password from NetworkManager
                     Rectangle {
                         implicitWidth: 22
                         implicitHeight: 22
@@ -377,7 +413,22 @@ Item {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: netrow.showPw = !netrow.showPw
+                            onClicked: {
+                                if (pskEdit.text.length === 0) {
+                                    if (netrow.savedPw.length > 0) {
+                                        pskEdit.text = netrow.savedPw;
+                                        netrow.showPw = true;
+                                    } else {
+                                        pwFetchProc.running = true;
+                                    }
+                                } else if (pskEdit.text === netrow.savedPw) {
+                                    // hide / clear the stored-password view
+                                    pskEdit.clear();
+                                    netrow.showPw = false;
+                                } else {
+                                    netrow.showPw = !netrow.showPw;
+                                }
+                            }
                         }
                     }
 
@@ -385,8 +436,11 @@ Item {
                         id: applyBtn
 
                         function applyClicked() {
-                            if (root.changePsk(netrow.ssidName, pskEdit.text))
-                                pskEdit.text = "";
+                            if (root.changePsk(netrow.ssidName, pskEdit.text)) {
+                                pskEdit.clear();
+                                netrow.savedPw = "";
+                                netrow.showPw = false;
+                            }
                         }
 
                         implicitWidth: 22
@@ -440,6 +494,24 @@ Item {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.forgetNetwork(netrow.modelData)
+                    }
+                }
+            }
+        }
+        }
+
+        // fetches the stored psk for this connection (nmcli -s shows secrets)
+        Process {
+            id: pwFetchProc
+            command: ["sh", "-c", `nmcli -s -g 802-11-wireless-security.psk connection show '${root.esc(netrow.ssidName)}'`]
+            running: false
+
+            stdout: SplitParser {
+                onRead: data => {
+                    netrow.savedPw = data.trim();
+                    if (netrow.savedPw.length > 0) {
+                        pskEdit.text = netrow.savedPw;
+                        netrow.showPw = true;
                     }
                 }
             }
@@ -698,6 +770,7 @@ Item {
                         visible: Networking.wifiEnabled && root.unknownNets.length > 0
                         text: `available · ${root.unknownNets.length}`
                         color: "#6272a4"
+                        Layout.topMargin: 12
                         font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
                     }
 
