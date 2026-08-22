@@ -218,8 +218,8 @@ ColumnLayout {
         visible: root.yearView
         Layout.fillWidth: true
         columns: 3
-        columnSpacing: 8
-        rowSpacing: 10
+        columnSpacing: 10
+        rowSpacing: 12
 
         Repeater {
             model: 12
@@ -229,12 +229,12 @@ ColumnLayout {
 
                 required property int index
 
-                spacing: 1
+                spacing: 2
 
                 Text {
                     text: Qt.formatDateTime(new Date(2000, miniMonth.index, 1), "MMM")
                     color: root.displayMonth === miniMonth.index ? Themes.calendarToday : Themes.calendarHeader
-                    font { pixelSize: 9; bold: true; family: "Quicksand" }
+                    font { pixelSize: 10; bold: true; family: "Quicksand" }
                     Layout.alignment: Qt.AlignHCenter
                 }
 
@@ -243,12 +243,12 @@ ColumnLayout {
                     year: root.displayYear
                     spacing: 0
                     Layout.fillWidth: true
-                    // 6 week rows of ~12px — implicit size must be explicit here too
-                    Layout.preferredHeight: 76
+                    // 6 week rows of ~14px — implicit size must be explicit here too
+                    Layout.preferredHeight: 88
 
                     delegate: Item {
-                        implicitWidth: 11
-                        implicitHeight: 12
+                        implicitWidth: 13
+                        implicitHeight: 14
 
                         readonly property bool isTrackedMini: {
                             MiscState.trackedDatesRev;
@@ -258,7 +258,7 @@ ColumnLayout {
                         Text {
                             anchors.centerIn: parent
                             text: model.day
-                            font { pixelSize: 7; family: "Quicksand" }
+                            font { pixelSize: 8; family: "Quicksand" }
                             color: model.today ? Themes.calendarToday : model.month === miniMonth.index ? Themes.calendarActiveMonth : Themes.calendarInactiveMonth
                         }
 

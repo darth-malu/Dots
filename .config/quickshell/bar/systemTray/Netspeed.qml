@@ -397,14 +397,6 @@ Loader {
                                         font { pixelSize: 11; bold: true; family: "Quicksand" }
                                     }
                                 }
-
-                                Text {
-                                    text: root.ethUp
-                                        ? (NetworkState.ethernet?.linkSpeed ? `linked · ${NetworkState.ethernet.linkSpeed} Mb/s` : "linked")
-                                        : root.ethConnected ? "connecting…" : "no link"
-                                    color: root.ethUp ? "#8be9fd" : "#6272a4"
-                                    font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                                }
                             }
 
                             Item { Layout.fillWidth: true }
@@ -519,6 +511,18 @@ Loader {
                             peak: root.peakTx
                             tick: root.graphTick
                             maxLen: root.historyMax
+                        }
+
+                        // ── Link speed — ghosted footer, bottom center ──
+                        Text {
+                            Layout.alignment: Qt.AlignHCenter
+                            visible: root.ethIfName.length > 0
+                            text: root.ethUp
+                                ? (NetworkState.ethernet?.linkSpeed ? `${NetworkState.ethernet.linkSpeed} Mb/s` : "linked")
+                                : root.ethConnected ? "connecting…" : "no link"
+                            color: "#6272a4"
+                            opacity: 0.55
+                            font { pixelSize: 8; letterSpacing: 2; family: "ZedMono Nerd Font" }
                         }
                     }
                 }

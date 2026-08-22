@@ -59,6 +59,9 @@ BarBlock {
         function toggle(): void {
             MiscState.showPopup = !MiscState.showPopup;
         }
+        function state(): string {
+            return lazyClock.item ? lazyClock.item.dbg : "not loaded";
+        }
     }
 
     LazyLoader {
@@ -67,6 +70,10 @@ BarBlock {
 
         PopupWindow {
             id: popup
+
+            // live geometry readout for the calendar IPC debug handler
+            readonly property string dbg: `visible=${MiscState.showPopup} yearView=${clockPopup.yearView} iw=${implicitWidth} w=${width} ih=${implicitHeight} h=${height} ciw=${clockPopup.implicitWidth} cih=${clockPopup.implicitHeight}`
+
             visible: MiscState.showPopup
             grabFocus: true
             color: MiscState.popupSolidBg ? "#282a36" : "transparent"
@@ -74,12 +81,23 @@ BarBlock {
             anchor.window: root.host
             anchor.rect.x: {
                 let globalPos = root.mapToGlobal(0, 0);
-                return globalPos.x + (root.width / 2) - (width / 2);
+                const cx = globalPos.x + (root.width / 2) - (width / 2);
+                // clamp inside the monitor — an offscreen-overflowing anchor makes
+                // Hyprland refuse to map the popup entirely (blank year view)
+                const scrW = root.host?.screen?.width ?? 1920;
+                return Math.max(6, Math.min(cx, scrW - width - 6));
             }
 
             anchor.rect.y: 33
 
-            implicitWidth: 280
+            // widen for the full-year grid so the 12 mini months get room to breathe
+            implicitWidth: clockPopup.yearView ? 460 : 280
+            Behavior on implicitWidth {
+                NumberAnimation {
+                    duration: 150
+                    easing.type: Easing.OutCubic
+                }
+            }
             // size to actual content so the year view fits its grid without dead space
             implicitHeight: clockPopup.implicitHeight + 16
             Behavior on implicitHeight {

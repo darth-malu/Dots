@@ -91,6 +91,7 @@ RowLayout {
                                 item.activate();
                             } else if (event.button == Qt.RightButton) {
                                 menuAnchor.open();
+                                Quickshell.execDetached(["notify-send", "works"]);
                             } else if (event.button == Qt.MiddleButton) {
                                 item.secondaryActivate();
                             }
