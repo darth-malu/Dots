@@ -16,6 +16,9 @@ Item {
     property var passwordNetwork: null
     property bool showDetails: false
 
+    // BarBlock hosting this popup — provides live rx/tx histories, peaks and formatters
+    property var netRoot: null
+
     readonly property var networks: {
         const list = [...(root.adapter?.networks.values ?? [])];
         list.sort((a, b) => ((b.connected === true) - (a.connected === true))
@@ -73,6 +76,80 @@ Item {
                 radius: 1
                 anchors.bottom: parent.bottom
                 color: index < Math.round((sbars.level ?? 0) * 4) ? sbars.litColor : "#44475a"
+            }
+        }
+    }
+
+    component TrafficGraph: Rectangle {
+        id: tgraph
+
+        property var history
+        property real peak: 1
+        property color accent: "#bd93f9"
+        property int tick
+        property int maxLen: 60
+
+        Layout.fillWidth: true
+        implicitHeight: 34
+        radius: 8
+        color: Qt.rgba(1, 1, 1, 0.03)
+        clip: true
+
+        onTickChanged: tcanvas.requestPaint()
+        onWidthChanged: tcanvas.requestPaint()
+
+        Canvas {
+            id: tcanvas
+
+            anchors.fill: parent
+            anchors.margins: 4
+            antialiasing: true
+            renderStrategy: Canvas.Immediate
+
+            onPaint: {
+                const ctx = getContext("2d");
+                ctx.clearRect(0, 0, width, height);
+
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.06)";
+                ctx.lineWidth = 1;
+                for (let i = 1; i <= 2; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, Math.round(height * i / 3));
+                    ctx.lineTo(width, Math.round(height * i / 3));
+                    ctx.stroke();
+                }
+
+                const h = tgraph.history ?? [];
+                if (h.length < 2)
+                    return;
+
+                const stepX = width / (Math.max(tgraph.maxLen, 2) - 1);
+                const scale = Math.max(tgraph.peak, 0.001);
+                const yAt = i => height - Math.min(1, h[i] / scale) * (height - 2) - 1;
+
+                const grad = ctx.createLinearGradient(0, 0, 0, height);
+                grad.addColorStop(0, Qt.rgba(tgraph.accent.r, tgraph.accent.g, tgraph.accent.b, 0.32));
+                grad.addColorStop(1, Qt.rgba(tgraph.accent.r, tgraph.accent.g, tgraph.accent.b, 0.02));
+
+                ctx.beginPath();
+                ctx.moveTo(0, height);
+                for (let i = 0; i < h.length; i++)
+                    ctx.lineTo(i * stepX, yAt(i));
+                ctx.lineTo((h.length - 1) * stepX, height);
+                ctx.closePath();
+                ctx.fillStyle = grad;
+                ctx.fill();
+
+                ctx.beginPath();
+                for (let i = 0; i < h.length; i++) {
+                    if (i === 0)
+                        ctx.moveTo(0, yAt(i));
+                    else
+                        ctx.lineTo(i * stepX, yAt(i));
+                }
+                ctx.strokeStyle = tgraph.accent;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
             }
         }
     }
@@ -272,18 +349,18 @@ Item {
                         color: "#44475a"
                     }
 
-                    // ── Wifi signal history graph ──
+                    // ── Upload/download traffic graphs + totals ──
                     ColumnLayout {
-                        visible: NetworkState.wifiGraphEnabled
+                        visible: NetworkState.wifiGraphEnabled && root.netRoot !== null
                         Layout.fillWidth: true
-                        spacing: 4
+                        spacing: 5
 
                         RowLayout {
                             Layout.fillWidth: true
-                            spacing: 6
+                            spacing: 8
 
                             Text {
-                                text: "signal · last 3 min"
+                                text: "traffic · live"
                                 color: "#6272a4"
                                 font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
                             }
@@ -291,74 +368,39 @@ Item {
                             Item { Layout.fillWidth: true }
 
                             Text {
-                                text: `${Math.round((NetworkState.activeNetwork?.signalStrength ?? 0) * 100)}%`
+                                text: `↓ ${root.netRoot.fmtRate(root.netRoot.rxRate)}`
                                 color: "#bd93f9"
-                                font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                            }
+
+                            Text {
+                                text: `↑ ${root.netRoot.fmtRate(root.netRoot.txRate)}`
+                                color: "#ff79c6"
+                                font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
                             }
                         }
 
-                        Rectangle {
-                            Layout.fillWidth: true
-                            implicitHeight: 44
-                            radius: 8
-                            color: Qt.rgba(1, 1, 1, 0.03)
-                            clip: true
+                        TrafficGraph {
+                            accent: "#bd93f9"
+                            history: root.netRoot.rxHistory
+                            peak: root.netRoot.peakRx
+                            tick: root.netRoot.graphTick
+                            maxLen: root.netRoot.historyMax
+                        }
 
-                            Canvas {
-                                id: signalCanvas
+                        TrafficGraph {
+                            accent: "#ff79c6"
+                            history: root.netRoot.txHistory
+                            peak: root.netRoot.peakTx
+                            tick: root.netRoot.graphTick
+                            maxLen: root.netRoot.historyMax
+                        }
 
-                                anchors.fill: parent
-                                anchors.margins: 5
-
-                                property var samples: NetworkState.wifiSignalHistory
-
-                                onSamplesChanged: requestPaint()
-                                onWidthChanged: requestPaint()
-
-                                onPaint: {
-                                    const ctx = getContext("2d");
-                                    ctx.clearRect(0, 0, width, height);
-
-                                    ctx.strokeStyle = "rgba(255, 255, 255, 0.07)";
-                                    ctx.lineWidth = 1;
-                                    for (const fy of [0.05, 0.5, 0.95]) {
-                                        ctx.beginPath();
-                                        ctx.moveTo(0, height * fy);
-                                        ctx.lineTo(width, height * fy);
-                                        ctx.stroke();
-                                    }
-
-                                    const vals = signalCanvas.samples;
-                                    if (!vals || vals.length < 2)
-                                        return;
-
-                                    const stepX = width / (vals.length - 1);
-                                    const yFor = v => height - (Math.min(Math.max(v, 0), 1) * (height - 5) + 2.5);
-
-                                    const grad = ctx.createLinearGradient(0, 0, 0, height);
-                                    grad.addColorStop(0, "rgba(189, 147, 249, 0.32)");
-                                    grad.addColorStop(1, "rgba(189, 147, 249, 0.02)");
-
-                                    ctx.beginPath();
-                                    ctx.moveTo(0, yFor(vals[0]));
-                                    for (let i = 1; i < vals.length; i++)
-                                        ctx.lineTo(i * stepX, yFor(vals[i]));
-                                    ctx.lineTo(width, height);
-                                    ctx.lineTo(0, height);
-                                    ctx.closePath();
-                                    ctx.fillStyle = grad;
-                                    ctx.fill();
-
-                                    ctx.beginPath();
-                                    ctx.moveTo(0, yFor(vals[0]));
-                                    for (let i = 1; i < vals.length; i++)
-                                        ctx.lineTo(i * stepX, yFor(vals[i]));
-                                    ctx.strokeStyle = "#bd93f9";
-                                    ctx.lineWidth = 1.5;
-                                    ctx.lineJoin = "round";
-                                    ctx.stroke();
-                                }
-                            }
+                        Text {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: `total ↓ ${root.netRoot.fmtBytes(root.netRoot.ifaceRxTotal)} · ↑ ${root.netRoot.fmtBytes(root.netRoot.ifaceTxTotal)}`
+                            color: "#6272a4"
+                            font { pixelSize: 9; family: "ZedMono Nerd Font" }
                         }
                     }
 

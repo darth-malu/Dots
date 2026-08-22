@@ -55,26 +55,9 @@ Singleton {
     // dracula: overlay0 / teal
     readonly property color ethColor: !root.ethernet?.hasLink ? "#6272a4" : "#8be9fd"
 
-    // wifi signal history for the popup graph (~3 min window at 2s samples)
+    // popup traffic graphs — each toggle makes its graph section visible AND starts live sampling
     property bool wifiGraphEnabled: false
-    property var wifiSignalHistory: []
-
-    onWifiGraphEnabledChanged: {
-        if (!wifiGraphEnabled)
-            wifiSignalHistory = [];
-    }
-
-    Timer {
-        interval: 2000
-        running: root.wifiPopupVisible && root.wifiGraphEnabled && root.wifiConnected
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: {
-            const h = root.wifiSignalHistory.slice(-89);
-            h.push(root.activeNetwork ? root.activeNetwork.signalStrength : 0);
-            root.wifiSignalHistory = h;
-        }
-    }
+    property bool ethGraphsEnabled: false
 
     // ethernet details are only sampled once the user explicitly enables monitoring
     property bool ethMonitorEnabled: false

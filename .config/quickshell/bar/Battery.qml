@@ -43,21 +43,6 @@ RowLayout {
         : percentage < 0.90 ? "\uf241"
         : "\uf240"
 
-    // ── Charge badge (sits left of the body so the body width stays fixed) ──
-    MaterialSymbol {
-        visible: batteryBlock.isCharging || batteryBlock.isPendingCharge
-        text: batteryBlock.isCharging ? "\uf0e7" : "\uf1e6"
-        iconSize: 10
-        color: batteryBlock.accentColor
-        Layout.rightMargin: -5
-
-        Behavior on color {
-            ColorAnimation {
-                duration: 200
-            }
-        }
-    }
-
     MouseArea {
         id: root
 
@@ -120,19 +105,33 @@ RowLayout {
                 }
             }
 
-            // ── Readout: bare number, dark outline keeps it readable over any fill ──
-            Text {
+            // ── Readout: charge glyph + bare number, dark outline keeps both readable over any fill.
+            // Fully charged shows only the bolt — the number is dropped entirely. ──
+            RowLayout {
                 anchors.centerIn: parent
-                // bare number — no "%"
-                text: batteryBlock.pctDisplay
-                font {
-                    pixelSize: 11
-                    family: "ZedMono Nerd Font"
-                    weight: Font.Bold
+                spacing: 2
+
+                Text {
+                    visible: batteryBlock.isCharging || batteryBlock.isPendingCharge || batteryBlock.isFullyCharged
+                    text: batteryBlock.isPendingCharge ? "\uf1e6" : "\uf0e7"
+                    font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                    color: "#f8f8f2"
+                    style: Text.Outline
+                    styleColor: Qt.rgba(0, 0, 0, 0.65)
                 }
-                color: "#f8f8f2"
-                style: Text.Outline
-                styleColor: Qt.rgba(0, 0, 0, 0.65)
+
+                Text {
+                    visible: !batteryBlock.isFullyCharged
+                    text: batteryBlock.pctDisplay
+                    font {
+                        pixelSize: 11
+                        family: "ZedMono Nerd Font"
+                        weight: Font.Bold
+                    }
+                    color: "#f8f8f2"
+                    style: Text.Outline
+                    styleColor: Qt.rgba(0, 0, 0, 0.65)
+                }
             }
         }
 

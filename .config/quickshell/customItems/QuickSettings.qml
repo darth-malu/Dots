@@ -1133,7 +1133,10 @@ BarBlock {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    onClicked: Quickshell.execDetached(["sh", "-c", "exec hyprpwcenter 2>/dev/null || exec pwvucontrol"])
+                                    onClicked: {
+                                        root.showQsPopup = false;
+                                        Quickshell.execDetached(["sh", "-c", "exec hyprpwcenter 2>/dev/null || exec pwvucontrol"]);
+                                    }
                                 }
                             }
 

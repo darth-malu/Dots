@@ -48,6 +48,10 @@ Loader {
         property real ethRxTotal: 0
         property real ethTxTotal: 0
 
+        // byte counters of whichever interface is currently routed (wifi or eth)
+        property real ifaceRxTotal: 0
+        property real ifaceTxTotal: 0
+
         readonly property real totalDown: ethRxTotal
         readonly property real totalUp: ethTxTotal
 
@@ -87,6 +91,8 @@ Loader {
         }
 
         function pushSample(rx, tx) {
+            if (!root.graphsLive)
+                return;
             rxHistory.push(rx);
             txHistory.push(tx);
             if (rxHistory.length > historyMax)
@@ -94,6 +100,19 @@ Loader {
             if (txHistory.length > historyMax)
                 txHistory.shift();
             graphTick++;
+        }
+
+        // graphs only accumulate samples while one of the popup graphs is actually shown
+        readonly property bool wifiGraphs: NetworkState.wifiPopupVisible && NetworkState.wifiGraphEnabled
+        readonly property bool ethGraphs: NetworkState.netPopupVisible && NetworkState.ethMonitorEnabled && NetworkState.ethGraphsEnabled
+        readonly property bool graphsLive: wifiGraphs || ethGraphs
+
+        onGraphsLiveChanged: {
+            if (!graphsLive) {
+                rxHistory = [];
+                txHistory = [];
+                graphTick++;
+            }
         }
 
         readonly property bool ethMonitor: NetworkState.ethMonitorEnabled
@@ -165,6 +184,9 @@ Loader {
 
                         root.rxPrev = rx;
                         root.txPrev = tx;
+
+                        root.ifaceRxTotal = rx;
+                        root.ifaceTxTotal = tx;
                     }
 
                     if (root.ethIfName.length > 0 && data.startsWith(root.ethIfName + ":")) {
@@ -201,8 +223,10 @@ Loader {
 
         Timer {
             interval: root.refreshInterval
-            // bar mode polls whenever shown; popup only samples after the monitor toggle is enabled
-            running: NetworkState.netspeedVisible || (NetworkState.netPopupVisible && NetworkState.ethMonitorEnabled)
+            // bar mode polls whenever shown; popups only sample once their toggles are enabled
+            running: NetworkState.netspeedVisible
+                || (NetworkState.netPopupVisible && NetworkState.ethMonitorEnabled)
+                || root.wifiGraphs
             repeat: true
             triggeredOnStart: true
             onTriggered: () => {
@@ -450,7 +474,61 @@ Loader {
                             valueColor: "#ff79c6"
                         }
 
+                        // ── Graphs switch: controls live sampling AND visibility of both bars ──
+                        RowLayout {
+                            visible: root.ethMonitor
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Text {
+                                text: "graphs"
+                                color: "#6272a4"
+                                font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                                Layout.preferredWidth: 56
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Text {
+                                visible: !NetworkState.ethGraphsEnabled
+                                text: "off"
+                                color: "#6272a4"
+                                font { pixelSize: 9; family: "ZedMono Nerd Font"; italic: true }
+                            }
+
+                            Rectangle {
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: 26
+                                implicitHeight: 14
+                                radius: 7
+                                color: NetworkState.ethGraphsEnabled ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.35) : "#343746"
+
+                                Rectangle {
+                                    x: NetworkState.ethGraphsEnabled ? parent.width - width - 2 : 2
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    implicitWidth: 10
+                                    implicitHeight: 10
+                                    radius: 5
+                                    color: NetworkState.ethGraphsEnabled ? "#bd93f9" : "#6272a4"
+
+                                    Behavior on x {
+                                        NumberAnimation {
+                                            duration: 120
+                                            easing.type: Easing.OutQuad
+                                        }
+                                    }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: NetworkState.ethGraphsEnabled = !NetworkState.ethGraphsEnabled
+                                }
+                            }
+                        }
+
                         SpeedBar {
+                            visible: root.ethGraphs
                             label: "download"
                             glyph: "\uf063"
                             accent: "#bd93f9"
@@ -461,6 +539,7 @@ Loader {
                         }
 
                         SpeedBar {
+                            visible: root.ethGraphs
                             label: "upload"
                             glyph: "\uf062"
                             accent: "#ff79c6"
@@ -477,6 +556,7 @@ Loader {
         WifiPopup {
             host: loaderBig.host
             anchorItem: root
+            netRoot: root
         }
     }
 

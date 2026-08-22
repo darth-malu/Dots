@@ -1,12 +1,41 @@
 pragma Singleton
 import Quickshell
 import QtQuick
+import QtMultimedia
 import Quickshell.Services.UPower
+import Quickshell.Services.Pipewire
 
 Singleton {
     id: root
 
     readonly property UPowerDevice battery: UPower.displayDevice
+
+    // charger events play a sound; while output is muted they fall back to a notification
+    readonly property bool outputMuted: Pipewire.ready && root.sink?.audio?.muted === true
+    readonly property PwNode sink: Pipewire.defaultAudioSink
+
+    PwObjectTracker {
+        objects: [root.sink]
+    }
+
+    SoundEffect {
+        id: sfxPlug
+        source: Qt.resolvedUrl("../customItems/game_ready.wav")
+    }
+
+    SoundEffect {
+        id: sfxUnplug
+        source: Qt.resolvedUrl("../customItems/game_ready.wav")
+    }
+
+    function plugEvent(summary, body, icon) {
+        if (root.outputMuted)
+            notify(summary, body, icon);
+        else if (icon === "unplug")
+            sfxUnplug.play();
+        else
+            sfxPlug.play();
+    }
 
     readonly property var powerProfile: PowerProfiles.profile
 
@@ -97,13 +126,13 @@ Singleton {
         const pct = root.pctDisplay;
         switch (chargeState) {
         case UPowerDeviceState.Charging:
-            notify("Charging", `Battery at ${pct}% · ${timeLeftText() ?? "estimating…"}`, "plug");
+            plugEvent("Charging", `Battery at ${pct}% · ${timeLeftText() ?? "estimating…"}`, "plug");
             break;
         case UPowerDeviceState.Discharging:
-            notify("Discharging", `Running on battery · ${pct}%`, "unplug");
+            plugEvent("Discharging", `Running on battery · ${pct}%`, "unplug");
             break;
         case UPowerDeviceState.FullyCharged:
-            notify("Battery full", `${pct}% — you can unplug`, "full-battery");
+            plugEvent("Battery full", `${pct}% — you can unplug`, "full-battery");
             break;
         }
     }

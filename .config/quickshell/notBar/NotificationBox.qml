@@ -30,11 +30,13 @@ WrapperMouseArea {
 
     property int indexAll: -1
 
-    property real iconSize: ifMusic ? 90 : 50
+    property real iconSize: ifMusic ? 90 : 44
 
-    property real iconRadius: iconSize / 5
+    property real iconRadius: iconSize / 4
 
-    property bool showTime: false
+    // critical notifications get a red accent strip, everything else purple
+    readonly property bool urgent: n.urgency == NotificationUrgency.Critical
+    readonly property color accent: urgent ? "#ff5555" : "#bd93f9"
 
     property bool expanded: false
 
@@ -55,63 +57,57 @@ WrapperMouseArea {
         id: elapsedTimer
     }
 
-    Timer {
-        running: rootMouseArea.showTime
-        interval: 1000
-        repeat: true
-        onTriggered: rootMouseArea.elapsed = elapsedTimer.elapsed()
-    }
-
     Rectangle {
         id: outerBox
-        implicitWidth: Math.max(120, mainLayout.implicitWidth + 16)
-        implicitHeight: mainLayout.implicitHeight
-        radius: rootMouseArea.ifMusic ? 12 : 8
-        color: Themes.bgBlur
-        border {
-            width: rootMouseArea.ifMusic ? 0 : 1
-            color: Qt.rgba(0.627, 0.125, 0.941, 0.78)
+
+        implicitWidth: Math.min(360, Math.max(240, mainLayout.implicitWidth + 30))
+        implicitHeight: mainLayout.implicitHeight + 20
+        radius: 12
+        color: "#f0282a36"
+        border.width: 1
+        border.color: rootMouseArea.urgent ? Qt.rgba(1, 0.33, 0.33, 0.45) : Qt.rgba(0.74, 0.58, 0.98, 0.32)
+
+        Behavior on border.color {
+            ColorAnimation {
+                duration: 150
+            }
+        }
+
+        // urgency accent strip
+        Rectangle {
+            anchors.left: parent.left
+            anchors.leftMargin: 8
+            anchors.verticalCenter: parent.verticalCenter
+            implicitWidth: 3
+            implicitHeight: parent.height - 24
+            radius: 1.5
+            color: rootMouseArea.accent
+            opacity: 0.9
         }
 
         RowLayout {
             id: mainLayout
-            spacing: 10
+
+            anchors.centerIn: parent
+            width: parent.width - 30
+            spacing: 12
 
             Item {
                 id: songArtContainer
                 visible: rootMouseArea.image != ""
                 implicitWidth: rootMouseArea.iconSize
                 implicitHeight: rootMouseArea.iconSize
-                Layout.topMargin: 2
-                Layout.bottomMargin: 2
-                Layout.leftMargin: 2
+                Layout.alignment: Qt.AlignVCenter
 
                 ClippingWrapperRectangle {
                     id: songArt
                     visible: rootMouseArea.image != ""
-                    radius: outerBox.radius - 2
-                    color: "transparent"
+                    radius: outerBox.radius - 4
+                    color: "#343746"
+                    anchors.fill: songArtContainer
                     IconImage {
                         implicitSize: songArtContainer.height
                         source: NotificationState.getImage(rootMouseArea.image)
-                        asynchronous: true
-                    }
-                }
-
-                ClippingWrapperRectangle {
-                    id: appIconRect
-                    visible: false
-                    radius: 2
-                    color: "transparent"
-                    anchors {
-                        horizontalCenter: songArtContainer.right
-                        verticalCenter: songArtContainer.bottom
-                        horizontalCenterOffset: -4
-                        verticalCenterOffset: -4
-                    }
-                    IconImage {
-                        implicitSize: 16
-                        source: NotificationState.getImage(rootMouseArea.n.appIcon)
                         asynchronous: true
                     }
                 }
@@ -119,43 +115,47 @@ WrapperMouseArea {
 
             ColumnLayout {
                 id: contentLayout
-                spacing: 6
-                // Layout.topMargin: 8
-                // Layout.bottomMargin: 8
-                // Layout.rightMargin: 8
+                spacing: 4
+                Layout.fillWidth: true
 
                 RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
                     Text {
                         id: summary
                         text: rootMouseArea.n.summary
                         elide: Text.ElideRight
-                        wrapMode: Text.Wrap
-                        color: Qt.rgba(171 / 255, 141 / 255, 237 / 255, 0.98)
+                        Layout.fillWidth: true
+                        Layout.maximumWidth: 260
+                        color: rootMouseArea.accent
                         font {
-                            pointSize: 10
-                            family: 'Quicksand medium'
+                            pixelSize: 12
+                            family: "Quicksand"
                             weight: Font.Bold
                             bold: true
                         }
                     }
+
                     Text {
                         id: currentTime
                         visible: rootMouseArea.showTime
-                        Layout.alignment: Qt.AlignRight
+                        Layout.alignment: Qt.AlignVCenter
                         text: NotificationState.humanTime(rootMouseArea.timestamp, rootMouseArea.elapsed)
+                        color: "#6272a4"
+                        font { pixelSize: 9; family: "ZedMono Nerd Font" }
                     }
                 }
 
                 Text {
                     id: body
-                    Layout.maximumWidth: 500
-                    Layout.preferredWidth: implicitWidth
+                    Layout.fillWidth: true
                     elide: Text.ElideRight
                     wrapMode: Text.Wrap
-                    font.weight: Font.Medium
                     maximumLineCount: rootMouseArea.expanded ? 20 : (rootMouseArea.n.actions.length > 1 ? 1 : 2)
                     text: rootMouseArea.n.body
-                    color: 'white'
+                    color: "#b8bfcb"
+                    font { pixelSize: 10; family: "Quicksand" }
                 }
 
                 RowLayout {
@@ -174,7 +174,7 @@ WrapperMouseArea {
                             implicitHeight: 24
                             Layout.fillWidth: true
                             radius: 6
-                            color: actionMA.containsMouse ? Qt.lighter("#343746", 1.2) : "#343746"
+                            color: actionMA.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "#343746"
 
                             Behavior on color {
                                 ColorAnimation {
@@ -229,12 +229,10 @@ WrapperMouseArea {
                 id: expandButton
                 visible: body.text.length > (rootMouseArea.n.actions.length > 1 ? 50 : 100)
 
-                property string sourceIcon: rootMouseArea.expanded ? "go-up-symbolic" : "go-down-symbolic"
-
-                implicitWidth: 20
-                implicitHeight: 20
-                radius: 4
-                color: expandMA.containsMouse ? Qt.lighter("#343746", 1.3) : "#343746"
+                implicitWidth: 18
+                implicitHeight: 18
+                radius: 5
+                color: expandMA.containsMouse ? Qt.rgba(1, 1, 1, 0.09) : "#343746"
 
                 Behavior on color {
                     ColorAnimation {
@@ -242,11 +240,11 @@ WrapperMouseArea {
                     }
                 }
 
-                IconImage {
-                    source: Quickshell.iconPath(expandButton.sourceIcon)
+                Text {
                     anchors.centerIn: parent
-                    implicitHeight: 12
-                    implicitWidth: 12
+                    text: rootMouseArea.expanded ? "\uf077" : "\uf078"
+                    color: "#b8bfcb"
+                    font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
                 }
 
                 MouseArea {
@@ -260,10 +258,10 @@ WrapperMouseArea {
 
             Rectangle {
                 id: closeButton
-                implicitWidth: 20
-                implicitHeight: 20
-                radius: 4
-                color: closeMA.containsMouse ? Qt.lighter("#ff5555", 1.3) : "#343746"
+                implicitWidth: 18
+                implicitHeight: 18
+                radius: 5
+                color: closeMA.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.25) : "#343746"
 
                 Behavior on color {
                     ColorAnimation {
@@ -271,11 +269,11 @@ WrapperMouseArea {
                     }
                 }
 
-                IconImage {
-                    source: Quickshell.iconPath("process-stop-symbolic")
+                Text {
                     anchors.centerIn: parent
-                    implicitHeight: 12
-                    implicitWidth: 12
+                    text: "\uf00d"
+                    color: closeMA.containsMouse ? "#ff5555" : "#6272a4"
+                    font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
                 }
 
                 MouseArea {
