@@ -175,6 +175,7 @@ Item {
         readonly property string ssidName: modelData?.name ?? ""
         readonly property bool hiddenNet: ssidName.length === 0
         readonly property bool editing: root.editSsid.length > 0 && root.editSsid === ssidName
+        property bool showPw: false
 
         spacing: 4
         Layout.fillWidth: true
@@ -325,7 +326,7 @@ Item {
 
                         Layout.fillWidth: true
                         Layout.preferredHeight: 24
-                        echoMode: TextInput.Password
+                        echoMode: netrow.showPw ? TextInput.Normal : TextInput.Password
                         placeholderText: "change password…"
                         color: "#f8f8f2"
                         placeholderTextColor: "#6272a4"
@@ -345,6 +346,29 @@ Item {
 
                         Keys.onReturnPressed: applyBtn.applyClicked()
                         Keys.onEnterPressed: applyBtn.applyClicked()
+                    }
+
+                    // reveal / hide the typed password
+                    Rectangle {
+                        implicitWidth: 22
+                        implicitHeight: 22
+                        radius: 6
+                        color: eyeMa.containsMouse ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.16) : "transparent"
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: netrow.showPw ? "\uf070" : "\uf06e"
+                            color: netrow.showPw ? "#bd93f9" : "#6272a4"
+                            font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                        }
+
+                        MouseArea {
+                            id: eyeMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: netrow.showPw = !netrow.showPw
+                        }
                     }
 
                     Rectangle {

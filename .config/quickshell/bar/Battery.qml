@@ -69,10 +69,10 @@ RowLayout {
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 
         onClicked: mouse => {
-            if (mouse.button == Qt.LeftButton)
-                batteryBlock.showPct = !batteryBlock.showPct;
-            else if (mouse.button == Qt.MiddleButton || mouse.button == Qt.RightButton)
+            if (mouse.button == Qt.LeftButton || mouse.button == Qt.MiddleButton)
                 batteryBlock.showPopup = !batteryBlock.showPopup;
+            else if (mouse.button == Qt.RightButton)
+                batteryBlock.showPct = !batteryBlock.showPct;
         }
 
         // ── Battery body (fixed width — never resizes with the value) ──
@@ -106,7 +106,7 @@ RowLayout {
                 }
 
                 width: Math.max(0, (parent.width - 4) * Math.min(Math.max(batteryBlock.percentage, 0), 1))
-                radius: 2
+                radius: 4
                 color: batteryBlock.accentColor
 
                 Behavior on color {

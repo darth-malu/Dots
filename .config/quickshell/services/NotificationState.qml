@@ -25,6 +25,10 @@ Singleton {
         let isMusic = (notif.appName == 'mzichi' || notif.appName == 'ncmpcpp' || notif.appName == 'spotifY');
         // let isSpotifyAd = notif.summary.startsWith("󰎍    Listen to music");
 
+        // nm-applet's stock connect popup is replaced by our themed one (emitted by NetworkState)
+        if (notif.summary == "Connection established" && notif.appName != "Shell")
+            return;
+
         allNotifs = [notif, ...allNotifs];
 
         if (notif.lastGeneration) // if notif was carried over from last reload

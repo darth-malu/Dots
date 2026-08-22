@@ -58,4 +58,26 @@ Singleton {
     // popup traffic graphs — each toggle makes its graph section visible AND starts history sampling
     property bool wifiGraphEnabled: false
     property bool ethGraphsEnabled: false
+
+    // themed "connection established" popup — replaces nm-applet's stock notification
+    readonly property string iconsDir: "/home/malu/.config/quickshell/icons"
+    property bool wasWifiConnected: false
+
+    function currentWifiIconPath() {
+        if (!root.adapter || !Networking.wifiEnabled)
+            return `${root.iconsDir}/wifi-slash.svg`;
+        if (!root.wifiConnected)
+            return `${root.iconsDir}/wifi-x.svg`;
+        return `${root.iconsDir}/wifi-${Math.round((root.activeNetwork?.signalStrength ?? 0) * 3)}.svg`;
+    }
+
+    onWifiConnectedChanged: {
+        // suppressed while the wifi popup is open — the connection is visible there
+        if (root.wifiConnected && !root.wasWifiConnected && !root.wifiPopupVisible) {
+            const ssid = String(root.activeNetwork?.name ?? "").replace(/'/g, "'\\''");
+            Quickshell.execDetached(["sh", "-c",
+                `notify-send 'Connection established' '${ssid}' -i ${root.currentWifiIconPath()} -a Shell -t 4000`]);
+        }
+        root.wasWifiConnected = root.wifiConnected;
+    }
 }
