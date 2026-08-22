@@ -146,8 +146,11 @@ RowLayout {
         Rectangle {
             id: cap
 
-            Layout.alignment: Qt.AlignVCenter
-            Layout.leftMargin: -1
+            anchors {
+                verticalCenter: parent.verticalCenter
+                left: batteryBody.right
+                leftMargin: -0.5
+            }
 
             implicitWidth: 2.5
             implicitHeight: 7

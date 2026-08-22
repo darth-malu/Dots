@@ -916,8 +916,6 @@ BarBlock {
                                 }
                             }
 
-                            }
-
                             // ── Volume HUD (bottom-left of card) ──
                             Rectangle {
                                 anchors.left: parent.left
@@ -1134,4 +1132,5 @@ BarBlock {
                 }
             }
         }
+    }
 }
