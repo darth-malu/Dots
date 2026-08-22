@@ -268,7 +268,7 @@ Item {
             // anchor.window: mprisRoot.host
             // anchor.rect.x: mprisRoot.host.width / 2 - width / 2
             // anchor.rect.y: 35
-            anchor.window: parentWindow
+            anchor.window: mprisRoot.host
             anchor.rect.x: mprisRoot.host.width / 2 - width / 2
             anchor.rect.y: 35
             visible: mprisRoot.showPopup
@@ -311,7 +311,7 @@ Item {
         PopupWindow {
             id: artPopup
 
-            anchor.window: parentWindow
+            anchor.window: mprisRoot.host
             anchor.rect.x: {
                 let g = mprisRoot.mapToGlobal(0, 0);
                 return g.x + mprisRoot.width / 2 - width / 2;

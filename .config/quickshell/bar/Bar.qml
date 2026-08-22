@@ -141,6 +141,10 @@ ShellRoot {
                 host: barr
                 anchors.centerIn: parent
             }
+
+            BrightnessOsd {
+                barWindow: barr
+            }
         }
     }
 }

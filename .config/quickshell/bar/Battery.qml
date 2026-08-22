@@ -43,10 +43,23 @@ RowLayout {
         : percentage < 0.90 ? "\uf241"
         : "\uf240"
 
+    // ── Charge badge (sits left of the body so the body width stays fixed) ──
+    MaterialSymbol {
+        visible: batteryBlock.isCharging || batteryBlock.isPendingCharge
+        text: batteryBlock.isCharging ? "\uf0e7" : "\uf1e6"
+        iconSize: 10
+        color: batteryBlock.accentColor
+        Layout.rightMargin: -5
+
+        Behavior on color {
+            ColorAnimation {
+                duration: 200
+            }
+        }
+    }
+
     MouseArea {
         id: root
-
-        readonly property bool chargingVisible: batteryBlock.isCharging || batteryBlock.isPendingCharge
 
         implicitWidth: batteryBody.width + cap.width + 1
         implicitHeight: batteryBody.height
@@ -59,12 +72,11 @@ RowLayout {
                 batteryBlock.showPopup = !batteryBlock.showPopup;
         }
 
-        // ── Battery body ──
+        // ── Battery body (fixed width — never resizes with the value) ──
         Rectangle {
             id: batteryBody
 
-            // dynamic width so "100%" never clips (old design clipped at a fixed 26px)
-            width: Math.max(34, innerRow.implicitWidth + 16)
+            width: 34
             height: 17
             radius: 4
             color: "#343746"
@@ -108,36 +120,28 @@ RowLayout {
                 }
             }
 
-            // ── Overlay: bolt/plug + percentage ──
-            RowLayout {
-                id: innerRow
+            // ── Readout chip: dark scrim + white number stays readable over any fill ──
+            Rectangle {
+                id: scrimChip
 
                 anchors.centerIn: parent
-                spacing: 3
-
-                MaterialSymbol {
-                    visible: root.chargingVisible
-                    text: batteryBlock.isCharging ? "\uf0e7" : "\uf1e6"
-                    iconSize: 10
-                    color: "#f8f8f2"
-                    style: Text.Outline
-                    styleColor: Qt.rgba(0, 0, 0, 0.7)
-                }
+                implicitWidth: pctText.implicitWidth + 10
+                implicitHeight: 13
+                radius: 6.5
+                color: Qt.rgba(0, 0, 0, 0.45)
 
                 Text {
                     id: pctText
 
-                    text: batteryBlock.isFullyCharged && !batteryBlock.isCharging ? "" : batteryBlock.pctDisplay + "%"
-                    visible: text !== ""
+                    anchors.centerIn: parent
+                    // bare number — no "%"
+                    text: batteryBlock.pctDisplay
                     font {
-                        pixelSize: 12
+                        pixelSize: 11
                         family: "ZedMono Nerd Font"
                         weight: Font.Bold
                     }
-                    // white text + dark outline stays readable over any fill/state color
                     color: "#f8f8f2"
-                    style: Text.Outline
-                    styleColor: Qt.rgba(0, 0, 0, 0.7)
                 }
             }
         }
@@ -217,17 +221,7 @@ RowLayout {
                     spacing: 10
 
                     ColumnLayout {
-                        spacing: 2
-
-                        Text {
-                            text: `${batteryBlock.pctDisplay}%`
-                            color: batteryBlock.accentColor
-                            font {
-                                pixelSize: 28
-                                bold: true
-                                family: "ZedMono Nerd Font"
-                            }
-                        }
+                        spacing: 4
 
                         Text {
                             text: {
@@ -246,8 +240,8 @@ RowLayout {
                                 }
                                 return "";
                             }
-                            color: "#b8bfcb"
-                            font { pixelSize: 10; family: "Quicksand" }
+                            color: "#f8f8f2"
+                            font { pixelSize: 13; bold: true; family: "Quicksand" }
                             visible: text !== ""
                         }
 

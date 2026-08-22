@@ -1037,6 +1037,17 @@ BarBlock {
                                     }
                                 }
 
+                                Brightness {
+                                    Layout.topMargin: 2
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    implicitHeight: 1
+                                    visible: BrightnessState.available
+                                    color: "#343746"
+                                }
+
                                 SinkHeader {
                                     node: PipewireState.outputSink
                                     fallback: "output"
