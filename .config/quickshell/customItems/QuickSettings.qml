@@ -213,7 +213,7 @@ BarBlock {
                                     Text {
                                         anchors.centerIn: parent
                                         // text: "\uf4a6"
-                                        text: ""
+                                        text: "\uf4a6"
                                         color: nasBtnMouse.containsMouse ? "#ffd9a8" : "#ffb86c"
                                         font {
                                             pixelSize: 16

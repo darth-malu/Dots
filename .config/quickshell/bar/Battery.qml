@@ -54,10 +54,10 @@ RowLayout {
         implicitHeight: batteryBody.height
         cursorShape: Qt.PointingHandCursor
 
-        acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+        acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 
         onClicked: mouse => {
-            if (mouse.button == Qt.LeftButton)
+            if (mouse.button == Qt.RightButton)
                 batteryBlock.showPct = !batteryBlock.showPct;
             else
                 batteryBlock.showPopup = !batteryBlock.showPopup;

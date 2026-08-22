@@ -64,7 +64,9 @@ Item {
                 NetworkState.wifiGraphEnabled = false;
             } else {
                 connListProc.running = true;
-                bandProc.running = true;
+                // bands rarely change — fetch lazily, only once per session
+                if (!root.bandsLoaded && Networking.wifiEnabled)
+                    bandProc.running = true;
             }
             if (root.adapter)
                 root.adapter.scannerEnabled = NetworkState.wifiPopupVisible;
@@ -874,8 +876,10 @@ Item {
         }
     }
 
-    // ssid -> band ("2.4G" / "5G" / "6G") parsed from the last wifi scan
+    // ssid -> band ("2.4G" / "5G" / "6G") parsed from the last wifi scan.
+    // fetched lazily: one cheap nmcli pass, parsed in a single batch on exit
     property var bandMap: ({})
+    property bool bandsLoaded: false
 
     function bandFor(ssid) {
         return root.bandMap[ssid] ?? "";
@@ -895,18 +899,26 @@ Item {
         command: ["sh", "-c", "nmcli -t -f SSID,FREQ dev wifi list --rescan no"]
         running: false
 
+        property string buf: ""
+
         stdout: SplitParser {
-            onRead: data => {
-                const i = data.lastIndexOf(":");
+            onRead: data => bandProc.buf += data + "\n"
+        }
+
+        onExited: {
+            const map = {};
+            for (const line of bandProc.buf.trim().split("\n")) {
+                const i = line.lastIndexOf(":");
                 if (i <= 0)
-                    return;
-                const ssid = data.slice(0, i);
-                if (ssid.length === 0 || root.bandMap[ssid] != null)
-                    return;
-                const m = Object.assign({}, root.bandMap);
-                m[ssid] = root.bandLabel(data.slice(i + 1));
-                root.bandMap = m;
+                    continue;
+                const ssid = line.slice(0, i);
+                if (ssid.length === 0 || map[ssid] != null)
+                    continue;
+                map[ssid] = root.bandLabel(line.slice(i + 1));
             }
+            root.bandMap = map;
+            root.bandsLoaded = true;
+            bandProc.buf = "";
         }
     }
 

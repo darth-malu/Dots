@@ -1,6 +1,8 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Services.Mpris
 import qs.customItems
 import qs.services
 
@@ -43,6 +45,21 @@ BarBlock {
             : isConnected ? "#50fa7b"
             : modelData?.pairing === true ? "#f1fa8c"
             : "#6272a4"
+
+        // the bluez media player exported by this device over MPRIS (for volume)
+        readonly property var btPlayer: {
+            if (!drow.isConnected)
+                return null;
+            const addr = String(drow.modelData?.address ?? "").replace(/:/g, "").toLowerCase();
+            const nm = String(drow.modelData?.name ?? "").toLowerCase();
+            const players = Mpris.players.values;
+            for (let i = 0; i < players.length; i++) {
+                const pid = String(players[i].id ?? "").toLowerCase();
+                if ((addr.length > 0 && pid.includes(addr)) || (nm.length > 0 && pid.includes(nm)))
+                    return players[i];
+            }
+            return null;
+        }
 
         spacing: 7
         Layout.fillWidth: true
@@ -92,6 +109,30 @@ BarBlock {
                 text: Math.round((drow.modelData?.battery ?? 0) * 100) + "%"
                 color: "#b8bfcb"
                 font { pixelSize: 9; family: "ZedMono Nerd Font" }
+            }
+        }
+
+        // media volume for the device's bluez player, when one is connected
+        RowLayout {
+            visible: drow.btPlayer !== null
+            spacing: 4
+
+            Text {
+                text: "\uf028"
+                color: "#6272a4"
+                font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+            }
+
+            Slider {
+                from: 0
+                to: 1
+                stepSize: 0.01
+                value: drow.btPlayer?.volume ?? 0
+                onMoved: {
+                    if (drow.btPlayer)
+                        drow.btPlayer.volume = value;
+                }
+                implicitWidth: 56
             }
         }
     }
@@ -152,8 +193,20 @@ BarBlock {
                         }
 
                         Text {
-                            text: root.adapter ? (Bt.enabled ? "powered" : "disabled") : "unavailable"
-                            color: root.adapter ? (Bt.enabled ? "#f8f8f2" : "#6272a4") : "#6272a4"
+                            // dynamic status: unavailable > powered off > connected · <device> > on
+                            text: {
+                                if (!root.adapter)
+                                    return "unavailable";
+                                if (!Bt.enabled)
+                                    return "powered off";
+                                const conn = root.devices.filter(d => d.connected === true);
+                                if (conn.length === 1)
+                                    return "connected · " + String(conn[0].name ?? conn[0].deviceName ?? "");
+                                if (conn.length > 1)
+                                    return `connected · ${conn.length}`;
+                                return "on";
+                            }
+                            color: !root.adapter || !Bt.enabled ? "#6272a4" : Bt.connected ? "#50fa7b" : "#f8f8f2"
                             elide: Text.ElideRight
                             font { pixelSize: 11; family: "ZedMono Nerd Font" }
                             Layout.fillWidth: true

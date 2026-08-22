@@ -11,7 +11,7 @@ BarBlock {
     required property var host
 
     property string mountPoint: "/"
-    property string diskIcon: ""
+    property string diskIcon: "\uf0a0"
     property string diskLabel: ""
     property bool showUsage: false
 

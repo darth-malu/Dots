@@ -8,16 +8,54 @@ import qs.customItems
 import qs.services
 import Quickshell.Services.Pipewire
 import Quickshell.Services.Mpris
+import Quickshell.Networking
 
 Item {
     id: root
 
     property int currentCategory: 0
 
+    // small shared toggle switch used by the connections page
+    component TogglePill: Rectangle {
+        id: pill
+
+        property bool on: false
+        signal toggled()
+
+        Layout.alignment: Qt.AlignVCenter
+        implicitWidth: 26
+        implicitHeight: 14
+        radius: 7
+        color: on ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.35) : "#343746"
+
+        Rectangle {
+            x: pill.on ? parent.width - width - 2 : 2
+            anchors.verticalCenter: parent.verticalCenter
+            implicitWidth: 10
+            implicitHeight: 10
+            radius: 5
+            color: pill.on ? "#bd93f9" : "#6272a4"
+
+            Behavior on x {
+                NumberAnimation {
+                    duration: 120
+                    easing.type: Easing.OutQuad
+                }
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: pill.toggled()
+        }
+    }
+
     readonly property var categories: [
-        { icon: "", label: "General" },
-        { icon: "", label: "Bar" },
-        { icon: "", label: "Audio" },
+        { icon: "", label: "General" },
+        { icon: "", label: "Bar" },
+        { icon: "", label: "Audio" },
+        { icon: "\uf1eb", label: "Connections" },
     ]
 
     property var sinkList: []
@@ -31,7 +69,6 @@ Item {
     }
 
     property string activeInterface: ""
-    property string ipAddr: ""
     readonly property string netState: {
         var raw = netFile.text().trim();
         return raw.length > 0 ? raw : "down";
@@ -49,20 +86,9 @@ Item {
         command: ["sh", "-c", "ip -o route show default 2>/dev/null | head -1 | awk '{print $5}'"]
         stdout: SplitParser {
             onRead: data => {
-                if (data.trim().length > 0) {
+                if (data.trim().length > 0)
                     root.activeInterface = data.trim();
-                    ipProcess.running = true;
-                }
             }
-        }
-    }
-
-    Process {
-        id: ipProcess
-        running: false
-        command: ["sh", "-c", `ip -4 -o addr show ${root.activeInterface} 2>/dev/null | awk '{print $4}' | head -1`]
-        stdout: SplitParser {
-            onRead: data => root.ipAddr = data
         }
     }
 
@@ -255,9 +281,7 @@ Item {
                                         }
 
                                         Text {
-                                            text: root.ipAddr.length > 0
-                                                ? root.ipAddr
-                                                : (root.isOnline ? "Connected" : "Offline")
+                                            text: root.isOnline ? "Connected" : "Offline"
                                             color: root.isOnline ? "#50fa7b" : "#ff5555"
                                             font { pixelSize: 10; family: "ZedMono Nerd Font" }
                                             elide: Text.ElideRight
@@ -406,7 +430,10 @@ Item {
                                 Loader {
                                     id: pageLoader
                                     width: parent.width
-                                    sourceComponent: root.currentCategory === 0 ? generalPage : root.currentCategory === 1 ? barPage : audioPage
+                                    sourceComponent: root.currentCategory === 0 ? generalPage
+                                        : root.currentCategory === 1 ? barPage
+                                        : root.currentCategory === 2 ? audioPage
+                                        : connectionsPage
                                 }
                             }
                         }
@@ -575,6 +602,240 @@ Item {
                                 MouseArea {
                                     anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                                     onClicked: MprisState.hideWhenIdle = !MprisState.hideWhenIdle
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Component {
+            id: connectionsPage
+
+            ColumnLayout {
+                spacing: 16
+
+                Text {
+                    text: "Connections"
+                    color: "#f8f8f2"
+                    font {
+                        pixelSize: 20
+                        bold: true
+                        family: "Quicksand"
+                    }
+                }
+
+                Text {
+                    text: "Radios, links and quick access to network popups."
+                    color: "#b8bfcb"
+                    font {
+                        pixelSize: 11
+                        family: "ZedMono Nerd Font"
+                    }
+                    Layout.bottomMargin: 8
+                }
+
+                Card {
+                    title: "Wi-Fi"
+                    icon: "\uf1eb"
+                    accent: "#bd93f9"
+
+                    ColumnLayout {
+                        spacing: 10
+                        Layout.fillWidth: true
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 10
+
+                            Text {
+                                text: Networking.wifiEnabled ? (NetworkState.wifiConnected ? "connected" : "on") : "off"
+                                color: NetworkState.wifiConnected ? "#50fa7b" : "#b8bfcb"
+                                font { pixelSize: 11; family: "ZedMono Nerd Font" }
+                                Layout.fillWidth: true
+                            }
+
+                            TogglePill {
+                                on: Networking.wifiEnabled
+                                onToggled: Networking.wifiEnabled = !Networking.wifiEnabled
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                implicitHeight: 26
+                                radius: 6
+                                color: netMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.14) : "#343746"
+
+                                RowLayout {
+                                    anchors.centerIn: parent
+                                    spacing: 6
+
+                                    Text {
+                                        text: "\uf1eb"
+                                        color: "#bd93f9"
+                                        font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                    }
+
+                                    Text {
+                                        text: "networks…"
+                                        color: "#f8f8f2"
+                                        font { pixelSize: 10; bold: true; family: "Quicksand" }
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: netMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        MiscState.toggleSettings = false;
+                                        NetworkState.wifiPopupVisible = true;
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                implicitHeight: 26
+                                radius: 6
+                                color: scanMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.14) : "#343746"
+
+                                RowLayout {
+                                    anchors.centerIn: parent
+                                    spacing: 6
+
+                                    Text {
+                                        text: "\uf2f1"
+                                        color: "#bd93f9"
+                                        font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                    }
+
+                                    Text {
+                                        text: "rescan"
+                                        color: "#f8f8f2"
+                                        font { pixelSize: 10; bold: true; family: "Quicksand" }
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: scanMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: Quickshell.execDetached(["sh", "-c", "nmcli dev wifi rescan"])
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Card {
+                    title: "Bluetooth"
+                    icon: "\uf293"
+                    accent: "#8be9fd"
+
+                    ColumnLayout {
+                        spacing: 10
+                        Layout.fillWidth: true
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 10
+
+                            Text {
+                                text: !Bt.adapter ? "unavailable" : Bt.enabled ? (Bt.connected ? "connected" : "powered") : "off"
+                                color: Bt.connected ? "#50fa7b" : "#b8bfcb"
+                                font { pixelSize: 11; family: "ZedMono Nerd Font" }
+                                Layout.fillWidth: true
+                            }
+
+                            TogglePill {
+                                on: Bt.enabled
+                                enabled: Bt.adapter !== null
+                                onToggled: {
+                                    if (Bt.adapter)
+                                        Bt.adapter.enabled = !Bt.enabled;
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 26
+                            radius: 6
+                            color: btOpenMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.14) : "#343746"
+
+                            RowLayout {
+                                anchors.centerIn: parent
+                                spacing: 6
+
+                                Text {
+                                    text: "\uf293"
+                                    color: "#8be9fd"
+                                    font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                }
+
+                                Text {
+                                    text: "devices…"
+                                    color: "#f8f8f2"
+                                    font { pixelSize: 10; bold: true; family: "Quicksand" }
+                                }
+                            }
+
+                            MouseArea {
+                                id: btOpenMa
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    MiscState.toggleSettings = false;
+                                    NetworkState.btPopupVisible = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Card {
+                    title: "Ethernet"
+                    icon: "\uf796"
+                    accent: "#8be9fd"
+
+                    ColumnLayout {
+                        id: ethCardCol
+
+                        spacing: 10
+                        Layout.fillWidth: true
+
+                        readonly property bool ethUp: NetworkState.ethernet?.network?.connected ?? false
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 10
+
+                            Text {
+                                text: NetworkState.ethernet === null ? "no adapter" : ethCardCol.ethUp ? "linked" : "disconnected"
+                                color: ethCardCol.ethUp ? "#50fa7b" : "#b8bfcb"
+                                font { pixelSize: 11; family: "ZedMono Nerd Font" }
+                                Layout.fillWidth: true
+                            }
+
+                            TogglePill {
+                                on: ethCardCol.ethUp
+                                enabled: NetworkState.ethernet !== null
+                                onToggled: {
+                                    const dev = NetworkState.ethernet;
+                                    if (!dev)
+                                        return;
+                                    const act = dev.network?.connected ? "disconnect" : "connect";
+                                    Quickshell.execDetached(["sh", "-c", `nmcli dev ${act} '${String(dev.name).replace(/'/g, "'\\''")}'`]);
                                 }
                             }
                         }
