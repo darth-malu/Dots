@@ -67,14 +67,13 @@ BarBlock {
         radius: 6
         color: "transparent"
 
-        Text {
+        IconImage {
             anchors.centerIn: parent
-            text: ""
-            color: "#bd93f9"
-            font {
-                pixelSize: 16
-                family: "Symbols Nerd Font Mono"
-            }
+            implicitSize: 17
+            source: Qt.resolvedUrl("../svg/NixOS.svg")
+            asynchronous: true
+        }
+    }
         }
     }
 

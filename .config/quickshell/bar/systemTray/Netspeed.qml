@@ -461,11 +461,6 @@ Loader {
                             }
                         }
 
-                        Rectangle {
-                            Layout.fillWidth: true
-                            implicitHeight: 1
-                            color: "#343746"
-                        }
 
                         InfoRow {
                             label: "ipv4"
@@ -478,11 +473,6 @@ Loader {
                             value: root.gateway.length > 0 ? root.gateway : "-"
                         }
 
-                        Rectangle {
-                            Layout.fillWidth: true
-                            implicitHeight: 1
-                            color: "#343746"
-                        }
 
                         // totals — the graphs toggle lives in the popup header now
                         // ── Live traffic graphs — same design as the wifi popup ──

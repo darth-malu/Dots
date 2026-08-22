@@ -17,6 +17,9 @@ RowLayout {
 
     property bool showPopup: false
 
+    // percentage readout inside the battery — off by default, left click toggles
+    property bool showPct: false
+
     readonly property UPowerDevice bat: UPower.displayDevice
 
     readonly property bool isCharging: BatteryState.isCharging
@@ -33,6 +36,7 @@ RowLayout {
         : isCritical ? "#ff5555"
         : isLow ? "#ffb86c"
         : "#bd93f9"
+
 
     readonly property string batteryGlyph:
         isCharging ? "\uf0e7"
@@ -52,7 +56,12 @@ RowLayout {
 
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton
 
-        onClicked: mouse => batteryBlock.showPopup = !batteryBlock.showPopup
+        onClicked: mouse => {
+            if (mouse.button == Qt.LeftButton)
+                batteryBlock.showPct = !batteryBlock.showPct;
+            else
+                batteryBlock.showPopup = !batteryBlock.showPopup;
+        }
 
         // ── Battery body (fixed width — never resizes with the value) ──
         Rectangle {
@@ -127,7 +136,7 @@ RowLayout {
             // ── Percentage — inside the body, outlined for legibility over the fill ──
             Text {
                 anchors.centerIn: parent
-                visible: !batteryBlock.isCharging && !batteryBlock.isPendingCharge && !batteryBlock.isFullyCharged
+                visible: batteryBlock.showPct && !batteryBlock.isCharging && !batteryBlock.isPendingCharge && !batteryBlock.isFullyCharged
                 text: `${batteryBlock.pctDisplay}`
                 color: "#f8f8f2"
                 style: Text.Outline
@@ -409,7 +418,7 @@ RowLayout {
                         Repeater {
                             model: [
                                 { glyph: "\uf06c", name: "Saver", profile: PowerProfile.PowerSaver, tint: "#96e6a1" },
-                                { glyph: "\uf24e", name: "Balanced", profile: PowerProfile.Balanced, tint: "#f0a6ca" },
+                                { glyph: "\uf24e", name: "Balanced", profile: PowerProfile.Balanced, tint: "#c3b8f5" },
                                 { glyph: "\uf0e7", name: "Perf", profile: PowerProfile.Performance, tint: "#8fd8e8" }
                             ]
 
