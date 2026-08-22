@@ -245,8 +245,9 @@ Loader {
             id: netRow
             spacing: 6
 
-            // ── Wifi icon + own click zone ──
+            // ── Wifi icon — shown whenever the cable is NOT linked (exactly one net icon at all times) ──
             Item {
+                visible: NetworkState.ethernet?.hasLink !== true
                 implicitWidth: wifiIco.width
                 implicitHeight: wifiIco.height
                 Layout.alignment: Qt.AlignVCenter
@@ -268,8 +269,9 @@ Loader {
                 }
             }
 
-            // ── Ethernet icon + own click zone ──
+            // ── Ethernet icon — linked cable takes over the slot and hides wifi ──
             Item {
+                visible: NetworkState.ethernet?.hasLink === true
                 implicitWidth: ethIco.width
                 implicitHeight: ethIco.height
                 Layout.alignment: Qt.AlignVCenter
@@ -279,8 +281,8 @@ Loader {
                     anchors.centerIn: parent
                     icon: NetworkState.ethIcon
                     color: NetworkState.ethColor
-                    width: 14
-                    height: 14
+                    width: 16
+                    height: 16
                 }
 
                 MouseArea {

@@ -43,6 +43,11 @@ PanelWindow {
                 n: NotificationState.popupNotifs[index]
                 timestamp: Date.now()
                 indexPopup: index
+
+                // music toasts are redundant while the quicksettings now-playing card is open
+                readonly property bool isMusicToast: ["mzichi", "ncmpcpp", "spotifY"].includes(n?.appName ?? "")
+                visible: !(isMusicToast && MiscState.qsOpen)
+
                 onContainsMouseChanged: {
                     if (!containsMouse)
                         notifTimer.restart();
@@ -51,7 +56,8 @@ PanelWindow {
                 }
                 Timer {
                     id: notifTimer
-                    running: true
+                    // music toasts hold their expiry while suppressed by the QS popup
+                    running: !notifBox.isMusicToast || !MiscState.qsOpen
                     interval: (notifBox.n.expireTimeout > 0 && notifBox.n.expireTimeout < 10 ? notifBox.n.expireTimeout : 4) * 1000
                     onTriggered: {
                         NotificationState.notifDismissByNotif(notifBox.n);

@@ -58,50 +58,6 @@ WrapperMouseArea {
         }
     }
 
-    // offscreen sampler that averages the album art into a usable accent bg
-    Canvas {
-        id: domSampler
-
-        width: 10
-        height: 10
-        visible: false
-
-        onPaint: {
-            // no-op paint; sampling happens in onImageLoaded
-        }
-
-        onImageLoaded: {
-            let r = 0, g = 0, b = 0, n = 0;
-            try {
-                const ctx = getContext("2d");
-                ctx.clearRect(0, 0, width, height);
-                ctx.drawImage(rootMouseArea.image, 0, 0, width, height);
-                const d = ctx.getImageData(0, 0, width, height).data;
-                for (let i = 0; i < d.length; i += 4) {
-                    if (d[i + 3] > 32) {
-                        r += d[i];
-                        g += d[i + 1];
-                        b += d[i + 2];
-                        n++;
-                    }
-                }
-            } catch (e) {}
-
-            if (n > 0) {
-                let rr = r / n / 255, gg = g / n / 255, bb = b / n / 255;
-                const mx = Math.max(rr, gg, bb);
-                // lift very dark art so text stays readable on top of it
-                if (mx > 0 && mx < 0.7) {
-                    const f = 0.7 / mx;
-                    rr = Math.min(1, rr * f);
-                    gg = Math.min(1, gg * f);
-                    bb = Math.min(1, bb * f);
-                }
-                rootMouseArea.domColor = Qt.rgba(rr * 0.5 + 0.04, gg * 0.5 + 0.04, bb * 0.5 + 0.04, 1);
-            }
-        }
-    }
-
     onImageChanged: {
         if (!ifMusic || image.length === 0)
             return;
@@ -129,6 +85,51 @@ WrapperMouseArea {
         Behavior on border.color {
             ColorAnimation {
                 duration: 150
+            }
+        }
+
+        // offscreen sampler that averages the album art into a usable accent bg.
+        // lives inside outerBox because WrapperMouseArea allows only ONE visual child
+        Canvas {
+            id: domSampler
+
+            width: 10
+            height: 10
+            visible: false
+
+            onPaint: {
+                // no-op paint; sampling happens in onImageLoaded
+            }
+
+            onImageLoaded: {
+                let r = 0, g = 0, b = 0, n = 0;
+                try {
+                    const ctx = getContext("2d");
+                    ctx.clearRect(0, 0, width, height);
+                    ctx.drawImage(rootMouseArea.image, 0, 0, width, height);
+                    const d = ctx.getImageData(0, 0, width, height).data;
+                    for (let i = 0; i < d.length; i += 4) {
+                        if (d[i + 3] > 32) {
+                            r += d[i];
+                            g += d[i + 1];
+                            b += d[i + 2];
+                            n++;
+                        }
+                    }
+                } catch (e) {}
+
+                if (n > 0) {
+                    let rr = r / n / 255, gg = g / n / 255, bb = b / n / 255;
+                    const mx = Math.max(rr, gg, bb);
+                    // lift very dark art so text stays readable on top of it
+                    if (mx > 0 && mx < 0.7) {
+                        const f = 0.7 / mx;
+                        rr = Math.min(1, rr * f);
+                        gg = Math.min(1, gg * f);
+                        bb = Math.min(1, bb * f);
+                    }
+                    rootMouseArea.domColor = Qt.rgba(rr * 0.5 + 0.04, gg * 0.5 + 0.04, bb * 0.5 + 0.04, 1);
+                }
             }
         }
 

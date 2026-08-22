@@ -21,8 +21,7 @@ RowLayout {
         asynchronous: true
         active: true
         sourceComponent: connections
-        Layout.fillHeight: true
-        // Layout.fillWidth: true
+        Layout.alignment: Qt.AlignVCenter
     }
 
     Loader {

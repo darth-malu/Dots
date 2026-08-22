@@ -119,7 +119,8 @@ BarBlock {
                         var d = day < 10 ? '0' + day : '' + day;
                         var key = year + '-' + m + '-' + d;
                         var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                        var dt = new Date(year, month - 1, day);
+                        // month is already 0-based here (comes straight from the MonthGrid model)
+                        var dt = new Date(year, month, day);
                         var dayName = days[dt.getDay()];
                         var initial = "* TODO " + task + "\n  SCHEDULED: <" + key + " " + dayName + ">";
                         Quickshell.execDetached(['emacsclient', '-c', '-n', '-e', '(progn (setq org-capture-initial "' + initial + '") (org-capture nil "t"))']);

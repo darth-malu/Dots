@@ -55,22 +55,29 @@ Singleton {
             if (p.trackArtist !== "")
                 best = p;
         }
-        if (best)
-            root.player = best;
-        else if (fallback)
-            root.player = fallback;
-        else
-            root.player = null;
+    if (best) {
+        root.player = best;
+        root.lastPlayer = best;
+    } else if (fallback) {
+        root.player = fallback;
+        root.lastPlayer = fallback;
+    } else {
+        root.player = null;
     }
+}
 
-    function sendNotify() {
-        if (!root.player)
-            return;
-        let title = root.player.trackTitle || "Unknown Title";
-        let artist = root.player.trackArtist || "Unknown Artist";
-        let album = root.player.trackAlbum || "Unknown Album";
-        let art = root.player.trackArtUrl || "audio-x-generic";
-        let isMpd = root.player.identity === "Music Player Daemon";
+function sendNotify() {
+    // fall back to the last active player so the songart toast also works while nothing is playing
+    let p = root.player && !root.isIgnored(root.player) ? root.player : null;
+    if (!p)
+        p = root.lastPlayer && !root.isIgnored(root.lastPlayer) ? root.lastPlayer : null;
+    if (!p)
+        return;
+    let title = p.trackTitle || "Unknown Title";
+    let artist = p.trackArtist || "Unknown Artist";
+    let album = p.trackAlbum || "Unknown Album";
+    let art = p.trackArtUrl || "audio-x-generic";
+    let isMpd = p.identity === "Music Player Daemon";
 
         // console.log(`Your current player: ${root.player?.identity}`);
 

@@ -131,6 +131,8 @@ Singleton {
             break;
         case UPowerDeviceState.Discharging:
             plugEvent("Discharging", `Running on battery · ${pct}%`, "unplug");
+            // unplugging while already low/critical must warn immediately
+            evalWarnings();
             break;
         case UPowerDeviceState.FullyCharged:
             plugEvent("Battery full", `${pct}% — you can unplug`, "full-battery");
@@ -138,7 +140,7 @@ Singleton {
         }
     }
 
-    onBatPercentageChanged: {
+    function evalWarnings() {
         if (!root.available || root.isPluggedIn)
             return;
         const pct = root.pctDisplay;
@@ -150,6 +152,22 @@ Singleton {
         } else if (pct <= lowThreshold && !warnedLow) {
             warnedLow = true;
             notify("Low battery", `${pct}%${left ? ` · ~${left} remaining` : ""}`, "low-battery", "normal", true);
+        }
+    }
+
+    onBatPercentageChanged: evalWarnings()
+
+    // covers boot/already-low-on-unplug cases where the percentage never changes
+    Component.onCompleted: Qt.callLater(evalWarnings)
+
+    // keep nagging every 5 minutes while critically low and still off the charger
+    Timer {
+        interval: 300000
+        running: root.available && root.isCritical && !root.isPluggedIn
+        repeat: true
+        onTriggered: {
+            const left = root.timeLeftText();
+            root.notify("Battery still critical", `${root.pctDisplay}%${left ? ` · ~${left} left` : ""} — plug in now`, "warning-battery", "critical", true);
         }
     }
 }

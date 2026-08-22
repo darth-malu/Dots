@@ -58,7 +58,7 @@ ColumnLayout {
         spacing: 4
 
         Text {
-            text: ""
+            text: "\uf104"
             color: Themes.calendarHeader
             font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
             MouseArea {
@@ -102,7 +102,7 @@ ColumnLayout {
         Item { Layout.fillWidth: true }
 
         Text {
-            text: ""
+            text: "\uf105"
             color: Themes.calendarHeader
             font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
             MouseArea {

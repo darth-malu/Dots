@@ -27,6 +27,48 @@ BarBlock {
     property bool shuffleOn: false
     property bool loopOn: false
 
+    // true while every NAS share (Hyogo/Mutsu/Yuri) is mounted
+    property bool nasAllMounted: true
+
+    Process {
+        id: nasMountCheck
+        command: ["sh", "-c", "for m in Hyogo Mutsu Yuri; do systemctl is-active 'media-'$m'.mount' 2>/dev/null; done"]
+        running: false
+
+        stdout: SplitParser {
+            onRead: data => {
+                if (data.trim().length > 0 && data.trim() !== "active")
+                    root.nasAllMounted = false;
+            }
+        }
+    }
+
+    Timer {
+        id: nasRecheck
+
+        // fast re-poll after a remount click so the button color recovers quickly
+        interval: 4000
+        running: false
+        repeat: true
+        onTriggered: {
+            if (root.nasAllMounted)
+                stop();
+            else
+                nasMountCheck.running = true;
+        }
+    }
+
+    Timer {
+        interval: 15000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            root.nasAllMounted = true;
+            nasMountCheck.running = true;
+        }
+    }
+
     // ── volume OSD ──
     property bool osdShown: false
     property bool osdInCard: false
@@ -51,6 +93,9 @@ BarBlock {
     onLeftClicked: {
         root.showQsPopup = !root.showQsPopup;
     }
+
+    onShowQsPopupChanged: MiscState.qsOpen = showQsPopup
+    Component.onCompleted: MiscState.qsOpen = showQsPopup
 
     onRightClicked: MiscState.toggleSysTray = !MiscState.toggleSysTray
     onAltLeftClicked: MiscState.toggleSysTray = !MiscState.toggleSysTray
@@ -203,18 +248,28 @@ BarBlock {
                                 }
 
                                 Rectangle {
+                                    id: nasBtn
+
                                     // NAS remount shortcut only makes sense on carthage
                                     visible: root.hostName === "carthage"
                                     Layout.preferredWidth: 32
                                     Layout.preferredHeight: 32
                                     radius: 6
-                                    color: nasBtnMouse.containsMouse ? Qt.rgba(1, 0.72, 0.42, 0.16) : Qt.rgba(1, 0.72, 0.42, 0.07)
+                                    // grey when everything is mounted, orange when a NAS share is missing;
+                                    // bg + border only appear on hover
+                                    color: !nasBtnMouse.containsMouse ? "transparent" : root.nasAllMounted ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 0.72, 0.42, 0.16)
+                                    border.width: nasBtnMouse.containsMouse ? 1 : 0
+                                    border.color: root.nasAllMounted ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 0.72, 0.42, 0.35)
 
                                     Text {
                                         anchors.centerIn: parent
                                         // text: "\uf4a6"
                                         text: "\uf4a6"
-                                        color: nasBtnMouse.containsMouse ? "#ffd9a8" : "#ffb86c"
+                                        color: {
+                                            if (root.nasAllMounted)
+                                                return nasBtnMouse.containsMouse ? "#9aa3b2" : "#6272a4";
+                                            return nasBtnMouse.containsMouse ? "#ffd9a8" : "#ffb86c";
+                                        }
                                         font {
                                             pixelSize: 16
                                             family: "Symbols Nerd Font Mono"
@@ -232,7 +287,11 @@ BarBlock {
                                         anchors.fill: parent
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: Quickshell.execDetached(["sh", "-c", "for m in Hyogo Mutsu Yuri; do systemctl is-active \"media-$m.mount\" >/dev/null 2>&1 || systemctl restart \"media-$m.mount\"; done"])
+                                        onClicked: {
+                                            Quickshell.execDetached(["sh", "-c", "for m in Hyogo Mutsu Yuri; do systemctl is-active \"media-$m.mount\" >/dev/null 2>&1 || systemctl restart \"media-$m.mount\"; done"]);
+                                            root.nasAllMounted = true;
+                                            nasRecheck.restart();
+                                        }
                                     }
                                 }
 

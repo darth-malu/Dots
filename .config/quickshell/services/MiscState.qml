@@ -19,6 +19,9 @@ Singleton {
     property bool toggleSysTray: false
     property bool toggleSettings: false
 
+    // true while the quicksettings popup is open (used to suppress redundant music toasts)
+    property bool qsOpen: false
+
     property date currentDate: new Date()
 
     property bool showPopup: false
