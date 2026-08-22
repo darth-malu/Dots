@@ -6,10 +6,11 @@ import Quickshell
 import Quickshell.Services.UPower
 import qs.themes
 
-BarBlock {
+RowLayout {
     id: batteryBlock
 
     Layout.alignment: Qt.AlignVCenter
+    spacing: 6
     visible: BatteryState.available
 
     required property var host
@@ -26,7 +27,7 @@ BarBlock {
     readonly property real percentage: BatteryState.batPercentage
     readonly property int pctDisplay: BatteryState.pctDisplay
 
-    // dracula palette: green = charging/full · yellow = pending · orange = low · red = critical
+    // green = charging · yellow = pending · red = critical · orange = low · purple = normal
     readonly property color accentColor: isCharging ? "#50fa7b"
         : isPendingCharge ? "#f1fa8c"
         : isCritical ? "#ff5555"
@@ -42,22 +43,115 @@ BarBlock {
         : percentage < 0.90 ? "\uf241"
         : "\uf240"
 
-    onClicked: mouse => {
-        if (mouse.button == Qt.LeftButton)
-            showPopup = !showPopup;
-    }
-    onMiddleClicked: showPopup = !showPopup
+    MouseArea {
+        id: root
 
-    content: RowLayout {
-        spacing: 6
+        readonly property bool chargingVisible: batteryBlock.isCharging || batteryBlock.isPendingCharge
 
-        Item {
-            Layout.preferredWidth: 2
+        implicitWidth: batteryBody.width + cap.width + 1
+        implicitHeight: batteryBody.height
+        cursorShape: Qt.PointingHandCursor
+
+        acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
+
+        onClicked: mouse => {
+            if (mouse.button == Qt.MiddleButton || mouse.button == Qt.LeftButton)
+                batteryBlock.showPopup = !batteryBlock.showPopup;
         }
 
-        MaterialSymbol {
-            text: batteryBlock.batteryGlyph
-            iconSize: 13
+        // ── Battery body ──
+        Rectangle {
+            id: batteryBody
+
+            // dynamic width so "100%" never clips (old design clipped at a fixed 26px)
+            width: Math.max(34, innerRow.implicitWidth + 16)
+            height: 17
+            radius: 4
+            color: "#343746"
+            border.width: 1
+            border.color: Qt.rgba(batteryBlock.accentColor.r, batteryBlock.accentColor.g, batteryBlock.accentColor.b, 0.55)
+
+            Behavior on border.color {
+                ColorAnimation {
+                    duration: 200
+                }
+            }
+
+            clip: true
+
+            // ── Fill level ──
+            Rectangle {
+                id: batteryFill
+
+                anchors {
+                    top: parent.top
+                    left: parent.left
+                    bottom: parent.bottom
+                    margins: 2
+                }
+
+                width: Math.max(0, (parent.width - 4) * Math.min(Math.max(batteryBlock.percentage, 0), 1))
+                radius: 2
+                color: batteryBlock.accentColor
+
+                Behavior on width {
+                    NumberAnimation {
+                        duration: 300
+                        easing.type: Easing.OutCubic
+                    }
+                }
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 200
+                    }
+                }
+            }
+
+            // ── Overlay: bolt/plug + percentage ──
+            RowLayout {
+                id: innerRow
+
+                anchors.centerIn: parent
+                spacing: 3
+
+                MaterialSymbol {
+                    visible: root.chargingVisible
+                    text: batteryBlock.isCharging ? "\uf0e7" : "\uf1e6"
+                    iconSize: 10
+                    color: "#f8f8f2"
+                    style: Text.Outline
+                    styleColor: Qt.rgba(0, 0, 0, 0.7)
+                }
+
+                Text {
+                    id: pctText
+
+                    text: batteryBlock.isFullyCharged && !batteryBlock.isCharging ? "" : batteryBlock.pctDisplay + "%"
+                    visible: text !== ""
+                    font {
+                        pixelSize: 12
+                        family: "ZedMono Nerd Font"
+                        weight: Font.Bold
+                    }
+                    // white text + dark outline stays readable over any fill/state color
+                    color: "#f8f8f2"
+                    style: Text.Outline
+                    styleColor: Qt.rgba(0, 0, 0, 0.7)
+                }
+            }
+        }
+
+        // ── Cap nub ──
+        Rectangle {
+            id: cap
+
+            Layout.alignment: Qt.AlignVCenter
+            Layout.leftMargin: -1
+
+            implicitWidth: 2.5
+            implicitHeight: 7
+            radius: 1
             color: batteryBlock.accentColor
 
             Behavior on color {
@@ -66,38 +160,19 @@ BarBlock {
                 }
             }
         }
-
-        StyledText {
-            font {
-                pixelSize: 12
-                family: "ZedMono Nerd Font"
-                weight: Font.Bold
-            }
-            text: batteryBlock.pctDisplay + "%"
-            color: batteryBlock.isCritical || batteryBlock.isLow ? batteryBlock.accentColor : "#f8f8f2"
-
-            Behavior on color {
-                ColorAnimation {
-                    duration: 200
-                }
-            }
-        }
-
-        Item {
-            Layout.preferredWidth: 2
-        }
     }
 
     PopupWindow {
         id: batteryPopup
+
         visible: batteryBlock.showPopup
         grabFocus: true
         color: MiscState.popupSolidBg ? "#282a36" : "transparent"
 
         anchor.window: batteryBlock.host
         anchor.rect.x: {
-            let g = batteryBlock.mapToGlobal(0, 0);
-            return g.x + (batteryBlock.width / 2) - (width / 2);
+            let g = root.mapToGlobal(0, 0);
+            return g.x + (root.width / 2) - (width / 2);
         }
         anchor.rect.y: 33
 
@@ -126,6 +201,7 @@ BarBlock {
 
             ColumnLayout {
                 id: popupCol
+
                 anchors {
                     fill: parent
                     margins: 14
@@ -239,6 +315,7 @@ BarBlock {
 
                     component StatRow: RowLayout {
                         id: srow
+
                         required property string label
                         required property string value
                         spacing: 8
@@ -300,6 +377,7 @@ BarBlock {
 
                     component ProfileButton: Rectangle {
                         id: pbtn
+
                         required property string glyph
                         required property string name
                         required property int profile
