@@ -22,12 +22,18 @@ Singleton {
     }
 
     function onNewNotif(notif) {
+        console.log("[notif] app=" + notif.appName + " summary=" + notif.summary);
         let isMusic = (notif.appName == 'mzichi' || notif.appName == 'ncmpcpp' || notif.appName == 'spotifY');
-        // let isSpotifyAd = notif.summary.startsWith("󰎍    Listen to music");
 
         // nm-applet's stock connect popup is replaced by our themed one (emitted by NetworkState)
         if (notif.summary == "Connection established" && notif.appName != "Shell")
             return;
+
+        // music toasts are redundant while quicksettings is open — never queue them
+        if (isMusic && MiscState.qsOpen) {
+            allNotifs = [notif, ...allNotifs];
+            return;
+        }
 
         allNotifs = [notif, ...allNotifs];
 
@@ -44,6 +50,23 @@ Singleton {
 
         if (!notifPanelOpen)
             notifOverlayOpen = true;
+    }
+
+    // when quicksettings opens, purge any queued music toasts outright —
+    // freezing them creates zombies that resurrect after closing qs
+    Connections {
+        target: MiscState
+
+        function onQsOpenChanged() {
+            if (!MiscState.qsOpen)
+                return;
+            const keep = root.popupNotifs.filter(n => !(n.appName == 'mzichi' || n.appName == 'ncmpcpp' || n.appName == 'spotifY'));
+            if (keep.length !== root.popupNotifs.length) {
+                root.popupNotifs = keep;
+                if (keep.length === 0 && !root.notifPanelOpen)
+                    root.notifOverlayOpen = false;
+            }
+        }
     }
 
     function showLastNotif(notif) {
