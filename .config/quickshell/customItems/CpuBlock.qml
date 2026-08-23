@@ -11,6 +11,9 @@ BarBlock {
 
     required property var host
 
+    // inline % readout beside the gauge · toggled by right-click
+    property bool showUsage: true
+
     readonly property int cpuPercent: ResourcesState.cpuUsageString
     readonly property real cpuTemp: ResourcesState.cpuTemp
 
@@ -38,8 +41,14 @@ BarBlock {
         return "#8be9fd";
     }
 
+    // left-click opens the per-process popup · right-click toggles the
+    // inline usage readout beside the gauge
     onClicked: mouse => {
         MiscState.showCpuProcs = !MiscState.showCpuProcs;
+    }
+
+    onRightClicked: mouse => {
+        cpu.showUsage = !cpu.showUsage;
     }
 
     content: RowLayout {
@@ -91,6 +100,7 @@ BarBlock {
         // live usage readout beside the gauge ring
         BarText {
             id: usageText
+            visible: cpu.showUsage
             symbolText: `${cpu.cpuPercent}%`
             baseColor: cpu.cpuColor
             pointSize: 11

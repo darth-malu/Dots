@@ -254,29 +254,52 @@ BarBlock {
                                     }
                                 }
 
-                                // copy summary + body to the clipboard
-                                Text {
-                                    text: histRow.copied ? "\uf00c" : "\uf328"
-                                    color: histRow.copied ? "#50fa7b" : rowCopyMa.containsMouse ? "#bd93f9" : "#6272a4"
-                                    font {
-                                        pixelSize: 12
-                                        family: "Symbols Nerd Font Mono"
-                                    }
+                                // copy pill — left-click copies title + body,
+                                // right-click copies the body only
+                                Rectangle {
+                                    id: rowCopyPill
+
+                                    implicitWidth: 24
+                                    implicitHeight: 20
+                                    radius: 6
+                                    color: rowCopyMa.containsMouse || histRow.copied
+                                        ? Qt.rgba(0.741, 0.576, 0.976, histRow.copied ? 0.18 : 0.12)
+                                        : "transparent"
 
                                     Behavior on color {
                                         ColorAnimation { duration: 120 }
+                                    }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: histRow.copied ? "\uf00c" : "\uf328"
+                                        color: histRow.copied ? "#50fa7b" : rowCopyMa.containsMouse ? "#bd93f9" : "#6272a4"
+                                        font {
+                                            pixelSize: 12
+                                            family: "Symbols Nerd Font Mono"
+                                        }
+
+                                        Behavior on color {
+                                            ColorAnimation { duration: 120 }
+                                        }
                                     }
 
                                     MouseArea {
                                         id: rowCopyMa
 
                                         anchors.fill: parent
-                                        anchors.margins: -6
+                                        anchors.margins: -4
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
+                                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                        onClicked: mouse => {
                                             const n = histRow.modelData;
-                                            const text = [n.summary, n.body].filter(s => s && s.length > 0).join("\n");
+                                            // right button grabs just the message body
+                                            const text = mouse.button === Qt.RightButton
+                                                ? String(n.body ?? "")
+                                                : [n.summary, n.body].filter(s => s && s.length > 0).join("\n");
+                                            if (text.length === 0)
+                                                return;
                                             Quickshell.execDetached(["sh", "-c", `printf %s '${text.replace(/'/g, "'\\''")}' | wl-copy`]);
                                             histRow.copied = true;
                                             copiedTimer.restart();

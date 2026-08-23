@@ -82,6 +82,17 @@ Singleton {
         return "\uf001";
     }
 
+    // wpctl pipeline that resolves a player's sink-input id by keyword
+    function wpStreamLookup(kw) {
+        return `id=$(wpctl status | awk -v kw='${kw}' '/^[[:space:]]*└?─? ?Streams:/{s=1;next} /^Video|^Audio|^Endpoints/{s=0} s && /^[[:space:]]*[0-9]+\\./ && index(tolower($0), kw) { match($0, /[0-9]+/); print substr($0, RSTART, RLENGTH); exit }'); `;
+    }
+
+    // short app keyword used to find a player's stream in wpctl
+    function streamKeyword(p) {
+        const kw = ((p.desktopEntry && p.desktopEntry.length > 2 ? p.desktopEntry : p.identity || "").split(" ")[0] || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        return kw.length >= 3 ? kw : "";
+    }
+
     // volume nudge that works for players without MPRIS volume support —
     // chrome gets its per-application stream adjusted via wpctl
     function adjustVolume(p, up) {
@@ -91,10 +102,39 @@ Singleton {
             p.volume = Math.max(0, Math.min(p.volume + (up ? 0.05 : -0.05), 1));
             return;
         }
-        const kw = ((p.desktopEntry && p.desktopEntry.length > 2 ? p.desktopEntry : p.identity || "").split(" ")[0] || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-        if (kw.length < 3)
+        const kw = streamKeyword(p);
+        if (!kw)
             return;
-        Quickshell.execDetached(["sh", "-c", `id=$(wpctl status | awk -v kw='${kw}' '/^[[:space:]]*└?─? ?Streams:/{s=1;next} /^Video|^Audio|^Endpoints/{s=0} s && /^[[:space:]]*[0-9]+\\./ && index(tolower($0), kw) { match($0, /[0-9]+/); print substr($0, RSTART, RLENGTH); exit }'); ` + `[ -n "$id" ] && wpctl set-volume "$id" ${up ? "0.05+" : "0.05-"}`]);
+        Quickshell.execDetached(["sh", "-c", wpStreamLookup(kw) + `[ -n "$id" ] && wpctl set-volume "$id" ${up ? "0.05+" : "0.05-"}`]);
+    }
+
+    // per-player mute — MPRIS volume snaps to 0 and back to the last level;
+    // players without MPRIS volume fall back to wpctl mute on their stream
+    property var savedVolume: ({})
+
+    function isMuted(p) {
+        if (!p)
+            return false;
+        return p.volumeSupported ? p.volume <= 0 : false;
+    }
+
+    function toggleMute(p) {
+        if (!p)
+            return;
+        if (p.volumeSupported) {
+            if (p.volume > 0) {
+                root.savedVolume[p.identity] = p.volume;
+                p.volume = 0;
+            } else {
+                const v = root.savedVolume[p.identity];
+                p.volume = (v && v > 0 && v <= 1) ? v : 0.5;
+            }
+            return;
+        }
+        const kw = streamKeyword(p);
+        if (!kw)
+            return;
+        Quickshell.execDetached(["sh", "-c", wpStreamLookup(kw) + `[ -n "$id" ] && wpctl set-mute "$id" toggle`]);
     }
 
     property var ignored: ["mpv", "whatsapp", "undefined"]

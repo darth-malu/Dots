@@ -18,7 +18,8 @@ BarBlock {
 
         Text {
             anchors.centerIn: parent
-            text: ""
+            // \uf0f4 — fa-coffee (escape form survives edits that mangle PUA glyphs)
+            text: "\uf0f4"
             color: "#ffb86c"
             font {
                 pixelSize: 13

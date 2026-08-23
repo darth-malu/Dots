@@ -69,9 +69,9 @@ BarBlock {
         }
         anchor.rect.y: 33
 
-        // +16 for the shadow gutter around the card
-        implicitWidth: 344
-        implicitHeight: Math.min(qsContent.implicitHeight + 16, Screen.desktopAvailableHeight * 0.7)
+        // slim footprint; height hugs content and only scrolls past 72% screen
+        implicitWidth: 310
+        implicitHeight: Math.min(qsContent.implicitHeight + 16, Screen.desktopAvailableHeight * 0.72)
 
         // drop shadow drawn from a proxy silhouette so the real card never
         // passes through the effect (stays pixel-crisp and fully interactive)
@@ -111,16 +111,22 @@ BarBlock {
                 z: -1
             }
 
-            ScrollView {
+            // rigid container — hugs its content; drag/wheel physics only
+            // engage once the column actually overflows the popup
+            Flickable {
+                id: qsScroll
+
                 anchors.fill: parent
-                anchors.margins: 2
+                anchors.margins: 4
                 clip: true
-                ScrollBar.vertical.policy: ScrollBar.AlwaysOff
-                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                contentWidth: width
+                contentHeight: qsContent.implicitHeight
+                interactive: contentHeight > height + 1
+                boundsBehavior: interactive ? Flickable.DragAndOvershoot : Flickable.StopAtBounds
 
                 ColumnLayout {
                     id: qsContent
-                    width: parent.width
+                    width: qsScroll.width
                     spacing: 0
 
                     // ═══ CONTENT ═══
@@ -278,7 +284,7 @@ BarBlock {
 
                                                 Text {
                                                     anchors.centerIn: parent
-                                                    text: CaffeineService.enabled ? "" : "󰾪"
+                                                    text: CaffeineService.enabled ? "\uf0f4" : "󰾪"
                                                     color: CaffeineService.enabled ? "#ffb86c" : "#6272a4"
                                                     font {
                                                         pixelSize: 16
@@ -617,7 +623,7 @@ BarBlock {
                         ClippingRectangle {
                             id: nowPlayingCard
                             Layout.fillWidth: true
-                            Layout.bottomMargin: 6
+                            Layout.bottomMargin: 8
                             radius: 10
                             visible: MprisState.cardPlayer !== null
                             color: {
@@ -646,14 +652,18 @@ BarBlock {
 
                             property int progressTick: 0
                             property bool showVolumeBadge: false
+                            // middle-click mute state · expanded controls gate
+                            readonly property bool mutedNow: MprisState.isMuted(MprisState.cardPlayer)
+                            property bool expControlsRevealed: false
                             // external players (no MPRIS volume, e.g. chrome) get a
                             // locally tracked percentage since pactl can't be read back
                             property real extVol: 0.5
                             readonly property bool mprisVolume: MprisState.cardPlayer?.volumeSupported ?? false
                             readonly property int currentVolume: Math.round((mprisVolume ? MprisState.cardPlayer?.volume ?? 0 : extVol) * 100)
 
-                            // visibility-first volume tint — hotter as it gets louder
-                            readonly property color volumeColor: currentVolume <= 0 ? "#6272a4"
+                            // visibility-first volume tint — hotter as it gets louder;
+                            // muted drops to red regardless of level
+                            readonly property color volumeColor: mutedNow || currentVolume <= 0 ? "#ff5555"
                                 : currentVolume > 80 ? "#ff79c6"
                                 : currentVolume > 50 ? "#c6a0f6"
                                 : "#bd93f9"
@@ -867,7 +877,7 @@ BarBlock {
 
                                             Text {
                                                 anchors.centerIn: parent
-                                                text: `${nowPlayingCard.currentVolume}%`
+                                                text: nowPlayingCard.mutedNow ? "\uf026" : `${nowPlayingCard.currentVolume}%`
                                                 color: nowPlayingCard.volumeColor
                                                 font {
                                                     pixelSize: 17
@@ -1068,6 +1078,12 @@ BarBlock {
                             Item {
                                 visible: !root.compactNowPlaying
                                 anchors.fill: parent
+
+                                // controls always start tucked away
+                                onVisibleChanged: {
+                                    if (visible)
+                                        nowPlayingCard.expControlsRevealed = false;
+                                }
                                 // implicitHeight: 100
                                 // implicitWidth: 100
 
@@ -1119,25 +1135,48 @@ BarBlock {
                                     }
 
                                     // ── Track info ──
+                                    // click the title to reveal/hide progress +
+                                    // transport controls (hidden by default)
                                     ColumnLayout {
+                                        id: expInfoCol
                                         Layout.fillWidth: true
                                         spacing: 3
                                         Layout.leftMargin: 4
                                         Layout.rightMargin: 4
 
-                                        Text {
+                                        RowLayout {
                                             Layout.fillWidth: true
-                                            text: MprisState.cardPlayer?.trackTitle || "No track"
-                                            color: "#ffffff"
-                                            font {
-                                                bold: true
-                                                pixelSize: 18
-                                                family: "FantasqueSansM Nerd Font"
+                                            spacing: 6
+
+                                            Text {
+                                                Layout.fillWidth: true
+                                                text: MprisState.cardPlayer?.trackTitle || "No track"
+                                                color: "#ffffff"
+                                                font {
+                                                    bold: true
+                                                    pixelSize: 18
+                                                    family: "FantasqueSansM Nerd Font"
+                                                }
+                                                elide: Text.ElideRight
+                                                maximumLineCount: 1
+                                                style: Text.Raised
+                                                styleColor: Qt.rgba(0, 0, 0, 0.7)
                                             }
-                                            elide: Text.ElideRight
-                                            maximumLineCount: 1
-                                            style: Text.Raised
-                                            styleColor: Qt.rgba(0, 0, 0, 0.7)
+
+                                            // reveal-state chevron
+                                            Text {
+                                                text: nowPlayingCard.expControlsRevealed ? "\uf077" : "\uf078"
+                                                color: expInfoHover.containsMouse || nowPlayingCard.expControlsRevealed
+                                                    ? nowPlayingCard.dominantColor : Qt.rgba(1, 1, 1, 0.45)
+                                                font {
+                                                    pixelSize: 11
+                                                    family: "Symbols Nerd Font Mono"
+                                                }
+
+                                                Behavior on color {
+                                                    ColorAnimation { duration: 120 }
+                                                }
+                                            }
                                         }
 
                                         Text {
@@ -1152,13 +1191,33 @@ BarBlock {
                                             maximumLineCount: 1
                                             visible: text.length > 0
                                         }
+
+                                        HoverHandler {
+                                            id: expInfoHover
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: nowPlayingCard.expControlsRevealed = !nowPlayingCard.expControlsRevealed
+                                        }
                                     }
 
                                     // ── Progress bar ──
+                                    // hidden until the title is clicked
                                     Item {
                                         Layout.fillWidth: true
                                         Layout.preferredHeight: 16
                                         Layout.topMargin: 2
+                                        enabled: nowPlayingCard.expControlsRevealed
+                                        opacity: nowPlayingCard.expControlsRevealed ? 1 : 0
+
+                                        Behavior on opacity {
+                                            NumberAnimation {
+                                                duration: 180
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
 
                                         readonly property real ratio: {
                                             nowPlayingCard.progressTick;
@@ -1206,11 +1265,21 @@ BarBlock {
                                     }
 
                                     // ── Playback controls ──
+                                    // hidden until the title is clicked
                                     RowLayout {
                                         Layout.fillWidth: true
                                         Layout.preferredHeight: 32
                                         spacing: 8
                                         Layout.bottomMargin: 2
+                                        enabled: nowPlayingCard.expControlsRevealed
+                                        opacity: nowPlayingCard.expControlsRevealed ? 1 : 0
+
+                                        Behavior on opacity {
+                                            NumberAnimation {
+                                                duration: 180
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
 
                                         Item {
                                             Layout.fillWidth: true
@@ -1331,7 +1400,7 @@ BarBlock {
 
                                     Text {
                                         anchors.centerIn: parent
-                                        text: `${nowPlayingCard.currentVolume}%`
+                                        text: nowPlayingCard.mutedNow ? "\uf026" : `${nowPlayingCard.currentVolume}%`
                                         color: nowPlayingCard.volumeColor
                                         font {
                                             pixelSize: 34
@@ -1341,12 +1410,29 @@ BarBlock {
                                     }
                                 }
                             }
+
+                            // middle-click anywhere on the card mutes /
+                            // unmutes the player in control — the volume
+                            // HUD flashes the state as feedback
+                            MouseArea {
+                                anchors.fill: parent
+                                acceptedButtons: Qt.MiddleButton
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    const p = MprisState.cardPlayer;
+                                    if (!(p?.canControl))
+                                        return;
+                                    MprisState.toggleMute(p);
+                                    nowPlayingCard.showVolumeBadge = true;
+                                    volumeBadgeTimer.restart();
+                                }
+                            }
                         }
 
                         // ═══ VOLUME ═══
                         ClippingRectangle {
                             Layout.fillWidth: true
-                            Layout.bottomMargin: 6
+                            Layout.bottomMargin: 8
                             radius: 10
                             color: "#21222c"
                             border.width: 1

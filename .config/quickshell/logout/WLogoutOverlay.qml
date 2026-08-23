@@ -168,19 +168,6 @@ Item {
                                             }
                                         }
                                     }
-
-                                    Text {
-                                        Layout.alignment: Qt.AlignHCenter
-                                        text: "end session?"
-                                        color: root.faint
-                                        font {
-                                            pixelSize: 10
-                                            bold: true
-                                            family: "Quicksand"
-                                            letterSpacing: 5
-                                            capitalization: Font.AllUppercase
-                                        }
-                                    }
                                 }
 
                                 // ── action row ──

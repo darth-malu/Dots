@@ -103,8 +103,68 @@ Item {
         }
     }
 
-    // ── poll-rate slider row: glyph · label · live value · slider ──
-    component PollRow: ColumnLayout {
+    // ── one clickable / holdable arrow button ──
+    component StepBtn: Rectangle {
+        id: sb
+
+        property string glyph
+        signal stepped()
+
+        implicitWidth: 24
+        implicitHeight: 24
+        radius: 7
+        color: sbMa.containsMouse || sbMa.pressed ? Qt.rgba(0.74, 0.58, 0.98, 0.16) : "#343746"
+        border.width: 1
+        border.color: sbMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.45) : "transparent"
+
+        Behavior on color {
+            ColorAnimation { duration: 110 }
+        }
+        Behavior on border.color {
+            ColorAnimation { duration: 110 }
+        }
+
+        Text {
+            anchors.centerIn: parent
+            text: sb.glyph
+            color: sbMa.pressed ? "#bd93f9" : sbMa.containsMouse ? "#f8f8f2" : "#b8bfcb"
+            font {
+                pixelSize: 11
+                bold: true
+                family: "Symbols Nerd Font Mono"
+            }
+
+            Behavior on color {
+                ColorAnimation { duration: 110 }
+            }
+        }
+
+        MouseArea {
+            id: sbMa
+
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            // step immediately, then repeat while held
+            onPressed: {
+                sb.stepped();
+                sbHold.restart();
+            }
+            onReleased: sbHold.stop()
+            onCanceled: sbHold.stop()
+
+            Timer {
+                id: sbHold
+                interval: 400
+                repeat: true
+                running: false
+                onTriggered: sb.stepped()
+            }
+        }
+    }
+
+    // ── poll-rate stepper row: glyph · label · [−] value [+] ──
+    component PollRow: RowLayout {
         id: pr
 
         required property string icon
@@ -113,93 +173,65 @@ Item {
         required property int maxMs
         required property int stepMs
         property int valueMs
-        // fired when the user releases/moves the slider to a new value
+        // fired whenever the value changes
         signal committed(int ms)
 
-        spacing: 6
+        function nudge(dir) {
+            const v = Math.max(minMs, Math.min(maxMs, valueMs + dir * stepMs));
+            if (v === valueMs)
+                return;
+            valueMs = v;
+            committed(v);
+        }
+
+        spacing: 12
         Layout.fillWidth: true
+        Layout.preferredHeight: 34
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 10
+        Text {
+            text: pr.icon
+            color: "#bd93f9"
+            font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+            Layout.preferredWidth: 20
+            horizontalAlignment: Text.AlignHCenter
+        }
+
+        Text {
+            text: pr.label
+            color: "#f8f8f2"
+            font { pixelSize: 12; family: "Quicksand"; bold: true }
+            Layout.alignment: Qt.AlignVCenter
+        }
+
+        Item { Layout.fillWidth: true }
+
+        StepBtn {
+            glyph: "\uf068"
+            Layout.alignment: Qt.AlignVCenter
+            onStepped: pr.nudge(-1)
+        }
+
+        // live value readout
+        Rectangle {
+            implicitWidth: 58
+            implicitHeight: 24
+            radius: 7
+            color: "#21222c"
+            border.width: 1
+            border.color: "#313244"
 
             Text {
-                text: pr.icon
-                color: "#bd93f9"
-                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                Layout.preferredWidth: 20
-                horizontalAlignment: Text.AlignHCenter
-            }
-
-            Text {
-                text: pr.label
-                color: "#f8f8f2"
-                font { pixelSize: 12; family: "Quicksand"; bold: true }
-                Layout.alignment: Qt.AlignVCenter
-            }
-
-            Item { Layout.fillWidth: true }
-
-            Text {
+                anchors.centerIn: parent
                 text: root.fmtMs(pr.valueMs)
                 color: "#bd93f9"
                 font { pixelSize: 11; bold: true; family: "ZedMono Nerd Font" }
-                Layout.alignment: Qt.AlignVCenter
             }
         }
 
-        Slider {
-            id: sld
-
-            from: pr.minMs
-            to: pr.maxMs
-            stepSize: pr.stepMs
-            value: pr.valueMs
-
-            Layout.fillWidth: true
-            Layout.leftMargin: 4
-            Layout.rightMargin: 4
-
-            background: Rectangle {
-                implicitHeight: 18
-                color: "transparent"
-
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: parent.width
-                    height: 5
-                    radius: 2.5
-                    color: "#343746"
-                }
-
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: sld.visualPosition * parent.width
-                    height: 5
-                    radius: 2.5
-                    color: "#bd93f9"
-                }
-            }
-
-            handle: Rectangle {
-                x: sld.leftPadding + sld.visualPosition * (sld.availableWidth - width)
-                anchors.verticalCenter: parent.verticalCenter
-                width: 14
-                height: 14
-                radius: 7
-                color: sld.pressed ? "#ff79c6" : "#f8f8f2"
-                border.color: "#bd93f9"
-                border.width: 2
-
-                Behavior on color {
-                    ColorAnimation { duration: 100 }
-                }
-            }
-
-            onMoved: {
-                pr.valueMs = value;
-                pr.committed(value);
-            }
+        StepBtn {
+            glyph: "\uf067"
+            Layout.alignment: Qt.AlignVCenter
+            onStepped: pr.nudge(1)
         }
     }
 

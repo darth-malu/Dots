@@ -138,6 +138,7 @@ RowLayout {
                 id: drag
                 anchors.fill: parent
                 anchors.margins: -4
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
                 cursorShape: Qt.PointingHandCursor
                 hoverEnabled: true
                 function setFromMouse(mx) {
@@ -147,9 +148,17 @@ RowLayout {
                     root.node.audio.volume = Math.max(0, Math.min((mx - r.x) / parent.width, 1));
                     root.adjusted(root.node.audio.volume);
                 }
-                onPressed: mouse => setFromMouse(mouse.x)
+                onPressed: mouse => {
+                    // right-click anywhere on the track mutes the sink
+                    if (mouse.button === Qt.RightButton) {
+                        if (root.ready)
+                            root.node.audio.muted = !root.node.audio.muted;
+                        return;
+                    }
+                    setFromMouse(mouse.x);
+                }
                 onPositionChanged: mouse => {
-                    if (pressed)
+                    if (mouse.buttons & Qt.LeftButton)
                         setFromMouse(mouse.x);
                 }
                 onWheel: wheel => {
