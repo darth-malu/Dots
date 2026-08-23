@@ -141,163 +141,240 @@ BarBlock {
                 id: allDisksCol
                 anchors.fill: parent
                 anchors.margins: 14
-                spacing: 7
+                spacing: 10
 
-                // header mirrors the data-row column widths below:
-                // mount(140) · size(44) · free(44) · bar(fills) · use(32)
+                // ── header zone: icon + title + count chip ──
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 6
+                    spacing: 7
+
+                    Text {
+                        text: disk.diskIcon
+                        color: "#bd93f9"
+                        font {
+                            pixelSize: 13
+                            family: "Symbols Nerd Font Mono"
+                        }
+                    }
 
                     Text {
                         text: "mounts"
-                        color: "#6272a4"
+                        color: "#f8f8f2"
                         font {
-                            pixelSize: 9
+                            pixelSize: 12
                             bold: true
                             family: "Quicksand"
-                            letterSpacing: 1
                         }
-                        Layout.preferredWidth: 140
-                        elide: Text.ElideRight
                     }
 
-                    Text {
-                        text: "size"
-                        color: "#6272a4"
-                        font {
-                            pixelSize: 9
-                            family: "ZedMono Nerd Font"
-                        }
-                        Layout.preferredWidth: 44
-                        Layout.alignment: Qt.AlignRight
-                    }
-
-                    Text {
-                        text: "free"
-                        color: "#6272a4"
-                        font {
-                            pixelSize: 9
-                            family: "ZedMono Nerd Font"
-                        }
-                        Layout.preferredWidth: 44
-                        Layout.alignment: Qt.AlignRight
-                    }
-
-                    // spacer standing in for the usage-bar column
                     Item {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 1
                     }
 
-                    Text {
-                        text: "use"
-                        color: "#6272a4"
-                        font {
-                            pixelSize: 9
-                            family: "ZedMono Nerd Font"
+                    Rectangle {
+                        implicitWidth: mountChip.implicitWidth + 14
+                        implicitHeight: 18
+                        radius: 9
+                        color: "#21222c"
+
+                        Text {
+                            id: mountChip
+                            anchors.centerIn: parent
+                            text: `${disk.allDisksList.length} mounted`
+                            color: "#bd93f9"
+                            font {
+                                pixelSize: 9
+                                bold: true
+                                family: "ZedMono Nerd Font"
+                            }
                         }
-                        Layout.preferredWidth: 32
-                        Layout.alignment: Qt.AlignRight
                     }
                 }
 
+                // ── data zone ──
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 1
-                    color: "#343746"
-                }
+                    radius: 10
+                    color: "#21222c"
 
-                Repeater {
-                    model: disk.allDisksList
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 10
+                        spacing: 4
 
-                    RowLayout {
-                        id: drow
-                        required property string modelData
-                        spacing: 6
+                        // column labels — widths mirror the rows below:
+                        // mount(140) · size(44) · free(44) · bar(fills) · use(32)
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
 
-                        readonly property var parts: modelData.trim().split(/\s+/)
-                        readonly property int pct: parts.length >= 5 ? parseInt(parts[4]) || 0 : 0
-                        readonly property color tier: pct > 90 ? "#ff5555" : pct > 75 ? "#ffb86c" : pct > 60 ? "#f1fa8c" : "#50fa7b"
-
-                        Text {
-                            Layout.preferredWidth: 140
-                            text: drow.parts[0] || ""
-                            color: "#f8f8f2"
-                            font {
-                                pixelSize: 10
-                                family: "ZedMono Nerd Font"
+                            Text {
+                                text: "mount"
+                                color: "#6272a4"
+                                font {
+                                    pixelSize: 9
+                                    bold: true
+                                    family: "Quicksand"
+                                    letterSpacing: 1
+                                }
+                                Layout.preferredWidth: 140
+                                elide: Text.ElideRight
                             }
-                            elide: Text.ElideMiddle
-                        }
 
-                        Text {
-                            Layout.preferredWidth: 44
-                            horizontalAlignment: Text.AlignRight
-                            text: drow.parts[1] || ""
-                            color: "#6272a4"
-                            font {
-                                pixelSize: 9
-                                family: "ZedMono Nerd Font"
+                            Text {
+                                text: "size"
+                                color: "#6272a4"
+                                font {
+                                    pixelSize: 9
+                                    family: "ZedMono Nerd Font"
+                                }
+                                Layout.preferredWidth: 44
+                                Layout.alignment: Qt.AlignRight
                             }
-                        }
 
-                        Text {
-                            Layout.preferredWidth: 44
-                            horizontalAlignment: Text.AlignRight
-                            text: drow.parts[3] || ""
-                            color: "#b8bfcb"
-                            font {
-                                pixelSize: 9
-                                family: "ZedMono Nerd Font"
+                            Text {
+                                text: "free"
+                                color: "#6272a4"
+                                font {
+                                    pixelSize: 9
+                                    family: "ZedMono Nerd Font"
+                                }
+                                Layout.preferredWidth: 44
+                                Layout.alignment: Qt.AlignRight
+                            }
+
+                            // spacer standing in for the usage-bar column
+                            Item {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 1
+                            }
+
+                            Text {
+                                text: "use"
+                                color: "#6272a4"
+                                font {
+                                    pixelSize: 9
+                                    family: "ZedMono Nerd Font"
+                                }
+                                Layout.preferredWidth: 32
+                                Layout.alignment: Qt.AlignRight
                             }
                         }
 
                         Rectangle {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 5
-                            radius: 2.5
+                            implicitHeight: 1
                             color: Qt.rgba(1, 1, 1, 0.06)
+                        }
+
+                        Repeater {
+                            model: disk.allDisksList
 
                             Rectangle {
-                                width: parent.width * Math.min(drow.pct / 100, 1)
-                                height: parent.height
-                                radius: 2.5
-                                color: drow.tier
+                                id: drow
 
-                                Behavior on width {
-                                    NumberAnimation {
-                                        duration: 300
-                                        easing.type: Easing.OutCubic
+                                required property string modelData
+
+                                readonly property var parts: modelData.trim().split(/\s+/)
+                                readonly property int pct: parts.length >= 5 ? parseInt(parts[4]) || 0 : 0
+                                readonly property color tier: pct > 90 ? "#ff5555" : pct > 75 ? "#ffb86c" : pct > 60 ? "#f1fa8c" : "#50fa7b"
+
+                                Layout.fillWidth: true
+                                implicitHeight: 22
+                                radius: 6
+                                color: dmouse.containsMouse ? Qt.rgba(1, 1, 1, 0.04) : "transparent"
+
+                                MouseArea {
+                                    id: dmouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                }
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    spacing: 6
+
+                                    Text {
+                                        Layout.preferredWidth: 140
+                                        text: drow.parts[0] || ""
+                                        color: "#f8f8f2"
+                                        font {
+                                            pixelSize: 10
+                                            family: "ZedMono Nerd Font"
+                                        }
+                                        elide: Text.ElideMiddle
+                                    }
+
+                                    Text {
+                                        Layout.preferredWidth: 44
+                                        horizontalAlignment: Text.AlignRight
+                                        text: drow.parts[1] || ""
+                                        color: "#6272a4"
+                                        font {
+                                            pixelSize: 9
+                                            family: "ZedMono Nerd Font"
+                                        }
+                                    }
+
+                                    Text {
+                                        Layout.preferredWidth: 44
+                                        horizontalAlignment: Text.AlignRight
+                                        text: drow.parts[3] || ""
+                                        color: "#b8bfcb"
+                                        font {
+                                            pixelSize: 9
+                                            family: "ZedMono Nerd Font"
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        Layout.fillWidth: true
+                                        Layout.preferredHeight: 5
+                                        radius: 2.5
+                                        color: Qt.rgba(1, 1, 1, 0.06)
+
+                                        Rectangle {
+                                            width: parent.width * Math.min(drow.pct / 100, 1)
+                                            height: parent.height
+                                            radius: 2.5
+                                            color: drow.tier
+
+                                            Behavior on width {
+                                                NumberAnimation {
+                                                    duration: 300
+                                                    easing.type: Easing.OutCubic
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    Text {
+                                        Layout.preferredWidth: 32
+                                        horizontalAlignment: Text.AlignRight
+                                        text: `${drow.pct}%`
+                                        color: drow.pct > 90 ? "#ff5555" : "#b8bfcb"
+                                        font {
+                                            pixelSize: 9
+                                            bold: drow.pct > 90
+                                            family: "ZedMono Nerd Font"
+                                        }
                                     }
                                 }
                             }
                         }
 
                         Text {
-                            Layout.preferredWidth: 32
-                            horizontalAlignment: Text.AlignRight
-                            text: `${drow.pct}%`
-                            color: drow.pct > 90 ? "#ff5555" : "#b8bfcb"
+                            text: "no mounts found"
+                            color: "#6272a4"
                             font {
-                                pixelSize: 9
-                                bold: drow.pct > 90
-                                family: "ZedMono Nerd Font"
+                                pixelSize: 10
+                                italic: true
+                                family: "Quicksand"
                             }
+                            visible: disk.allDisksList.length === 0
+                            Layout.alignment: Qt.AlignHCenter
                         }
                     }
-                }
-
-                Text {
-                    text: "no mounts found"
-                    color: "#6272a4"
-                    font {
-                        pixelSize: 10
-                        italic: true
-                        family: "Quicksand"
-                    }
-                    visible: disk.allDisksList.length === 0
-                    Layout.alignment: Qt.AlignHCenter
                 }
             }
         }

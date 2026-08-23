@@ -30,6 +30,16 @@ BarBlock {
 
     readonly property color cpuColor: cpuPercent > 80 ? "#ff5555" : cpuPercent > 60 ? "#f1fa8c" : "#bd93f9"
 
+    function tempColor(t) {
+        if (t >= 75)
+            return "#ff5555";
+        if (t >= 62)
+            return "#ffb86c";
+        if (t >= 45)
+            return "#f1fa8c";
+        return "#8be9fd";
+    }
+
     onClicked: mouse => {
         if (mouse.button === Qt.LeftButton)
             showTemp = !showTemp;
@@ -203,10 +213,41 @@ BarBlock {
                         }
 
                         Text {
-                            text: `${cpu.cpuPercent}% · ${Math.round(cpu.cpuTemp)}°  min ${Math.round(cpu.tempMin)}°  max ${Math.round(cpu.tempMax)}°`
+                            text: `${cpu.cpuPercent}% ·`
                             color: cpu.cpuColor
                             font {
                                 pixelSize: 9
+                                family: "ZedMono Nerd Font"
+                            }
+                        }
+
+                        // temps are color-coded: cool → hot (cyan/yellow/orange/red)
+                        Text {
+                            text: `${Math.round(cpu.cpuTemp)}°`
+                            color: cpu.tempColor(cpu.cpuTemp)
+                            font {
+                                pixelSize: 9
+                                bold: true
+                                family: "ZedMono Nerd Font"
+                            }
+                        }
+
+                        Text {
+                            text: `min ${Math.round(cpu.tempMin)}°`
+                            color: cpu.tempColor(cpu.tempMin)
+                            font {
+                                pixelSize: 9
+                                bold: true
+                                family: "ZedMono Nerd Font"
+                            }
+                        }
+
+                        Text {
+                            text: `max ${Math.round(cpu.tempMax)}°`
+                            color: cpu.tempColor(cpu.tempMax)
+                            font {
+                                pixelSize: 9
+                                bold: true
                                 family: "ZedMono Nerd Font"
                             }
                         }

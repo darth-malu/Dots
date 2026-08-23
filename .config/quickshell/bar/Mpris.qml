@@ -224,43 +224,31 @@ Item {
 
                             var cx = width / 2;
                             var cy = height / 2;
-
-                            // ── volume feedback — replaces play/pause while scrolling ──
-                            // speaker glyph + sound-wave arcs that light up by thirds
-                            if (mprisRoot.showVolume) {
-                                var vol = Math.max(0, Math.min(MprisState.player?.volume ?? 0, 1));
-                                ctx.fillStyle = vol <= 0.001 ? "#6272a4" : "#FF7EB3";
-
-                                // waves emanating from the speaker cone — the speaker
-                                // glyph itself is a crisp Text overlay (canvas glyphs blur)
-                                ctx.lineCap = "round";
-                                ctx.lineWidth = 1.4;
-                                var ox = cx - 0.5;
-                                for (var i = 0; i < 2; i++) {
-                                    ctx.beginPath();
-                                    ctx.arc(ox, cy, 3.5 + i * 3, -Math.PI / 4, Math.PI / 4);
-                                    ctx.strokeStyle = vol >= (i + 1) / 3 - 0.001 ? "#FF7EB3" : Qt.rgba(1, 0.71, 0.76, 0.25);
-                                    ctx.stroke();
-                                }
-                                return;
-                            }
-
-                            // ── normal playback view ──
                             var r = Math.min(cx, cy) - 1.5;
 
+                            // dim track
                             ctx.beginPath();
                             ctx.arc(cx, cy, r, 0, Math.PI * 2);
                             ctx.strokeStyle = Qt.rgba(1, 0.71, 0.76, 0.25);
                             ctx.lineWidth = 2.5;
                             ctx.stroke();
 
-                            if (progressRing.progress > 0.005) {
+                            // value arc — song progress normally; while scrolling,
+                            // the ring temporarily becomes the volume level (purple)
+                            var frac;
+                            if (mprisRoot.showVolume)
+                                frac = Math.max(0, Math.min(MprisState.player?.volume ?? 0, 1));
+                            else
+                                frac = progressRing.progress;
+
+                            if (frac > 0.005) {
                                 ctx.beginPath();
                                 var startAngle = -Math.PI / 2;
-                                var endAngle = startAngle + Math.PI * 2 * Math.min(progressRing.progress, 1);
+                                var endAngle = startAngle + Math.PI * 2 * Math.min(frac, 0.999);
                                 ctx.arc(cx, cy, r, startAngle, endAngle);
-                                ctx.strokeStyle = "#FF7EB3";
+                                ctx.strokeStyle = mprisRoot.showVolume ? "#bd93f9" : "#FF7EB3";
                                 ctx.lineWidth = 2.5;
+                                ctx.lineCap = "round";
                                 ctx.stroke();
                             }
                         }

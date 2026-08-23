@@ -675,6 +675,20 @@ BarBlock {
                                     }
                                 }
 
+                                // player switcher — sits next to the + button
+                                TrackButton {
+                                    text: "\uf0ec"
+                                    ghost: true
+                                    accentColor: MprisState.pinIdentity.length > 0 ? "#f1fa8c" : Qt.rgba(1, 1, 1, 0.6)
+                                    onClicked: MprisState.cycleCardPin()
+                                    anchors {
+                                        right: parent.right
+                                        top: parent.top
+                                        rightMargin: 30
+                                        topMargin: 2
+                                    }
+                                }
+
                                 RowLayout {
                                     anchors.fill: parent
                                     // spacing: 10
@@ -901,13 +915,6 @@ BarBlock {
                                                 flat: true
                                                 accentColor: nowPlayingCard.dominantColor
                                                 onClicked: MprisState.cardPlayer?.next()
-                                            }
-                                            TrackButton {
-                                                visible: MiscState.showPlayerChooser
-                                                text: "\uf0ec"
-                                                flat: true
-                                                accentColor: MprisState.pinIdentity.length > 0 ? "#f1fa8c" : Qt.rgba(1, 1, 1, 0.5)
-                                                onClicked: MprisState.cycleCardPin()
                                             }
                                             Item {
                                                 Layout.fillWidth: true
@@ -1185,6 +1192,20 @@ BarBlock {
                                         right: parent.right
                                         top: parent.top
                                         rightMargin: 2
+                                        topMargin: 2
+                                    }
+                                }
+
+                                // player switcher — sits next to the − button
+                                TrackButton {
+                                    text: "\uf0ec"
+                                    ghost: true
+                                    accentColor: MprisState.pinIdentity.length > 0 ? "#f1fa8c" : Qt.rgba(1, 1, 1, 0.6)
+                                    onClicked: MprisState.cycleCardPin()
+                                    anchors {
+                                        right: parent.right
+                                        top: parent.top
+                                        rightMargin: 30
                                         topMargin: 2
                                     }
                                 }
