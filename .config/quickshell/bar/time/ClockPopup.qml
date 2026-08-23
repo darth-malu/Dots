@@ -33,12 +33,35 @@ ColumnLayout {
     property bool inputVisible: false
     property bool yearView: false
 
+    // YYYY-MM-DD key for the selected day
+    readonly property string selectedKey: selectedYear < 0 ? "" : selectedYear + "-" + String(selectedMonth + 1).padStart(2, "0") + "-" + String(selectedDay).padStart(2, "0")
+
     function clearSelection() {
         selectedDay = -1;
         selectedMonth = -1;
         selectedYear = -1;
         inputVisible = false;
         taskField.text = "";
+        timeField.text = "";
+    }
+
+    // submit the input: a valid time creates an in-shell reminder,
+    // no time keeps the legacy emacs org-capture flow
+    function submitInput() {
+        const t = taskField.text.trim();
+        if (t.length === 0 || root.selectedYear < 0)
+            return;
+        const tm = timeField.text.trim();
+        const m = tm.match(/^(\d{1,2}):(\d{2})$/);
+        if (m) {
+            const hh = String(Math.min(23, parseInt(m[1]))).padStart(2, "0");
+            const mm = String(Math.min(59, parseInt(m[2]))).padStart(2, "0");
+            ReminderState.add(t, root.selectedKey, hh + ":" + mm);
+            root.clearSelection();
+        } else {
+            root.taskSubmitted(root.selectedDay, root.selectedMonth, root.selectedYear, t);
+            root.clearSelection();
+        }
     }
 
     function prevMonth() {
@@ -208,6 +231,27 @@ ColumnLayout {
                 radius: width / 2
                 color: Themes.calendarActiveMonth
                 visible: parent.isTracked
+            }
+
+            // reminder badge — count of pending reminders on this day
+            Rectangle {
+                anchors.top: parent.top
+                anchors.right: parent.right
+                anchors.topMargin: 1
+                anchors.rightMargin: 1
+                visible: ReminderState.countForDate(model.year, model.month, model.day) > 0
+                implicitWidth: remBadgeTxt.implicitWidth + 5
+                implicitHeight: remBadgeTxt.implicitHeight + 1
+                radius: height / 2
+                color: "#bd93f9"
+
+                Text {
+                    id: remBadgeTxt
+                    anchors.centerIn: parent
+                    text: ReminderState.countForDate(model.year, model.month, model.day)
+                    color: "#282a36"
+                    font { pixelSize: 7; bold: true; family: "ZedMono Nerd Font" }
+                }
             }
 
             MouseArea {
@@ -387,41 +431,167 @@ ColumnLayout {
                 }
             }
 
-            TextField {
-                id: taskField
+            RowLayout {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 26
-                placeholderText: "Add a task..."
-                color: "#f8f8f2"
-                placeholderTextColor: "#6272a4"
-                font { pixelSize: 11; family: "Quicksand" }
-                background: Rectangle {
-                    radius: 6
-                    color: "#44475a"
-                    border.color: taskField.activeFocus ? Themes.calendarToday : "#6272a4"
-                    border.width: 1
-                }
-                leftPadding: 8
-                rightPadding: 8
-                topPadding: 0
-                bottomPadding: 0
-                verticalAlignment: Text.AlignVCenter
-                selectByMouse: true
+                spacing: 4
 
-                Keys.onReturnPressed: {
-                    if (text.trim().length > 0) {
-                        root.taskSubmitted(root.selectedDay, root.selectedMonth, root.selectedYear, text.trim());
-                        root.clearSelection();
+                TextField {
+                    id: taskField
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 26
+                    placeholderText: "Task — or add HH:MM for a reminder"
+                    color: "#f8f8f2"
+                    placeholderTextColor: "#6272a4"
+                    font { pixelSize: 11; family: "Quicksand" }
+                    background: Rectangle {
+                        radius: 6
+                        color: "#44475a"
+                        border.color: taskField.activeFocus ? Themes.calendarToday : "#6272a4"
+                        border.width: 1
                     }
+                    leftPadding: 8
+                    rightPadding: 8
+                    topPadding: 0
+                    bottomPadding: 0
+                    verticalAlignment: Text.AlignVCenter
+                    selectByMouse: true
+
+                    Keys.onReturnPressed: root.submitInput()
+                    Keys.onEnterPressed: root.submitInput()
+                    Keys.onEscapePressed: root.clearSelection()
                 }
-                Keys.onEnterPressed: {
-                    if (text.trim().length > 0) {
-                        root.taskSubmitted(root.selectedDay, root.selectedMonth, root.selectedYear, text.trim());
-                        root.clearSelection();
+
+                TextField {
+                    id: timeField
+                    Layout.preferredWidth: 52
+                    Layout.preferredHeight: 26
+                    placeholderText: "HH:MM"
+                    color: "#bd93f9"
+                    placeholderTextColor: Qt.rgba(0.74, 0.58, 0.98, 0.5)
+                    font { pixelSize: 10; bold: true; family: "ZedMono Nerd Font" }
+                    horizontalAlignment: Text.AlignHCenter
+                    background: Rectangle {
+                        radius: 6
+                        color: "#44475a"
+                        border.color: timeField.activeFocus ? "#bd93f9" : "#6272a4"
+                        border.width: 1
                     }
-                }
+                    topPadding: 0
+                    bottomPadding: 0
+                    verticalAlignment: Text.AlignVCenter
+                    selectByMouse: true
+
+                    Keys.onReturnPressed: root.submitInput()
+                    Keys.onEnterPressed: root.submitInput()
                 Keys.onEscapePressed: root.clearSelection()
             }
         }
     }
+
+    // ── upcoming reminders ──
+    ColumnLayout {
+        visible: !root.yearView && ReminderState.upcoming.length > 0
+        Layout.fillWidth: true
+        spacing: 3
+
+        Text {
+            Layout.leftMargin: 2
+            text: "Reminders"
+            color: "#6272a4"
+            font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
+        }
+
+        Repeater {
+            model: ReminderState.upcoming.slice(0, 4)
+
+            delegate: Rectangle {
+                id: remRow
+
+                required property var modelData
+
+                Layout.fillWidth: true
+                implicitHeight: 30
+                radius: 7
+                color: remHover.containsMouse ? "#343746" : "#21222c"
+
+                Behavior on color {
+                    ColorAnimation { duration: 110 }
+                }
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 8
+                    anchors.rightMargin: 6
+                    spacing: 8
+
+                    Text {
+                        text: "\uf0f3"
+                        color: "#bd93f9"
+                        font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: remRow.modelData.text
+                        color: "#f8f8f2"
+                        font { pixelSize: 10; bold: true; family: "Quicksand" }
+                        elide: Text.ElideRight
+                        maximumLineCount: 1
+                    }
+
+                    Text {
+                        text: {
+                            const p = remRow.modelData.date.split("-");
+                            const d = new Date(parseInt(p[0]), parseInt(p[1]) - 1, parseInt(p[2]));
+                            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                            const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+                            let s = days[d.getDay()] + " " + months[d.getMonth()] + " " + d.getDate();
+                            if (remRow.modelData.time)
+                                s += " · " + remRow.modelData.time;
+                            return s;
+                        }
+                        color: "#b8bfcb"
+                        font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                    }
+
+                    // done toggle
+                    Text {
+                        text: "\ueae2"
+                        color: doneMa.containsMouse ? "#50fa7b" : "#6272a4"
+                        font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+
+                        MouseArea {
+                            id: doneMa
+                            anchors.fill: parent
+                            anchors.margins: -4
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ReminderState.toggleDone(remRow.modelData.id)
+                        }
+                    }
+
+                    // delete
+                    Text {
+                        text: "\uf00d"
+                        color: delMa.containsMouse ? "#ff5555" : "#6272a4"
+                        font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+
+                        MouseArea {
+                            id: delMa
+                            anchors.fill: parent
+                            anchors.margins: -4
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ReminderState.remove(remRow.modelData.id)
+                        }
+                    }
+                }
+
+                HoverHandler {
+                    id: remHover
+                }
+            }
+        }
+    }
+}
 }

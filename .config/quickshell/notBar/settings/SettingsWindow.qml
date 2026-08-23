@@ -211,20 +211,45 @@ Item {
             onStepped: pr.nudge(-1)
         }
 
-        // live value readout
+        // live value readout — scroll over it to adjust
         Rectangle {
+            id: valBox
+
             implicitWidth: 58
             implicitHeight: 24
             radius: 7
-            color: "#21222c"
+            color: valHover.containsMouse ? "#2a2c3a" : "#21222c"
             border.width: 1
-            border.color: "#313244"
+            border.color: valHover.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.5) : "#313244"
+
+            Behavior on color {
+                ColorAnimation { duration: 110 }
+            }
+            Behavior on border.color {
+                ColorAnimation { duration: 110 }
+            }
+
+            HoverHandler {
+                id: valHover
+            }
+
+            WheelHandler {
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                onWheel: ev => {
+                    pr.nudge(ev.angleDelta.y > 0 ? 1 : -1);
+                    ev.accepted = true;
+                }
+            }
 
             Text {
                 anchors.centerIn: parent
                 text: root.fmtMs(pr.valueMs)
-                color: "#bd93f9"
+                color: valHover.containsMouse ? "#f8f8f2" : "#bd93f9"
                 font { pixelSize: 11; bold: true; family: "ZedMono Nerd Font" }
+
+                Behavior on color {
+                    ColorAnimation { duration: 110 }
+                }
             }
         }
 
@@ -440,43 +465,36 @@ Item {
                                 Layout.bottomMargin: 8
                             }
 
+                            // compact ✕ close button
                             Rectangle {
-                                Layout.fillWidth: true
-                                Layout.leftMargin: 12
-                                Layout.rightMargin: 12
-                                implicitHeight: 36
-                                radius: 8
-                                color: closeMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.12) : "transparent"
+                                id: closeBtn
+
+                                Layout.alignment: Qt.AlignHCenter
+                                implicitWidth: 34
+                                implicitHeight: 34
+                                radius: 9
+                                color: closeMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.14) : "#343746"
+                                border.width: 1
+                                border.color: closeMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.55) : "transparent"
 
                                 Behavior on color {
                                     ColorAnimation { duration: 100 }
                                 }
+                                Behavior on border.color {
+                                    ColorAnimation { duration: 100 }
+                                }
 
-                                RowLayout {
-                                    anchors {
-                                        left: parent.left
-                                        verticalCenter: parent.verticalCenter
-                                        leftMargin: 12
-                                    }
-                                    spacing: 10
-
-                                    Text {
-                                        text: ""
-                                        color: "#ff5555"
-                                        font {
-                                            pixelSize: 14
-                                            family: "Symbols Nerd Font Mono"
-                                        }
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "\uf00d"
+                                    color: closeMa.containsMouse ? "#ff5555" : "#b8bfcb"
+                                    font {
+                                        pixelSize: 13
+                                        family: "Symbols Nerd Font Mono"
                                     }
 
-                                    Text {
-                                        text: "Close"
-                                        color: "#ff5555"
-                                        font {
-                                            pixelSize: 12
-                                            family: "Quicksand"
-                                            bold: true
-                                        }
+                                    Behavior on color {
+                                        ColorAnimation { duration: 100 }
                                     }
                                 }
 
@@ -542,12 +560,96 @@ Item {
                         spacing: 0
                         Layout.fillWidth: true
 
-                        SettingRow {
-                            icon: "\ueac1"
-                            label: "Solid bar"
-                            caption: BarState.solidBar ? "radius 4 Â· 2px gap" : "transparent Â· flush top"
-                            checked: BarState.solidBar
-                            onFlipped: BarState.solidBar = !BarState.solidBar
+                        // segmented style selector — pick the bar
+                        // treatment directly instead of an on/off switch
+                        RowLayout {
+                            id: barStyleSeg
+
+                            readonly property bool solid: BarState.solidBar
+
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 38
+                            spacing: 12
+
+                            Text {
+                                text: "\ueac1"
+                                color: "#bd93f9"
+                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                Layout.preferredWidth: 20
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            Text {
+                                text: "Bar style"
+                                color: "#f8f8f2"
+                                font { pixelSize: 12; family: "Quicksand"; bold: true }
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Rectangle {
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: segRow.implicitWidth + 6
+                                implicitHeight: 26
+                                radius: 8
+                                color: "#21222c"
+                                border.width: 1
+                                border.color: "#313244"
+
+                                Row {
+                                    id: segRow
+
+                                    anchors.centerIn: parent
+                                    spacing: 2
+
+                                    Repeater {
+                                        model: [
+                                            { key: false, label: "Transparent" },
+                                            { key: true, label: "Solid" }
+                                        ]
+
+                                        delegate: Rectangle {
+                                            id: segOpt
+
+                                            required property var modelData
+
+                                            readonly property bool sel: barStyleSeg.solid === segOpt.modelData.key
+
+                                            width: segLbl.implicitWidth + 20
+                                            height: 22
+                                            radius: 6
+                                            color: sel ? "#bd93f9" : segOptMa.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.14) : "transparent"
+
+                                            Behavior on color {
+                                                ColorAnimation { duration: 120 }
+                                            }
+
+                                            Text {
+                                                id: segLbl
+
+                                                anchors.centerIn: parent
+                                                text: segOpt.modelData.label
+                                                color: segOpt.sel ? "#181825" : segOptMa.containsMouse ? "#f8f8f2" : "#b8bfcb"
+                                                font { pixelSize: 10; bold: true; family: "Quicksand" }
+
+                                                Behavior on color {
+                                                    ColorAnimation { duration: 120 }
+                                                }
+                                            }
+
+                                            MouseArea {
+                                                id: segOptMa
+
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: BarState.solidBar = segOpt.modelData.key
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                         Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
@@ -708,9 +810,106 @@ Item {
             ColumnLayout {
                 spacing: 12
 
+                // ── live status tiles ──
+                RowLayout {
+                    spacing: 12
+                    Layout.fillWidth: true
+
+                    Rectangle {
+                        id: wifiTile
+
+                        Layout.fillWidth: true
+                        implicitHeight: 74
+                        radius: 10
+                        color: "#21222c"
+                        border.width: 1
+                        border.color: NetworkState.wifiConnected ? Qt.rgba(0.741, 0.576, 0.976, 0.4) : "#313244"
+
+                        Behavior on border.color {
+                            ColorAnimation { duration: 150 }
+                        }
+
+                        ColumnLayout {
+                            anchors.centerIn: parent
+                            spacing: 5
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: NetworkState.wifiIcon
+                                color: NetworkState.wifiColor
+                                font { pixelSize: 20; family: "Symbols Nerd Font Mono" }
+                            }
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: {
+                                    const n = NetworkState.activeNetwork?.name;
+                                    return NetworkState.wifiConnected && n ? n : "Wi-Fi off";
+                                }
+                                color: NetworkState.wifiConnected ? "#f8f8f2" : "#6272a4"
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                                font { pixelSize: 11; bold: true; family: "Quicksand" }
+                            }
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: NetworkState.adapter?.connected
+                                    ? "signal " + Math.round(NetworkState.activeNetwork?.strength ?? 0) + "%"
+                                    : NetworkState.wifiEnabled ? "idle" : "disabled"
+                                color: "#6272a4"
+                                font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        id: ethTile
+
+                        Layout.fillWidth: true
+                        implicitHeight: 74
+                        radius: 10
+                        color: "#21222c"
+                        border.width: 1
+                        border.color: NetworkState.ethernet?.hasLink ? Qt.rgba(0.545, 0.914, 0.992, 0.4) : "#313244"
+
+                        Behavior on border.color {
+                            ColorAnimation { duration: 150 }
+                        }
+
+                        ColumnLayout {
+                            anchors.centerIn: parent
+                            spacing: 5
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: NetworkState.ethIcon
+                                color: NetworkState.ethColor
+                                font { pixelSize: 20; family: "Symbols Nerd Font Mono" }
+                            }
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: NetworkState.ethernet?.hasLink ? "Ethernet" : "No cable"
+                                color: NetworkState.ethernet?.hasLink ? "#f8f8f2" : "#6272a4"
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                                font { pixelSize: 11; bold: true; family: "Quicksand" }
+                            }
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: NetworkState.ethernet?.hasLink ? "link up" : "disconnected"
+                                color: "#6272a4"
+                                font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                            }
+                        }
+                    }
+                }
+
                 Card {
-                    title: "Wi-Fi"
-                    icon: "\uf1eb"
+                    title: "Preferences"
+                    icon: "\uf013"
                     accent: "#bd93f9"
 
                     ColumnLayout {
@@ -724,17 +923,8 @@ Item {
                             checked: MiscState.wifiGreenName
                             onFlipped: MiscState.wifiGreenName = !MiscState.wifiGreenName
                         }
-                    }
-                }
 
-                Card {
-                    title: "Ethernet"
-                    icon: "\uf796"
-                    accent: "#8be9fd"
-
-                    ColumnLayout {
-                        spacing: 0
-                        Layout.fillWidth: true
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
 
                         SettingRow {
                             icon: "\uf796"
@@ -742,6 +932,42 @@ Item {
                             caption: MiscState.showNetTotals ? "always visible" : "with graphs"
                             checked: MiscState.showNetTotals
                             onFlipped: MiscState.showNetTotals = !MiscState.showNetTotals
+                        }
+                    }
+                }
+
+                Card {
+                    title: "Bar modules"
+                    icon: "\ueac1"
+                    accent: "#8be9fd"
+
+                    ColumnLayout {
+                        spacing: 0
+                        Layout.fillWidth: true
+
+                        SettingRow {
+                            icon: "\uf1eb"
+                            label: "Wi-Fi module"
+                            checked: MiscState.showWifi
+                            onFlipped: MiscState.showWifi = !MiscState.showWifi
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                        SettingRow {
+                            icon: "\uf796"
+                            label: "Ethernet module"
+                            checked: MiscState.showEthernet
+                            onFlipped: MiscState.showEthernet = !MiscState.showEthernet
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                        SettingRow {
+                            icon: "\uf294"
+                            label: "Bluetooth module"
+                            checked: MiscState.showBluetooth
+                            onFlipped: MiscState.showBluetooth = !MiscState.showBluetooth
                         }
                     }
                 }

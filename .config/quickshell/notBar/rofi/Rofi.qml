@@ -36,6 +36,11 @@ PanelWindow {
 
     property alias searchField: search.text
 
+    // clipboard-manager hooks — emitted instead of the old raw-line copy so
+    // binary/image entries survive a round-trip through `cliphist decode`
+    signal clipChosen(string entry)
+    signal clipDeleted(string entry)
+
     onVisibleChanged: {
         if (visible) {
             search.forceActiveFocus();
@@ -100,16 +105,21 @@ PanelWindow {
                                     // Current Items is a DesktopEntry.
                                     current.modelData.execute();
                                 else if (RofiState.toggleClipHist) {
-                                    // Current Items is a String of Number\tString.
-                                    Quickshell.clipboardText = current.modelData;
-                                    // Quickshell.execDetached(["bash", "-c", "cliphist decode <<EOF | wl-copy\n" + current.modelData + "\nEOF"]);
-                                    // Quickshell.execDetached(["notify-send", `${Quickshell.clipboardText}`]);
+                                    // Current Item is a raw cliphist list line ("id\tpreview")
+                                    launcher.clipChosen(current.modelData);
                                 }
                                 RofiState.toggler();
                                 search.text = "";
                                 event.accepted = true;
                             }
                             event.accepted = true;
+                        } else if (event.key === Qt.Key_Delete && RofiState.toggleClipHist) {
+                            // remove the selected entry from the history
+                            let current = itemLauncher.currentItem;
+                            if (current) {
+                                launcher.clipDeleted(current.modelData);
+                                event.accepted = true;
+                            }
                         } else if (event.key === Qt.Key_Escape) {
                             RofiState.toggler();
                             search.text = "";
@@ -157,9 +167,8 @@ PanelWindow {
                             current.modelData.wayland.activate();
                         else if (RofiState.toggleAppLauncher)
                             current.modelData.execute();
-                        else if (RofiState.toggleClipHist) {
-                            Quickshell.clipboardText = current.modelData;
-                        }
+                        else if (RofiState.toggleClipHist)
+                            launcher.clipChosen(current.modelData);
                         RofiState.toggler();
                         search.text = "";
                     }

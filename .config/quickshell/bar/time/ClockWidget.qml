@@ -1,5 +1,4 @@
 import qs.themes
-import QtMultimedia
 import QtQuick
 import qs.customItems
 import qs.services
@@ -17,9 +16,8 @@ BarBlock {
     // anchors.verticalCenter: parent.verticalCenter
 
     // hoverEnabled: true
-    SoundEffect {
-        id: beep
-        source: Qt.resolvedUrl("../../customItems/game_ready.wav")
+    function beepPlay() {
+        Sfx.playPath("/home/malu/.config/quickshell/customItems/game_ready.wav");
     }
 
     onClicked: mouse => {
@@ -28,7 +26,7 @@ BarBlock {
             ResourcesState.resourcesVisible = !ResourcesState.resourcesVisible;
             // beep.play();
         } else if ((mouse.modifiers & Qt.ShiftModifier) && (mouse.button === Qt.RightButton))
-            beep.play();
+            root.beepPlay();
         else if (mouse.button === Qt.RightButton)
             MiscState.showPopup = !MiscState.showPopup;
     }

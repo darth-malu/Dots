@@ -43,6 +43,13 @@ BarBlock {
             timerPicker = 0;
         }
     }
+
+    // closing a menu closes all children too — hiding the power card
+    // takes the restart/shutdown timer view with it
+    onShowPowerPopupChanged: {
+        if (!showPowerPopup)
+            timerPicker = 0;
+    }
     Component.onCompleted: MiscState.qsOpen = showQsPopup
 
     onRightClicked: MiscState.toggleSysTray = !MiscState.toggleSysTray
@@ -1306,11 +1313,14 @@ BarBlock {
                                             id: expInfoHover
                                         }
 
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            hoverEnabled: true
+                                        // tap anywhere on the track text to raise/hide
+                                        // the seek bar + transport (handler, not a layout
+                                        // child — keeps the column geometry untouched)
+                                        TapHandler {
+                                            acceptedButtons: Qt.LeftButton
+                                            gesturePolicy: TapHandler.ReleaseWithinBounds
                                             cursorShape: Qt.PointingHandCursor
-                                            onClicked: nowPlayingCard.expControlsRevealed = !nowPlayingCard.expControlsRevealed
+                                            onTapped: nowPlayingCard.expControlsRevealed = !nowPlayingCard.expControlsRevealed
                                         }
                                     }
                                 }
@@ -1412,11 +1422,10 @@ BarBlock {
                             // middle-click anywhere on the card mutes /
                             // unmutes the player in control — the volume
                             // HUD flashes the state as feedback
-                            MouseArea {
-                                anchors.fill: parent
+                            TapHandler {
                                 acceptedButtons: Qt.MiddleButton
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
+                                gesturePolicy: TapHandler.ReleaseWithinBounds
+                                onTapped: {
                                     const p = MprisState.cardPlayer;
                                     if (!(p?.canControl))
                                         return;

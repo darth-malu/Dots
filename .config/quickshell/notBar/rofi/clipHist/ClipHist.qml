@@ -1,39 +1,71 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import qs.services
 import qs.notBar.rofi
-import Quickshell.Io
 
+// Clipboard history browser backed by cliphist (omarchy-style):
+// · type to filter, Enter copies the real payload via `cliphist decode`
+//   (text AND images survive — no more raw-list-line copying)
+// · Delete removes the selected entry from the history
 Rofi {
     id: root
     visible: RofiState.toggleClipHist
 
-    modelIngest: jsonData
+    // every raw `cliphist list` line ("id\tpreview")
+    property var entries: []
 
-    property var clipHist
-
-    FileView {
-        id: clipmanJson
-        path: "file:///home/malu/.local/share/clipman.json"
-
-        watchChanges: true      // when changes are made on disk reload the file's content
-        onFileChanged: reload()
-        // onLoaded: root.processJson()
+    // search-filtered view feeding the list
+    readonly property var filteredEntries: {
+        const q = root.searchField.toLowerCase();
+        if (q.length === 0)
+            return entries;
+        return entries.filter(e => e.toLowerCase().includes(q));
     }
 
-    readonly property var jsonData: {
-        try {
-            var t = clipmanJson.text().trim();
-            return t.length > 0 ? JSON.parse(t) : [];
-        } catch (e) {
-            return [];
-        }
-    }
+    modelIngest: filteredEntries
 
     delegateIngest: LauncherDelegate {
         required property var modelData
+
         iconUrl: ""
-        // iconUrl: Quickshell.iconPath(modelData?.wayland?.appId ?? "", "image-missing")
         app: TextClipHistDelegate {}
+    }
+
+    // shell-quote a raw entry so it can travel through printf safely
+    function shQuote(s) {
+        return "'" + s.replace(/'/g, "'\\''") + "'";
+    }
+
+    // ── load the history every time the launcher opens ──
+    onVisibleChanged: {
+        if (visible)
+            listProcess.running = true;
+    }
+
+    Process {
+        id: listProcess
+
+        command: ["cliphist", "list"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const lines = this.text.split("\n").filter(l => l.length > 0);
+                root.entries = lines;
+            }
+        }
+    }
+
+    onClipChosen: entry => {
+        Quickshell.execDetached(["sh", "-c",
+            "printf '%s' " + shQuote(entry) + " | cliphist decode | wl-copy"]);
+        Quickshell.execDetached(["notify-send", "-a", "Clipboard", "-t", "1500", "\uf0c5  Copied to clipboard"]);
+    }
+
+    onClipDeleted: entry => {
+        Quickshell.execDetached(["sh", "-c",
+            "printf '%s' " + shQuote(entry) + " | cliphist delete"]);
+        root.entries = root.entries.filter(e => e !== entry);
     }
 }

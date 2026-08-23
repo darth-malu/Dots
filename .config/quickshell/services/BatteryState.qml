@@ -1,9 +1,9 @@
 pragma Singleton
 import Quickshell
 import QtQuick
-import QtMultimedia
 import Quickshell.Services.UPower
 import Quickshell.Services.Pipewire
+import qs.services
 
 Singleton {
     id: root
@@ -18,35 +18,15 @@ Singleton {
         objects: [root.sink]
     }
 
-    SoundEffect {
-        id: sfxPlug
-        source: Qt.resolvedUrl("../customItems/game_ready.wav")
-    }
-
-    SoundEffect {
-        id: sfxUnplug
-        source: Qt.resolvedUrl("../customItems/game_ready.wav")
-    }
-
-    // low-battery attention cue — crisp double beep
-    SoundEffect {
-        id: sfxLow
-        source: Qt.resolvedUrl("../wav/mixkit-censorship-beep-1082.wav")
-    }
-
-    // critical battery — insistent ringtone so it cannot be missed
-    SoundEffect {
-        id: sfxCritical
-        source: Qt.resolvedUrl("../wav/mixkit-vintage-telephone-ringtone-1356.wav")
-    }
+    readonly property string gameReadyWav: "/home/malu/.config/quickshell/customItems/game_ready.wav"
 
     function plugEvent(summary, body, icon) {
         if (root.outputMuted)
             notify(summary, body, icon);
         else if (icon === "unplug")
-            sfxUnplug.play();
+            Sfx.playPath(root.gameReadyWav);
         else
-            sfxPlug.play();
+            Sfx.playPath(root.gameReadyWav);
     }
 
     readonly property var powerProfile: PowerProfiles.profile
@@ -168,11 +148,11 @@ Singleton {
         if (pct <= criticalThreshold && !warnedCritical) {
             warnedLow = true;
             warnedCritical = true;
-            sfxCritical.play();
+            Sfx.play("mixkit-vintage-telephone-ringtone-1356.wav");
             notify("Critical battery", `${pct}%${left ? ` · ~${left} left` : ""} — plug in now`, "warning-battery", "critical");
         } else if (pct <= lowThreshold && !warnedLow) {
             warnedLow = true;
-            sfxLow.play();
+            Sfx.play("mixkit-censorship-beep-1082.wav");
             notify("Low battery", `${pct}%${left ? ` · ~${left} remaining` : ""}`, "low-battery", "normal");
         }
     }
@@ -189,7 +169,7 @@ Singleton {
         repeat: true
         onTriggered: {
             const left = root.timeLeftText();
-            sfxCritical.play();
+            Sfx.play("mixkit-vintage-telephone-ringtone-1356.wav");
             root.notify("Battery still critical", `${root.pctDisplay}%${left ? ` · ~${left} left` : ""} — plug in now`, "warning-battery", "critical");
         }
     }

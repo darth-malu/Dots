@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Mpris
 
 Singleton {
@@ -23,7 +24,23 @@ Singleton {
     property bool hideWhenIdle: true
 
     // scroll-to-marquee song titles (pill + quicksettings card)
-    property bool marqueeEnabled: true
+    property bool marqueeEnabled: prefs.marqueeEnabled
+    onMarqueeEnabledChanged: prefs.marqueeEnabled = marqueeEnabled
+
+    // ── persistent store ──
+    FileView {
+        id: prefStore
+
+        path: Quickshell.env("HOME") + "/.config/quickshell/mpris-prefs.json"
+        watchChanges: false
+        onAdapterUpdated: writeAdapter()
+
+        JsonAdapter {
+            id: prefs
+
+            property bool marqueeEnabled: true
+        }
+    }
 
     // ── quicksettings card persistence ──
     // pinned player identity (set by cycling through players on the card)

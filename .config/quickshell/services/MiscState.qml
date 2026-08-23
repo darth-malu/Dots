@@ -18,7 +18,9 @@ Singleton {
 
     property bool toggleRofi: false
 
-    property bool toggleSysTray: false
+    // tray icons visibility — persisted so the tray survives restarts
+    property bool toggleSysTray: prefs.showSysTray
+    onToggleSysTrayChanged: prefs.showSysTray = toggleSysTray
     property bool toggleSettings: false
 
     // true while the quicksettings popup is open (used to suppress redundant music toasts)
@@ -30,7 +32,9 @@ Singleton {
     property date currentDate: new Date()
 
     property bool showPopup: false
-    property bool popupSolidBg: false
+    // persisted preference
+    property bool popupSolidBg: prefs.popupSolidBg
+    onPopupSolidBgChanged: prefs.popupSolidBg = popupSolidBg
 
     property var trackedDates: ({})
     property int trackedDatesRev: 0
@@ -53,24 +57,67 @@ Singleton {
     property bool showGpu: false
     property bool showCpuProcs: false
     property bool showMemProcs: false
-    property bool showPlayerChooser: false
-    property bool showShuffle: false
-    property bool showLoop: false
+    // ── media / now-playing toggles (persisted) ──
+    property bool showPlayerChooser: prefs.showPlayerChooser
+    onShowPlayerChooserChanged: prefs.showPlayerChooser = showPlayerChooser
 
-    // ── Bar module visibility ──
-    property bool showBluetooth: true
-    property bool showWifi: true
-    property bool showEthernet: true
-    property bool showBattery: true
-    property bool showNotifTray: true
+    property bool showShuffle: prefs.showShuffle
+    onShowShuffleChanged: prefs.showShuffle = showShuffle
+
+    property bool showLoop: prefs.showLoop
+    onShowLoopChanged: prefs.showLoop = showLoop
+
+    // ── Bar module visibility (persisted) ──
+    property bool showBluetooth: prefs.showBluetooth
+    onShowBluetoothChanged: prefs.showBluetooth = showBluetooth
+
+    property bool showWifi: prefs.showWifi
+    onShowWifiChanged: prefs.showWifi = showWifi
+
+    property bool showEthernet: prefs.showEthernet
+    onShowEthernetChanged: prefs.showEthernet = showEthernet
+
+    property bool showBattery: prefs.showBattery
+    onShowBatteryChanged: prefs.showBattery = showBattery
+
+    property bool showNotifTray: prefs.showNotifTray
+    onShowNotifTrayChanged: prefs.showNotifTray = showNotifTray
 
     // wifi popup — green highlighted name for the connected network
     // (false = classic white name, only the dot marks the connection)
-    property bool wifiGreenName: true
+    property bool wifiGreenName: prefs.wifiGreenName
+    onWifiGreenNameChanged: prefs.wifiGreenName = wifiGreenName
 
     // ethernet popup — session totals always visible (false = old behaviour,
     // totals only shown together with the traffic graphs)
-    property bool showNetTotals: true
+    property bool showNetTotals: prefs.showNetTotals
+    onShowNetTotalsChanged: prefs.showNetTotals = showNetTotals
+
+    // ── persistent store for user preferences ──
+    FileView {
+        id: prefStore
+
+        path: Quickshell.env("HOME") + "/.config/quickshell/prefs.json"
+        watchChanges: false
+        onAdapterUpdated: writeAdapter()
+
+        JsonAdapter {
+            id: prefs
+
+            property bool popupSolidBg: false
+            property bool showSysTray: true
+            property bool showPlayerChooser: false
+            property bool showShuffle: false
+            property bool showLoop: false
+            property bool wifiGreenName: true
+            property bool showNetTotals: true
+            property bool showBluetooth: true
+            property bool showWifi: true
+            property bool showEthernet: true
+            property bool showBattery: true
+            property bool showNotifTray: true
+        }
+    }
 
     // ── Avatar (shared by quicksettings + settings sidebar) ──
     readonly property string avatarPath: {

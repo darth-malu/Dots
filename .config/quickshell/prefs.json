@@ -1,0 +1,14 @@
+{
+    "popupSolidBg": false,
+    "showBattery": true,
+    "showBluetooth": true,
+    "showEthernet": true,
+    "showLoop": false,
+    "showNetTotals": true,
+    "showNotifTray": true,
+    "showPlayerChooser": false,
+    "showShuffle": false,
+    "showSysTray": true,
+    "showWifi": true,
+    "wifiGreenName": true
+}

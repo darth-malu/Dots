@@ -35,12 +35,11 @@ ShellRoot {
             margins {
                 right: 10
                 left: 6
-                // transparent setup sits flush with the top edge
-                top: BarState.solidBar ? 2 : 0
+                top: 0
             }
 
             // Solid (non-transparent) background — full slab, radius 4,
-            // hanging 2px off the top edge so it reads as a crisp panel
+            // flush with the top edge (no top margin)
             Rectangle {
                 visible: BarState.solidBar
                 anchors.fill: parent
