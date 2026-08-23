@@ -16,14 +16,26 @@ Scope {
     // which channel the OSD is currently displaying (output vs microphone)
     property bool osdIsMic: false
 
-    readonly property var activeNode: osdIsMic ? (defaultSource?.audio ?? null) : ifAudioNode
-    readonly property real nodeVolume: activeNode?.volume ?? 0
-    readonly property bool nodeMuted: activeNode?.muted ?? false
+    // values are snapshotted at the moment of the volume event — displaying
+    // them directly can never go stale or desync from what triggered the OSD
+    property real osdVolume: 0
+    property bool osdMuted: false
+
+    function trigger(fromMic) {
+        const a = fromMic ? (root.defaultSource?.audio ?? null) : root.ifAudioNode;
+        if (!a)
+            return;
+        root.osdIsMic = fromMic;
+        root.osdVolume = a.volume;
+        root.osdMuted = a.muted;
+        root.shouldShowOsd = true;
+        hideTimer.restart();
+    }
 
     readonly property color volColor: {
-        if (root.nodeMuted)
+        if (root.osdMuted)
             return "#6272a4";
-        var v = root.nodeVolume;
+        var v = root.osdVolume;
         if (v > 0.8)
             return "#ff79c6";
         if (v > 0.5)
@@ -39,15 +51,11 @@ Scope {
         target: root.ifAudioNode ?? null
 
         function onVolumeChanged() {
-            root.osdIsMic = false;
-            root.shouldShowOsd = true;
-            hideTimer.restart();
+            root.trigger(false);
         }
 
         function onMutedChanged() {
-            root.osdIsMic = false;
-            root.shouldShowOsd = true;
-            hideTimer.restart();
+            root.trigger(false);
         }
     }
 
@@ -55,15 +63,11 @@ Scope {
         target: root.defaultSource?.audio ?? null
 
         function onVolumeChanged() {
-            root.osdIsMic = true;
-            root.shouldShowOsd = true;
-            hideTimer.restart();
+            root.trigger(true);
         }
 
         function onMutedChanged() {
-            root.osdIsMic = true;
-            root.shouldShowOsd = true;
-            hideTimer.restart();
+            root.trigger(true);
         }
     }
 
@@ -122,13 +126,13 @@ Scope {
 
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: root.nodeMuted ? (root.osdIsMic ? "\uf131" : "\uf026") : Math.floor(root.nodeVolume * 100)
+                            text: root.osdMuted ? (root.osdIsMic ? "\uf131" : "\uf026") : Math.floor(root.osdVolume * 100)
                             color: root.volColor
                             font {
-                                pixelSize: root.nodeMuted ? 16 : 14
-                                family: root.nodeMuted ? "Symbols Nerd Font Mono" : "monofur Nerd Font"
+                                pixelSize: root.osdMuted ? 16 : 14
+                                family: root.osdMuted ? "Symbols Nerd Font Mono" : "monofur Nerd Font"
                                 bold: true
-                                letterSpacing: root.nodeMuted ? 0 : 1
+                                letterSpacing: root.osdMuted ? 0 : 1
                             }
                         }
                     }
@@ -146,7 +150,7 @@ Scope {
                         bottomMargin: 0
                     }
                     // height: (parent.height - bottomDeck.height - 12) * (nodeVolume)
-                    height: (parent.height - bottomDeck.height - 4) * root.nodeVolume
+                    height: (parent.height - bottomDeck.height - 4) * root.osdVolume
                     radius: 3
                     color: root.volColor
 

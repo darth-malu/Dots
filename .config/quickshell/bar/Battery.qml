@@ -402,82 +402,91 @@ RowLayout {
                     font { pixelSize: 10; bold: true; family: "Quicksand"; letterSpacing: 1 }
                 }
 
-                // ── Segmented profile control ──
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: 34
-                    radius: 9
-                    color: "#21222c"
-                    border.width: 1
-                    border.color: "#343746"
+                // ── Profile list — one sleek row per profile ──
+                Repeater {
+                    model: [
+                        { glyph: "\uf06c", name: "Power Saver", desc: "stretch battery life", profile: PowerProfile.PowerSaver, tint: "#50fa7b" },
+                        { glyph: "\uf24e", name: "Balanced", desc: "everyday use", profile: PowerProfile.Balanced, tint: "#bd93f9" },
+                        { glyph: "\uf0e7", name: "Performance", desc: "maximum throughput", profile: PowerProfile.Performance, tint: "#ff5555" }
+                    ]
 
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.margins: 3
-                        spacing: 3
+                    delegate: Rectangle {
+                        id: seg
 
-                        Repeater {
-                            model: [
-                                { glyph: "\uf06c", name: "Saver", profile: PowerProfile.PowerSaver, tint: "#96e6a1" },
-                                { glyph: "\uf24e", name: "Balanced", profile: PowerProfile.Balanced, tint: "#bd93f9" },
-                                { glyph: "\uf0e7", name: "Perf", profile: PowerProfile.Performance, tint: "#8be9fd" }
-                            ]
+                        required property var modelData
 
-                            delegate: Rectangle {
-                                id: seg
+                        readonly property bool active: PowerProfiles.profile === seg.modelData.profile
+                        readonly property color tint: seg.modelData.tint
 
-                                required property var modelData
+                        Layout.fillWidth: true
+                        implicitHeight: 32
+                        radius: 8
+                        color: seg.active ? Qt.rgba(seg.tint.r, seg.tint.g, seg.tint.b, 0.13)
+                            : segHover.hovered ? Qt.rgba(1, 1, 1, 0.04) : "transparent"
+                        border.width: seg.active ? 1 : 0
+                        border.color: Qt.rgba(seg.tint.r, seg.tint.g, seg.tint.b, 0.45)
 
-                                readonly property bool active: PowerProfiles.profile === seg.modelData.profile
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 120
+                            }
+                        }
 
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 9
+                            anchors.rightMargin: 9
+                            spacing: 8
+
+                            Text {
+                                text: seg.modelData.glyph
+                                color: seg.active ? seg.tint : segHover.hovered ? "#b8bfcb" : "#6272a4"
+                                font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
+                            }
+
+                            ColumnLayout {
+                                spacing: 0
                                 Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                radius: 6
-                                color: seg.active ? Qt.rgba(seg.modelData.tint.r, seg.modelData.tint.g, seg.modelData.tint.b, 0.16)
-                                    : segHover.hovered ? Qt.rgba(1, 1, 1, 0.05) : "transparent"
 
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: 120
-                                    }
+                                Text {
+                                    text: seg.modelData.name
+                                    color: seg.active ? "#f8f8f2" : "#b8bfcb"
+                                    font { pixelSize: 10; bold: true; family: "Quicksand" }
                                 }
 
-                                // hairline accent under the active segment
-                                Rectangle {
-                                    visible: seg.active
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    anchors.bottom: parent.bottom
-                                    width: parent.width * 0.4
-                                    height: 2
-                                    radius: 1
-                                    color: seg.modelData.tint
-                                }
-
-                                RowLayout {
-                                    anchors.centerIn: parent
-                                    spacing: 5
-
-                                    Text {
-                                        text: seg.modelData.glyph
-                                        color: seg.active ? seg.modelData.tint : "#6272a4"
-                                        font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
-                                    }
-
-                                    Text {
-                                        text: seg.modelData.name
-                                        color: seg.active ? "#f8f8f2" : segHover.hovered ? "#b8bfcb" : "#6272a4"
-                                        font { pixelSize: 9; bold: true; family: "Quicksand" }
-                                    }
-                                }
-
-                                HoverHandler {
-                                    id: segHover
-                                }
-
-                                TapHandler {
-                                    onTapped: PowerProfiles.profile = seg.modelData.profile
+                                Text {
+                                    text: seg.modelData.desc
+                                    color: seg.active ? Qt.rgba(seg.tint.r, seg.tint.g, seg.tint.b, 0.85) : "#6272a4"
+                                    font { pixelSize: 8; family: "ZedMono Nerd Font" }
                                 }
                             }
+
+                            // radio indicator
+                            Rectangle {
+                                implicitWidth: 14
+                                implicitHeight: 14
+                                radius: 7
+                                color: "transparent"
+                                border.width: 1.5
+                                border.color: seg.active ? seg.tint : "#44475a"
+
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    implicitWidth: 6
+                                    implicitHeight: 6
+                                    radius: 3
+                                    color: seg.tint
+                                    visible: seg.active
+                                }
+                            }
+                        }
+
+                        HoverHandler {
+                            id: segHover
+                        }
+
+                        TapHandler {
+                            onTapped: PowerProfiles.profile = seg.modelData.profile
                         }
                     }
                 }

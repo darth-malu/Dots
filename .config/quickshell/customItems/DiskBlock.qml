@@ -109,10 +109,7 @@ BarBlock {
             let g = disk.mapToGlobal(0, 0);
             return g.x + (disk.width / 2) - (width / 2);
         }
-        anchor.rect.y: {
-            let g = disk.mapToGlobal(0, 0);
-            return g.y + disk.height + 4;
-        }
+        anchor.rect.y: 33
 
         implicitWidth: 420
         implicitHeight: allDisksCol.implicitHeight + 56
