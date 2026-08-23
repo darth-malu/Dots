@@ -75,6 +75,22 @@ Item {
     }
 
     IpcHandler {
+        target: 'brightness'
+        function get(): string {
+            return BrightnessState.pctDisplay.toString();
+        }
+
+        function set(pct: string): void {
+            BrightnessState.setLevel(parseInt(pct) || 0);
+        }
+
+        function adjust(delta: string): void {
+            const d = parseInt(delta) || 0;
+            BrightnessState.setLevel(BrightnessState.pctDisplay + d);
+        }
+    }
+
+    IpcHandler {
         target: 'netspeed'
         function toggleNet(): void {
             NetworkState.netspeedVisible = !NetworkState.netspeedVisible;

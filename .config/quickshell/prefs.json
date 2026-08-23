@@ -1,4 +1,5 @@
 {
+    "iconWorkspaces": true,
     "popupSolidBg": false,
     "showBattery": true,
     "showBluetooth": true,
@@ -8,7 +9,9 @@
     "showNotifTray": true,
     "showPlayerChooser": false,
     "showShuffle": false,
-    "showSysTray": true,
+    "showSysTray": false,
+    "showVolumeIn": true,
+    "showVolumeOut": true,
     "showWifi": true,
     "wifiGreenName": true
 }

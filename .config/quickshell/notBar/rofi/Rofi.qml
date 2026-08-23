@@ -1,6 +1,7 @@
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Widgets
+import Quickshell.Hyprland
 import QtQuick.Layouts
 import QtQuick.Controls
 import QtQuick
@@ -26,6 +27,19 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+
+    // focus a Hyprland client reliably — wayland.activate() sends an
+    // xdg-activation token which Hyprland frequently ignores, so go straight
+    // through the dispatcher using the toplevel address
+    function focusToplevel(tl) {
+        if (!tl)
+            return;
+        if (tl.address)
+            Hyprland.dispatch("focuswindow address:" + tl.address);
+        else if (tl.wayland)
+            tl.wayland.activate();
+    }
+
     // BackgroundEffect.blurRegion: Region {
     //     item: launcher.contentItem
     // }
@@ -62,27 +76,33 @@ PanelWindow {
             anchors.margins: 10
             spacing: 10
 
+            // ── header: mode glyph · search with placeholder · result count ──
             RowLayout {
-                spacing: 20
+                spacing: 10
 
                 Text {
-                    text: " "
+                    text: RofiState.toggleOpenWindows ? "\uf2d0" : RofiState.toggleAppLauncher ? "\uf009" : "\uf0ea"
                     color: Themes.rofiAccent
-                    horizontalAlignment: Qt.AlignRight
+                    font {
+                        pixelSize: 13
+                        family: "Symbols Nerd Font Mono"
+                    }
                 }
 
                 TextField {
                     id: search
 
                     Layout.fillWidth: true
-                    Layout.bottomMargin: 2
                     enabled: true
                     hoverEnabled: true
                     maximumLength: 30
+                    placeholderText: RofiState.toggleOpenWindows ? "search windows" : RofiState.toggleAppLauncher ? "launch app" : "search clipboard"
+                    placeholderTextColor: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.35)
                     color: search.enabled ? Themes.windowTextColor : 'transparent'
+                    selectByMouse: true
                     background: Rectangle {
                         color: 'transparent'
-                        implicitHeight: 10
+                        implicitHeight: 14
                         implicitWidth: 200
                         radius: 4
                     }
@@ -100,7 +120,7 @@ PanelWindow {
                             if (current) {
                                 if (RofiState.toggleOpenWindows)
                                     // Current Item is a Window(toplevel)
-                                    current.modelData.wayland.activate();
+                                    focusToplevel(current.modelData);
                                 else if (RofiState.toggleAppLauncher)
                                     // Current Items is a DesktopEntry.
                                     current.modelData.execute();
@@ -129,6 +149,23 @@ PanelWindow {
                         }
                     }
                 }
+
+                Text {
+                    visible: itemLauncher.count > 0
+                    text: itemLauncher.count
+                    color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.4)
+                    font {
+                        pixelSize: 10
+                        family: "ZedMono Nerd Font"
+                    }
+                }
+            }
+
+            // hairline separating the query from the results
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: 1
+                color: Qt.rgba(Themes.rofiBorder.r, Themes.rofiBorder.g, Themes.rofiBorder.b, 0.35)
             }
 
             function copier() {
@@ -139,6 +176,7 @@ PanelWindow {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
+                spacing: 2
                 highlightMoveDuration: 150
                 // highlightRangeMode: ListView.StrictlyEnforceRange
                 keyNavigationWraps: false
@@ -164,7 +202,7 @@ PanelWindow {
                     let current = currentItem;
                     if (current) {
                         if (RofiState.toggleOpenWindows)
-                            current.modelData.wayland.activate();
+                            focusToplevel(current.modelData);
                         else if (RofiState.toggleAppLauncher)
                             current.modelData.execute();
                         else if (RofiState.toggleClipHist)
@@ -176,6 +214,31 @@ PanelWindow {
 
                 ScrollBar.vertical: ScrollBar {
                     policy: itemLauncher.contentHeight > itemLauncher.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                }
+
+                // quiet empty state instead of a blank box
+                Text {
+                    anchors.centerIn: parent
+                    visible: itemLauncher.count === 0
+                    text: RofiState.toggleClipHist ? "clipboard is empty" : "no matches"
+                    color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.35)
+                    font {
+                        pixelSize: 11
+                        letterSpacing: 1
+                        family: "ZedMono Nerd Font"
+                    }
+                }
+            }
+
+            // ── footer: contextual key hints ──
+            Text {
+                Layout.alignment: Qt.AlignHCenter
+                text: RofiState.toggleOpenWindows ? "\u21b5 focus \u00b7 \u2191\u2193 select \u00b7 esc close" : RofiState.toggleAppLauncher ? "\u21b5 launch \u00b7 \u2191\u2193 select \u00b7 esc close" : "\u21b5 paste \u00b7 del forget \u00b7 esc close"
+                color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.3)
+                font {
+                    pixelSize: 9
+                    letterSpacing: 2
+                    family: "ZedMono Nerd Font"
                 }
             }
         }

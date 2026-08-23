@@ -33,25 +33,23 @@ ShellRoot {
             implicitHeight: 26
 
             margins {
-                right: 10
-                left: 6
+                // Full mode is edge-to-edge — no side margins at all
+                right: BarState.barMode === 2 ? 0 : 10
+                left: BarState.barMode === 2 ? 0 : 6
                 top: 0
             }
 
-            // Solid (non-transparent) background — full slab, radius 4,
-            // flush with the top edge (no top margin)
+            // Solid slab (mode 1): rounded, hairline border, side margins.
+            // Full slab (mode 2): true full-bleed — square corners, no border.
             Rectangle {
-                visible: BarState.solidBar
+                visible: BarState.barMode !== 0
                 anchors.fill: parent
-                radius: 4
+                radius: BarState.barMode === 2 ? 0 : 4
                 color: "#181825"
-                border.width: 1
+                border.width: BarState.barMode === 2 ? 0 : 1
                 border.color: "#313244"
                 z: -1
             }
-
-            // Transparent setup — no background at all, modules float on the
-            // wallpaper; bar sits flush with the top edge (no top margin)
 
             anchors {
                 top: true
@@ -69,8 +67,11 @@ ShellRoot {
                     Layout.alignment: Qt.AlignLeft
                     Layout.leftMargin: 6
 
-                    // Workspacesicons {}
-                    // Workspaces {} //FIXME: Hyprland Workspaces seem not to be working
+                    // workspace module — icons (default) or numbers, swappable live
+                    Loader {
+                        sourceComponent: MiscState.iconWorkspaces ? iconWorkspacesComp : numWorkspacesComp
+                    }
+
                     ActiveWindow {}
                 }
 
@@ -87,13 +88,13 @@ ShellRoot {
                     Resources {
                         host: barr
                     }
+                    SystemTray {
+                        host: barr
+                    }
                     ClockWidget {
                         host: barr
                     }
                     Battery {
-                        host: barr
-                    }
-                    SystemTray {
                         host: barr
                     }
                 }
@@ -125,6 +126,18 @@ ShellRoot {
 
             BrightnessOsd {
                 barWindow: barr
+            }
+
+            Component {
+                id: iconWorkspacesComp
+
+                Workspacesicons {}
+            }
+
+            Component {
+                id: numWorkspacesComp
+
+                Workspaces {}
             }
         }
     }

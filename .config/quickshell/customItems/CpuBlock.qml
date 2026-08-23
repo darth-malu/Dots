@@ -44,7 +44,8 @@ BarBlock {
     // left-click opens the per-process popup · right-click toggles the
     // inline usage readout beside the gauge
     onClicked: mouse => {
-        MiscState.showCpuProcs = !MiscState.showCpuProcs;
+        if (mouse.button === Qt.LeftButton)
+            MiscState.showCpuProcs = !MiscState.showCpuProcs;
     }
 
     onRightClicked: mouse => {
@@ -163,7 +164,7 @@ BarBlock {
             id: procPopup
             visible: MiscState.showCpuProcs
             grabFocus: true
-            color: MiscState.popupSolidBg ? "#282a36" : "transparent"
+            color: "transparent"
 
             anchor.window: cpu.host
             anchor.rect.x: {
@@ -178,7 +179,7 @@ BarBlock {
             Rectangle {
                 anchors.fill: parent
                 radius: 12
-                color: "#282a36"
+                color: MiscState.popupCardBg
                 border.width: 1
                 border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
 

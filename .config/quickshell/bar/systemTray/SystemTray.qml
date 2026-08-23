@@ -30,9 +30,10 @@ RowLayout {
         asynchronous: true
         active: MiscState.toggleSysTray
 
-        Layout.fillHeight: true // ENSURE THE LOADER TAKES UP SPACE- enable clicking inside it 😀
+        // breathing room between the tray slab and the bar edges
         Layout.topMargin: 4
-        Layout.bottomMargin: 3
+        Layout.bottomMargin: 4
+        Layout.alignment: Qt.AlignVCenter
 
         sourceComponent: sysBlock
     }
@@ -55,92 +56,100 @@ RowLayout {
     }
     Component {
         id: sysBlock
+        // classic tray row inside one themed pill — each item keeps its own
+        // hover tint; the pill adapts to the bar style setting:
+        //   transparent bar → frosted glass tint
+        //   solid / full bar → dark slab, distinct from the bar itself
         BarBlock {
+            id: traySlab
+
             interactive: false
 
-            implicitWidth: tray.implicitWidth
-            implicitHeight: tray.implicitHeight
+            Layout.preferredWidth: trayRow.implicitWidth + 14
+            Layout.preferredHeight: trayRow.implicitHeight + 8
 
-            color: trayHover.hovered ? Qt.rgba(1, 1, 1, 0.28) : Qt.rgba(1, 1, 1, 0.19)
+            readonly property bool glassy: BarState.barMode === 0
+
+            radius: height / 2
+            color: glassy ? Qt.rgba(1, 1, 1, 0.14) : "#313244"
+            border.width: 1
+            border.color: glassy ? Qt.rgba(1, 1, 1, 0.20) : Qt.rgba(1, 1, 1, 0.07)
 
             Behavior on color {
-                ColorAnimation { duration: 120 }
+                ColorAnimation { duration: 160 }
             }
-
-            HoverHandler {
-                id: trayHover
+            Behavior on border.color {
+                ColorAnimation { duration: 160 }
             }
 
             content: RowLayout {
-                id: tray
-                anchors.fill: parent
-                anchors.leftMargin: 2
-                anchors.rightMargin: 2
+                id: trayRow
+
+                spacing: 3
 
                 Repeater {
                     id: systemTrayRepeater
                     model: SystemTray.items
 
-                    delegate: MouseArea {
+                    delegate: Rectangle {
                         id: delegate
 
                         required property SystemTrayItem modelData
 
-                        property alias item: delegate.modelData
-
-                        Layout.fillHeight: true
-                        Layout.preferredWidth: Math.max(icon.implicitWidth + 8, 20)
-                        Layout.alignment: Qt.AlignVCenter
-
+                        readonly property var item: modelData
                         readonly property bool hasMenu: item?.hasMenu ?? false
                         // menu only opens while this flag is armed — a stale
                         // QsMenuAnchor grabbing focus was closing it instantly
                         property bool menuArmed: false
-                        onHasMenuChanged: if (!hasMenu) menuArmed = false
+                        onHasMenuChanged: if (!hasMenu)
+                            menuArmed = false
 
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+                        Layout.alignment: Qt.AlignVCenter
+                        implicitWidth: 24
+                        implicitHeight: 22
+                        radius: 6
+                        color: delegateMa.pressed ? Qt.rgba(0.741, 0.576, 0.976, 0.35)
+                            : delegateMa.containsMouse ? Qt.rgba(1, 1, 1, 0.16)
+                            : "transparent"
 
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: height / 2
-                            color: delegate.pressed ? Qt.rgba(0.741, 0.576, 0.976, 0.35)
-                                : delegate.containsMouse ? Qt.rgba(1, 1, 1, 0.14)
-                                : "transparent"
-
-                            Behavior on color {
-                                ColorAnimation { duration: 110 }
-                            }
-                        }
-
-                        onClicked: event => {
-                            if (event.button == Qt.LeftButton) {
-                                try { item.activate(); } catch (e) {}
-                            } else if (event.button == Qt.RightButton) {
-                                if (delegate.hasMenu) {
-                                    delegate.menuArmed = true;
-                                    menuAnchor.open();
-                                } else {
-                                    try { item.activate(); } catch (e) {}
-                                }
-                            } else if (event.button == Qt.MiddleButton) {
-                                try { item.secondaryActivate(); } catch (e) {}
-                            }
+                        Behavior on color {
+                            ColorAnimation { duration: 110 }
                         }
 
                         IconImage {
-                            id: icon
                             anchors.centerIn: parent
-                            source: modelData.icon
+                            source: parent.item.icon
                             implicitSize: 13
                             asynchronous: true
                         }
 
+                        MouseArea {
+                            id: delegateMa
+
+                            anchors.fill: parent
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+
+                            onClicked: event => {
+                                if (event.button == Qt.LeftButton) {
+                                    try { delegate.item.activate(); } catch (e) {}
+                                } else if (event.button == Qt.RightButton) {
+                                    if (delegate.hasMenu) {
+                                        delegate.menuArmed = true;
+                                        menuAnchor.open();
+                                    } else {
+                                        try { delegate.item.activate(); } catch (e) {}
+                                    }
+                                } else if (event.button == Qt.MiddleButton) {
+                                    try { delegate.item.secondaryActivate(); } catch (e) {}
+                                }
+                            }
+                        }
+
                         QsMenuAnchor {
                             id: menuAnchor
-                            menu: delegate.menuArmed ? modelData.menu : null
+                            menu: delegate.menuArmed ? delegate.item.menu : null
 
                             anchor.window: delegate.QsWindow.window
                             anchor.adjustment: PopupAdjustment.Flip
@@ -156,6 +165,10 @@ RowLayout {
                 }
             }
         }
+    }
+
+    VolumePills {
+        host: root.host
     }
 
     QuickSettings {

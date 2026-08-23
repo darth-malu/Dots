@@ -293,30 +293,63 @@ Loader {
                 }
             }
 
-            // ── rates (original design) ──
+            // ── rates — arrows carry the direction, values sit on a fixed
+            // grid so the block never jitters as digits change ──
             RowLayout {
                 visible: NetworkState.netspeedVisible && root.online
-                spacing: 5
+                spacing: 7
 
                 Item {
                     Layout.preferredWidth: 2
                 }
 
-                BarText {
-                    text: root.fmtRate(root.rxRate)
-                    color: "#bd93f9"
-                    font {
-                        pixelSize: 10
-                        family: "ZedMono Nerd Font"
+                RowLayout {
+                    spacing: 2
+
+                    Text {
+                        text: "\u2193"
+                        color: Qt.rgba(0.741, 0.576, 0.976, 0.55)
+                        font {
+                            pixelSize: 10
+                            family: "ZedMono Nerd Font"
+                        }
+                    }
+
+                    BarText {
+                        text: root.fmtRate(root.rxRate)
+                        color: "#bd93f9"
+                        horizontalAlignment: Text.AlignRight
+                        Layout.preferredWidth: 34
+                        font {
+                            pixelSize: 10
+                            bold: true
+                            family: "ZedMono Nerd Font"
+                        }
                     }
                 }
 
-                BarText {
-                    text: root.fmtRate(root.txRate)
-                    color: "#ff79c6"
-                    font {
-                        pixelSize: 10
-                        family: "ZedMono Nerd Font"
+                RowLayout {
+                    spacing: 2
+
+                    Text {
+                        text: "\u2191"
+                        color: Qt.rgba(1, 0.474, 0.776, 0.55)
+                        font {
+                            pixelSize: 10
+                            family: "ZedMono Nerd Font"
+                        }
+                    }
+
+                    BarText {
+                        text: root.fmtRate(root.txRate)
+                        color: "#ff79c6"
+                        horizontalAlignment: Text.AlignRight
+                        Layout.preferredWidth: 34
+                        font {
+                            pixelSize: 10
+                            bold: true
+                            family: "ZedMono Nerd Font"
+                        }
                     }
                 }
             }
@@ -340,7 +373,7 @@ Loader {
                 id: netPopup
                 visible: NetworkState.netPopupVisible
                 grabFocus: true
-                color: MiscState.popupSolidBg ? "#282a36" : "transparent"
+                color: "transparent"
 
                 anchor.window: loaderBig.host
                 anchor.rect.x: {
@@ -357,7 +390,7 @@ Loader {
                     id: cardBg
                     anchors.fill: parent
                     radius: 12
-                    color: "#282a36"
+                    color: MiscState.popupCardBg
                     border.width: 1
                     border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
 
@@ -496,27 +529,7 @@ Loader {
                                     }
                                 }
 
-                                // ── Live traffic graphs — live rates right ──
-                                RowLayout {
-                                    visible: root.ethGraphs
-                                    Layout.fillWidth: true
-                                    spacing: 8
-
-                                    Item { Layout.fillWidth: true }
-
-                                    Text {
-                                        text: `↓ ${root.fmtRate(root.rxRate)}`
-                                        color: "#bd93f9"
-                                        font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
-                                    }
-
-                                    Text {
-                                        text: `↑ ${root.fmtRate(root.txRate)}`
-                                        color: "#ff79c6"
-                                        font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
-                                    }
-                                }
-
+                                // ── Live traffic graphs — current speed rendered inside each graph ──
                                 TrafficGraph {
                                     visible: root.ethGraphs
                                     accent: "#bd93f9"
@@ -524,6 +537,7 @@ Loader {
                                     peak: root.peakRx
                                     tick: root.graphTick
                                     maxLen: root.historyMax
+                                    label: "\u2193 " + root.fmtRate(root.rxRate)
                                 }
 
                                 TrafficGraph {
@@ -533,6 +547,7 @@ Loader {
                                     peak: root.peakTx
                                     tick: root.graphTick
                                     maxLen: root.historyMax
+                                    label: "\u2191 " + root.fmtRate(root.txRate)
                                 }
                         }
 
@@ -567,6 +582,8 @@ Loader {
         property color accent: "#bd93f9"
         property int tick
         property int maxLen: 60
+        // current speed chip drawn inside the graph, top-right
+        property string label: ""
 
         Layout.fillWidth: true
         implicitHeight: 34
@@ -576,6 +593,23 @@ Loader {
 
         onTickChanged: tcanvas.requestPaint()
         onWidthChanged: tcanvas.requestPaint()
+        onLabelChanged: tcanvas.requestPaint()
+
+        Text {
+            anchors {
+                right: parent.right
+                top: parent.top
+                margins: 4
+            }
+            text: tgraph.label
+            visible: tgraph.label.length > 0
+            color: Qt.lighter(tgraph.accent, 1.25)
+            font {
+                pixelSize: 9
+                bold: true
+                family: "ZedMono Nerd Font"
+            }
+        }
 
         Canvas {
             id: tcanvas

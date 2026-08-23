@@ -94,7 +94,7 @@ RowLayout {
                 color: root.accent
                 border.width: 1
                 border.color: Qt.rgba(0, 0, 0, 0.4)
-                scale: drag.dragging || drag.containsMouse ? 1.15 : 1.0
+                scale: drag.pressed || drag.containsMouse ? 1.15 : 1.0
 
                 Behavior on scale {
                     NumberAnimation {
@@ -104,7 +104,7 @@ RowLayout {
                 }
 
                 Behavior on x {
-                    enabled: !drag.dragging
+                    enabled: !drag.pressed
                     NumberAnimation {
                         duration: 60
                     }
@@ -119,20 +119,23 @@ RowLayout {
                 cursorShape: Qt.PointingHandCursor
                 hoverEnabled: true
 
-                function setFromMouse(mx) {
+                function setFromMouse(mx, commit) {
                     if (!root.ready)
-                        return;
+                        return false;
                     const r = mapToItem(parent, 0, 0);
                     const pct = Math.max(0, Math.min((mx - r.x) / parent.width, 1));
-                    BrightnessState.setLevel(pct * 100);
+                    // drags only preview; release/wheel/click commit to hardware
+                    BrightnessState.setLevel(pct * 100, commit);
                     root.adjusted(Math.round(pct * 100));
+                    return true;
                 }
 
-                onPressed: mouse => setFromMouse(mouse.x)
+                onPressed: mouse => setFromMouse(mouse.x, true)
                 onPositionChanged: mouse => {
                     if (pressed)
-                        setFromMouse(mouse.x);
+                        setFromMouse(mouse.x, false);
                 }
+                onReleased: mouse => setFromMouse(mouse.x, true)
                 onWheel: wheel => {
                     if (!root.ready)
                         return;

@@ -229,7 +229,7 @@ BarBlock {
             id: btPopup
             visible: NetworkState.btPopupVisible
             grabFocus: true
-            color: MiscState.popupSolidBg ? "#282a36" : "transparent"
+            color: "transparent"
 
             anchor.window: root.host
             anchor.rect.x: {
@@ -245,7 +245,7 @@ BarBlock {
             Rectangle {
                 anchors.fill: parent
                 radius: 12
-                color: "#282a36"
+                color: MiscState.popupCardBg
                 border.width: 1
                 border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
 

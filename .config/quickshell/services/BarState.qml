@@ -8,9 +8,14 @@ Singleton {
     property bool enableBar: prefs.enableBar
     onEnableBarChanged: prefs.enableBar = enableBar
 
-    // false = transparent (no bg, flush top) · true = solid slab
-    property bool solidBar: prefs.solidBar
-    onSolidBarChanged: prefs.solidBar = solidBar
+    // 0 = transparent (no bg, flush top)
+    // 1 = solid slab (rounded, hairline border, side margins)
+    // 2 = full-bleed slab (edge-to-edge, no side margins, no border)
+    property int barMode: prefs.barMode
+    onBarModeChanged: prefs.barMode = barMode
+
+    // legacy flag kept for older consumers/settings state
+    readonly property bool solidBar: barMode === 1
 
     // ── persistent store ──
     FileView {
@@ -24,7 +29,11 @@ Singleton {
             id: prefs
 
             property bool enableBar: true
+            // legacy boolean — seeds barMode on first load; once an explicit
+            // mode is stored the binding is broken and this key is ignored
             property bool solidBar: false
+            // no stored value yet → derive from the old boolean (migration)
+            property int barMode: prefs.solidBar ? 1 : 0
         }
     }
 }

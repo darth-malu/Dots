@@ -101,7 +101,7 @@ BarBlock {
         id: menuPopup
         visible: root.showMenu
         grabFocus: true
-        color: MiscState.popupSolidBg ? "#282a36" : "transparent"
+        color: "transparent"
 
         anchor.window: root.host
         anchor.rect.x: {
@@ -120,7 +120,7 @@ BarBlock {
             id: menuCol
             anchors.fill: parent
             radius: 10
-            color: "#282a36"
+            color: MiscState.popupCardBg
             border.color: "#343746"
 
             ColumnLayout {

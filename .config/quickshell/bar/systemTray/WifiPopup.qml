@@ -101,6 +101,8 @@ Item {
         property color accent: "#bd93f9"
         property int tick
         property int maxLen: 60
+        // current speed chip drawn inside the graph, top-right
+        property string label: ""
 
         Layout.fillWidth: true
         implicitHeight: 34
@@ -110,6 +112,23 @@ Item {
 
         onTickChanged: tcanvas.requestPaint()
         onWidthChanged: tcanvas.requestPaint()
+        onLabelChanged: tcanvas.requestPaint()
+
+        Text {
+            anchors {
+                right: parent.right
+                top: parent.top
+                margins: 4
+            }
+            text: tgraph.label
+            visible: tgraph.label.length > 0
+            color: Qt.lighter(tgraph.accent, 1.25)
+            font {
+                pixelSize: 9
+                bold: true
+                family: "ZedMono Nerd Font"
+            }
+        }
 
         Canvas {
             id: tcanvas
@@ -617,7 +636,7 @@ Item {
             id: wifiPopup
             visible: NetworkState.wifiPopupVisible
             grabFocus: true
-            color: MiscState.popupSolidBg ? "#282a36" : "transparent"
+            color: "transparent"
 
             anchor.window: root.host
             anchor.rect.x: {
@@ -633,7 +652,7 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 radius: 12
-                color: "#282a36"
+                color: MiscState.popupCardBg
                 border.width: 1
                 border.color: Qt.rgba(0.74, 0.58, 0.98, 0.35)
 
@@ -828,31 +847,14 @@ Item {
                                     }
                                 }
 
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 8
-
-                                    Item { Layout.fillWidth: true }
-
-                                    Text {
-                                        text: `\u2193 ${root.netRoot.fmtRate(root.netRoot.rxRate)}`
-                                        color: "#bd93f9"
-                                        font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
-                                    }
-
-                                    Text {
-                                        text: `\u2191 ${root.netRoot.fmtRate(root.netRoot.txRate)}`
-                                        color: "#ff79c6"
-                                        font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
-                                    }
-                                }
-
+                                // ── Live traffic graphs — current speed rendered inside each graph ──
                                 TrafficGraph {
                                     accent: "#bd93f9"
                                     history: root.netRoot.rxHistory
                                     peak: root.netRoot.peakRx
                                     tick: root.netRoot.graphTick
                                     maxLen: root.netRoot.historyMax
+                                    label: "\u2193 " + root.netRoot.fmtRate(root.netRoot.rxRate)
                                 }
 
                                 TrafficGraph {
@@ -861,6 +863,7 @@ Item {
                                     peak: root.netRoot.peakTx
                                     tick: root.netRoot.graphTick
                                     maxLen: root.netRoot.historyMax
+                                    label: "\u2191 " + root.netRoot.fmtRate(root.netRoot.txRate)
                                 }
                             }
                         }

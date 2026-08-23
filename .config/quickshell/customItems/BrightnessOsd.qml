@@ -1,29 +1,30 @@
 import QtQuick
-import QtQuick.Layouts
 import Quickshell
 import qs.services
 
-// Standalone OSD pill (mirrors the volume OSD look) that pops under the bar
-// whenever brightness changes, tinted by level.
-PopupWindow {
+// Vertical edge OSD mirroring notBar/Volume.qml — fill rises from the
+// bottom, live % sits in the deck below, tint follows the level.
+PanelWindow {
     id: osd
 
     required property var barWindow
 
-    // warm = dim · yellow = mid · green = bright (same scheme as wifi signal)
+    // warm = dim · yellow = mid · green = bright
     readonly property color accent: BrightnessState.pctDisplay <= 33 ? "#ffb86c"
         : BrightnessState.pctDisplay <= 66 ? "#f1fa8c"
         : "#50fa7b"
 
     property bool shown: false
 
-    anchor.window: barWindow
-    anchor.rect.x: Math.round((barWindow?.width ?? 0) / 2 - width / 2)
-    anchor.rect.y: 33
-    implicitWidth: pillRow.implicitWidth + 26
-    implicitHeight: 28
+    visible: osd.shown && !MiscState.qsOpen
+    anchors.right: true
+    margins.right: screen.width / 95
+    exclusiveZone: 0
+
+    implicitWidth: 38
+    implicitHeight: 180
     color: "transparent"
-    visible: osd.shown
+    mask: Region {}
 
     function bump() {
         osd.shown = true;
@@ -33,7 +34,7 @@ PopupWindow {
     Timer {
         id: hideTimer
 
-        interval: 900
+        interval: 1200
         onTriggered: osd.shown = false
     }
 
@@ -41,39 +42,65 @@ PopupWindow {
         target: BrightnessState
 
         function onLevelChanged() {
-            osd.bump();
+            if (!MiscState.qsOpen)
+                osd.bump();
         }
     }
 
-    Rectangle {
+    Item {
         anchors.fill: parent
-        radius: height / 2
-        color: Qt.rgba(0, 0, 0, 0.72)
-        border.width: 1
-        border.color: Qt.rgba(osd.accent.r, osd.accent.g, osd.accent.b, 0.35)
+        opacity: osd.shown ? 1 : 0
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 150
+            }
+        }
 
-        RowLayout {
-            id: pillRow
+        Rectangle {
+            anchors.fill: parent
+            radius: 5
+            color: Qt.rgba(0.04, 0.01, 0.1, 0.75)
+            border.color: Qt.rgba(1, 1, 1, 0.06)
+            border.width: 1
 
-            anchors.centerIn: parent
-            spacing: 6
+            Item {
+                id: bottomDeck
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: 22
 
-            Text {
-                text: BrightnessState.pctDisplay <= 15 ? "\uf186" : "\uf185"
-                color: osd.accent
-                font {
-                    pixelSize: 13
-                    family: "Symbols Nerd Font Mono"
+                Text {
+                    anchors.centerIn: parent
+                    text: BrightnessState.pctDisplay
+                    color: osd.accent
+                    font {
+                        pixelSize: 14
+                        family: "monofur Nerd Font"
+                        bold: true
+                        letterSpacing: 1
+                    }
                 }
             }
 
-            Text {
-                text: BrightnessState.pctDisplay + "%"
-                color: "#f8f8f2"
-                font {
-                    pixelSize: 12
-                    bold: true
-                    family: "ZedMono Nerd Font"
+            Rectangle {
+                id: bar
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    bottom: bottomDeck.top
+                    leftMargin: 4
+                    rightMargin: 4
+                    bottomMargin: 0
+                }
+                height: (parent.height - bottomDeck.height - 4) * Math.max(0, Math.min(BrightnessState.level, 1))
+                radius: 3
+                color: osd.accent
+
+                Behavior on height {
+                    NumberAnimation {
+                        duration: 100
+                    }
                 }
             }
         }

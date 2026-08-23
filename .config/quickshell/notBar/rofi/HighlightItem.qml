@@ -9,24 +9,18 @@ Item {
     ClippingRectangle {
         anchors.fill: parent
         color: Themes.rofiHighlightBg
-        radius: 3
+        radius: 6
 
+        // single rounded accent notch hugging the left edge
         Rectangle {
             anchors {
                 left: parent.left
-                top: parent.top
-                bottom: parent.bottom
+                leftMargin: 2
+                verticalCenter: parent.verticalCenter
             }
-            width: 2
-            color: root.accentColor
-        }
-        Rectangle {
-            anchors {
-                right: parent.right
-                top: parent.top
-                bottom: parent.bottom
-            }
-            width: 2
+            width: 3
+            height: parent.height - 8
+            radius: 1.5
             color: root.accentColor
         }
     }

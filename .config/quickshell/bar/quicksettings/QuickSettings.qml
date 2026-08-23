@@ -67,7 +67,10 @@ BarBlock {
         id: quickSettingsPopup
         visible: root.showQsPopup
         grabFocus: true
-        color: MiscState.popupSolidBg ? "#282a36" : "transparent"
+        // always transparent — the card below paints its own opaque
+        // background; an opaque window backdrop would square off the
+        // corners around the rounded card and shadow (border artifacts)
+        color: "transparent"
 
         anchor.window: root.host
         anchor.rect.x: {
@@ -97,7 +100,7 @@ BarBlock {
             anchors.margins: 8
             radius: 12
             visible: false
-            color: "#282a36"
+            color: MiscState.popupCardBg
         }
 
         Rectangle {
@@ -105,7 +108,7 @@ BarBlock {
             anchors.fill: parent
             anchors.margins: 8
             radius: 12
-            color: "#282a36"
+            color: MiscState.popupCardBg
 
             Shortcut {
                 sequence: "Escape"
@@ -157,10 +160,18 @@ BarBlock {
                                     Layout.preferredHeight: 40
                                     radius: height / 2
                                     color: avatarMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "#343746"
+                                    // hairline ring keeps the circle crisp against the card
+                                    border.width: 1
+                                    border.color: avatarMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.55) : Qt.rgba(1, 1, 1, 0.14)
+
+                                    Behavior on border.color {
+                                        ColorAnimation { duration: 140 }
+                                    }
 
                                     Image {
                                         id: avatarImg
                                         anchors.fill: parent
+                                        anchors.margins: 1
                                         source: MiscState.avatarUrl
                                         fillMode: Image.PreserveAspectCrop
                                         asynchronous: true
@@ -184,8 +195,12 @@ BarBlock {
                                     }
                                 }
 
+                                // identity block — optically centred against the
+                                // 40px avatar, hostname over dimmed uptime
                                 ColumnLayout {
-                                    spacing: 2
+                                    spacing: 1
+                                    Layout.alignment: Qt.AlignVCenter
+                                    Layout.fillWidth: true
 
                                     StyledText {
                                         text: root.hostName
@@ -194,22 +209,36 @@ BarBlock {
                                             pixelSize: 13
                                             family: "Quicksand"
                                             bold: true
+                                            letterSpacing: 0.3
                                         }
                                         color: "#f8f8f2"
                                         elide: Text.ElideRight
+                                        Layout.maximumWidth: 180
                                     }
 
-                                    StyledText {
-                                        text: ResourcesState.uptimeText
-                                        visible: text.length > 0
-                                        horizontalAlignment: Text.AlignLeft
-                                        font {
-                                            pixelSize: 12
-                                            family: "Monofur Nerd Font"
-                                            weight: Font.Bold
+                                    RowLayout {
+                                        spacing: 4
+
+                                        Text {
+                                            text: "\uf017"
+                                            color: "#6272a4"
+                                            font {
+                                                pixelSize: 9
+                                                family: "Symbols Nerd Font Mono"
+                                            }
                                         }
-                                        color: "#b8bfcb"
-                                        elide: Text.ElideRight
+
+                                        StyledText {
+                                            text: ResourcesState.uptimeText
+                                            visible: text.length > 0
+                                            horizontalAlignment: Text.AlignLeft
+                                            font {
+                                                pixelSize: 10
+                                                family: "ZedMono Nerd Font"
+                                            }
+                                            color: "#b8bfcb"
+                                            elide: Text.ElideRight
+                                        }
                                     }
                                 }
 

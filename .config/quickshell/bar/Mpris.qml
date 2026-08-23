@@ -138,6 +138,10 @@ Item {
                     var ctx = getContext("2d");
                     ctx.clearRect(0, 0, width, height);
 
+                    // zero-sized slot (hidden pill) would make arc() throw
+                    if (width <= 4 || height <= 4)
+                        return;
+
                     var frac = Math.max(0, Math.min(MprisState.player?.volume ?? 0, 1));
                     var r = Math.min(width, height) / 2 - 1.5;
 
@@ -349,6 +353,10 @@ Item {
                             var cy = height / 2;
                             var r = Math.min(cx, cy) - 1.5;
 
+                            // zero-sized slot would make arc() throw
+                            if (r <= 0)
+                                return;
+
                             var frac;
                             if (mprisRoot.showVolume)
                                 frac = Math.max(0, Math.min(MprisState.player?.volume ?? 0, 1));
@@ -433,7 +441,7 @@ Item {
             anchor.rect.y: 35
             visible: mprisRoot.showPopup
             grabFocus: true
-            color: MiscState.popupSolidBg ? "#282a36" : "transparent"
+            color: "transparent"
             implicitWidth: 280
             implicitHeight: Math.min(mprisPopupContent.implicitHeight + 16, 320)
 
@@ -441,7 +449,7 @@ Item {
                 id: mprisPopupRect
                 anchors.fill: parent
                 radius: 10
-                color: "#282a36"
+                color: MiscState.popupCardBg
                 border.width: 1
                 border.color: "#44475a"
 
@@ -480,7 +488,7 @@ Item {
             anchor.rect.y: 35
             visible: mprisRoot.showArtPopup && MprisState.player !== null
             grabFocus: true
-            color: MiscState.popupSolidBg ? "#282a36" : "transparent"
+            color: "transparent"
             implicitWidth: 280
             implicitHeight: 280
 
@@ -488,7 +496,7 @@ Item {
                 id: artPopupRect
                 anchors.fill: parent
                 radius: 12
-                color: "#282a36"
+                color: MiscState.popupCardBg
                 border.width: 1
                 border.color: "#44475a"
 

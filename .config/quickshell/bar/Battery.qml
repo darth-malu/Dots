@@ -193,7 +193,7 @@ RowLayout {
 
         visible: batteryBlock.showPopup
         grabFocus: true
-        color: MiscState.popupSolidBg ? "#282a36" : "transparent"
+        color: "transparent"
 
         anchor.window: batteryBlock.host
         anchor.rect.x: {
@@ -210,7 +210,7 @@ RowLayout {
             radius: 12
             layer.enabled: true
             layer.samples: 8
-            color: "#282a36"
+            color: MiscState.popupCardBg
             border.width: 1
             border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
 

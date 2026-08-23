@@ -106,7 +106,7 @@ BarBlock {
         id: allDisksPopup
         visible: false
         grabFocus: true
-        color: MiscState.popupSolidBg ? "#282a36" : "transparent"
+        color: "transparent"
 
         anchor.window: disk.host
         anchor.rect.x: {
@@ -123,7 +123,7 @@ BarBlock {
             radius: 12
             layer.enabled: true
             layer.samples: 8
-            color: "#282a36"
+            color: MiscState.popupCardBg
             border.width: 1
             border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
 

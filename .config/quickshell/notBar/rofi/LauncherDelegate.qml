@@ -5,7 +5,7 @@ import Quickshell
 
 Rectangle {
     id: root
-    width: parent.width
+    width: parent ? parent.width : 0
     height: appName.childrenRect.height + 15
     color: "transparent"
 
@@ -18,7 +18,10 @@ Rectangle {
 
     property Component delegateMD
 
-    property bool isCurrentItem: (parent.currentItem == 0)
+    // delegates are created before parenting — guard so ListView setup
+    // doesn't spam null-parent TypeErrors
+    required property int index
+    property bool isCurrentItem: parent ? (parent.currentIndex === index) : false
 
     property MouseArea mouseArea: mouseArea
 

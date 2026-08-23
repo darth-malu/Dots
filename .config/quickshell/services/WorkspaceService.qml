@@ -44,7 +44,8 @@ Singleton {
             }
 
             if (!(c in symbolChunkInd)) {
-                if (chunks[chunks.length - 1].type == "icon") {
+                // spacer between repeated icons — only after an existing icon
+                if (chunks.length > 0 && chunks[chunks.length - 1].type === "icon") {
                     chunks.push({
                         type: "spacer"
                     });

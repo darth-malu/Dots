@@ -10,8 +10,11 @@ BarBlock {
 
     required property var host
 
-    // distinct pill background so this block stands out from its neighbours
-    color: mouseArea.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.18) : Qt.rgba(0.741, 0.576, 0.976, 0.10)
+    // no pill background at rest — it only lights up while the swap
+    // view (right-click) is open, with a faint hover hint otherwise
+    color: showSwap ? Qt.rgba(0.741, 0.576, 0.976, 0.18)
+        : mouseArea.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.10)
+        : "transparent"
 
     property bool showSwap: false
 
@@ -140,7 +143,7 @@ BarBlock {
             id: memPopup
             visible: MiscState.showMemProcs
             grabFocus: true
-            color: MiscState.popupSolidBg ? "#282a36" : "transparent"
+            color: "transparent"
 
             anchor.window: memory.host
             anchor.rect.x: {
@@ -155,7 +158,7 @@ BarBlock {
             Rectangle {
                 anchors.fill: parent
                 radius: 12
-                color: "#282a36"
+                color: MiscState.popupCardBg
                 border.width: 1
                 border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
 

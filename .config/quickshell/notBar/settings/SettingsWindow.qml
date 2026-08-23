@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
+import Quickshell.Widgets
 import qs.customItems
 import qs.services
 import qs.bar.quicksettings.nowplaying
@@ -361,7 +362,8 @@ Item {
 
                 radius: 16
                 color: "#282a36"
-                border.color: "#44475a"
+                border.width: 1
+                border.color: "#3b3f51"
 
                 MouseArea {
                     anchors.fill: parent
@@ -455,57 +457,6 @@ Item {
                             }
 
                             Item { Layout.fillHeight: true }
-
-                            Rectangle {
-                                Layout.fillWidth: true
-                                Layout.leftMargin: 12
-                                Layout.rightMargin: 12
-                                height: 1
-                                color: "#343746"
-                                Layout.bottomMargin: 8
-                            }
-
-                            // compact ✕ close button
-                            Rectangle {
-                                id: closeBtn
-
-                                Layout.alignment: Qt.AlignHCenter
-                                implicitWidth: 34
-                                implicitHeight: 34
-                                radius: 9
-                                color: closeMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.14) : "#343746"
-                                border.width: 1
-                                border.color: closeMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.55) : "transparent"
-
-                                Behavior on color {
-                                    ColorAnimation { duration: 100 }
-                                }
-                                Behavior on border.color {
-                                    ColorAnimation { duration: 100 }
-                                }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "\uf00d"
-                                    color: closeMa.containsMouse ? "#ff5555" : "#b8bfcb"
-                                    font {
-                                        pixelSize: 13
-                                        family: "Symbols Nerd Font Mono"
-                                    }
-
-                                    Behavior on color {
-                                        ColorAnimation { duration: 100 }
-                                    }
-                                }
-
-                                MouseArea {
-                                    id: closeMa
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: MiscState.toggleSettings = false
-                                }
-                            }
                         }
                     }
 
@@ -514,11 +465,12 @@ Item {
                         Layout.fillHeight: true
                         color: "transparent"
 
+                        // top inset keeps the first card clear of the ✕
                         Item {
                             anchors {
                                 fill: parent
-                                margins: 20
-                                topMargin: 16
+                                margins: 24
+                                topMargin: 54
                             }
 
                             Flickable {
@@ -565,7 +517,7 @@ Item {
                         RowLayout {
                             id: barStyleSeg
 
-                            readonly property bool solid: BarState.solidBar
+                            readonly property int mode: BarState.barMode
 
                             Layout.fillWidth: true
                             Layout.preferredHeight: 38
@@ -605,8 +557,9 @@ Item {
 
                                     Repeater {
                                         model: [
-                                            { key: false, label: "Transparent" },
-                                            { key: true, label: "Solid" }
+                                            { key: 0, label: "Transparent" },
+                                            { key: 1, label: "Solid" },
+                                            { key: 2, label: "Full" }
                                         ]
 
                                         delegate: Rectangle {
@@ -614,7 +567,7 @@ Item {
 
                                             required property var modelData
 
-                                            readonly property bool sel: barStyleSeg.solid === segOpt.modelData.key
+                                            readonly property bool sel: barStyleSeg.mode === segOpt.modelData.key
 
                                             width: segLbl.implicitWidth + 20
                                             height: 22
@@ -644,12 +597,69 @@ Item {
                                                 anchors.fill: parent
                                                 hoverEnabled: true
                                                 cursorShape: Qt.PointingHandCursor
-                                                onClicked: BarState.solidBar = segOpt.modelData.key
-                                            }
-                                        }
-                                    }
-                                }
+                                                onClicked: BarState.barMode = segOpt.modelData.key
                             }
+                        }
+                    }
+                }
+
+                // ── ✕ — floats over the content pane, top right ──
+                Rectangle {
+                    id: closeBtn
+
+                    z: 5
+                    anchors {
+                        top: parent.top
+                        right: parent.right
+                        margins: 12
+                    }
+                    implicitWidth: 30
+                    implicitHeight: 30
+                    radius: 9
+                    color: closeMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.14) : "#343746"
+                    border.width: 1
+                    border.color: closeMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.55) : "transparent"
+
+                    Behavior on color {
+                        ColorAnimation { duration: 100 }
+                    }
+                    Behavior on border.color {
+                        ColorAnimation { duration: 100 }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "\uf00d"
+                        color: closeMa.containsMouse ? "#ff5555" : "#b8bfcb"
+                        font {
+                            pixelSize: 12
+                            family: "Symbols Nerd Font Mono"
+                        }
+
+                        Behavior on color {
+                            ColorAnimation { duration: 100 }
+                        }
+                    }
+
+                    MouseArea {
+                        id: closeMa
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: MiscState.toggleSettings = false
+                    }
+                }
+            }
+        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                        SettingRow {
+                            icon: "\uf009"
+                            label: "Icon workspaces"
+                            caption: MiscState.iconWorkspaces ? "app icons" : "numbers"
+                            checked: MiscState.iconWorkspaces
+                            onFlipped: MiscState.iconWorkspaces = !MiscState.iconWorkspaces
                         }
 
                         Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
@@ -675,6 +685,8 @@ Item {
 
                         Repeater {
                             model: [
+                                { icon: "\uf028", label: "Volume output", key: "showVolumeOut" },
+                                { icon: "\uf130", label: "Microphone input", key: "showVolumeIn" },
                                 { icon: "\uf293", label: "Bluetooth", key: "showBluetooth" },
                                 { icon: "\uf1eb", label: "Wi-Fi", key: "showWifi" },
                                 { icon: "\uf1e6", label: "Ethernet", key: "showEthernet" },
@@ -700,7 +712,7 @@ Item {
 
                                 // separator between module rows
                                 Rectangle {
-                                    visible: modCell.index < 4
+                                    visible: modCell.index < 6
                                     Layout.fillWidth: true
                                     height: 1
                                     color: "#343746"
@@ -833,11 +845,11 @@ Item {
                             anchors.centerIn: parent
                             spacing: 5
 
-                            Text {
+                            IconImage {
                                 Layout.alignment: Qt.AlignHCenter
-                                text: NetworkState.wifiIcon
-                                color: NetworkState.wifiColor
-                                font { pixelSize: 20; family: "Symbols Nerd Font Mono" }
+                                source: NetworkState.wifiIcon
+                                implicitSize: 22
+                                asynchronous: true
                             }
 
                             Text {
@@ -881,11 +893,11 @@ Item {
                             anchors.centerIn: parent
                             spacing: 5
 
-                            Text {
+                            IconImage {
                                 Layout.alignment: Qt.AlignHCenter
-                                text: NetworkState.ethIcon
-                                color: NetworkState.ethColor
-                                font { pixelSize: 20; family: "Symbols Nerd Font Mono" }
+                                source: NetworkState.ethIcon
+                                implicitSize: 22
+                                asynchronous: true
                             }
 
                             Text {

@@ -6,6 +6,7 @@ import QtQuick.Layouts
 import Quickshell.Widgets
 import Quickshell
 import QtQuick.Effects
+import qs.services
 
 RowLayout {
     spacing: 3
@@ -15,8 +16,8 @@ RowLayout {
         model: ScriptModel {
             values: {
                 var seenEmpty = false;
-                return [...Hyprland.workspaces.values].filter(ws => {
-                    if (ws.monitor !== monitor || ws.name.includes("special"))
+                const list = [...Hyprland.workspaces.values].filter(ws => {
+                    if (!ws || ws.monitor !== monitor || ws.name.includes("special"))
                         return false;
                     // There is a flickering that can happen when switching from one empty workspace to another where both empty workspaces are shown
                     // on the bar at the same time.  This ensures that only the first empty workspace is shown.
@@ -29,87 +30,44 @@ RowLayout {
                     }
                     return false;
                 });
-                // Sort workspaces by id
-                // .sort((a, b) => a.id - b.id);
+                list.sort((a, b) => a.id - b.id);
+                return list;
             }
         }
 
         BarBlock {
             id: rootBlock
 
+            required property var modelData
             property HyprlandWorkspace ws: modelData
 
-            property bool isActive: Hyprland.focusedMonitor?.activeWorkspace?.id === ws.id
+            property bool isActive: (Hyprland.focusedMonitor?.activeWorkspace?.id ?? -1) === (ws?.id ?? -2)
 
             property bool isOpen: monitor.activeWorkspace?.id === ws.id
 
-            property bool hasClients: ws.name.length > 2
+            // real client count instead of the old name-length heuristic
+            property bool hasClients: (ws?.lastIpcObject?.windows ?? 0) > 0
 
-            property color workspaceBg: isActive ? (hasClients ? Themes.activeBg : "transparent") : Themes.inactiveBg
-
-            property color borderColor: (isActive && hasClients) ? Themes.activeHasClientsBorder : "transparent"
+            readonly property bool hovered: mouseArea.containsMouse
 
             dim: false
-            // underline: isActive ? true : false
-            // underlineColor: "#D295BF"
-            border.color: borderColor
-
-            color: workspaceBg
-
-            // layer.enabled: true
 
             radius: height / 2
 
-            gradient: (isActive || isOpen) && hasClients ? Themes.activeGradient : Themes.inactiveGradientV
+            border.width: isActive ? 1 : 0
+            border.color: Themes.activeHasClientsBorder
 
-            Layout.preferredWidth: content.width
+            color: isActive ? Qt.rgba(0.741, 0.576, 0.976, 0.18)
+                : hovered ? Qt.rgba(1, 1, 1, 0.07)
+                : "transparent"
 
-            Layout.preferredHeight: content.height
-
-            // Behavior on border.color {
-            //     ColorAnimation {
-            //         duration: 120
-            //     }
-            // }
-
-            // Behavior on color {
-            //     ColorAnimation {
-            //         duration: 100
-            //     }
-            // }
-
-            // Behavior on gradient {
-            //     ColorAnimation {
-            //         duration: 100
-            //     }
-            // }
-
-            Rectangle {
-                id: inactiveGradientH
-                visible: !isActive && !isOpen
-                gradient: Themes.inactiveGradientH
-                implicitWidth: parent.width
-                implicitHeight: parent.height
-                radius: parent.radius
-                z: -1
-            }
-
-            Rectangle {
-                id: shadowThemes
-                visible: Themes.borderShadow
-                implicitWidth: parent.width - 1
-                implicitHeight: parent.height - 1
-                radius: parent.radius
-                color: "indigo"
-                border.color: parent.isActive || parent.isOpen ? "red" : "white" // Inner border color
-                border.width: 1 // Inner border width
-                x: 1
-                y: 1
-                z: -1
+            Behavior on color {
+                ColorAnimation { duration: 120 }
             }
 
             onClicked: function () {
-                Hyprland.dispatch(`workspace ${ws.id}`);
+                if (ws)
+                    Hyprland.dispatch(`workspace ${ws.id}`);
             }
 
             content: RowLayout {
@@ -119,7 +77,7 @@ RowLayout {
                 Repeater {
                     id: therepeater
                     model: ScriptModel {
-                        values: WorkspacesService.getChunks(ws.name)
+                        values: WorkspaceService.getChunks(ws?.name ?? "")
                     }
 
                     delegate: Item {
@@ -181,15 +139,16 @@ RowLayout {
                                     }
                                 }
                                 Rectangle {
-                                    // TODO see if changes needed here
-                                    visible: ws.mult > 1
+                                    // multiplicity badge — same icon seen N times
+                                    // in this workspace name
+                                    visible: modelData.mult > 1
                                     width: 10
                                     height: width
                                     radius: width / 2
                                     color: Themes.dropShadow
                                     opacity: 0.8
                                     BarText {
-                                        text: ws.mult
+                                        text: modelData.mult
                                         pointSize: 11
                                         dim: !rootBlock.isActive
                                         style: Text.Outline

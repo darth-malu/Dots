@@ -36,6 +36,11 @@ Singleton {
     property bool popupSolidBg: prefs.popupSolidBg
     onPopupSolidBgChanged: prefs.popupSolidBg = popupSolidBg
 
+    // popup card theming — windows stay transparent project-wide; the CARD
+    // switches between opaque slab and frosted glass
+    readonly property bool popupGlassy: !popupSolidBg
+    readonly property color popupCardBg: popupSolidBg ? "#282a36" : Qt.rgba(40 / 255, 42 / 255, 54 / 255, 0.82)
+
     property var trackedDates: ({})
     property int trackedDatesRev: 0
 
@@ -93,6 +98,18 @@ Singleton {
     property bool showNetTotals: prefs.showNetTotals
     onShowNetTotalsChanged: prefs.showNetTotals = showNetTotals
 
+    // workspace module flavour — true = app icons (default), false = numbers
+    property bool iconWorkspaces: prefs.iconWorkspaces
+    onIconWorkspacesChanged: prefs.iconWorkspaces = iconWorkspaces
+
+    // bar audio modules — output (speaker) and input (mic) can be hidden
+    // independently from settings
+    property bool showVolumeOut: prefs.showVolumeOut
+    onShowVolumeOutChanged: prefs.showVolumeOut = showVolumeOut
+
+    property bool showVolumeIn: prefs.showVolumeIn
+    onShowVolumeInChanged: prefs.showVolumeIn = showVolumeIn
+
     // ── persistent store for user preferences ──
     FileView {
         id: prefStore
@@ -116,6 +133,9 @@ Singleton {
             property bool showEthernet: true
             property bool showBattery: true
             property bool showNotifTray: true
+            property bool iconWorkspaces: true
+            property bool showVolumeOut: true
+            property bool showVolumeIn: true
         }
     }
 
