@@ -15,7 +15,7 @@ Item {
     signal activated
 
     Layout.fillWidth: true
-    Layout.preferredHeight: 40
+    Layout.preferredHeight: 46
 
     property real scaleVal: 1
 
@@ -23,9 +23,19 @@ Item {
         id: powerBtnBg
 
         anchors.fill: parent
-        radius: 8
-        color: mouseArea.containsMouse ? Qt.rgba(parent.color.r, parent.color.g, parent.color.b, 0.12) : parent.highlighted ? Qt.rgba(parent.color.r, parent.color.g, parent.color.b, 0.10) : "transparent"
+        anchors.margins: 2
+        radius: 12
+        color: mouseArea.containsMouse ? Qt.rgba(parent.color.r, parent.color.g, parent.color.b, 0.16) : parent.highlighted ? Qt.rgba(parent.color.r, parent.color.g, parent.color.b, 0.12) : Qt.rgba(parent.color.r, parent.color.g, parent.color.b, 0.05)
         scale: parent.scaleVal
+
+        // thin accent ring on hover / while a matching timer is pending
+        Rectangle {
+            anchors.fill: parent
+            radius: parent.radius
+            color: "transparent"
+            border.width: mouseArea.containsMouse || parent.parent.highlighted ? 1 : 0
+            border.color: Qt.rgba(parent.parent.color.r, parent.parent.color.g, parent.parent.color.b, 0.35)
+        }
 
         // gentle breathing while a matching timer is pending
         SequentialAnimation on opacity {
@@ -56,9 +66,9 @@ Item {
         Text {
             Layout.alignment: Qt.AlignHCenter
             text: parent.parent.icon
-            color: parent.parent.highlighted || mouseArea.containsMouse ? parent.parent.color : Qt.rgba(parent.parent.color.r, parent.parent.color.g, parent.parent.color.b, 0.6)
+            color: parent.parent.highlighted || mouseArea.containsMouse ? parent.parent.color : Qt.rgba(parent.parent.color.r, parent.parent.color.g, parent.parent.color.b, 0.75)
             font {
-                pixelSize: 16
+                pixelSize: 19
                 family: "Symbols Nerd Font Mono"
             }
             Behavior on color {
@@ -71,11 +81,12 @@ Item {
         Text {
             Layout.alignment: Qt.AlignHCenter
             text: parent.parent.label
-            color: parent.parent.highlighted || mouseArea.containsMouse ? parent.parent.color : "#6272a4"
+            color: parent.parent.highlighted || mouseArea.containsMouse ? parent.parent.color : "#b8bfcb"
             font {
-                pixelSize: 8
+                pixelSize: 9
                 family: "Quicksand"
                 bold: true
+                letterSpacing: 0.5
             }
             visible: parent.parent.label.length > 0
             Behavior on color {

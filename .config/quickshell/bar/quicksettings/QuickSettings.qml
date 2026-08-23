@@ -154,7 +154,7 @@ BarBlock {
 
             ScrollView {
                 anchors.fill: parent
-                anchors.margins: 3
+                anchors.margins: 2
                 clip: true
                 ScrollBar.vertical.policy: ScrollBar.AsNeeded
                 ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
@@ -455,7 +455,7 @@ BarBlock {
                             title: ""
                             icon: ""
                             visible: root.showPowerPopup
-                            Layout.topMargin: 6
+                            Layout.topMargin: 4
 
                             RowLayout {
                                 Layout.fillWidth: true
@@ -471,7 +471,7 @@ BarBlock {
                                 QsPower {
                                     icon: ""
                                     color: "#50fa7b"
-                                    label: PowerTimer.mode === "reboot" ? PowerTimer.formatTime(PowerTimer.remaining) : "Reboot"
+                                    label: "Reboot"
                                     highlighted: PowerTimer.mode === "reboot"
                                     cmd: ""
                                     onActivated: root.timerPicker = root.timerPicker === 1 ? 0 : 1
@@ -479,7 +479,7 @@ BarBlock {
                                 QsPower {
                                     icon: "\uf011"
                                     color: "#ff5555"
-                                    label: PowerTimer.mode === "poweroff" ? PowerTimer.formatTime(PowerTimer.remaining) : "Shutdown"
+                                    label: "Shutdown"
                                     highlighted: PowerTimer.mode === "poweroff"
                                     cmd: ""
                                     onActivated: root.timerPicker = root.timerPicker === 2 ? 0 : 2
@@ -814,7 +814,8 @@ BarBlock {
 
                                         Text {
                                             anchors.centerIn: parent
-                                            text: MprisState.isBrowserPlayer(MprisState.cardPlayer) ? MprisState.browserGlyph(MprisState.cardPlayer) : ""
+                                            // browser glyph for browsers, music note for anyone else without art
+                                            text: !MprisState.cardPlayer ? "" : MprisState.isBrowserPlayer(MprisState.cardPlayer) ? MprisState.browserGlyph(MprisState.cardPlayer) : "\uf001"
                                             color: "#6272a4"
                                             font {
                                                 pixelSize: 24
@@ -1066,7 +1067,8 @@ BarBlock {
 
                                     Text {
                                         anchors.centerIn: parent
-                                        text: MprisState.isBrowserPlayer(MprisState.cardPlayer) ? MprisState.browserGlyph(MprisState.cardPlayer) : ""
+                                        // browser glyph for browsers, music note for anyone else without art
+                                            text: !MprisState.cardPlayer ? "" : MprisState.isBrowserPlayer(MprisState.cardPlayer) ? MprisState.browserGlyph(MprisState.cardPlayer) : "\uf001"
                                         color: "#6272a4"
                                         font {
                                             pixelSize: 56

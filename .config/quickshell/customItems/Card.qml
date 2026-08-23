@@ -8,12 +8,12 @@ Rectangle {
     property string icon
     property color accent: "#f8f8f2"
     property int cardRadius: 10
-    property int cardPadding: 6
+    property int cardPadding: 5
     property color cardColor: "transparent"
     property real cardSpacing: 6
 
     Layout.fillWidth: true
-    Layout.bottomMargin: 2
+    Layout.bottomMargin: 0
     radius: cardRadius
     color: cardColor
 

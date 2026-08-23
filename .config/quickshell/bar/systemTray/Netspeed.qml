@@ -397,13 +397,6 @@ Loader {
 
                             Item { Layout.fillWidth: true }
 
-                            Text {
-                                visible: root.ethUp
-                                text: NetworkState.ethernet?.linkSpeed ? `${NetworkState.ethernet.linkSpeed} Mb/s` : "linked"
-                                color: "#6272a4"
-                                font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                            }
-
                             Rectangle {
                                 Layout.alignment: Qt.AlignVCenter
                                 implicitWidth: 22
@@ -543,13 +536,13 @@ Loader {
                                 }
                         }
 
-                        // ── ghost footer ──
+                        // ── ghost footer — link speed rides along with the poll rate ──
                         Text {
                             Layout.alignment: Qt.AlignHCenter
                             visible: root.ethIfName.length > 0
                             text: root.ethUp
-                                ? "polls 1s"
-                                : root.ethConnected ? "connecting…" : "no link"
+                                ? `${NetworkState.ethernet?.linkSpeed ?? ""} Mb/s \u00b7 polls 1s`
+                                : root.ethConnected ? "connecting\u2026" : "no link"
                             color: "#6272a4"
                             opacity: 0.55
                             font { pixelSize: 8; letterSpacing: 2; family: "ZedMono Nerd Font" }

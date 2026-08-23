@@ -62,7 +62,7 @@ BarBlock {
 
             anchor.rect.y: 33
 
-            implicitWidth: 320
+            implicitWidth: 344
             implicitHeight: centerCol.implicitHeight + 24
 
             Rectangle {
@@ -113,7 +113,7 @@ BarBlock {
                             }
                             color: "#f8f8f2"
                             font {
-                                pixelSize: 11
+                                pixelSize: 12
                                 bold: true
                                 family: "Quicksand"
                             }
@@ -125,8 +125,8 @@ BarBlock {
 
                         Rectangle {
                             visible: NotificationState.allNotifs.length > 0
-                            implicitWidth: clearTxt.implicitWidth + 14
-                            implicitHeight: 18
+                            implicitWidth: clearTxt.implicitWidth + 16
+                            implicitHeight: 20
                             radius: 9
                             color: clearMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.15) : "#343746"
 
@@ -137,7 +137,7 @@ BarBlock {
                                 text: "\uf1f8  clear"
                                 color: clearMa.containsMouse ? "#ff5555" : "#b8bfcb"
                                 font {
-                                    pixelSize: 9
+                                    pixelSize: 10
                                     bold: true
                                     family: "Symbols Nerd Font Mono, Quicksand"
                                 }
@@ -177,25 +177,25 @@ BarBlock {
                             }
 
                             Layout.fillWidth: true
-                            implicitHeight: 32
-                            radius: 7
+                            implicitHeight: 42
+                            radius: 9
                             color: histMouse.hovered ? Qt.rgba(1, 1, 1, 0.05) : histRow.urgent ? Qt.rgba(1, 0.33, 0.33, 0.08) : "transparent"
 
                             RowLayout {
                                 anchors.fill: parent
-                                anchors.leftMargin: 8
-                                anchors.rightMargin: 6
-                                spacing: 8
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 8
+                                spacing: 9
 
                                 Rectangle {
-                                    implicitWidth: 22
-                                    implicitHeight: 22
-                                    radius: 5
+                                    implicitWidth: 30
+                                    implicitHeight: 30
+                                    radius: 7
                                     color: "#343746"
 
                                     IconImage {
                                         anchors.fill: parent
-                                        anchors.margins: 3
+                                        anchors.margins: 4
                                         visible: histRow.iconUrl != ""
                                         source: histRow.iconUrl
                                         asynchronous: true
@@ -207,7 +207,7 @@ BarBlock {
                                         text: "\uf0f3"
                                         color: "#6272a4"
                                         font {
-                                            pixelSize: 11
+                                            pixelSize: 13
                                             family: "Symbols Nerd Font Mono"
                                         }
                                     }
@@ -223,7 +223,7 @@ BarBlock {
                                         color: histRow.urgent ? "#ff5555" : "#bd93f9"
                                         elide: Text.ElideRight
                                         font {
-                                            pixelSize: 10
+                                            pixelSize: 12
                                             bold: true
                                             family: "Quicksand"
                                         }
@@ -236,7 +236,7 @@ BarBlock {
                                         color: "#b8bfcb"
                                         elide: Text.ElideRight
                                         font {
-                                            pixelSize: 9
+                                            pixelSize: 11
                                             family: "Quicksand"
                                         }
                                     }
@@ -246,7 +246,7 @@ BarBlock {
                                     text: NotificationState.humanTime(Math.floor(NotificationState.notifTs(histRow.modelData) / 1000), Math.floor(centerCol.nowTs / 1000))
                                     color: "#6272a4"
                                     font {
-                                        pixelSize: 8
+                                        pixelSize: 9
                                         family: "ZedMono Nerd Font"
                                     }
                                 }
@@ -255,7 +255,7 @@ BarBlock {
                                     text: "\uf00d"
                                     color: rowCloseMa.containsMouse ? "#ff5555" : "#6272a4"
                                     font {
-                                        pixelSize: 10
+                                        pixelSize: 12
                                         family: "Symbols Nerd Font Mono"
                                     }
 
@@ -263,7 +263,7 @@ BarBlock {
                                         id: rowCloseMa
 
                                         anchors.fill: parent
-                                        anchors.margins: -4
+                                        anchors.margins: -6
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: {
@@ -286,7 +286,7 @@ BarBlock {
                         text: "nothing here yet"
                         color: "#6272a4"
                         font {
-                            pixelSize: 10
+                            pixelSize: 11
                             italic: true
                             family: "Quicksand"
                         }
