@@ -41,7 +41,7 @@ Singleton {
         return "root:/icons/ethernet-x.svg";
     }
 
-    // gray = disabled/no adapter · purple = idle · peach→yellow→green by signal
+    // gray = disabled/no adapter · purple = idle · peach→yellow→cyan by signal
     readonly property color wifiColor: {
         if (!root.adapter || !Networking.wifiEnabled)
             return "#6272a4";
@@ -49,7 +49,7 @@ Singleton {
             return "#bd93f9";
 
         const s = root.activeNetwork.signalStrength;
-        return s < 0.34 ? "#ffb86c" : s < 0.67 ? "#f1fa8c" : "#50fa7b";
+        return s < 0.34 ? "#ffb86c" : s < 0.67 ? "#f1fa8c" : "#8be9fd";
     }
 
     // dracula: overlay0 / teal
@@ -75,8 +75,9 @@ Singleton {
         // suppressed while the wifi popup is open — the connection is visible there
         if (root.wifiConnected && !root.wasWifiConnected && !root.wifiPopupVisible) {
             const ssid = String(root.activeNetwork?.name ?? "").replace(/'/g, "'\\''");
+            const sig = Math.round((root.activeNetwork?.signalStrength ?? 0) * 100);
             Quickshell.execDetached(["sh", "-c",
-                `notify-send 'Connection established' '${ssid}' -i ${root.currentWifiIconPath()} -a Shell -t 4000`]);
+                `notify-send '${ssid}' 'signal · ${sig}%' -i ${root.currentWifiIconPath()} -a Shell -t 4000`]);
         }
         root.wasWifiConnected = root.wifiConnected;
     }

@@ -46,9 +46,7 @@ Item {
         return s >= 0 && s <= 8;
     }
 
-    function signalColor(level, connected) {
-        if (connected === true)
-            return "#50fa7b";
+    function signalColor(level) {
         const s = level ?? 0;
         return s < 0.34 ? "#ffb86c" : s < 0.67 ? "#f1fa8c" : "#8be9fd";
     }
@@ -125,15 +123,6 @@ Item {
                 const ctx = getContext("2d");
                 ctx.clearRect(0, 0, width, height);
 
-                ctx.strokeStyle = "rgba(255, 255, 255, 0.06)";
-                ctx.lineWidth = 1;
-                for (let i = 1; i <= 2; i++) {
-                    ctx.beginPath();
-                    ctx.moveTo(0, Math.round(height * i / 3));
-                    ctx.lineTo(width, Math.round(height * i / 3));
-                    ctx.stroke();
-                }
-
                 const h = tgraph.history ?? [];
                 if (h.length < 2)
                     return;
@@ -208,10 +197,10 @@ Item {
             }
         }
 
-        // green accent rail marks the connected network at a glance
+        // green accent rail marks the connected network, anchored to the right edge
         Rectangle {
             visible: parent.isConnected
-            anchors.left: parent.left
+            anchors.right: parent.right
             anchors.topMargin: 10
             anchors.bottomMargin: 10
             anchors.top: parent.top
@@ -270,19 +259,8 @@ Item {
 
             SignalBars {
                 level: netrow.modelData?.signalStrength ?? 0
-                litColor: root.signalColor(netrow.modelData?.signalStrength ?? 0, netrow.isConnected)
+                litColor: root.signalColor(netrow.modelData?.signalStrength ?? 0)
                 Layout.alignment: Qt.AlignBottom
-            }
-
-            // numeric signal strength for legibility
-            Text {
-                visible: !netrow.hiddenNet
-                text: (netrow.modelData?.signalStrength ?? 0) + "%"
-                color: "#6272a4"
-                font {
-                    pixelSize: 9
-                    family: "ZedMono Nerd Font"
-                }
             }
 
             Text {
@@ -315,15 +293,6 @@ Item {
                 }
             }
 
-            // connected dot, then padlock for secured networks
-            Rectangle {
-                visible: netrow.isConnected
-                implicitWidth: 5
-                implicitHeight: 5
-                radius: 2.5
-                color: "#50fa7b"
-            }
-
             // open lock marks open (unsecured) networks; secured ones stay unmarked
             Text {
                 text: "\uf09c"
@@ -350,6 +319,15 @@ Item {
                         root.editSsid = netrow.editing ? "" : netrow.ssidName;
                     }
                 }
+            }
+
+            // connected dot — rightmost indicator on the row
+            Rectangle {
+                visible: netrow.isConnected
+                implicitWidth: 5
+                implicitHeight: 5
+                radius: 2.5
+                color: "#50fa7b"
             }
         }
 
@@ -502,7 +480,6 @@ Item {
                         implicitHeight: 22
                         radius: 6
                         color: eyeMa.containsMouse ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.16) : "transparent"
-
                         Text {
                             anchors.centerIn: parent
                             text: netrow.showPw ? "\uf070" : "\uf06e"
@@ -531,6 +508,32 @@ Item {
                                     netrow.showPw = !netrow.showPw;
                                 }
                             }
+                        }
+                    }
+
+                    // copy the stored password to the clipboard (wl-copy)
+                    Rectangle {
+                        implicitWidth: 22
+                        implicitHeight: 22
+                        radius: 6
+                        color: copyMa.containsMouse ? Qt.rgba(139 / 255, 233 / 255, 253 / 255, 0.14) : "transparent"
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "\uf0c5"
+                            color: copyMa.containsMouse ? "#8be9fd" : "#6272a4"
+                            font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                        }
+
+                        MouseArea {
+                            id: copyMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Quickshell.execDetached(["sh", "-c",
+                                `pw=$(nmcli -s -g 802-11-wireless-security.psk connection show '${root.esc(netrow.ssidName)}' | tr -d '\\n'); `
+                                + `if [ -n "$pw" ]; then printf %s "$pw" | wl-copy && notify-send -a Shell 'Password copied' '${root.esc(netrow.ssidName)}'; `
+                                + `else notify-send -a Shell 'No stored password' '${root.esc(netrow.ssidName)}'; fi`]);
                         }
                     }
 
@@ -689,7 +692,7 @@ Item {
                                 width: parent.width
                                 elide: Text.ElideRight
                                 text: !root.adapter ? "no adapter"
-                                    : NetworkState.wifiConnected ? "connected · " + (NetworkState.activeNetwork?.name ?? "?")
+                                    : NetworkState.wifiConnected ? (NetworkState.activeNetwork?.name ?? "?") + " · " + Math.round((NetworkState.activeNetwork?.signalStrength ?? 0) * 100) + "%"
                                     : Networking.wifiEnabled ? "idle"
                                     : "off"
                                 color: !root.adapter ? "#6272a4"
@@ -799,7 +802,7 @@ Item {
                                     text: modelData.value
                                     color: "#f8f8f2"
                                     elide: Text.ElideRight
-                                    font { pixelSize: 11; family: "ZedMono Nerd Font" }
+                                    font { pixelSize: 12; family: "ZedMono Nerd Font" }
                                     Layout.fillWidth: true
                                 }
                             }

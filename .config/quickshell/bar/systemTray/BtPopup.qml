@@ -9,6 +9,7 @@ import qs.services
 BarBlock {
     id: root
 
+    visible: MiscState.showBluetooth
     required property var host
 
     readonly property var adapter: Bt.adapter
@@ -41,10 +42,38 @@ BarBlock {
         required property var modelData
 
         readonly property bool isConnected: modelData?.connected === true
-        readonly property color stateColor: modelData?.blocked === true ? "#ff5555"
+        readonly property bool isBlocked: modelData?.blocked === true
+        readonly property bool isPairing: modelData?.pairing === true
+        readonly property bool isPaired: modelData?.paired === true
+        readonly property color stateColor: isBlocked ? "#ff5555"
             : isConnected ? "#50fa7b"
-            : modelData?.pairing === true ? "#f1fa8c"
+            : isPairing ? "#f1fa8c"
             : "#6272a4"
+        readonly property string stateWord: isBlocked ? "blocked"
+            : isConnected ? "connected"
+            : isPairing ? "pairing…"
+            : isPaired ? "paired"
+            : "available"
+
+        // bluez icon class -> nerd font glyph
+        readonly property string devGlyph: {
+            const s = String(modelData?.icon ?? "");
+            if (s.includes("headset") || s.includes("headphones") || s.includes("audio"))
+                return "\uf025";
+            if (s.includes("keyboard"))
+                return "\uf11c";
+            if (s.includes("mouse") || s.includes("pointing"))
+                return "\uf245";
+            if (s.includes("phone"))
+                return "\uf10b";
+            if (s.includes("camera"))
+                return "\uf030";
+            if (s.includes("computer") || s.includes("laptop"))
+                return "\uf109";
+            if (s.includes("watch"))
+                return "\uf2a2";
+            return "\uf294";
+        }
 
         // the bluez media player exported by this device over MPRIS (for volume)
         readonly property var btPlayer: {
@@ -77,20 +106,47 @@ BarBlock {
             }
         }
 
+        // device-type glyph in a state-tinted tile
         Rectangle {
-            Layout.alignment: Qt.AlignVCenter
-            implicitWidth: 6
-            implicitHeight: 6
-            radius: 3
-            color: drow.stateColor
+            implicitWidth: 24
+            implicitHeight: 24
+            radius: 6
+            color: Qt.rgba(drow.stateColor.r, drow.stateColor.g, drow.stateColor.b, drow.isConnected ? 0.14 : 0.07)
+
+            Text {
+                anchors.centerIn: parent
+                text: drow.devGlyph
+                color: drow.stateColor
+                font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+            }
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: 120
+                }
+            }
         }
 
-        Text {
-            text: drow.modelData?.name || drow.modelData?.deviceName || drow.modelData?.address || "?"
-            color: drow.isConnected ? "#f8f8f2" : "#b8bfcb"
-            elide: Text.ElideRight
-            font { pixelSize: 11; family: "Quicksand" }
+        ColumnLayout {
+            spacing: 1
             Layout.fillWidth: true
+
+            Text {
+                text: drow.modelData?.name || drow.modelData?.deviceName || drow.modelData?.address || "?"
+                color: drow.isConnected ? "#f8f8f2" : "#b8bfcb"
+                elide: Text.ElideRight
+                font { pixelSize: 11; bold: true; family: "Quicksand" }
+                Layout.fillWidth: true
+            }
+
+            // address · state word — the informational line
+            Text {
+                text: (drow.modelData?.address ?? "?") + " · " + drow.stateWord
+                color: drow.isBlocked ? "#ff5555" : drow.isConnected ? "#50fa7b" : "#6272a4"
+                elide: Text.ElideRight
+                font { pixelSize: 9; family: "ZedMono Nerd Font"; letterSpacing: 0.5 }
+                Layout.fillWidth: true
+            }
         }
 
         RowLayout {
@@ -181,35 +237,39 @@ BarBlock {
                     anchors.margins: 14
                     spacing: 8
 
+                    // ── Header: icon · title · connected count · power toggle ──
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 8
+                        spacing: 7
 
-                        Text {
-                            text: "adapter"
-                            color: "#6272a4"
-                            font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
-                            Layout.preferredWidth: 56
+                        SvgIcon {
+                            icon: Bt.btIcon
+                            color: Bt.btColor
+                            width: 15
+                            height: 15
+                            Layout.alignment: Qt.AlignVCenter
                         }
 
                         Text {
-                            // dynamic status: unavailable > powered off > connected · <device> > on
-                            text: {
-                                if (!root.adapter)
-                                    return "unavailable";
-                                if (!Bt.enabled)
-                                    return "powered off";
-                                const conn = root.devices.filter(d => d.connected === true);
-                                if (conn.length === 1)
-                                    return "connected · " + String(conn[0].name ?? conn[0].deviceName ?? "");
-                                if (conn.length > 1)
-                                    return `connected · ${conn.length}`;
-                                return "on";
-                            }
-                            color: !root.adapter || !Bt.enabled ? "#6272a4" : Bt.connected ? "#50fa7b" : "#f8f8f2"
-                            elide: Text.ElideRight
-                            font { pixelSize: 11; family: "ZedMono Nerd Font" }
+                            text: "bluetooth"
+                            color: "#f8f8f2"
+                            font { pixelSize: 12; bold: true; family: "Quicksand" }
                             Layout.fillWidth: true
+                        }
+
+                        Rectangle {
+                            visible: root.devices.filter(d => d.connected === true).length > 0
+                            radius: 4
+                            implicitWidth: connText.implicitWidth + 10
+                            implicitHeight: 15
+
+                            Text {
+                                id: connText
+                                anchors.centerIn: parent
+                                text: root.devices.filter(d => d.connected === true).length + " connected"
+                                color: "#50fa7b"
+                                font { pixelSize: 8; bold: true; family: "ZedMono Nerd Font" }
+                            }
                         }
 
                         Rectangle {

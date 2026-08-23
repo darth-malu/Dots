@@ -66,7 +66,7 @@ Loader {
 
         function fmtRate(v) {
             if (v <= 0)
-                return "0.0";
+                return "0.00";
             if (v >= 1000)
                 return (v / 1000).toFixed(2);
             if (v < 10)
@@ -247,7 +247,7 @@ Loader {
 
             // ── Wifi icon — shown whenever the cable is NOT linked (exactly one net icon at all times) ──
             Item {
-                visible: NetworkState.ethernet?.hasLink !== true
+                visible: NetworkState.ethernet?.hasLink !== true && MiscState.showWifi
                 implicitWidth: wifiIco.width
                 implicitHeight: wifiIco.height
                 Layout.alignment: Qt.AlignVCenter
@@ -271,7 +271,7 @@ Loader {
 
             // ── Ethernet icon — linked cable takes over the slot and hides wifi ──
             Item {
-                visible: NetworkState.ethernet?.hasLink === true
+                visible: NetworkState.ethernet?.hasLink === true && MiscState.showEthernet
                 implicitWidth: ethIco.width
                 implicitHeight: ethIco.height
                 Layout.alignment: Qt.AlignVCenter
@@ -302,7 +302,7 @@ Loader {
                 }
 
                 BarText {
-                    text: root.rxRate === 0 ? "-" : root.fmtRate(root.rxRate)
+                    text: root.fmtRate(root.rxRate)
                     color: "#bd93f9"
                     font {
                         pixelSize: 10
@@ -318,7 +318,7 @@ Loader {
                 }
 
                 BarText {
-                    text: root.txRate === 0 ? "-" : root.fmtRate(root.txRate)
+                    text: root.fmtRate(root.txRate)
                     color: "#ff79c6"
                     font {
                         pixelSize: 10
@@ -562,7 +562,8 @@ Loader {
             color: irow.valueColor
             elide: Text.ElideRight
             font {
-                pixelSize: 11
+                pixelSize: 12
+                bold: true
                 family: "ZedMono Nerd Font"
             }
             Layout.fillWidth: true

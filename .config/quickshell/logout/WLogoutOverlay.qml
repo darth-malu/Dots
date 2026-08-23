@@ -4,9 +4,8 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Wayland
 import qs.services
-import qs.logout
 
-Variants {
+Item {
     id: root
 
     property color backgroundColor: "#e60c0c0c"
@@ -14,7 +13,7 @@ Variants {
     property color buttonHoverColor: "#bd93f9"
     property color buttonTextColor: "#f8f8f2"
 
-    default property list<LogoutButton> buttons
+    default property list<QtObject> _unused
 
     // timer duration slider — holds the LogoutButton being scheduled
     property var pickerButton: null
@@ -50,14 +49,18 @@ Variants {
         root.close();
     }
 
-    model: Quickshell.screens
+    property list<LogoutButton> buttons: [lockBtn, exitBtn, restartTimerBtn, shutdownTimerBtn]
 
-    PanelWindow {
-        id: w
+    Variants {
+        model: Quickshell.screens
 
-        required property var modelData
-        screen: modelData
-        visible: MiscState.logoutOpen
+        PanelWindow {
+            id: w
+
+            required property var modelData
+            screen: modelData
+            visible: MiscState.logoutOpen
+
 
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
@@ -450,8 +453,10 @@ Variants {
             }
         }
     }
+    }
 
     LogoutButton {
+        id: lockBtn
         command: "loginctl lock-session"
         keybind: Qt.Key_L
         text: "Lock"
@@ -459,6 +464,7 @@ Variants {
     }
 
     LogoutButton {
+        id: exitBtn
         command: "loginctl terminate-user $USER"
         keybind: Qt.Key_E
         text: "Logout"
@@ -466,6 +472,7 @@ Variants {
     }
 
     LogoutButton {
+        id: restartTimerBtn
         keybind: Qt.Key_T
         text: "Restart Timer"
         icon: "\uf021"
@@ -473,6 +480,7 @@ Variants {
     }
 
     LogoutButton {
+        id: shutdownTimerBtn
         keybind: Qt.Key_Y
         text: "Shutdown Timer"
         icon: "\uf011"

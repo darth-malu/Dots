@@ -12,39 +12,6 @@ ColumnLayout {
     anchors.fill: parent
     spacing: 6
 
-    // micro header
-    RowLayout {
-        Layout.fillWidth: true
-        spacing: 6
-
-        Text {
-            text: "\uf03a"
-            color: "#6272a4"
-            font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
-        }
-
-        Text {
-            text: "players · " + Mpris.players.values.length
-            color: "#6272a4"
-            font {
-                pixelSize: 9
-                bold: true
-                family: "Quicksand"
-                letterSpacing: 1
-            }
-        }
-
-        Item {
-            Layout.fillWidth: true
-        }
-    }
-
-    Rectangle {
-        Layout.fillWidth: true
-        implicitHeight: 1
-        color: "#343746"
-    }
-
     Repeater {
         id: playerRepeater
         model: Mpris.players
@@ -95,7 +62,8 @@ ColumnLayout {
                     return "";
                 }
             }
-            readonly property bool hasArt: isAlive && (modelData.trackArtUrl ?? "") !== ""
+            readonly property bool hasArt: isAlive && (modelData.trackArtUrl ?? "") !== "" && !MprisState.isBrowserPlayer(modelData)
+            readonly property bool isBrowser: isAlive && MprisState.isBrowserPlayer(modelData)
 
             color: rowHover.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
 
@@ -142,7 +110,7 @@ ColumnLayout {
                     Text {
                         anchors.centerIn: parent
                         visible: !prow.hasArt
-                        text: ""
+                        text: prow.isBrowser ? MprisState.browserGlyph(modelData) : ""
                         color: "#6272a4"
                         font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
                     }
@@ -182,11 +150,41 @@ ColumnLayout {
                     Layout.fillWidth: true
                 }
 
-                // playback state glyph
-                Text {
-                    text: prow.isPaused ? "\uf04b" : prow.isPlaying ? "\uf04c" : ""
-                    color: prow.isPaused ? "#bd93f9" : "#50fa7b"
-                    font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+                // play / pause toggle
+                Rectangle {
+                    implicitWidth: 26
+                    implicitHeight: 26
+                    radius: 13
+                    visible: prow.isPlaying || prow.isPaused
+                    color: ppHover.containsMouse ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.18) : "transparent"
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 120
+                        }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: prow.isPaused ? "\uf04b" : "\uf04c"
+                        color: ppHover.containsMouse ? "#f8f8f2" : (prow.isPaused ? "#bd93f9" : "#50fa7b")
+                        font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+                    }
+
+                    MouseArea {
+                        id: ppHover
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (!prow.isAlive)
+                                return;
+                            try {
+                                if (prow.modelData.canPlay || prow.modelData.canPause)
+                                    prow.modelData.togglePlaying();
+                            } catch (e) {}
+                        }
+                    }
                 }
             }
 

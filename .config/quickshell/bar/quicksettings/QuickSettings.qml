@@ -184,6 +184,41 @@ BarBlock {
                                 Layout.fillWidth: true
                                 spacing: 10
 
+                                // avatar — click to choose a new one
+                                Rectangle {
+                                    id: avatarBox
+                                    Layout.preferredWidth: 40
+                                    Layout.preferredHeight: 40
+                                    radius: 20
+                                    color: avatarMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "#343746"
+                                    clip: true
+
+                                    Image {
+                                        id: avatarImg
+                                        anchors.fill: parent
+                                        source: MiscState.avatarUrl
+                                        fillMode: Image.PreserveAspectCrop
+                                        asynchronous: true
+                                        visible: status === Image.Ready
+                                    }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "\uf007"
+                                        color: "#6272a4"
+                                        font { pixelSize: 16; family: "Symbols Nerd Font Mono" }
+                                        visible: avatarImg.status !== Image.Ready
+                                    }
+
+                                    MouseArea {
+                                        id: avatarMa
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: MiscState.pickAvatar()
+                                    }
+                                }
+
                                 ColumnLayout {
                                     spacing: 2
 
@@ -542,7 +577,7 @@ BarBlock {
 
                                 Image {
                                     id: hiddenArt
-                                    source: MprisState.cardPlayer?.trackArtUrl || ""
+                                    source: MprisState.artFor(MprisState.cardPlayer)
                                     asynchronous: true
                                     onStatusChanged: {
                                         if (status === Image.Ready)
@@ -663,7 +698,7 @@ BarBlock {
                                         Image {
                                             id: compactArtImage
                                             anchors.fill: parent
-                                            source: MprisState.cardPlayer?.trackArtUrl || ""
+                                            source: MprisState.artFor(MprisState.cardPlayer)
                                             fillMode: Image.PreserveAspectCrop
                                             asynchronous: true
                                             mipmap: true
@@ -672,7 +707,7 @@ BarBlock {
 
                                         Text {
                                             anchors.centerIn: parent
-                                            text: ""
+                                            text: MprisState.isBrowserPlayer(MprisState.cardPlayer) ? MprisState.browserGlyph(MprisState.cardPlayer) : ""
                                             color: "#6272a4"
                                             font {
                                                 pixelSize: 24
@@ -851,12 +886,6 @@ BarBlock {
                                                 Layout.fillWidth: true
                                             }
                                             TrackButton {
-                                                text: "\uf021"
-                                                flat: true
-                                                accentColor: MprisState.pinIdentity.length > 0 ? "#f1fa8c" : Qt.rgba(1, 1, 1, 0.5)
-                                                onClicked: MprisState.cycleCardPin()
-                                            }
-                                            TrackButton {
                                                 text: "\uf048"
                                                 flat: true
                                                 accentColor: nowPlayingCard.dominantColor
@@ -873,6 +902,13 @@ BarBlock {
                                                 flat: true
                                                 accentColor: nowPlayingCard.dominantColor
                                                 onClicked: MprisState.cardPlayer?.next()
+                                            }
+                                            TrackButton {
+                                                visible: MiscState.showPlayerChooser
+                                                text: "\uf0ec"
+                                                flat: true
+                                                accentColor: MprisState.pinIdentity.length > 0 ? "#f1fa8c" : Qt.rgba(1, 1, 1, 0.5)
+                                                onClicked: MprisState.cycleCardPin()
                                             }
                                             Item {
                                                 Layout.fillWidth: true
@@ -894,7 +930,7 @@ BarBlock {
                                     anchors.fill: parent
                                     radius: 8
                                     color: {
-                                        if (MprisState.cardPlayer?.trackArtUrl)
+                                        if (MprisState.artFor(MprisState.cardPlayer).length > 0)
                                             return Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.12);
                                         return "#21222c";
                                     }
@@ -902,7 +938,7 @@ BarBlock {
                                     Image {
                                         id: expandedArtImage
                                         anchors.fill: parent
-                                        source: MprisState.cardPlayer?.trackArtUrl || ""
+                                        source: MprisState.artFor(MprisState.cardPlayer)
                                         fillMode: Image.PreserveAspectCrop
                                         asynchronous: true
                                         visible: status === Image.Ready
@@ -910,7 +946,7 @@ BarBlock {
 
                                     Text {
                                         anchors.centerIn: parent
-                                        text: ""
+                                        text: MprisState.isBrowserPlayer(MprisState.cardPlayer) ? MprisState.browserGlyph(MprisState.cardPlayer) : ""
                                         color: "#6272a4"
                                         font {
                                             pixelSize: 56

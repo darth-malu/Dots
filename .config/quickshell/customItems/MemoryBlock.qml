@@ -292,14 +292,14 @@ BarBlock {
 
                                 Rectangle {
                                     Layout.fillWidth: true
-                                    implicitHeight: 3
-                                    radius: 1.5
+                                    implicitHeight: 6
+                                    radius: 3
                                     color: Qt.rgba(1, 1, 1, 0.06)
 
                                     Rectangle {
                                         width: parent.width * Math.min(mrow.kib / mrow.relMax, 1)
                                         height: parent.height
-                                        radius: 1.5
+                                        radius: 3
                                         color: mrow.accent
 
                                         Behavior on width {

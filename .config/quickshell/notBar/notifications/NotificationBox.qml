@@ -34,7 +34,7 @@ WrapperMouseArea {
 
     // critical notifications keep a red border; wifi connects show a signal-tinted wifi glyph
     readonly property bool urgent: n.urgency == NotificationUrgency.Critical
-    readonly property bool isWifiConnect: n.summary == "Connection established" && n.appName == "Shell"
+    readonly property bool isWifiConnect: n.appName == "Shell" && n.body.startsWith("signal · ")
     readonly property color accent: urgent ? "#ff5555" : "#bd93f9"
 
     property bool expanded: false

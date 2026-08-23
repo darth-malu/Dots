@@ -106,9 +106,19 @@ Item {
                         Image {
                             id: albumArtImage
                             anchors.fill: parent
-                            source: MprisState.player?.trackArtUrl ?? ""
+                            source: MprisState.artFor(MprisState.player)
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
+                            visible: MprisState.mprisArtVisible
+                        }
+
+                        // browsers never get art — show their icon instead
+                        Text {
+                            anchors.centerIn: parent
+                            visible: MprisState.isBrowserPlayer(MprisState.player)
+                            text: MprisState.browserGlyph(MprisState.player)
+                            color: "#bd93f9"
+                            font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
                         }
                     }
 
@@ -116,7 +126,7 @@ Item {
                     BarText {
                         anchors.centerIn: parent
                         // visible: !albumArt.visible
-                        visible: !(albumArtImage.status == Image.Ready)
+                        visible: !(albumArtImage.status == Image.Ready) && !MprisState.isBrowserPlayer(MprisState.player)
                         text: "🎵"
                         pointSize: 10
                     }
@@ -175,12 +185,12 @@ Item {
                 }
 
                 // ── play/pause button with progress ring ──
+                // hiding the progress pill hides the pause button with it
                 Item {
                     id: playButtonBox
-                    implicitWidth: 22
-                    implicitHeight: 22
-                    Layout.preferredWidth: 22
-                    Layout.preferredHeight: 22
+                    visible: MprisState.showMprisProgress
+                    Layout.preferredWidth: visible ? 22 : 0
+                    Layout.preferredHeight: visible ? 22 : 0
 
                     Canvas {
                         id: progressRing
@@ -379,16 +389,25 @@ Item {
                 // album art fills the popup
                 Image {
                     anchors.fill: parent
-                    source: MprisState.player?.trackArtUrl ?? ""
+                    source: MprisState.artFor(MprisState.player)
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
                     mipmap: true
                 }
 
+                // browsers never get art — show their icon instead
+                Text {
+                    anchors.centerIn: parent
+                    visible: MprisState.isBrowserPlayer(MprisState.player)
+                    text: MprisState.browserGlyph(MprisState.player)
+                    color: "#bd93f9"
+                    font { pixelSize: 42; family: "Symbols Nerd Font Mono" }
+                }
+
                 // fallback when no art
                 BarText {
                     anchors.centerIn: parent
-                    visible: !(MprisState.player?.trackArtUrl ?? "")
+                    visible: !(MprisState.player?.trackArtUrl ?? "") && !MprisState.isBrowserPlayer(MprisState.player)
                     text: "🎵"
                     pointSize: 48
                 }

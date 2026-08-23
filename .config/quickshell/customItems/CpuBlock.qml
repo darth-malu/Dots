@@ -16,6 +16,18 @@ BarBlock {
     readonly property int cpuPercent: ResourcesState.cpuUsageString
     readonly property real cpuTemp: ResourcesState.cpuTemp
 
+    // session temperature extremes (since shell start)
+    property real tempMin: cpuTemp
+    property real tempMax: cpuTemp
+    onCpuTempChanged: {
+        if (cpuTemp > 0) {
+            if (tempMin <= 0 || cpuTemp < tempMin)
+                tempMin = cpuTemp;
+            if (cpuTemp > tempMax)
+                tempMax = cpuTemp;
+        }
+    }
+
     readonly property color cpuColor: cpuPercent > 80 ? "#ff5555" : cpuPercent > 60 ? "#f1fa8c" : "#bd93f9"
 
     onClicked: mouse => {
@@ -178,13 +190,11 @@ BarBlock {
                         spacing: 6
 
                         Text {
-                            text: "cpu"
-                            color: "#6272a4"
+                            text: "\uf2db"
+                            color: "#bd93f9"
                             font {
-                                pixelSize: 9
-                                bold: true
-                                family: "Quicksand"
-                                letterSpacing: 1
+                                pixelSize: 12
+                                family: "Symbols Nerd Font Mono"
                             }
                         }
 
@@ -193,7 +203,7 @@ BarBlock {
                         }
 
                         Text {
-                            text: `${cpu.cpuPercent}% · ${Math.round(cpu.cpuTemp)}°`
+                            text: `${cpu.cpuPercent}% · ${Math.round(cpu.cpuTemp)}°  min ${Math.round(cpu.tempMin)}°  max ${Math.round(cpu.tempMax)}°`
                             color: cpu.cpuColor
                             font {
                                 pixelSize: 9
@@ -299,14 +309,14 @@ BarBlock {
 
                                 Rectangle {
                                     Layout.fillWidth: true
-                                    implicitHeight: 3
-                                    radius: 1.5
+                                    implicitHeight: 6
+                                    radius: 3
                                     color: Qt.rgba(1, 1, 1, 0.06)
 
                                     Rectangle {
                                         width: parent.width * Math.min(prow.cval / 100, 1)
                                         height: parent.height
-                                        radius: 1.5
+                                        radius: 3
                                         color: prow.accent
 
                                         Behavior on width {

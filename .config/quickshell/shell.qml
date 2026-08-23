@@ -23,3 +23,21 @@ ShellRoot {
     SettingsWindow {}
     WLogoutOverlay {}
 }
+
+// reload-nudge
+
+// nudge
+
+// nudge2
+
+// nudge
+
+// nudge
+
+// nudge
+
+// nudge
+
+// nudge
+
+// nudge

@@ -80,7 +80,29 @@ Singleton {
             `[ -n "$id" ] && wpctl set-volume "$id" ${up ? "0.05+" : "0.05-"}`]);
     }
 
-    property var ignored: ["mpv", "whatsapp", "Chrome", "chromium", "firefox", "Mozilla zen", "undefined"]
+    property var ignored: ["mpv", "whatsapp", "undefined"]
+
+    // browsers are shown like any player but must NEVER display album art
+    function isBrowserPlayer(p) {
+        if (!p)
+            return false;
+        const s = ((p.identity ?? "") + " " + (p.desktopEntry ?? "")).toLowerCase();
+        return ["chrome", "chromium", "firefox", "zen"].some(k => s.includes(k));
+    }
+
+    function browserGlyph(p) {
+        const s = ((p?.identity ?? "") + " " + (p?.desktopEntry ?? "")).toLowerCase();
+        if (s.includes("chrome") || s.includes("chromium"))
+            return "\uf268";
+        return "\uf269";
+    }
+
+    // art url for a player — browsers always fall back to their icon glyph name
+    function artFor(p) {
+        if (!p || isBrowserPlayer(p))
+            return "";
+        return p.trackArtUrl ?? "";
+    }
 
     function ignorePlayer(identity) {
         if (!root.ignored.includes(identity))
@@ -147,6 +169,8 @@ Singleton {
         let artist = p.trackArtist || "Unknown Artist";
         let album = p.trackAlbum || "Unknown Album";
         let art = p.trackArtUrl || "audio-x-generic";
+        if (root.isBrowserPlayer(p))
+            art = dEntry || "audio-x-generic";
         // let len = p.length;
         let uid = p.uniqueId;
         let dEntry = p.desktopEntry;

@@ -13,16 +13,21 @@ Scope {
     property var ifAudioNode: VolumeState.isAudioNode
     property bool isMuted: VolumeState.isMuted
 
+    // which channel the OSD is currently displaying (output vs microphone)
+    property bool osdIsMic: false
+
+    readonly property var activeNode: osdIsMic ? (defaultSource?.audio ?? null) : ifAudioNode
+    readonly property real nodeVolume: activeNode?.volume ?? 0
+    readonly property bool nodeMuted: activeNode?.muted ?? false
+
     readonly property color volColor: {
-        if (root.isMuted)
+        if (root.nodeMuted)
             return "#6272a4";
-        var v = ifAudioNode?.volume ?? 0;
+        var v = root.nodeVolume;
         if (v > 0.8)
             return "#ff79c6";
         if (v > 0.5)
             return "#c6a0f6";
-        if (v > 0.2)
-            return "#bd93f9";
         return "#bd93f9";
     }
 
@@ -34,14 +39,30 @@ Scope {
         target: root.ifAudioNode ?? null
 
         function onVolumeChanged() {
+            root.osdIsMic = false;
             root.shouldShowOsd = true;
-            root.isMuted = root.ifAudioNode?.muted ?? false;
             hideTimer.restart();
         }
 
         function onMutedChanged() {
+            root.osdIsMic = false;
             root.shouldShowOsd = true;
-            root.isMuted = root.ifAudioNode?.muted ?? false;
+            hideTimer.restart();
+        }
+    }
+
+    Connections {
+        target: root.defaultSource?.audio ?? null
+
+        function onVolumeChanged() {
+            root.osdIsMic = true;
+            root.shouldShowOsd = true;
+            hideTimer.restart();
+        }
+
+        function onMutedChanged() {
+            root.osdIsMic = true;
+            root.shouldShowOsd = true;
             hideTimer.restart();
         }
     }

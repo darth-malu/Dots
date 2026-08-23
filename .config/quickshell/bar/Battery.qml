@@ -11,7 +11,7 @@ RowLayout {
 
     Layout.alignment: Qt.AlignVCenter
     spacing: 6
-    visible: BatteryState.available
+    visible: BatteryState.available && MiscState.showBattery
 
     required property var host
 
@@ -225,18 +225,17 @@ RowLayout {
                         Text {
                             text: {
                                 const b = batteryBlock.bat;
-                                const p = ` · ${batteryBlock.pctDisplay}%`;
                                 if (batteryBlock.isCharging) {
                                     const t = BatteryState.fmtTime(b.timeToFull);
-                                    return t ? `Charging · ${t} to full${p}` : `Charging${p}`;
+                                    return t ? `Charging · ${t} to full` : "Charging";
                                 }
                                 if (batteryBlock.isPendingCharge)
-                                    return `Plugged in${p}`;
+                                    return "Plugged in";
                                 if (batteryBlock.isFullyCharged)
-                                    return `Fully charged${p}`;
+                                    return "Fully charged";
                                 if (BatteryState.isDischarging) {
                                     const t = BatteryState.fmtTime(b.timeToEmpty);
-                                    return t ? `${t} remaining${p}` : `Discharging${p}`;
+                                    return t ? `${t} remaining` : "Discharging";
                                 }
                                 return "";
                             }
@@ -247,6 +246,20 @@ RowLayout {
                     }
 
                     Item { Layout.fillWidth: true }
+
+                    // single percentage readout for the whole popup
+                    Text {
+                        Layout.alignment: Qt.AlignVCenter
+                        text: batteryBlock.pctDisplay + "%"
+                        color: batteryBlock.accentColor
+                        font { pixelSize: 14; bold: true; family: "ZedMono Nerd Font" }
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 200
+                            }
+                        }
+                    }
 
                     // graph toggle (same style as the network popups)
                     Rectangle {
@@ -304,12 +317,6 @@ RowLayout {
                         }
 
                         Item { Layout.fillWidth: true }
-
-                        Text {
-                            text: `${batteryBlock.pctDisplay}%`
-                            color: batteryBlock.accentColor
-                            font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                        }
                     }
 
                     Rectangle {
@@ -339,16 +346,6 @@ RowLayout {
                                 const r = Math.round(ac.r * 255);
                                 const g = Math.round(ac.g * 255);
                                 const b = Math.round(ac.b * 255);
-
-                                // reference gridlines at ~100/50/0%
-                                ctx.strokeStyle = "rgba(255, 255, 255, 0.07)";
-                                ctx.lineWidth = 1;
-                                for (const fy of [0.05, 0.5, 0.95]) {
-                                    ctx.beginPath();
-                                    ctx.moveTo(0, height * fy);
-                                    ctx.lineTo(width, height * fy);
-                                    ctx.stroke();
-                                }
 
                                 const vals = graphCanvas.samples;
                                 if (!vals || vals.length < 2)
@@ -410,7 +407,9 @@ RowLayout {
                     Layout.fillWidth: true
                     implicitHeight: 34
                     radius: 9
-                    color: "#343746"
+                    color: "#21222c"
+                    border.width: 1
+                    border.color: "#343746"
 
                     RowLayout {
                         anchors.fill: parent
@@ -420,8 +419,8 @@ RowLayout {
                         Repeater {
                             model: [
                                 { glyph: "\uf06c", name: "Saver", profile: PowerProfile.PowerSaver, tint: "#96e6a1" },
-                                { glyph: "\uf24e", name: "Balanced", profile: PowerProfile.Balanced, tint: "#c3b8f5" },
-                                { glyph: "\uf0e7", name: "Perf", profile: PowerProfile.Performance, tint: "#8fd8e8" }
+                                { glyph: "\uf24e", name: "Balanced", profile: PowerProfile.Balanced, tint: "#bd93f9" },
+                                { glyph: "\uf0e7", name: "Perf", profile: PowerProfile.Performance, tint: "#8be9fd" }
                             ]
 
                             delegate: Rectangle {
@@ -433,13 +432,25 @@ RowLayout {
 
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
-                                radius: 7
-                                color: seg.active ? seg.modelData.tint : segHover.hovered ? Qt.rgba(1, 1, 1, 0.07) : "transparent"
+                                radius: 6
+                                color: seg.active ? Qt.rgba(seg.modelData.tint.r, seg.modelData.tint.g, seg.modelData.tint.b, 0.16)
+                                    : segHover.hovered ? Qt.rgba(1, 1, 1, 0.05) : "transparent"
 
                                 Behavior on color {
                                     ColorAnimation {
                                         duration: 120
                                     }
+                                }
+
+                                // hairline accent under the active segment
+                                Rectangle {
+                                    visible: seg.active
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    anchors.bottom: parent.bottom
+                                    width: parent.width * 0.4
+                                    height: 2
+                                    radius: 1
+                                    color: seg.modelData.tint
                                 }
 
                                 RowLayout {
@@ -448,13 +459,13 @@ RowLayout {
 
                                     Text {
                                         text: seg.modelData.glyph
-                                        color: seg.active ? "#282a36" : seg.modelData.tint
+                                        color: seg.active ? seg.modelData.tint : "#6272a4"
                                         font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
                                     }
 
                                     Text {
                                         text: seg.modelData.name
-                                        color: seg.active ? "#282a36" : "#b8bfcb"
+                                        color: seg.active ? "#f8f8f2" : segHover.hovered ? "#b8bfcb" : "#6272a4"
                                         font { pixelSize: 9; bold: true; family: "Quicksand" }
                                     }
                                 }

@@ -133,10 +133,11 @@ Item {
     IpcHandler {
         target: 'logout'
         function toggle(): void {
+            console.log("[logout] toggle -> " + !MiscState.logoutOpen);
             MiscState.logoutOpen = !MiscState.logoutOpen;
         }
 
-        function show(): void {
+        function open(): void {
             MiscState.logoutOpen = true;
         }
     }
