@@ -30,54 +30,19 @@ ShellRoot {
 
             aboveWindows: false
             color: 'transparent'
-            implicitHeight: BarState.barStyle === 0 ? 28 : 26
+            implicitHeight: 26
 
             margins {
                 right: 10
-                left: BarState.barStyle === 0 ? 10 : 6
+                left: 6
                 // transparent setup sits flush with the top edge
-                top: BarState.barStyle === 1 ? 2 : 0
-            }
-
-            // Floating background with rounded bottom corners
-            Rectangle {
-                visible: BarState.barStyle === 0
-                anchors.fill: parent
-                color: Qt.rgba(24 / 255, 24 / 255, 37 / 255, 0.75)
-                bottomLeftRadius: 10
-                bottomRightRadius: 10
-                z: -1
-
-                Rectangle {
-                    anchors {
-                        left: parent.left
-                        right: parent.right
-                        bottom: parent.bottom
-                    }
-                    height: 1
-                    visible: parent.visible
-                    gradient: Gradient {
-                        orientation: Gradient.Horizontal
-                        GradientStop {
-                            position: 0.0
-                            color: "transparent"
-                        }
-                        GradientStop {
-                            position: 0.5
-                            color: Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.35)
-                        }
-                        GradientStop {
-                            position: 1.0
-                            color: "transparent"
-                        }
-                    }
-                }
+                top: BarState.solidBar ? 2 : 0
             }
 
             // Solid (non-transparent) background — full slab, radius 4,
             // hanging 2px off the top edge so it reads as a crisp panel
             Rectangle {
-                visible: BarState.barStyle === 1
+                visible: BarState.solidBar
                 anchors.fill: parent
                 radius: 4
                 color: "#181825"

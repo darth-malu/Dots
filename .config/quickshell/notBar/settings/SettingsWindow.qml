@@ -543,31 +543,11 @@ Item {
                         Layout.fillWidth: true
 
                         SettingRow {
-                            icon: ""
-                            label: "Floating bar"
-                            caption: BarState.barStyle === 0 ? "rounded · 28px" : ""
-                            checked: BarState.barStyle === 0
-                            onFlipped: BarState.barStyle = 0
-                        }
-
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
-
-                        SettingRow {
                             icon: "\ueac1"
                             label: "Solid bar"
-                            caption: BarState.barStyle === 1 ? "radius 4 · 2px gap" : ""
-                            checked: BarState.barStyle === 1
-                            onFlipped: BarState.barStyle = 1
-                        }
-
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
-
-                        SettingRow {
-                            icon: "\ueb7c"
-                            label: "Transparent bar"
-                            caption: BarState.barStyle === 2 ? "no bg · flush top" : ""
-                            checked: BarState.barStyle === 2
-                            onFlipped: BarState.barStyle = 2
+                            caption: BarState.solidBar ? "radius 4 Â· 2px gap" : "transparent Â· flush top"
+                            checked: BarState.solidBar
+                            onFlipped: BarState.solidBar = !BarState.solidBar
                         }
 
                         Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }

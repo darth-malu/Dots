@@ -284,6 +284,41 @@ BarBlock {
                                         }
                                     }
 
+                                    // hover hint — floats above the pill so the
+                                    // row never shifts; doubles as copied toast
+                                    Rectangle {
+                                        anchors.bottom: parent.top
+                                        anchors.bottomMargin: 3
+                                        anchors.right: parent.right
+                                        z: 60
+                                        radius: 6
+                                        implicitWidth: hintLabel.implicitWidth + 14
+                                        implicitHeight: 17
+                                        color: "#282a36"
+                                        border.width: 1
+                                        border.color: histRow.copied ? Qt.rgba(0.31, 0.98, 0.48, 0.5) : Qt.rgba(0.74, 0.58, 0.98, 0.45)
+                                        visible: opacity > 0.01
+                                        opacity: rowCopyMa.containsMouse || histRow.copied ? 1 : 0
+
+                                        Behavior on opacity {
+                                            ColorAnimation { duration: 120 }
+                                        }
+
+                                        Text {
+                                            id: hintLabel
+
+                                            anchors.centerIn: parent
+                                            text: histRow.copied ? "copied" : "copy · right-click body"
+                                            color: histRow.copied ? "#50fa7b" : "#bd93f9"
+                                            font {
+                                                pixelSize: 8
+                                                bold: true
+                                                letterSpacing: 0.5
+                                                family: "Quicksand"
+                                            }
+                                        }
+                                    }
+
                                     MouseArea {
                                         id: rowCopyMa
 
