@@ -22,6 +22,64 @@ Singleton {
 
     property bool hideWhenIdle: true
 
+    // scroll-to-marquee song titles (pill + quicksettings card)
+    property bool marqueeEnabled: true
+
+    // ── quicksettings card persistence ──
+    // pinned player identity (set by cycling through players on the card)
+    property string pinIdentity: ""
+
+    function playerByIdentity(identity) {
+        for (let p of Mpris.players.values)
+            if (p.identity === identity)
+                return p;
+        return null;
+    }
+
+    // every player including normally-ignored ones (chrome etc.) so they
+    // can be selected as the card's control target
+    readonly property var controlPlayers: Mpris.players.values
+
+    // the player the quicksettings card shows/controls — survives pause,
+    // honours an explicit pin, falls back through player → lastPlayer
+    readonly property MprisPlayer cardPlayer: {
+        const p = root.pinIdentity.length > 0 ? root.playerByIdentity(root.pinIdentity) : null;
+        return p ?? root.player ?? root.lastPlayer ?? null;
+    }
+
+    function cycleCardPin() {
+        const list = root.controlPlayers;
+        if (list.length === 0) {
+            root.pinIdentity = "";
+            return;
+        }
+        const cur = root.cardPlayer?.identity ?? "";
+        let idx = -1;
+        for (let i = 0; i < list.length; i++)
+            if (list[i].identity === cur)
+                idx = i;
+        const next = list[(idx + 1) % list.length];
+        // cycling onto the already-shown player releases the pin instead
+        root.pinIdentity = next.identity === cur && root.pinIdentity.length > 0 ? "" : next.identity;
+    }
+
+    // volume nudge that works for players without MPRIS volume support —
+    // chrome gets its per-application stream adjusted via wpctl
+    function adjustVolume(p, up) {
+        if (!p)
+            return;
+        if (p.volumeSupported) {
+            p.volume = Math.max(0, Math.min(p.volume + (up ? 0.05 : -0.05), 1));
+            return;
+        }
+        const kw = ((p.desktopEntry && p.desktopEntry.length > 2 ? p.desktopEntry : p.identity || "").split(" ")[0] || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        if (kw.length < 3)
+            return;
+        Quickshell.execDetached(["sh", "-c",
+            `id=$(wpctl status | awk -v kw='${kw}' '/^[[:space:]]*└?─? ?Streams:/{s=1;next} /^Video|^Audio|^Endpoints/{s=0} s && /^[[:space:]]*[0-9]+\\./ && index(tolower($0), kw) { match($0, /[0-9]+/); print substr($0, RSTART, RLENGTH); exit }'); ` +
+            `[ -n "$id" ] && wpctl set-volume "$id" ${up ? "0.05+" : "0.05-"}`]);
+    }
+
     property var ignored: ["mpv", "whatsapp", "Chrome", "chromium", "firefox", "Mozilla zen", "undefined"]
 
     function ignorePlayer(identity) {

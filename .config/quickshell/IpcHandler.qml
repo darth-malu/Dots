@@ -129,4 +129,15 @@ Item {
             MiscState.toggleSysTray = !MiscState.toggleSysTray;
         }
     }
+
+    IpcHandler {
+        target: 'logout'
+        function toggle(): void {
+            MiscState.logoutOpen = !MiscState.logoutOpen;
+        }
+
+        function show(): void {
+            MiscState.logoutOpen = true;
+        }
+    }
 }

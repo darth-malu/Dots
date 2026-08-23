@@ -13,7 +13,7 @@ hl.bind(mod .. "+ ALT + I", hl.dsp.exec_cmd("qs ipc call notifications showLast"
 hl.bind(mod .. "SHIFT+ space", hl.dsp.exec_cmd("qs ipc call notifications dismissAll"), { locked = true })
 
 -- BAR
-hl.bind(mod .. "Delete", hl.dsp.exec_cmd("qs -p $HOME/.config/quickshell/notBar/wlogout/shell.qml"), { locked = true }) --TODO: make this toggle, instead of infinitely overlaying on existing instances
+hl.bind(mod .. "Delete", hl.dsp.exec_cmd("qs ipc call logout toggle"), { locked = true }) --now integrated into quickshell (toggle via IPC)
 hl.bind(mod .. "HOME", hl.dsp.exec_cmd("qs ipc call bar toggleBar"), { locked = true })
 hl.bind(mod .. "ALT + HOME", hl.dsp.exec_cmd("systemctl --user restart quickshell"), { locked = true })
 

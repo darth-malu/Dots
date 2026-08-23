@@ -194,18 +194,31 @@ Item {
             Quickshell.execDetached(["sh", "-c", `nmcli dev wifi connect '${root.esc(netrow.ssidName)}' password '${root.esc(psk)}'`]);
         }
 
-        radius: 3
+        radius: 8
         Layout.fillWidth: true
         // extra vertical breathing room for a comfortable list
-        implicitHeight: netCol.implicitHeight + 12
+        implicitHeight: netCol.implicitHeight + 16
         // the row being edited is isolated behind a purple tint; plain hover gets a subtle wash
-        color: editing ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.14) : rowHover.containsMouse ? Qt.rgba(1, 1, 1, 0.05) : "transparent"
-        opacity: isConnected ? 1 : 0.85
+        color: editing ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.14) : rowHover.containsMouse ? Qt.rgba(1, 1, 1, 0.07) : "transparent"
+        opacity: isConnected ? 1 : 0.9
 
         Behavior on color {
             ColorAnimation {
                 duration: 120
             }
+        }
+
+        // green accent rail marks the connected network at a glance
+        Rectangle {
+            visible: parent.isConnected
+            anchors.left: parent.left
+            anchors.topMargin: 10
+            anchors.bottomMargin: 10
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            width: 3
+            radius: 1.5
+            color: "#50fa7b"
         }
 
         onEditingChanged: {
@@ -261,6 +274,17 @@ Item {
                 Layout.alignment: Qt.AlignBottom
             }
 
+            // numeric signal strength for legibility
+            Text {
+                visible: !netrow.hiddenNet
+                text: (netrow.modelData?.signalStrength ?? 0) + "%"
+                color: "#6272a4"
+                font {
+                    pixelSize: 9
+                    family: "ZedMono Nerd Font"
+                }
+            }
+
             Text {
                 text: netrow.hiddenNet ? "hidden network" : netrow.ssidName
                 color: netrow.hiddenNet ? "#6272a4" : netrow.isConnected ? "#f8f8f2" : "#b8bfcb"
@@ -274,12 +298,21 @@ Item {
                 Layout.fillWidth: true
             }
 
-            // wifi band tag (2.4G / 5G / 6G) from nmcli scan data
-            Text {
+            // wifi band tag (2.4G / 5G / 6G) from nmcli scan data — chip style
+            Rectangle {
                 visible: !netrow.hiddenNet && root.bandFor(netrow.ssidName).length > 0
-                text: root.bandFor(netrow.ssidName)
-                color: "#6272a4"
-                font { pixelSize: 8; bold: true; family: "ZedMono Nerd Font" }
+                radius: 4
+                color: "#343746"
+                implicitWidth: bandText.implicitWidth + 10
+                implicitHeight: 14
+
+                Text {
+                    id: bandText
+                    anchors.centerIn: parent
+                    text: root.bandFor(netrow.ssidName)
+                    color: "#8be9fd"
+                    font { pixelSize: 8; bold: true; family: "ZedMono Nerd Font" }
+                }
             }
 
             // connected dot, then padlock for secured networks

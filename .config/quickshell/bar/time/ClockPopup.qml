@@ -150,6 +150,7 @@ ColumnLayout {
         year: root.displayYear
 
         delegate: Item {
+            id: dayCell
             implicitWidth: 30
             implicitHeight: 30
 
@@ -192,7 +193,7 @@ ColumnLayout {
                 color: {
                     if (parent.isSelected) return Themes.calendarToday;
                     if (model.today) return "#282a36";
-                    if (parent.hovered) return Themes.calendarToday;
+                    if (dayCell.hovered) return Themes.calendarToday;
                     if (model.month === grid.month) return Themes.calendarActiveMonth;
                     return Themes.calendarInactiveMonth;
                 }
@@ -213,8 +214,8 @@ ColumnLayout {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onEntered: parent.hovered = true
-                onExited: parent.hovered = false
+                onEntered: dayCell.hovered = true
+                onExited: dayCell.hovered = false
                 onClicked: {
                     root.selectedDay = model.day;
                     root.selectedMonth = model.month;
@@ -232,8 +233,8 @@ ColumnLayout {
         visible: root.yearView
         Layout.fillWidth: true
         columns: 3
-        columnSpacing: 10
-        rowSpacing: 12
+        columnSpacing: 14
+        rowSpacing: 16
 
         Repeater {
             model: 12
@@ -250,12 +251,12 @@ ColumnLayout {
                 Layout.preferredWidth: (yearGrid.width - 2 * yearGrid.columnSpacing) / 3
                 Layout.alignment: Qt.AlignTop
 
-                spacing: 2
+                spacing: 3
 
                 Text {
                     text: Qt.formatDateTime(new Date(2000, miniMonth.index, 1), "MMM")
                     color: root.displayMonth === miniMonth.index ? Themes.calendarToday : Themes.calendarHeader
-                    font { pixelSize: 10; bold: true; family: "Quicksand" }
+                    font { pixelSize: 12; bold: true; family: "Quicksand"; letterSpacing: 1 }
                     Layout.alignment: Qt.AlignHCenter
                 }
 
@@ -264,43 +265,72 @@ ColumnLayout {
                     year: root.displayYear
                     spacing: 0
                     Layout.fillWidth: true
-                    // 6 week rows of ~14px — implicit size must be explicit here too
-                    Layout.preferredHeight: 88
+                    // 6 week rows of ~19px — implicit size must be explicit here too
+                    Layout.preferredHeight: 116
 
                     delegate: Item {
-                        implicitWidth: 13
-                        implicitHeight: 14
+                        id: miniDay
+
+                        property bool hovered: false
+
+                        implicitWidth: 18
+                        implicitHeight: 19
 
                         readonly property bool isTrackedMini: {
                             MiscState.trackedDatesRev;
                             return MiscState.isTrackedDate(model.year, model.month, model.day);
                         }
 
+                        // hover / today circle — mirrors the month view aesthetic
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: Math.min(parent.width, parent.height) - 2
+                            height: width
+                            radius: width / 2
+                            visible: miniDay.hovered || model.today
+                            color: model.today ? Themes.calendarToday : Themes.calendarToday
+                            opacity: model.today ? 0.85 : 0.16
+                        }
+
                         Text {
                             anchors.centerIn: parent
                             text: model.day
-                            font { pixelSize: 8; family: "Quicksand" }
-                            color: model.today ? Themes.calendarToday : model.month === miniMonth.index ? Themes.calendarActiveMonth : Themes.calendarInactiveMonth
+                            font { pixelSize: 10; family: "Quicksand" }
+                            color: {
+                                if (model.today)
+                                    return "#282a36";
+                                if (miniDay.hovered)
+                                    return Themes.calendarToday;
+                                return model.month === miniMonth.index ? Themes.calendarActiveMonth : Themes.calendarInactiveMonth;
+                            }
                         }
 
                         Rectangle {
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.bottom: parent.bottom
-                            width: 3
-                            height: 3
-                            radius: 1.5
+                            width: 4
+                            height: 4
+                            radius: 2
                             color: Themes.calendarActiveMonth
                             visible: parent.isTrackedMini
                         }
 
-                        // click a day to open its month in month view
+                        // click a day to select it and open its month with the task input
                         MouseArea {
                             anchors.fill: parent
+                            hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
+                            onEntered: miniDay.hovered = true
+                            onExited: miniDay.hovered = false
                             onClicked: {
                                 root.clearSelection();
+                                root.selectedDay = model.day;
+                                root.selectedMonth = model.month;
+                                root.selectedYear = model.year;
                                 root.displayMonth = miniMonth.index;
                                 root.yearView = false;
+                                root.inputVisible = true;
+                                taskField.forceActiveFocus();
                             }
                         }
                     }

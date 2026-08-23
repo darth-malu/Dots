@@ -6,6 +6,7 @@ import Quickshell.Wayland
 import Quickshell.Io
 import qs.customItems
 import qs.services
+import qs.bar.quicksettings.nowplaying
 import Quickshell.Services.Pipewire
 import Quickshell.Services.Mpris
 import Quickshell.Networking
@@ -52,9 +53,10 @@ Item {
     }
 
     readonly property var categories: [
-        { icon: "", label: "General" },
-        { icon: "", label: "Bar" },
-        { icon: "", label: "Audio" },
+        { icon: "\uf013", label: "General" },
+        { icon: "\uf080", label: "Bar" },
+        { icon: "\uf144", label: "Media" },
+        { icon: "\uf001", label: "Audio" },
         { icon: "\uf1eb", label: "Connections" },
     ]
 
@@ -432,7 +434,8 @@ Item {
                                     width: parent.width
                                     sourceComponent: root.currentCategory === 0 ? generalPage
                                         : root.currentCategory === 1 ? barPage
-                                        : root.currentCategory === 2 ? audioPage
+                                        : root.currentCategory === 2 ? mediaPage
+                                        : root.currentCategory === 3 ? audioPage
                                         : connectionsPage
                                 }
                             }
@@ -448,13 +451,23 @@ Item {
             ColumnLayout {
                 spacing: 16
 
-                Text {
-                    text: "General"
-                    color: "#f8f8f2"
-                    font {
-                        pixelSize: 20
-                        bold: true
-                        family: "Quicksand"
+                RowLayout {
+                    spacing: 10
+
+                    Text {
+                        text: "\uf013"
+                        color: "#bd93f9"
+                        font { pixelSize: 20; family: "Symbols Nerd Font Mono" }
+                    }
+
+                    Text {
+                        text: "General"
+                        color: "#f8f8f2"
+                        font {
+                            pixelSize: 20
+                            bold: true
+                            family: "Quicksand"
+                        }
                     }
                 }
 
@@ -490,6 +503,43 @@ Item {
                     }
                 }
 
+            }
+        }
+
+        // ── Media page — mpris pill behaviour + marquee toggle ──
+        Component {
+            id: mediaPage
+
+            ColumnLayout {
+                spacing: 16
+
+                RowLayout {
+                    spacing: 10
+
+                    Text {
+                        text: "\uf144"
+                        color: "#bd93f9"
+                        font { pixelSize: 20; family: "Symbols Nerd Font Mono" }
+                    }
+
+                    Text {
+                        text: "Media"
+                        color: "#f8f8f2"
+                        font {
+                            pixelSize: 20
+                            bold: true
+                            family: "Quicksand"
+                        }
+                    }
+                }
+
+                Text {
+                    text: "Media player pill, popups and title scrolling."
+                    color: "#b8bfcb"
+                    font { pixelSize: 11; family: "ZedMono Nerd Font" }
+                    Layout.bottomMargin: 8
+                }
+
                 Card {
                     title: "MPRIS"
                     icon: ""
@@ -505,10 +555,11 @@ Item {
                             Layout.preferredHeight: 36
 
                             Text {
-                                text: ""
+                                text: "\ue01c"
                                 color: "#bd93f9"
                                 font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                                Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
+                                Layout.preferredWidth: 20
+                                horizontalAlignment: Text.AlignHCenter
                             }
 
                             ColumnLayout {
@@ -528,31 +579,52 @@ Item {
                                 }
                             }
 
-                            Item { Layout.fillWidth: true }
+                            Item {
+                                Layout.fillWidth: true
+                            }
 
                             Rectangle {
                                 Layout.alignment: Qt.AlignVCenter
-                                implicitWidth: 36; implicitHeight: 20; radius: 10
+                                implicitWidth: 36
+                                implicitHeight: 20
+                                radius: 10
                                 color: MprisState.showMprisProgress ? "#bd93f9" : "#44475a"
-                                Behavior on color { ColorAnimation { duration: 120 } }
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: 120
+                                    }
+                                }
 
                                 Rectangle {
-                                    width: 16; height: 16; radius: 8
+                                    width: 16
+                                    height: 16
+                                    radius: 8
                                     color: "#282a36"
                                     x: MprisState.showMprisProgress ? parent.width - width - 2 : 2
                                     y: (parent.height - height) / 2
-                                    Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                                    Behavior on x {
+                                        NumberAnimation {
+                                            duration: 120
+                                            easing.type: Easing.OutCubic
+                                        }
+                                    }
                                 }
 
                                 MouseArea {
-                                    anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
                                     onClicked: MprisState.showMprisProgress = !MprisState.showMprisProgress
                                 }
                             }
                         }
 
                         // Separator
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 28 }
+                        Rectangle {
+                            Layout.fillWidth: true
+                            height: 1
+                            color: "#343746"
+                            Layout.leftMargin: 28
+                        }
 
                         RowLayout {
                             spacing: 10
@@ -560,10 +632,11 @@ Item {
                             Layout.preferredHeight: 36
 
                             Text {
-                                text: ""
+                                text: "\ue03c"
                                 color: "#bd93f9"
                                 font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                                Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
+                                Layout.preferredWidth: 20
+                                horizontalAlignment: Text.AlignHCenter
                             }
 
                             ColumnLayout {
@@ -583,25 +656,118 @@ Item {
                                 }
                             }
 
-                            Item { Layout.fillWidth: true }
+                            Item {
+                                Layout.fillWidth: true
+                            }
 
                             Rectangle {
                                 Layout.alignment: Qt.AlignVCenter
-                                implicitWidth: 36; implicitHeight: 20; radius: 10
+                                implicitWidth: 36
+                                implicitHeight: 20
+                                radius: 10
                                 color: MprisState.hideWhenIdle ? "#bd93f9" : "#44475a"
-                                Behavior on color { ColorAnimation { duration: 120 } }
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: 120
+                                    }
+                                }
 
                                 Rectangle {
-                                    width: 16; height: 16; radius: 8
+                                    width: 16
+                                    height: 16
+                                    radius: 8
                                     color: "#282a36"
                                     x: MprisState.hideWhenIdle ? parent.width - width - 2 : 2
                                     y: (parent.height - height) / 2
-                                    Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                                    Behavior on x {
+                                        NumberAnimation {
+                                            duration: 120
+                                            easing.type: Easing.OutCubic
+                                        }
+                                    }
                                 }
 
                                 MouseArea {
-                                    anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
                                     onClicked: MprisState.hideWhenIdle = !MprisState.hideWhenIdle
+                                }
+                            }
+                        }
+
+                        // Separator
+                        Rectangle {
+                            Layout.fillWidth: true
+                            height: 1
+                            color: "#343746"
+                            Layout.leftMargin: 28
+                        }
+
+                        RowLayout {
+                            spacing: 10
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 36
+
+                            Text {
+                                text: "\uf07c"
+                                color: "#bd93f9"
+                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                Layout.preferredWidth: 20
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            ColumnLayout {
+                                spacing: 0
+                                Layout.fillWidth: true
+
+                                Text {
+                                    text: "Marquee titles"
+                                    color: "#f8f8f2"
+                                    font { pixelSize: 12; family: "Quicksand"; bold: true }
+                                }
+
+                                Text {
+                                    text: MprisState.marqueeEnabled ? "Long titles scroll" : "Long titles truncate"
+                                    color: "#6272a4"
+                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                }
+                            }
+
+                            Item {
+                                Layout.fillWidth: true
+                            }
+
+                            Rectangle {
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: 36
+                                implicitHeight: 20
+                                radius: 10
+                                color: MprisState.marqueeEnabled ? "#bd93f9" : "#44475a"
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: 120
+                                    }
+                                }
+
+                                Rectangle {
+                                    width: 16
+                                    height: 16
+                                    radius: 8
+                                    color: "#282a36"
+                                    x: MprisState.marqueeEnabled ? parent.width - width - 2 : 2
+                                    y: (parent.height - height) / 2
+                                    Behavior on x {
+                                        NumberAnimation {
+                                            duration: 120
+                                            easing.type: Easing.OutCubic
+                                        }
+                                    }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: MprisState.marqueeEnabled = !MprisState.marqueeEnabled
                                 }
                             }
                         }
@@ -616,13 +782,23 @@ Item {
             ColumnLayout {
                 spacing: 16
 
-                Text {
-                    text: "Connections"
-                    color: "#f8f8f2"
-                    font {
-                        pixelSize: 20
-                        bold: true
-                        family: "Quicksand"
+                RowLayout {
+                    spacing: 10
+
+                    Text {
+                        text: "\uf1eb"
+                        color: "#8be9fd"
+                        font { pixelSize: 20; family: "Symbols Nerd Font Mono" }
+                    }
+
+                    Text {
+                        text: "Connections"
+                        color: "#f8f8f2"
+                        font {
+                            pixelSize: 20
+                            bold: true
+                            family: "Quicksand"
+                        }
                     }
                 }
 
@@ -850,13 +1026,23 @@ Item {
             ColumnLayout {
                 spacing: 16
 
-                Text {
-                    text: "Bar"
-                    color: "#f8f8f2"
-                    font {
-                        pixelSize: 20
-                        bold: true
-                        family: "Quicksand"
+                RowLayout {
+                    spacing: 10
+
+                    Text {
+                        text: "\uf080"
+                        color: "#50fa7b"
+                        font { pixelSize: 20; family: "Symbols Nerd Font Mono" }
+                    }
+
+                    Text {
+                        text: "Bar"
+                        color: "#f8f8f2"
+                        font {
+                            pixelSize: 20
+                            bold: true
+                            family: "Quicksand"
+                        }
                     }
                 }
 
@@ -1002,13 +1188,23 @@ Item {
             ColumnLayout {
                 spacing: 16
 
-                Text {
-                    text: "Audio"
-                    color: "#f8f8f2"
-                    font {
-                        pixelSize: 20
-                        bold: true
-                        family: "Quicksand"
+                RowLayout {
+                    spacing: 10
+
+                    Text {
+                        text: "\uf001"
+                        color: "#c6a0f6"
+                        font { pixelSize: 20; family: "Symbols Nerd Font Mono" }
+                    }
+
+                    Text {
+                        text: "Audio"
+                        color: "#f8f8f2"
+                        font {
+                            pixelSize: 20
+                            bold: true
+                            family: "Quicksand"
+                        }
                     }
                 }
 
@@ -1047,115 +1243,24 @@ Item {
                             return "#bd93f9";
                         }
 
-                        // Master volume row
+                        // Master volume row — shared pill slider (matches quicksettings)
                         RowLayout {
                             spacing: 10
                             Layout.fillWidth: true
 
-                            Text {
-                                text: parent.parent.isMuted ? "" : ""
-                                color: parent.parent.volColor
-                                font { pixelSize: 18; family: "Symbols Nerd Font Mono" }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    acceptedButtons: Qt.RightButton
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        var a = Pipewire.defaultAudioSink?.audio;
-                                        if (a) a.muted = !a.muted;
-                                    }
-                                }
-                            }
-
-                            Text {
-                                text: Pipewire.ready
-                                    ? Math.floor((Pipewire.defaultAudioSink?.audio?.volume ?? 0) * 100) + "%"
-                                    : ""
-                                color: parent.parent.isMuted ? "#6272a4" : "#f8f8f2"
-                                font { pixelSize: 14; bold: true; family: "ZedMono Nerd Font" }
-                                Layout.preferredWidth: 44
-                            }
-
-                            Item {
+                            VolumeSlider {
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: 6
-
-                                readonly property real normVol: Pipewire.defaultAudioSink?.audio?.volume ?? 0
-
-                                Rectangle {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: parent.width
-                                    height: 6
-                                    radius: 3
-                                    color: "#343746"
-
-                                    Rectangle {
-                                        width: parent.width * Math.min(parent.parent.normVol, 1)
-                                        height: parent.height
-                                        radius: 3
-                                        color: parent.parent.parent.parent.volColor
-
-                                        Behavior on width {
-                                            NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
-                                        }
-                                    }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-
-                                    property bool dragging: false
-
-                                    function setVolFromMouse(mx) {
-                                        var v = Math.max(0, Math.min(mx / width, 1));
-                                        var a = Pipewire.defaultAudioSink?.audio;
-                                        if (a) a.volume = v;
-                                    }
-
-                                    onPressed: mouse => {
-                                        dragging = true;
-                                        setVolFromMouse(mouse.x);
-                                    }
-                                    onPositionChanged: mouse => {
-                                        if (dragging) setVolFromMouse(mouse.x);
-                                    }
-                                    onReleased: { dragging = false; }
-                                    onClicked: mouse => {
-                                        if (mouse.button == Qt.RightButton) {
-                                            var a = Pipewire.defaultAudioSink?.audio;
-                                            if (a) a.muted = !a.muted;
-                                        } else {
-                                            setVolFromMouse(mouse.x);
-                                        }
-                                    }
-
-                                    onWheel: event => {
-                                        var a = Pipewire.defaultAudioSink?.audio;
-                                        if (a) {
-                                            var v = a.volume;
-                                            v += event.angleDelta.y > 0 ? 0.05 : -0.05;
-                                            a.volume = Math.max(0, Math.min(v, 1));
-                                        }
-                                    }
-                                }
+                                node: Pipewire.defaultAudioSink
+                                glyph: "\uf028"
+                                glyphMuted: "\uf026"
+                                accent: "#bd93f9"
                             }
 
                             Text {
-                                text: "Mute"
-                                color: parent.parent.isMuted ? "#ff5555" : "#6272a4"
-                                font { pixelSize: 10; family: "Quicksand"; bold: true }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        var a = Pipewire.defaultAudioSink?.audio;
-                                        if (a) a.muted = !a.muted;
-                                    }
-                                }
+                                text: Pipewire.ready ? Math.floor((Pipewire.defaultAudioSink?.audio?.volume ?? 0) * 100) + "%" : ""
+                                color: Pipewire.defaultAudioSink?.audio?.muted ?? false ? "#6272a4" : "#f8f8f2"
+                                font { pixelSize: 13; bold: true; family: "ZedMono Nerd Font" }
+                                Layout.preferredWidth: 44
                             }
                         }
 

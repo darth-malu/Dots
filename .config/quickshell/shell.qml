@@ -9,6 +9,7 @@ import qs.notBar.rofi.appLauncher
 import qs.notBar.rofi.openWindows
 import qs.notBar.rofi.clipHist
 import qs.notBar.settings
+import qs.logout
 
 ShellRoot {
     Bar {}
@@ -20,4 +21,5 @@ ShellRoot {
     OpenWindows {}
     ClipHist {}
     SettingsWindow {}
+    WLogoutOverlay {}
 }

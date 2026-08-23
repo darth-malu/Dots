@@ -135,6 +135,7 @@ Item {
                     id: title
                     Layout.alignment: Qt.AlignVCenter
                     maxWidth: 150
+                    scrolling: MprisState.marqueeEnabled
                     text: MprisState.player?.trackTitle || "Unknown Track"
                     textColor: Themes.mprisTextColor
                     fontFamily: "quicksand"
@@ -215,21 +216,22 @@ Item {
                             var cy = height / 2;
 
                             // ── volume feedback — replaces play/pause while scrolling ──
-                            // low volume lights fewer bars, high volume lights them all
+                            // speaker glyph + sound-wave arcs that light up by thirds
                             if (mprisRoot.showVolume) {
                                 var vol = Math.max(0, Math.min(MprisState.player?.volume ?? 0, 1));
-                                ctx.fillStyle = "#FF7EB3";
+                                ctx.fillStyle = vol <= 0.001 ? "#6272a4" : "#FF7EB3";
                                 ctx.textAlign = "center";
                                 ctx.textBaseline = "middle";
                                 ctx.font = `9px "Symbols Nerd Font Mono"`;
-                                ctx.fillText(vol <= 0.001 ? "\uf026" : "\uf028", cx - 3.5, cy + 0.5);
+                                ctx.fillText(vol <= 0.001 ? "\uf026" : "\uf028", cx - 3, cy + 0.5);
 
+                                // waves emanating from the speaker cone
                                 ctx.lineCap = "round";
-                                ctx.lineWidth = 2;
-                                for (var i = 0; i < 3; i++) {
+                                ctx.lineWidth = 1.4;
+                                var ox = cx - 0.5;
+                                for (var i = 0; i < 2; i++) {
                                     ctx.beginPath();
-                                    ctx.moveTo(cx + 1.5 + i * 3, cy + 4);
-                                    ctx.lineTo(cx + 1.5 + i * 3, cy + 4 - (2.5 + i * 2.5));
+                                    ctx.arc(ox, cy, 3.5 + i * 3, -Math.PI / 4, Math.PI / 4);
                                     ctx.strokeStyle = vol >= (i + 1) / 3 - 0.001 ? "#FF7EB3" : Qt.rgba(1, 0.71, 0.76, 0.25);
                                     ctx.stroke();
                                 }

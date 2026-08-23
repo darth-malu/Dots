@@ -15,12 +15,6 @@ BarBlock {
 
     property bool showSwap: false
 
-    // converts a memory percentage into an absolute figure based on total RAM
-    function fmtMem(pct) {
-        const mib = pct / 100 * ResourcesState.memTotal * 1024;
-        return mib >= 1024 ? (mib / 1024).toFixed(1) + "G" : Math.round(mib) + "M";
-    }
-
     readonly property int memoryPercent: ResourcesState.memPercent
     readonly property real memoryUsed: ResourcesState.memUsed
     readonly property string memoryDetail: `${ResourcesState.memUsed.toFixed(1)}G / ${ResourcesState.memTotal.toFixed(1)}G`
@@ -93,8 +87,8 @@ BarBlock {
 
     Process {
         id: memProcsProc
-        // aggregate memory usage by process name (all subprocesses summed into one entry)
-        command: ["sh", "-c", "ps -eo pmem,comm --no-headers | awk '{m=$1; $1=\"\"; sub(/^ +/, \"\"); k=$0; mm[k]+=m; cnt[k]++} END {for (k in mm) printf \"%.1f %d %s\\n\", mm[k], cnt[k], k}' | sort -rn | head -10"]
+        // aggregate the real memory footprint (RSS) by process name
+        command: ["sh", "-c", "ps -eo rss,comm --no-headers | awk '{r=$1; $1=\"\"; sub(/^ +/, \"\"); k=$0; rr[k]+=r; cnt[k]++} END {for (k in rr) printf \"%d %d %s\\n\", rr[k], cnt[k], k}' | sort -rn | head -10"]
         property string buf: ""
         running: false
 
@@ -108,7 +102,7 @@ BarBlock {
                 const p = line.trim().split(/\s+/);
                 if (p.length >= 3)
                     rows.push({
-                        m: parseFloat(p[0]) || 0,
+                        kib: parseInt(p[0]) || 0,
                         c: parseInt(p[1]) || 1,
                         n: p.slice(2).join(" ")
                     });
@@ -182,7 +176,7 @@ BarBlock {
 
                     anchors.fill: parent
                     anchors.margins: 14
-                    spacing: 9
+                    spacing: 7
 
                     RowLayout {
                         Layout.fillWidth: true
@@ -220,85 +214,99 @@ BarBlock {
                     Repeater {
                         model: procModel
 
-                        ColumnLayout {
+                        Rectangle {
                             id: mrow
 
-                            required property real m
+                            required property int kib
                             required property int c
                             required property string n
 
-                            readonly property real mval: m
-                            readonly property int pcount: c
-                            readonly property color accent: mval > 25 ? "#ff5555" : mval > 10 ? "#f1fa8c" : "#bd93f9"
-                            readonly property real relMax: procModel.count > 0 ? Math.max(procModel.get(0).m, 0.5) : 1
+                            // share of total RAM drives the accent colour
+                            readonly property real frac: ResourcesState.memTotal > 0 ? kib / (ResourcesState.memTotal * 1048576) : 0
+                            readonly property color accent: frac > 0.2 ? "#ff5555" : frac > 0.08 ? "#f1fa8c" : "#bd93f9"
+                            readonly property real relMax: procModel.count > 0 ? Math.max(procModel.get(0).kib, 1) : 1
 
-                            spacing: 4
+                            radius: 8
                             Layout.fillWidth: true
+                            implicitHeight: mrowCol.implicitHeight + 12
+                            // hover highlight — the row under the cursor lights up
+                            color: mrowHover.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.12) : "transparent"
 
-                            RowLayout {
-                                spacing: 8
-                                Layout.fillWidth: true
-
-                                Text {
-                                    text: Number(mrow.mval.toFixed(1)) + "%"
-                                    color: mrow.accent
-                                    font {
-                                        pixelSize: 11
-                                        bold: true
-                                        family: "ZedMono Nerd Font"
-                                    }
-                                    Layout.preferredWidth: 40
-                                }
-
-                                Text {
-                                    text: mrow.n
-                                    color: "#f8f8f2"
-                                    elide: Text.ElideRight
-                                    font {
-                                        pixelSize: 11
-                                        family: "Quicksand"
-                                    }
-                                    Layout.fillWidth: true
-                                }
-
-                                Text {
-                                    visible: mrow.pcount > 1
-                                    text: "×" + mrow.pcount
-                                    color: "#6272a4"
-                                    font {
-                                        pixelSize: 9
-                                        family: "ZedMono Nerd Font"
-                                    }
-                                }
-
-                                Text {
-                                    text: memory.fmtMem(mrow.mval)
-                                    color: "#6272a4"
-                                    font {
-                                        pixelSize: 9
-                                        family: "ZedMono Nerd Font"
-                                    }
-                                    Layout.preferredWidth: 44
-                                    Layout.alignment: Qt.AlignRight
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: 120
                                 }
                             }
 
-                            Rectangle {
-                                Layout.fillWidth: true
-                                implicitHeight: 3
-                                radius: 1.5
-                                color: Qt.rgba(1, 1, 1, 0.06)
+                            MouseArea {
+                                id: mrowHover
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                acceptedButtons: Qt.NoButton
+                                z: -1
+                            }
+
+                            ColumnLayout {
+                                id: mrowCol
+
+                                anchors.fill: parent
+                                anchors.margins: 6
+                                spacing: 4
+
+                                RowLayout {
+                                    spacing: 8
+                                    Layout.fillWidth: true
+
+                                    Text {
+                                        text: ResourcesState.fmtKib(mrow.kib)
+                                        color: mrow.accent
+                                        font {
+                                            pixelSize: 11
+                                            bold: true
+                                            family: "ZedMono Nerd Font"
+                                        }
+                                        Layout.preferredWidth: 44
+                                    }
+
+                                    Text {
+                                        text: mrow.n
+                                        color: "#f8f8f2"
+                                        elide: Text.ElideRight
+                                        font {
+                                            pixelSize: 11
+                                            family: "Quicksand"
+                                        }
+                                        Layout.fillWidth: true
+                                    }
+
+                                    Text {
+                                        visible: mrow.c > 1
+                                        text: "×" + mrow.c
+                                        color: "#6272a4"
+                                        font {
+                                            pixelSize: 9
+                                            family: "ZedMono Nerd Font"
+                                        }
+                                    }
+                                }
 
                                 Rectangle {
-                                    width: parent.width * Math.min(mrow.mval / mrow.relMax, 1)
-                                    height: parent.height
+                                    Layout.fillWidth: true
+                                    implicitHeight: 3
                                     radius: 1.5
-                                    color: mrow.accent
+                                    color: Qt.rgba(1, 1, 1, 0.06)
 
-                                    Behavior on width {
-                                        NumberAnimation {
-                                            duration: 250
-                                            easing.type: Easing.OutQuad
+                                    Rectangle {
+                                        width: parent.width * Math.min(mrow.kib / mrow.relMax, 1)
+                                        height: parent.height
+                                        radius: 1.5
+                                        color: mrow.accent
+
+                                        Behavior on width {
+                                            NumberAnimation {
+                                                duration: 250
+                                                easing.type: Easing.OutQuad
+                                            }
                                         }
                                     }
                                 }

@@ -18,12 +18,6 @@ BarBlock {
 
     readonly property color cpuColor: cpuPercent > 80 ? "#ff5555" : cpuPercent > 60 ? "#f1fa8c" : "#bd93f9"
 
-    // converts a memory percentage into an absolute figure based on total RAM
-    function fmtMem(pct) {
-        const mib = pct / 100 * ResourcesState.memTotal * 1024;
-        return mib >= 1024 ? (mib / 1024).toFixed(1) + "G" : Math.round(mib) + "M";
-    }
-
     onClicked: mouse => {
         if (mouse.button === Qt.LeftButton)
             showTemp = !showTemp;
@@ -88,8 +82,8 @@ BarBlock {
 
     Process {
         id: procsProc
-        // aggregate cpu/memory usage by process name (all subprocesses summed into one entry)
-        command: ["sh", "-c", "ps -eo pcpu,pmem,comm --no-headers | awk '{c=$1; m=$2; $1=$2=\"\"; sub(/^ +/, \"\"); k=$0; cc[k]+=c; mm[k]+=m; cnt[k]++} END {for (k in cc) printf \"%.1f %.1f %d %s\\n\", cc[k], mm[k], cnt[k], k}' | sort -rn | head -10"]
+        // aggregate cpu usage + real memory footprint (RSS) by process name
+        command: ["sh", "-c", "ps -eo pcpu,rss,comm --no-headers | awk '{c=$1; r=$2; $1=$2=\"\"; sub(/^ +/, \"\"); k=$0; cc[k]+=c; rr[k]+=r; cnt[k]++} END {for (k in cc) printf \"%.1f %d %d %s\\n\", cc[k], rr[k], cnt[k], k}' | sort -rn | head -10"]
         property string buf: ""
         running: false
 
@@ -104,7 +98,7 @@ BarBlock {
                 if (p.length >= 4)
                     rows.push({
                         c: parseFloat(p[0]) || 0,
-                        m: parseFloat(p[1]) || 0,
+                        kib: parseInt(p[1]) || 0,
                         n: parseInt(p[2]) || 1,
                         name: p.slice(3).join(" ")
                     });
@@ -151,7 +145,7 @@ BarBlock {
             }
             anchor.rect.y: 33
 
-            implicitWidth: 320
+            implicitWidth: 340
             implicitHeight: procCol.implicitHeight + 28
 
             Rectangle {
@@ -176,87 +170,150 @@ BarBlock {
                     id: procCol
                     anchors.fill: parent
                     anchors.margins: 14
-                    spacing: 9
+                    spacing: 7
+
+                    // header — mirrors the memory popup
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Text {
+                            text: "cpu"
+                            color: "#6272a4"
+                            font {
+                                pixelSize: 9
+                                bold: true
+                                family: "Quicksand"
+                                letterSpacing: 1
+                            }
+                        }
+
+                        Item {
+                            Layout.fillWidth: true
+                        }
+
+                        Text {
+                            text: `${cpu.cpuPercent}% · ${Math.round(cpu.cpuTemp)}°`
+                            color: cpu.cpuColor
+                            font {
+                                pixelSize: 9
+                                family: "ZedMono Nerd Font"
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 1
+                        color: "#343746"
+                    }
 
                     Repeater {
                         model: procModel
 
-                        ColumnLayout {
+                        Rectangle {
                             id: prow
+
                             required property real c
+                            required property int kib
                             required property int n
                             required property string name
 
                             readonly property real cval: c
                             readonly property color accent: cval > 80 ? "#ff5555" : cval > 40 ? "#f1fa8c" : "#bd93f9"
 
-                            spacing: 4
+                            radius: 8
                             Layout.fillWidth: true
+                            implicitHeight: prowCol.implicitHeight + 12
+                            // hover highlight — the row under the cursor lights up
+                            color: prowHover.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.12) : "transparent"
 
-                            RowLayout {
-                                spacing: 8
-                                Layout.fillWidth: true
-
-                                Text {
-                                    text: Number(prow.cval.toFixed(1)) + "%"
-                                    color: prow.accent
-                                    font {
-                                        pixelSize: 11
-                                        bold: true
-                                        family: "ZedMono Nerd Font"
-                                    }
-                                    Layout.preferredWidth: 44
-                                }
-
-                                Text {
-                                    text: prow.name
-                                    color: "#f8f8f2"
-                                    elide: Text.ElideRight
-                                    font {
-                                        pixelSize: 11
-                                        family: "Quicksand"
-                                    }
-                                    Layout.fillWidth: true
-                                }
-
-                                Text {
-                                    visible: prow.n > 1
-                                    text: "×" + prow.n
-                                    color: "#6272a4"
-                                    font {
-                                        pixelSize: 9
-                                        family: "ZedMono Nerd Font"
-                                    }
-                                }
-
-                                Text {
-                                    text: cpu.fmtMem(prow.m)
-                                    color: "#6272a4"
-                                    font {
-                                        pixelSize: 9
-                                        family: "ZedMono Nerd Font"
-                                    }
-                                    Layout.preferredWidth: 44
-                                    Layout.alignment: Qt.AlignRight
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: 120
                                 }
                             }
 
-                            Rectangle {
-                                Layout.fillWidth: true
-                                implicitHeight: 3
-                                radius: 1.5
-                                color: Qt.rgba(1, 1, 1, 0.06)
+                            MouseArea {
+                                id: prowHover
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                acceptedButtons: Qt.NoButton
+                                z: -1
+                            }
+
+                            ColumnLayout {
+                                id: prowCol
+
+                                anchors.fill: parent
+                                anchors.margins: 6
+                                spacing: 4
+
+                                RowLayout {
+                                    spacing: 8
+                                    Layout.fillWidth: true
+
+                                    Text {
+                                        text: Number(prow.cval.toFixed(1)) + "%"
+                                        color: prow.accent
+                                        font {
+                                            pixelSize: 11
+                                            bold: true
+                                            family: "ZedMono Nerd Font"
+                                        }
+                                        Layout.preferredWidth: 44
+                                    }
+
+                                    Text {
+                                        text: prow.name
+                                        color: "#f8f8f2"
+                                        elide: Text.ElideRight
+                                        font {
+                                            pixelSize: 11
+                                            family: "Quicksand"
+                                        }
+                                        Layout.fillWidth: true
+                                    }
+
+                                    Text {
+                                        visible: prow.n > 1
+                                        text: "×" + prow.n
+                                        color: "#6272a4"
+                                        font {
+                                            pixelSize: 9
+                                            family: "ZedMono Nerd Font"
+                                        }
+                                    }
+
+                                    Text {
+                                        text: ResourcesState.fmtKib(prow.kib)
+                                        color: "#6272a4"
+                                        font {
+                                            pixelSize: 9
+                                            family: "ZedMono Nerd Font"
+                                        }
+                                        Layout.preferredWidth: 40
+                                        Layout.alignment: Qt.AlignRight
+                                    }
+                                }
 
                                 Rectangle {
-                                    width: parent.width * Math.min(prow.cval / 100, 1)
-                                    height: parent.height
+                                    Layout.fillWidth: true
+                                    implicitHeight: 3
                                     radius: 1.5
-                                    color: prow.accent
+                                    color: Qt.rgba(1, 1, 1, 0.06)
 
-                                    Behavior on width {
-                                        NumberAnimation {
-                                            duration: 250
-                                            easing.type: Easing.OutQuad
+                                    Rectangle {
+                                        width: parent.width * Math.min(prow.cval / 100, 1)
+                                        height: parent.height
+                                        radius: 1.5
+                                        color: prow.accent
+
+                                        Behavior on width {
+                                            NumberAnimation {
+                                                duration: 250
+                                                easing.type: Easing.OutQuad
+                                            }
                                         }
                                     }
                                 }

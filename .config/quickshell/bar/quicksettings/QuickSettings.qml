@@ -46,15 +46,15 @@ BarBlock {
         onInternalTextChanged: root.checkNasShares()
     }
 
-    // background refresh — FileView reload is an in-process read, cheap enough to run often
+    // background refresh — only polled while the popup is open (the NAS state
+    // lives on that button); a fresh read happens on open so it's never stale
     Timer {
         interval: 10000
-        running: true
+        running: root.showQsPopup
         repeat: true
         triggeredOnStart: true
         onTriggered: nasMounts.reload()
     }
-
     Timer {
         id: nasRecheck
         // fast re-poll after a remount click so the button color recovers quickly
@@ -99,6 +99,8 @@ BarBlock {
         if (!showQsPopup) {
             showPowerPopup = false;
             timerPicker = 0;
+        } else {
+            nasMounts.reload();
         }
     }
     Component.onCompleted: MiscState.qsOpen = showQsPopup
@@ -491,9 +493,9 @@ BarBlock {
                             Layout.fillWidth: true
                             Layout.bottomMargin: 6
                             radius: 10
-                            visible: MprisState.player !== null
+                            visible: MprisState.cardPlayer !== null
                             color: {
-                                if (MprisState.player?.trackArtUrl)
+                                if (MprisState.cardPlayer?.trackArtUrl)
                                     return Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.12);
                                 return "#21222c";
                             }
@@ -518,7 +520,11 @@ BarBlock {
 
                             property int progressTick: 0
                             property bool showVolumeBadge: false
-                            readonly property int currentVolume: Math.round((MprisState.player?.volume ?? 0) * 100)
+                            // external players (no MPRIS volume, e.g. chrome) get a
+                            // locally tracked percentage since pactl can't be read back
+                            property real extVol: 0.5
+                            readonly property bool mprisVolume: MprisState.cardPlayer?.volumeSupported ?? false
+                            readonly property int currentVolume: Math.round((mprisVolume ? MprisState.cardPlayer?.volume ?? 0 : extVol) * 100)
 
                             Timer {
                                 id: volumeBadgeTimer
@@ -536,7 +542,7 @@ BarBlock {
 
                                 Image {
                                     id: hiddenArt
-                                    source: MprisState.player?.trackArtUrl || ""
+                                    source: MprisState.cardPlayer?.trackArtUrl || ""
                                     asynchronous: true
                                     onStatusChanged: {
                                         if (status === Image.Ready)
@@ -586,7 +592,7 @@ BarBlock {
 
                                 Timer {
                                     interval: 1000
-                                    running: MprisState.player?.isPlaying ?? false
+                                    running: MprisState.cardPlayer?.isPlaying ?? false
                                     repeat: true
                                     onTriggered: nowPlayingCard.progressTick++
                                 }
@@ -599,14 +605,20 @@ BarBlock {
                                 anchors.fill: parent
 
                                 // scroll anywhere on the card to adjust player volume —
-                                // album art is temporarily replaced by a themed readout
+                                // album art is replaced by a themed readout while active;
+                                // players without MPRIS volume fall back to pactl
                                 WheelHandler {
                                     acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                                     onWheel: ev => {
-                                        const p = MprisState.player;
-                                        if (!(p?.canControl && p?.volumeSupported))
+                                        const p = MprisState.cardPlayer;
+                                        if (!(p?.canControl))
                                             return;
-                                        p.volume = Math.max(0, Math.min(p.volume + (ev.angleDelta.y > 0 ? 0.05 : -0.05), 1));
+                                        if (nowPlayingCard.mprisVolume) {
+                                            MprisState.adjustVolume(p, ev.angleDelta.y > 0);
+                                        } else {
+                                            nowPlayingCard.extVol = Math.max(0, Math.min(nowPlayingCard.extVol + (ev.angleDelta.y > 0 ? 0.05 : -0.05), 1));
+                                            MprisState.adjustVolume(p, ev.angleDelta.y > 0);
+                                        }
                                         nowPlayingCard.showVolumeBadge = true;
                                         volumeBadgeTimer.restart();
                                         ev.accepted = true;
@@ -651,7 +663,7 @@ BarBlock {
                                         Image {
                                             id: compactArtImage
                                             anchors.fill: parent
-                                            source: MprisState.player?.trackArtUrl || ""
+                                            source: MprisState.cardPlayer?.trackArtUrl || ""
                                             fillMode: Image.PreserveAspectCrop
                                             asynchronous: true
                                             mipmap: true
@@ -670,20 +682,9 @@ BarBlock {
                                         }
 
                                         // ── temporary volume readout (scroll the card) ──
+                                        // replaces the art in place — no overlay scrim;
                                         // tinted with the card's dominant color so it
                                         // matches whatever is playing
-                                        Rectangle {
-                                            anchors.fill: parent
-                                            visible: opacity > 0.01
-                                            opacity: nowPlayingCard.showVolumeBadge ? 1 : 0
-                                            Behavior on opacity {
-                                                NumberAnimation {
-                                                    duration: 150
-                                                }
-                                            }
-                                            color: Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.22)
-                                        }
-
                                         ColumnLayout {
                                             anchors.centerIn: parent
                                             visible: nowPlayingCard.showVolumeBadge
@@ -755,7 +756,8 @@ BarBlock {
 
                                                 MarqueeText {
                                                     Layout.fillWidth: true
-                                                    text: MprisState.player?.trackTitle || "No track"
+                                                    scrolling: MprisState.marqueeEnabled
+                                                    text: MprisState.cardPlayer?.trackTitle || "No track"
                                                     textColor: "#f8f8f2"
                                                     fontFamily: "Quicksand"
                                                     fontBold: true
@@ -765,7 +767,14 @@ BarBlock {
 
                                                 Text {
                                                     Layout.fillWidth: true
-                                                    text: MprisState.player?.trackArtist || ""
+                                                    // show which player is being controlled when several exist
+                                                    text: {
+                                                        const p = MprisState.cardPlayer;
+                                                        let t = p?.trackArtist || "";
+                                                        if (p && Mpris.players.values.length > 1)
+                                                            t += (t.length > 0 ? "  ·  " : "") + (p.identity || "");
+                                                        return t;
+                                                    }
                                                     color: "#b8bfcb"
                                                     font {
                                                         pixelSize: 9
@@ -791,7 +800,7 @@ BarBlock {
 
                                             readonly property real ratio: {
                                                 nowPlayingCard.progressTick;
-                                                var p = MprisState.player;
+                                                var p = MprisState.cardPlayer;
                                                 if (!p)
                                                     return 0;
                                                 var pos = p.position;
@@ -827,7 +836,7 @@ BarBlock {
                                                 anchors.fill: parent
                                                 cursorShape: Qt.PointingHandCursor
                                                 onClicked: mouse => {
-                                                    var p = MprisState.player;
+                                                    var p = MprisState.cardPlayer;
                                                     if (p && p.length > 0)
                                                         p.position = (mouse.x / width) * p.length;
                                                 }
@@ -842,22 +851,28 @@ BarBlock {
                                                 Layout.fillWidth: true
                                             }
                                             TrackButton {
+                                                text: "\uf021"
+                                                flat: true
+                                                accentColor: MprisState.pinIdentity.length > 0 ? "#f1fa8c" : Qt.rgba(1, 1, 1, 0.5)
+                                                onClicked: MprisState.cycleCardPin()
+                                            }
+                                            TrackButton {
                                                 text: "\uf048"
                                                 flat: true
                                                 accentColor: nowPlayingCard.dominantColor
-                                                onClicked: MprisState.player?.previous()
+                                                onClicked: MprisState.cardPlayer?.previous()
                                             }
                                             TrackButton {
-                                                text: MprisState.player?.isPlaying ? "\uf04c" : "\uf04b"
+                                                text: MprisState.cardPlayer?.isPlaying ? "\uf04c" : "\uf04b"
                                                 flat: true
                                                 accentColor: nowPlayingCard.dominantColor
-                                                onClicked: MprisState.player?.togglePlaying()
+                                                onClicked: MprisState.cardPlayer?.togglePlaying()
                                             }
                                             TrackButton {
                                                 text: "\uf050"
                                                 flat: true
                                                 accentColor: nowPlayingCard.dominantColor
-                                                onClicked: MprisState.player?.next()
+                                                onClicked: MprisState.cardPlayer?.next()
                                             }
                                             Item {
                                                 Layout.fillWidth: true
@@ -879,7 +894,7 @@ BarBlock {
                                     anchors.fill: parent
                                     radius: 8
                                     color: {
-                                        if (MprisState.player?.trackArtUrl)
+                                        if (MprisState.cardPlayer?.trackArtUrl)
                                             return Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.12);
                                         return "#21222c";
                                     }
@@ -887,7 +902,7 @@ BarBlock {
                                     Image {
                                         id: expandedArtImage
                                         anchors.fill: parent
-                                        source: MprisState.player?.trackArtUrl || ""
+                                        source: MprisState.cardPlayer?.trackArtUrl || ""
                                         fillMode: Image.PreserveAspectCrop
                                         asynchronous: true
                                         visible: status === Image.Ready
@@ -942,10 +957,10 @@ BarBlock {
                                                     implicitWidth: 5
                                                     implicitHeight: 5
                                                     radius: 2.5
-                                                    color: MprisState.player?.isPlaying ? "#88FF00" : "#6272a4"
+                                                    color: MprisState.cardPlayer?.isPlaying ? "#88FF00" : "#6272a4"
                                                 }
                                                 Text {
-                                                    text: MprisState.player?.identity || ""
+                                                    text: MprisState.cardPlayer?.identity || ""
                                                     color: "#f8f8f2"
                                                     font {
                                                         pixelSize: 7
@@ -988,7 +1003,7 @@ BarBlock {
 
                                         Text {
                                             Layout.fillWidth: true
-                                            text: MprisState.player?.trackTitle || "No track"
+                                            text: MprisState.cardPlayer?.trackTitle || "No track"
                                             color: "#ffffff"
                                             font {
                                                 bold: true
@@ -1003,7 +1018,7 @@ BarBlock {
 
                                         Text {
                                             Layout.fillWidth: true
-                                            text: MprisState.player?.trackArtist || ""
+                                            text: MprisState.cardPlayer?.trackArtist || ""
                                             color: Qt.rgba(1, 1, 1, 0.7)
                                             font {
                                                 pixelSize: 12
@@ -1023,7 +1038,7 @@ BarBlock {
 
                                         readonly property real ratio: {
                                             nowPlayingCard.progressTick;
-                                            var p = MprisState.player;
+                                            var p = MprisState.cardPlayer;
                                             if (!p)
                                                 return 0;
                                             var pos = p.position;
@@ -1059,7 +1074,7 @@ BarBlock {
                                             anchors.fill: parent
                                             cursorShape: Qt.PointingHandCursor
                                             onClicked: mouse => {
-                                                var p = MprisState.player;
+                                                var p = MprisState.cardPlayer;
                                                 if (p && p.length > 0)
                                                     p.position = (mouse.x / width) * p.length;
                                             }
@@ -1079,10 +1094,10 @@ BarBlock {
                                         TrackButton {
                                             text: ""
                                             visible: MiscState.showShuffle
-                                            active: MprisState.player?.shuffle ?? false
-                                            accentColor: MprisState.player?.shuffle ? "#f1fa8c" : Qt.rgba(1, 1, 1, 0.6)
+                                            active: MprisState.cardPlayer?.shuffle ?? false
+                                            accentColor: MprisState.cardPlayer?.shuffle ? "#f1fa8c" : Qt.rgba(1, 1, 1, 0.6)
                                             onClicked: {
-                                                var p = MprisState.player;
+                                                var p = MprisState.cardPlayer;
                                                 if (p?.canControl && p?.shuffleSupported)
                                                     p.shuffle = !p.shuffle;
                                             }
@@ -1090,25 +1105,25 @@ BarBlock {
                                         TrackButton {
                                             text: ""
                                             accentColor: Qt.rgba(1, 1, 1, 0.8)
-                                            onClicked: MprisState.player?.previous()
+                                            onClicked: MprisState.cardPlayer?.previous()
                                         }
                                         TrackButton {
-                                            text: MprisState.player?.isPlaying ? "" : ""
+                                            text: MprisState.cardPlayer?.isPlaying ? "" : ""
                                             accentColor: "#ffffff"
-                                            onClicked: MprisState.player?.togglePlaying()
+                                            onClicked: MprisState.cardPlayer?.togglePlaying()
                                         }
                                         TrackButton {
                                             text: ""
                                             accentColor: Qt.rgba(1, 1, 1, 0.8)
-                                            onClicked: MprisState.player?.next()
+                                            onClicked: MprisState.cardPlayer?.next()
                                         }
                                         TrackButton {
                                             text: ""
                                             visible: MiscState.showLoop
-                                            active: MprisState.player?.loopState !== MprisLoopState.None
-                                            accentColor: MprisState.player?.loopState === MprisLoopState.Track ? "#f1fa8c" : MprisState.player?.loopState === MprisLoopState.Playlist ? "#bd93f9" : Qt.rgba(1, 1, 1, 0.6)
+                                            active: MprisState.cardPlayer?.loopState !== MprisLoopState.None
+                                            accentColor: MprisState.cardPlayer?.loopState === MprisLoopState.Track ? "#f1fa8c" : MprisState.cardPlayer?.loopState === MprisLoopState.Playlist ? "#bd93f9" : Qt.rgba(1, 1, 1, 0.6)
                                             onClicked: {
-                                                var p = MprisState.player;
+                                                var p = MprisState.cardPlayer;
                                                 if (!p?.canControl || !p?.loopSupported)
                                                     return;
                                                 var ls = p.loopState;
@@ -1198,7 +1213,7 @@ BarBlock {
                                 anchors.fill: parent
                                 acceptedButtons: Qt.NoButton
                                 onWheel: wheel => {
-                                    var p = MprisState.player;
+                                    var p = MprisState.cardPlayer;
                                     if (p?.canControl && p?.volumeSupported) {
                                         p.volume = Math.max(0, Math.min(p.volume + (wheel.angleDelta.y > 0 ? 0.05 : -0.05), 1));
                                         root.showOsd("\uf028", Math.round(p.volume * 100), true);

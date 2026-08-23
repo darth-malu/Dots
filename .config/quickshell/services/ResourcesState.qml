@@ -93,6 +93,13 @@ Singleton {
         }
     }
 
+    // KiB → compact human figure ("512M" / "3.4G") — shared by the cpu/memory popups
+    function fmtKib(kib) {
+        if (kib >= 1048576)
+            return (kib / 1048576).toFixed(1) + "G";
+        return Math.round(kib / 1024) + "M";
+    }
+
     function processMemoryData(rawText) {
         if (!rawText)
             return;

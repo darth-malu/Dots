@@ -22,6 +22,9 @@ Singleton {
     // true while the quicksettings popup is open (used to suppress redundant music toasts)
     property bool qsOpen: false
 
+    // fullscreen logout / timer overlay
+    property bool logoutOpen: false
+
     property date currentDate: new Date()
 
     property bool showPopup: false
