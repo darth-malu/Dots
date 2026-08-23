@@ -92,23 +92,12 @@ Singleton {
         // let len = p.length;
         let uid = p.uniqueId;
         let dEntry = p.desktopEntry;
-        let vol = p.volumeSupported ? p.volume.toFixed(2) * 100 + "%" : "Volume Unsupported";
-
-        // let isMpd = p.identity === "Music Player Daemon";
-        // let isMusic = (p.identity === "Music Player Daemon") || (p.identity === "spotify");
-
-        // console.log(`Your current player: ${root.player?.identity}`);
+        let vol = p.volumeSupported ? p.volume.toFixed(2) * 100 + "%" : "--";
 
         if (title.startsWith('Listen to music,'))
             return;
 
-        // if (isMusic)
-        //     Quickshell.execDetached(["notify-send", "-a", "mzichi", "-i", art, `󰎍    ${title}`, `      ${uid} \n󰥓    ${artist}\n    ${album}`]);
-        // else
-        //     Quickshell.execDetached(["notify-send", "-a", "mzichi", "-i", art, `󰎍    ${title}`, `󰥓    ${artist}\n    ${album}`]);
-
-        Quickshell.execDetached(["notify-send", "-a", "mzichi", "-i", art, `󰎍    ${title}`, `      ${dEntry}   ${vol} \n󰥓    ${artist}\n    ${album}`]);
-        Quickshell.execDetached(["notify-send", "Your metadata is", `${p.metadata}`]);
+        Quickshell.execDetached(["notify-send", "-a", "mzichi", "-i", art, `󰎍    ${title}`, `      ${dEntry} \n󰥓    ${artist}\n    ${album}`]);
 
         /* NOTE xesam
         + genre

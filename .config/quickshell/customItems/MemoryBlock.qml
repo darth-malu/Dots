@@ -15,8 +15,6 @@ BarBlock {
 
     property bool showSwap: false
 
-    property var topProcs: []
-
     // converts a memory percentage into an absolute figure based on total RAM
     function fmtMem(pct) {
         const mib = pct / 100 * ResourcesState.memTotal * 1024;
@@ -115,9 +113,22 @@ BarBlock {
                         n: p.slice(2).join(" ")
                     });
             }
-            memory.topProcs = rows;
+            // update rows in place — reassigning a plain array model would tear
+            // down and recreate every delegate each tick (popup flicker)
+            while (procModel.count > rows.length)
+                procModel.remove(procModel.count - 1);
+            for (let i = 0; i < rows.length; i++) {
+                if (i < procModel.count)
+                    procModel.set(i, rows[i]);
+                else
+                    procModel.append(rows[i]);
+            }
             memProcsProc.buf = "";
         }
+    }
+
+    ListModel {
+        id: procModel
     }
 
     Timer {
@@ -207,17 +218,19 @@ BarBlock {
                     }
 
                     Repeater {
-                        model: memory.topProcs
+                        model: procModel
 
                         ColumnLayout {
                             id: mrow
 
-                            required property var modelData
+                            required property real m
+                            required property int c
+                            required property string n
 
-                            readonly property real mval: modelData?.m ?? 0
-                            readonly property int pcount: modelData?.c ?? 1
+                            readonly property real mval: m
+                            readonly property int pcount: c
                             readonly property color accent: mval > 25 ? "#ff5555" : mval > 10 ? "#f1fa8c" : "#bd93f9"
-                            readonly property real relMax: memory.topProcs.length > 0 ? Math.max(memory.topProcs[0]?.m ?? 1, 0.5) : 1
+                            readonly property real relMax: procModel.count > 0 ? Math.max(procModel.get(0).m, 0.5) : 1
 
                             spacing: 4
                             Layout.fillWidth: true
@@ -238,7 +251,7 @@ BarBlock {
                                 }
 
                                 Text {
-                                    text: mrow.modelData?.n ?? ""
+                                    text: mrow.n
                                     color: "#f8f8f2"
                                     elide: Text.ElideRight
                                     font {
@@ -294,13 +307,26 @@ BarBlock {
                     }
 
                     Text {
-                        visible: memory.topProcs.length === 0
+                        visible: procModel.count === 0
                         text: "sampling…"
                         color: "#6272a4"
                         font {
                             pixelSize: 10
                             italic: true
                             family: "Quicksand"
+                        }
+                        Layout.alignment: Qt.AlignHCenter
+                    }
+
+                    // poll-rate ghost footer
+                    Text {
+                        text: "polls 5s"
+                        color: "#6272a4"
+                        opacity: 0.45
+                        font {
+                            pixelSize: 8
+                            letterSpacing: 2
+                            family: "ZedMono Nerd Font"
                         }
                         Layout.alignment: Qt.AlignHCenter
                     }

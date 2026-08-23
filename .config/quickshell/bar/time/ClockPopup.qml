@@ -9,6 +9,19 @@ ColumnLayout {
     id: root
     spacing: 6
 
+    // IPC debug: live geometry of the year-view columns
+    readonly property string gridDbg: {
+        if (!yearGrid.visible)
+            return "yearGrid hidden";
+        let s = `gw=${Math.round(yearGrid.width)} | `;
+        for (let i = 0; i < yearGrid.children.length; i++) {
+            const c = yearGrid.children[i];
+            if (c.index !== undefined)
+                s += `[${c.index}]x=${Math.round(c.x)}w=${Math.round(c.width)}pw=${Math.round(c.Layout.preferredWidth)} `;
+        }
+        return s;
+    }
+
     signal taskSubmitted(int day, int month, int year, string task)
 
     property int displayMonth: TimeService.currentDate.getMonth()
@@ -215,6 +228,7 @@ ColumnLayout {
 
     // ── Full-year view (toggle via the title) ──
     GridLayout {
+        id: yearGrid
         visible: root.yearView
         Layout.fillWidth: true
         columns: 3
@@ -228,6 +242,13 @@ ColumnLayout {
                 id: miniMonth
 
                 required property int index
+
+                // stretch across the cell AND pin an explicit equal width —
+                // implicit+fillWidth alone lets GridLayout dump most of the
+                // row into the first column (uneven months)
+                Layout.fillWidth: true
+                Layout.preferredWidth: (yearGrid.width - 2 * yearGrid.columnSpacing) / 3
+                Layout.alignment: Qt.AlignTop
 
                 spacing: 2
 
@@ -271,18 +292,17 @@ ColumnLayout {
                             color: Themes.calendarActiveMonth
                             visible: parent.isTrackedMini
                         }
-                    }
-                }
 
-                // click a mini month to open it in month view
-                MouseArea {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        root.clearSelection();
-                        root.displayMonth = miniMonth.index;
-                        root.yearView = false;
+                        // click a day to open its month in month view
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                root.clearSelection();
+                                root.displayMonth = miniMonth.index;
+                                root.yearView = false;
+                            }
+                        }
                     }
                 }
             }

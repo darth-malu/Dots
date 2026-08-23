@@ -130,18 +130,16 @@ Item {
                     }
                 }
 
-                // ── track title ──
-                BarText {
+                // ── track title (marquee-scrolls when it doesn't fit) ──
+                MarqueeText {
                     id: title
-                    renderNative: true
                     Layout.alignment: Qt.AlignVCenter
-                    text: {
-                        let strLength = 30;
-                        var str = MprisState.player?.trackTitle || "Unknown Track";
-                        return str.length > strLength ? str.slice(0, strLength) + '..' : str;
-                    }
-                    color: Themes.mprisTextColor
-                    font: Themes.quicksand_medium
+                    maxWidth: 150
+                    text: MprisState.player?.trackTitle || "Unknown Track"
+                    textColor: Themes.mprisTextColor
+                    fontFamily: "quicksand"
+                    fontBold: true
+                    pixelSize: 12
                 }
 
                 // ── active player name ──
@@ -171,16 +169,6 @@ Item {
                     }
                 }
 
-                // ── volume readout ──
-                BarText {
-                    id: volumePlayer
-                    visible: mprisRoot.showVolume
-                    text: MprisState.player ? " " + Math.round(MprisState.player.volume * 100) : ""
-                    font: title.font
-                    color: Themes.mprisVolumeColor
-                    Layout.alignment: Qt.AlignVCenter
-                }
-
                 Item {
                     Layout.fillWidth: true
                 }
@@ -198,9 +186,26 @@ Item {
                         anchors.fill: parent
                         anchors.margins: 1.5
                         antialiasing: true
-                        visible: MprisState.showMprisProgress
+                        visible: MprisState.showMprisProgress || mprisRoot.showVolume
 
                         property real progress: 0
+
+                        onVisibleChanged: requestPaint()
+
+                        Connections {
+                            target: mprisRoot
+                            function onShowVolumeChanged() {
+                                progressRing.requestPaint();
+                            }
+                        }
+
+                        Connections {
+                            target: MprisState.player
+                            function onVolumeChanged() {
+                                if (mprisRoot.showVolume)
+                                    progressRing.requestPaint();
+                            }
+                        }
 
                         onPaint: {
                             var ctx = getContext("2d");
@@ -208,6 +213,30 @@ Item {
 
                             var cx = width / 2;
                             var cy = height / 2;
+
+                            // ── volume feedback — replaces play/pause while scrolling ──
+                            // low volume lights fewer bars, high volume lights them all
+                            if (mprisRoot.showVolume) {
+                                var vol = Math.max(0, Math.min(MprisState.player?.volume ?? 0, 1));
+                                ctx.fillStyle = "#FF7EB3";
+                                ctx.textAlign = "center";
+                                ctx.textBaseline = "middle";
+                                ctx.font = `9px "Symbols Nerd Font Mono"`;
+                                ctx.fillText(vol <= 0.001 ? "\uf026" : "\uf028", cx - 3.5, cy + 0.5);
+
+                                ctx.lineCap = "round";
+                                ctx.lineWidth = 2;
+                                for (var i = 0; i < 3; i++) {
+                                    ctx.beginPath();
+                                    ctx.moveTo(cx + 1.5 + i * 3, cy + 4);
+                                    ctx.lineTo(cx + 1.5 + i * 3, cy + 4 - (2.5 + i * 2.5));
+                                    ctx.strokeStyle = vol >= (i + 1) / 3 - 0.001 ? "#FF7EB3" : Qt.rgba(1, 0.71, 0.76, 0.25);
+                                    ctx.stroke();
+                                }
+                                return;
+                            }
+
+                            // ── normal playback view ──
                             var r = Math.min(cx, cy) - 1.5;
 
                             ctx.beginPath();
@@ -246,6 +275,8 @@ Item {
 
                     BarText {
                         anchors.centerIn: parent
+                        // play/pause glyph hides while the volume speaker takes over
+                        visible: !mprisRoot.showVolume
                         symbolText: MprisState.player?.isPlaying ? "\uf04c" : "\uf04b"
                         baseColor: "#FF7EB3"
                         color: "#FF7EB3"
@@ -275,7 +306,7 @@ Item {
             grabFocus: true
             color: MiscState.popupSolidBg ? "#282a36" : "transparent"
             implicitWidth: 280
-            implicitHeight: Math.min(mprisPopupRect.implicitHeight, 300)
+            implicitHeight: Math.min(mprisPopupContent.implicitHeight + 16, 320)
 
             Rectangle {
                 id: mprisPopupRect
@@ -297,6 +328,7 @@ Item {
                 }
 
                 MprisPopup {
+                    id: mprisPopupContent
                     anchors.fill: parent
                     anchors.margins: 8
                 }

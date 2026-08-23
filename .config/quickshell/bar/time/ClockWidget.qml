@@ -59,8 +59,16 @@ BarBlock {
         function toggle(): void {
             MiscState.showPopup = !MiscState.showPopup;
         }
+        function year(): string {
+            // jump straight into the full-year grid
+            if (!lazyClock.item)
+                return "popup not loaded";
+            lazyClock.item.setYearView(true);
+            MiscState.showPopup = true;
+            return lazyClock.item.dbg;
+        }
         function state(): string {
-            return lazyClock.item ? lazyClock.item.dbg : "not loaded";
+            return lazyClock.item ? lazyClock.item.fullDbg() : "not loaded";
         }
     }
 
@@ -91,7 +99,7 @@ BarBlock {
             anchor.rect.y: 33
 
             // widen for the full-year grid so the 12 mini months get room to breathe
-            implicitWidth: clockPopup.yearView ? 460 : 280
+            implicitWidth: clockPopup.yearView ? 580 : 280
             Behavior on implicitWidth {
                 NumberAnimation {
                     duration: 150
@@ -105,6 +113,15 @@ BarBlock {
                     duration: 150
                     easing.type: Easing.OutCubic
                 }
+            }
+
+            // IPC entry point — ids inside the LazyLoader aren't visible outside it
+            function setYearView(on: bool): void {
+                clockPopup.yearView = on;
+            }
+
+            function fullDbg(): string {
+                return dbg + "  ||  " + clockPopup.gridDbg;
             }
 
             Rectangle {

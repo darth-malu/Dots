@@ -475,7 +475,7 @@ Loader {
                             spacing: 8
 
                             Text {
-                                text: `total ↓ ${root.fmtBytes(root.ethRxTotal)}`
+                                text: `total ↓ ${root.fmtBytes(root.ethRxTotal)}  ↑ ${root.fmtBytes(root.ethTxTotal)}`
                                 color: "#6272a4"
                                 font { pixelSize: 9; family: "ZedMono Nerd Font" }
                             }
@@ -513,12 +513,12 @@ Loader {
                             maxLen: root.historyMax
                         }
 
-                        // ── Link speed — ghosted footer, bottom center ──
+                        // ── Link speed + poll rate — ghosted footer, bottom center ──
                         Text {
                             Layout.alignment: Qt.AlignHCenter
                             visible: root.ethIfName.length > 0
                             text: root.ethUp
-                                ? (NetworkState.ethernet?.linkSpeed ? `${NetworkState.ethernet.linkSpeed} Mb/s` : "linked")
+                                ? (NetworkState.ethernet?.linkSpeed ? `${NetworkState.ethernet.linkSpeed} Mb/s · polls 1s` : "linked · polls 1s")
                                 : root.ethConnected ? "connecting…" : "no link"
                             color: "#6272a4"
                             opacity: 0.55

@@ -20,6 +20,8 @@ Item {
     property real scaleVal: 1
 
     Rectangle {
+        id: powerBtnBg
+
         anchors.fill: parent
         radius: 8
         color: mouseArea.containsMouse ? Qt.rgba(parent.color.r, parent.color.g, parent.color.b, 0.12) : parent.highlighted ? Qt.rgba(parent.color.r, parent.color.g, parent.color.b, 0.10) : "transparent"
@@ -27,7 +29,7 @@ Item {
 
         // gentle breathing while a matching timer is pending
         SequentialAnimation on opacity {
-            running: parent.highlighted
+            running: powerBtnBg.highlighted
             loops: Animation.Infinite
             alwaysRunToEnd: true
             NumberAnimation {

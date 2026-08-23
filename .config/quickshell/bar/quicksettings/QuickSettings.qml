@@ -30,46 +30,42 @@ BarBlock {
     property bool shuffleOn: false
     property bool loopOn: false
 
-    // true while every NAS share (Hyogo/Mutsu/Yuri) is mounted
+    // true while every NAS share (Hyogo/Mutsu/Yuri) is mounted.
+    // parsed straight from /proc/mounts — no subprocess spawns per refresh
     property bool nasAllMounted: true
 
-    Process {
-        id: nasMountCheck
-        command: ["sh", "-c", "for m in Hyogo Mutsu Yuri; do systemctl is-active 'media-'$m'.mount' 2>/dev/null; done"]
-        running: false
+    function checkNasShares() {
+        const t = nasMounts.text();
+        root.nasAllMounted = t.includes("/Hyogo") && t.includes("/Mutsu") && t.includes("/Yuri");
+    }
 
-        stdout: SplitParser {
-            onRead: data => {
-                if (data.trim().length > 0 && data.trim() !== "active")
-                    root.nasAllMounted = false;
-            }
-        }
+    FileView {
+        id: nasMounts
+        path: "/proc/mounts"
+
+        onInternalTextChanged: root.checkNasShares()
+    }
+
+    // background refresh — FileView reload is an in-process read, cheap enough to run often
+    Timer {
+        interval: 10000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: nasMounts.reload()
     }
 
     Timer {
         id: nasRecheck
-        // TODO: make this a cached/efficient process
-
         // fast re-poll after a remount click so the button color recovers quickly
-        interval: 4000
+        interval: 2000
         running: false
         repeat: true
         onTriggered: {
             if (root.nasAllMounted)
                 stop();
             else
-                nasMountCheck.running = true;
-        }
-    }
-
-    Timer {
-        interval: 15000
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: {
-            root.nasAllMounted = true;
-            nasMountCheck.running = true;
+                nasMounts.reload();
         }
     }
 
@@ -116,7 +112,7 @@ BarBlock {
         onActivated: root.showQsPopup = false
     }
 
-    content: NixIcon {}
+    content: NixQuickSettings {}
 
     PopupWindow {
         id: quickSettingsPopup
@@ -598,8 +594,24 @@ BarBlock {
 
                             // ── COMPACT VIEW ──
                             Item {
+                                id: compactView
                                 visible: root.compactNowPlaying
                                 anchors.fill: parent
+
+                                // scroll anywhere on the card to adjust player volume —
+                                // album art is temporarily replaced by a themed readout
+                                WheelHandler {
+                                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                                    onWheel: ev => {
+                                        const p = MprisState.player;
+                                        if (!(p?.canControl && p?.volumeSupported))
+                                            return;
+                                        p.volume = Math.max(0, Math.min(p.volume + (ev.angleDelta.y > 0 ? 0.05 : -0.05), 1));
+                                        nowPlayingCard.showVolumeBadge = true;
+                                        volumeBadgeTimer.restart();
+                                        ev.accepted = true;
+                                    }
+                                }
 
                                 // TODO: have trackbutton here
                                 TrackButton {
@@ -657,19 +669,71 @@ BarBlock {
                                             visible: compactArtImage.status !== Image.Ready && !nowPlayingCard.showVolumeBadge
                                         }
 
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: nowPlayingCard.currentVolume
-                                            // color: "#ffffff"
-                                            color: nowPlayingCard.dominantColor
-                                            // style: Text.Raised
-                                            // styleColor: Qt.rgba(0, 0, 0, 0.55)
-                                            font {
-                                                pixelSize: 19
-                                                bold: true
-                                                family: "monofur Nerd Font"
+                                        // ── temporary volume readout (scroll the card) ──
+                                        // tinted with the card's dominant color so it
+                                        // matches whatever is playing
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            visible: opacity > 0.01
+                                            opacity: nowPlayingCard.showVolumeBadge ? 1 : 0
+                                            Behavior on opacity {
+                                                NumberAnimation {
+                                                    duration: 150
+                                                }
                                             }
+                                            color: Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.22)
+                                        }
+
+                                        ColumnLayout {
+                                            anchors.centerIn: parent
                                             visible: nowPlayingCard.showVolumeBadge
+                                            spacing: 3
+
+                                            Text {
+                                                Layout.alignment: Qt.AlignHCenter
+                                                text: nowPlayingCard.currentVolume <= 0 ? "\uf026" : "\uf028"
+                                                color: nowPlayingCard.dominantColor
+                                                font {
+                                                    pixelSize: 13
+                                                    family: "Symbols Nerd Font Mono"
+                                                }
+                                            }
+
+                                            Text {
+                                                Layout.alignment: Qt.AlignHCenter
+                                                text: nowPlayingCard.currentVolume
+                                                color: nowPlayingCard.dominantColor
+                                                font {
+                                                    pixelSize: 17
+                                                    bold: true
+                                                    family: "monofur Nerd Font"
+                                                }
+                                            }
+
+                                            Item {
+                                                Layout.preferredWidth: 40
+                                                Layout.preferredHeight: 4
+                                                Layout.alignment: Qt.AlignHCenter
+
+                                                Rectangle {
+                                                    anchors.fill: parent
+                                                    radius: 2
+                                                    color: Qt.rgba(1, 1, 1, 0.14)
+                                                }
+
+                                                Rectangle {
+                                                    width: parent.width * Math.min(nowPlayingCard.currentVolume / 100, 1)
+                                                    height: parent.height
+                                                    radius: 2
+                                                    color: nowPlayingCard.dominantColor
+                                                    Behavior on width {
+                                                        NumberAnimation {
+                                                            duration: 120
+                                                            easing.type: Easing.OutQuad
+                                                        }
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
 
@@ -689,17 +753,14 @@ BarBlock {
                                                 Layout.fillWidth: true
                                                 spacing: 1
 
-                                                Text {
+                                                MarqueeText {
                                                     Layout.fillWidth: true
                                                     text: MprisState.player?.trackTitle || "No track"
-                                                    color: "#f8f8f2"
-                                                    font {
-                                                        pixelSize: 11
-                                                        bold: true
-                                                        family: "Quicksand"
-                                                    }
-                                                    elide: Text.ElideRight
-                                                    maximumLineCount: 1
+                                                    textColor: "#f8f8f2"
+                                                    fontFamily: "Quicksand"
+                                                    fontBold: true
+                                                    pixelSize: 11
+                                                    maxWidth: 4096
                                                 }
 
                                                 Text {
@@ -1269,7 +1330,7 @@ BarBlock {
 
         property string txt
         property bool danger: false
-        signal picked()
+        signal picked
 
         Layout.fillWidth: true
         implicitHeight: 24

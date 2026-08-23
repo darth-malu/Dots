@@ -64,6 +64,7 @@ Item {
                 NetworkState.wifiGraphEnabled = false;
             } else {
                 connListProc.running = true;
+                ipProc.running = true;
                 // bands rarely change — fetch lazily, only once per session
                 if (!root.bandsLoaded && Networking.wifiEnabled)
                     bandProc.running = true;
@@ -645,14 +646,17 @@ Item {
                         // status text (no background) — click to inspect the current connection
                         Item {
                             Layout.alignment: Qt.AlignVCenter
+                            Layout.maximumWidth: 170
                             implicitWidth: wifiPillText.implicitWidth
                             implicitHeight: wifiPillText.implicitHeight
 
                             Text {
                                 id: wifiPillText
                                 anchors.centerIn: parent
+                                width: parent.width
+                                elide: Text.ElideRight
                                 text: !root.adapter ? "no adapter"
-                                    : NetworkState.wifiConnected ? "connected"
+                                    : NetworkState.wifiConnected ? "connected · " + (NetworkState.activeNetwork?.name ?? "?")
                                     : Networking.wifiEnabled ? "idle"
                                     : "off"
                                 color: !root.adapter ? "#6272a4"
@@ -742,6 +746,7 @@ Item {
                                 { label: "band", value: root.bandFor(NetworkState.activeNetwork?.name ?? "") || "-" },
                                 { label: "signal", value: Math.round((NetworkState.activeNetwork?.signalStrength ?? 0) * 100) + "%" },
                                 { label: "security", value: NetworkState.activeNetwork != null ? root.secLabel(NetworkState.activeNetwork.security) : "-" },
+                                { label: "ipv4", value: root.wifiIp.length > 0 ? root.wifiIp : "-" },
                                 { label: "device", value: root.adapter?.name ?? "-" }
                             ]
 
@@ -853,6 +858,16 @@ Item {
                         font { pixelSize: 10; family: "Quicksand"; italic: true }
                         Layout.alignment: Qt.AlignHCenter
                     }
+
+                    // poll-rate ghost footer
+                    Text {
+                        visible: root.adapter !== null
+                        text: NetworkState.wifiGraphEnabled ? "live · polls 1s" : "auto-scan while open"
+                        color: "#6272a4"
+                        opacity: 0.45
+                        font { pixelSize: 8; letterSpacing: 2; family: "ZedMono Nerd Font" }
+                        Layout.alignment: Qt.AlignHCenter
+                    }
                 }
             }
         }
@@ -873,6 +888,19 @@ Item {
                 m[data.slice(0, i)] = data.slice(i + 1).trim().toLowerCase() === "yes";
                 root.autoconnMap = m;
             }
+        }
+    }
+
+    // current default-route IPv4 (wifi or ethernet) for the details panel
+    property string wifiIp: ""
+
+    Process {
+        id: ipProc
+        command: ["sh", "-c", "ip -4 route get 1.1.1.1 2>/dev/null | sed -n 's/.*src \\([0-9.]\\+\\).*/\\1/p'"]
+        running: false
+
+        stdout: SplitParser {
+            onRead: data => root.wifiIp = data.trim()
         }
     }
 

@@ -12,7 +12,7 @@ BarBlock {
     property bool showPopup: false
 
     readonly property string netState: {
-        var raw = netFile.text.trim();
+        var raw = netFile.text().trim();
         return raw.length > 0 ? raw : "down";
     }
 
@@ -40,7 +40,11 @@ BarBlock {
         running: true
         repeat: true
         triggeredOnStart: true
-        onTriggered: ipProcess.running = true
+        onTriggered: {
+            // re-read link state so the gauge color tracks cable plug/unplug
+            netFile.reload();
+            ipProcess.running = true;
+        }
     }
 
     onClicked: {

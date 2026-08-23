@@ -18,8 +18,6 @@ BarBlock {
 
     readonly property color cpuColor: cpuPercent > 80 ? "#ff5555" : cpuPercent > 60 ? "#f1fa8c" : "#bd93f9"
 
-    property var topProcs: []
-
     // converts a memory percentage into an absolute figure based on total RAM
     function fmtMem(pct) {
         const mib = pct / 100 * ResourcesState.memTotal * 1024;
@@ -111,9 +109,22 @@ BarBlock {
                         name: p.slice(3).join(" ")
                     });
             }
-            cpu.topProcs = rows;
+            // update rows in place — reassigning a plain array model would tear
+            // down and recreate every delegate each tick (popup flicker)
+            while (procModel.count > rows.length)
+                procModel.remove(procModel.count - 1);
+            for (let i = 0; i < rows.length; i++) {
+                if (i < procModel.count)
+                    procModel.set(i, rows[i]);
+                else
+                    procModel.append(rows[i]);
+            }
             procsProc.buf = "";
         }
+    }
+
+    ListModel {
+        id: procModel
     }
 
     Timer {
@@ -168,13 +179,15 @@ BarBlock {
                     spacing: 9
 
                     Repeater {
-                        model: cpu.topProcs
+                        model: procModel
 
                         ColumnLayout {
                             id: prow
-                            required property var modelData
+                            required property real c
+                            required property int n
+                            required property string name
 
-                            readonly property real cval: modelData?.c ?? 0
+                            readonly property real cval: c
                             readonly property color accent: cval > 80 ? "#ff5555" : cval > 40 ? "#f1fa8c" : "#bd93f9"
 
                             spacing: 4
@@ -196,7 +209,7 @@ BarBlock {
                                 }
 
                                 Text {
-                                    text: prow.modelData?.name ?? ""
+                                    text: prow.name
                                     color: "#f8f8f2"
                                     elide: Text.ElideRight
                                     font {
@@ -207,8 +220,8 @@ BarBlock {
                                 }
 
                                 Text {
-                                    visible: (prow.modelData?.n ?? 1) > 1
-                                    text: "×" + (prow.modelData?.n ?? 1)
+                                    visible: prow.n > 1
+                                    text: "×" + prow.n
                                     color: "#6272a4"
                                     font {
                                         pixelSize: 9
@@ -217,7 +230,7 @@ BarBlock {
                                 }
 
                                 Text {
-                                    text: cpu.fmtMem(prow.modelData?.m ?? 0)
+                                    text: cpu.fmtMem(prow.m)
                                     color: "#6272a4"
                                     font {
                                         pixelSize: 9
@@ -252,13 +265,26 @@ BarBlock {
                     }
 
                     Text {
-                        visible: cpu.topProcs.length === 0
+                        visible: procModel.count === 0
                         text: "sampling…"
                         color: "#6272a4"
                         font {
                             pixelSize: 10
                             italic: true
                             family: "Quicksand"
+                        }
+                        Layout.alignment: Qt.AlignHCenter
+                    }
+
+                    // poll-rate ghost footer
+                    Text {
+                        text: "polls 2s"
+                        color: "#6272a4"
+                        opacity: 0.45
+                        font {
+                            pixelSize: 8
+                            letterSpacing: 2
+                            family: "ZedMono Nerd Font"
                         }
                         Layout.alignment: Qt.AlignHCenter
                     }
