@@ -63,6 +63,25 @@ Singleton {
         root.pinIdentity = next.identity === cur && root.pinIdentity.length > 0 ? "" : next.identity;
     }
 
+    // right-click on the switcher — pin the first player that is actually playing
+    function jumpToPlaying() {
+        const playing = root.controlPlayers.filter(p => !root.isIgnored(p) && p.isPlaying);
+        if (playing.length > 0)
+            root.pinIdentity = playing[0].identity;
+    }
+
+    // per-app glyph for the switcher button — shows which app the card controls
+    function appGlyph(p) {
+        const s = ((p?.identity ?? "") + " " + (p?.desktopEntry ?? "")).toLowerCase();
+        if (s.includes("spotify"))
+            return "\uf1bc";
+        if (s.includes("chrome") || s.includes("chromium"))
+            return "\uf268";
+        if (s.includes("firefox") || s.includes("zen"))
+            return "\uf269";
+        return "\uf001";
+    }
+
     // volume nudge that works for players without MPRIS volume support —
     // chrome gets its per-application stream adjusted via wpctl
     function adjustVolume(p, up) {

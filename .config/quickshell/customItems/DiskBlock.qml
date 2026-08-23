@@ -112,7 +112,7 @@ BarBlock {
         anchor.rect.y: 33
 
         implicitWidth: 420
-        implicitHeight: allDisksCol.implicitHeight + 56
+        implicitHeight: allDisksCol.implicitHeight + 24
 
         Rectangle {
             anchors.fill: parent
@@ -137,71 +137,14 @@ BarBlock {
             ColumnLayout {
                 id: allDisksCol
                 anchors.fill: parent
-                anchors.margins: 14
-                spacing: 10
+                anchors.margins: 12
+                spacing: 0
 
-                // ── header zone: icon + title + count chip ──
-                RowLayout {
+                // ── data zone — flat table straight on the popup, no recessed panel ──
+                ColumnLayout {
+                    id: mountZone
                     Layout.fillWidth: true
-                    spacing: 7
-
-                    Text {
-                        text: disk.diskIcon
-                        color: "#bd93f9"
-                        font {
-                            pixelSize: 13
-                            family: "Symbols Nerd Font Mono"
-                        }
-                    }
-
-                    Text {
-                        text: "mounts"
-                        color: "#f8f8f2"
-                        font {
-                            pixelSize: 12
-                            bold: true
-                            family: "Quicksand"
-                        }
-                    }
-
-                    Item {
-                        Layout.fillWidth: true
-                    }
-
-                    Rectangle {
-                        implicitWidth: mountChip.implicitWidth + 14
-                        implicitHeight: 18
-                        radius: 9
-                        color: "#21222c"
-
-                        Text {
-                            id: mountChip
-                            anchors.centerIn: parent
-                            text: `${disk.allDisksList.length} mounted`
-                            color: "#bd93f9"
-                            font {
-                                pixelSize: 9
-                                bold: true
-                                family: "ZedMono Nerd Font"
-                            }
-                        }
-                    }
-                }
-
-                // ── data zone ──
-                // implicitHeight is driven by the inner column — an anchored
-                // child does NOT give the wrapper its size on its own
-                Rectangle {
-                    Layout.fillWidth: true
-                    radius: 10
-                    color: "#21222c"
-                    implicitHeight: mountZone.implicitHeight + 20
-
-                    ColumnLayout {
-                        id: mountZone
-                        anchors.fill: parent
-                        anchors.margins: 10
-                        spacing: 4
+                    spacing: 4
 
                         // column labels — widths mirror the rows below:
                         // mount(140) · size(44) · free(44) · bar(fills) · use(32)
@@ -375,7 +318,6 @@ BarBlock {
                             visible: disk.allDisksList.length === 0
                             Layout.alignment: Qt.AlignHCenter
                         }
-                    }
                 }
             }
         }

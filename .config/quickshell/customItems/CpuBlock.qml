@@ -167,7 +167,7 @@ BarBlock {
             }
             anchor.rect.y: 33
 
-            implicitWidth: 340
+            implicitWidth: 300
             implicitHeight: procCol.implicitHeight + 28
 
             Rectangle {
@@ -216,7 +216,8 @@ BarBlock {
                             text: `${cpu.cpuPercent}% ·`
                             color: cpu.cpuColor
                             font {
-                                pixelSize: 9
+                                pixelSize: 12
+                                bold: true
                                 family: "ZedMono Nerd Font"
                             }
                         }
@@ -225,7 +226,7 @@ BarBlock {
                             text: `${Math.round(cpu.cpuTemp)}°`
                             color: cpu.tempColor(cpu.cpuTemp)
                             font {
-                                pixelSize: 9
+                                pixelSize: 12
                                 bold: true
                                 family: "ZedMono Nerd Font"
                             }
@@ -236,7 +237,7 @@ BarBlock {
                             text: "min·max"
                             color: "#6272a4"
                             font {
-                                pixelSize: 9
+                                pixelSize: 10
                                 family: "ZedMono Nerd Font"
                             }
                         }
@@ -245,7 +246,7 @@ BarBlock {
                             text: `${Math.round(cpu.tempMin)}.${Math.round(cpu.tempMax)}°`
                             color: cpu.tempColor(Math.min(cpu.tempMin, cpu.cpuTemp))
                             font {
-                                pixelSize: 9
+                                pixelSize: 12
                                 bold: true
                                 family: "ZedMono Nerd Font"
                             }

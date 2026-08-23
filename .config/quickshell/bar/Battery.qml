@@ -182,7 +182,7 @@ RowLayout {
         }
         anchor.rect.y: 33
 
-        implicitWidth: 260
+        implicitWidth: 300
         implicitHeight: popupCol.implicitHeight + 28
 
         Rectangle {
@@ -223,19 +223,20 @@ RowLayout {
                         spacing: 4
 
                         Text {
+                            // purely temporal readout — the icon already carries the state
                             text: {
                                 const b = batteryBlock.bat;
                                 if (batteryBlock.isCharging) {
                                     const t = BatteryState.fmtTime(b.timeToFull);
-                                    return t ? `Charging · ${t} to full` : "Charging";
+                                    return t ? `${t} to full` : "";
                                 }
                                 if (batteryBlock.isPendingCharge)
-                                    return "Plugged in";
+                                    return "";
                                 if (batteryBlock.isFullyCharged)
-                                    return "Fully charged";
+                                    return "";
                                 if (BatteryState.isDischarging) {
                                     const t = BatteryState.fmtTime(b.timeToEmpty);
-                                    return t ? `${t} remaining` : "Discharging";
+                                    return t ? `${t} remaining` : "";
                                 }
                                 return "";
                             }
@@ -405,9 +406,9 @@ RowLayout {
                 // ── Profile list — one sleek row per profile ──
                 Repeater {
                     model: [
-                        { glyph: "\uf06c", name: "Power Saver", desc: "stretch battery life", profile: PowerProfile.PowerSaver, tint: "#50fa7b" },
-                        { glyph: "\uf24e", name: "Balanced", desc: "everyday use", profile: PowerProfile.Balanced, tint: "#bd93f9" },
-                        { glyph: "\uf0e7", name: "Performance", desc: "maximum throughput", profile: PowerProfile.Performance, tint: "#ff5555" }
+                        { glyph: "\uf06c", name: "Power Saver", profile: PowerProfile.PowerSaver, tint: "#50fa7b" },
+                        { glyph: "\uf24e", name: "Balanced", profile: PowerProfile.Balanced, tint: "#bd93f9" },
+                        { glyph: "\uf0e7", name: "Performance", profile: PowerProfile.Performance, tint: "#ff5555" }
                     ]
 
                     delegate: Rectangle {
@@ -419,7 +420,7 @@ RowLayout {
                         readonly property color tint: seg.modelData.tint
 
                         Layout.fillWidth: true
-                        implicitHeight: 32
+                        implicitHeight: 28
                         radius: 8
                         color: seg.active ? Qt.rgba(seg.tint.r, seg.tint.g, seg.tint.b, 0.13)
                             : segHover.hovered ? Qt.rgba(1, 1, 1, 0.04) : "transparent"
@@ -444,21 +445,11 @@ RowLayout {
                                 font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
                             }
 
-                            ColumnLayout {
-                                spacing: 0
+                            Text {
+                                text: seg.modelData.name
+                                color: seg.active ? "#f8f8f2" : "#b8bfcb"
+                                font { pixelSize: 10; bold: true; family: "Quicksand" }
                                 Layout.fillWidth: true
-
-                                Text {
-                                    text: seg.modelData.name
-                                    color: seg.active ? "#f8f8f2" : "#b8bfcb"
-                                    font { pixelSize: 10; bold: true; family: "Quicksand" }
-                                }
-
-                                Text {
-                                    text: seg.modelData.desc
-                                    color: seg.active ? Qt.rgba(seg.tint.r, seg.tint.g, seg.tint.b, 0.85) : "#6272a4"
-                                    font { pixelSize: 8; family: "ZedMono Nerd Font" }
-                                }
                             }
 
                             // radio indicator

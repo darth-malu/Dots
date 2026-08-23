@@ -375,24 +375,18 @@ Loader {
                     ColumnLayout {
                         id: card
                         anchors.fill: parent
-                        anchors.margins: 14
-                        spacing: 10
+                        anchors.margins: 12
+                        spacing: 8
 
-                        // ── header zone: icon + title · graph toggle + connectivity switch ──
+                        // ── header zone: icon · graph toggle · connectivity switch ──
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 7
 
                             Text {
-                                text: "\uf1e6"
+                                text: "\uf0e8"
                                 color: "#bd93f9"
                                 font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
-                            }
-
-                            Text {
-                                text: "ethernet"
-                                color: "#f8f8f2"
-                                font { pixelSize: 12; bold: true; family: "Quicksand" }
                             }
 
                             Item { Layout.fillWidth: true }
@@ -451,61 +445,55 @@ Loader {
                             }
                         }
 
-                        // ── connection zone ──
-                        Rectangle {
+                        // ── connection zone — flat on the card, no recessed panel ──
+                        ColumnLayout {
                             Layout.fillWidth: true
-                            radius: 10
-                            color: "#21222c"
-                            implicitHeight: connZone.implicitHeight + 20
+                            spacing: 7
 
-                            ColumnLayout {
-                                id: connZone
-                                anchors.fill: parent
-                                anchors.margins: 10
-                                spacing: 7
-
-                                RowLayout {
-                                    spacing: 6
-
-                                    Rectangle {
-                                        implicitWidth: 6
-                                        implicitHeight: 6
-                                        radius: 3
-                                        color: root.ethUp ? "#50fa7b" : "#6272a4"
-                                    }
-
-                                    Text {
-                                        text: root.ethIfName.length > 0 ? root.ethIfName : "no device"
-                                        color: "#f8f8f2"
-                                        font { pixelSize: 11; bold: true; family: "Quicksand" }
-                                    }
-
-                                    Item { Layout.fillWidth: true }
-
-                                    Text {
-                                        visible: root.ethUp
-                                        text: NetworkState.ethernet?.linkSpeed ? `${NetworkState.ethernet.linkSpeed} Mb/s` : "linked"
-                                        color: "#6272a4"
-                                        font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                                    }
-                                }
+                            RowLayout {
+                                spacing: 6
 
                                 Rectangle {
-                                    Layout.fillWidth: true
-                                    implicitHeight: 1
-                                    color: Qt.rgba(1, 1, 1, 0.06)
+                                    implicitWidth: 6
+                                    implicitHeight: 6
+                                    radius: 3
+                                    color: root.ethUp ? "#50fa7b" : "#6272a4"
                                 }
 
-                                InfoRow {
-                                    label: "ipv4"
-                                    value: root.ipAddr.length > 0 ? root.ipAddr : "unavailable"
-                                    valueColor: root.ipAddr.length > 0 ? "#f8f8f2" : "#6272a4"
+                                Text {
+                                    text: root.ethIfName.length > 0 ? root.ethIfName : "no device"
+                                    color: "#f8f8f2"
+                                    font { pixelSize: 11; bold: true; family: "Quicksand" }
                                 }
 
-                                InfoRow {
-                                    label: "gateway"
-                                    value: root.gateway.length > 0 ? root.gateway : "-"
+                                Item { Layout.fillWidth: true }
+
+                                Text {
+                                    visible: root.ethUp
+                                    text: NetworkState.ethernet?.linkSpeed ? `${NetworkState.ethernet.linkSpeed} Mb/s` : "linked"
+                                    color: "#6272a4"
+                                    font { pixelSize: 9; family: "ZedMono Nerd Font" }
                                 }
+                            }
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                implicitHeight: 1
+                                color: Qt.rgba(1, 1, 1, 0.06)
+                            }
+
+                            // addresses shrunk to a single quiet mono line
+                            Text {
+                                Layout.fillWidth: true
+                                text: {
+                                    const ip = root.ipAddr.length > 0 ? root.ipAddr : "-";
+                                    const gw = root.gateway.length > 0 ? root.gateway : "-";
+                                    return `${ip} \u00b7 gw ${gw}`;
+                                }
+                                color: "#b8bfcb"
+                                elide: Text.ElideMiddle
+                                font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                            }
 
                                 // ── session totals — persistent by default, toggle in settings ──
                                 RowLayout {
@@ -573,7 +561,6 @@ Loader {
                                     tick: root.graphTick
                                     maxLen: root.historyMax
                                 }
-                            }
                         }
 
                         // ── ghost footer ──
@@ -596,40 +583,6 @@ Loader {
             host: loaderBig.host
             anchorItem: root
             netRoot: root
-        }
-    }
-
-    component InfoRow: RowLayout {
-        id: irow
-        property string label
-        property string value
-        property color valueColor: "#f8f8f2"
-
-        spacing: 8
-        Layout.fillWidth: true
-
-        Text {
-            text: irow.label
-            color: "#6272a4"
-            font {
-                pixelSize: 9
-                bold: true
-                family: "Quicksand"
-                letterSpacing: 1
-            }
-            Layout.preferredWidth: 56
-        }
-
-        Text {
-            text: irow.value
-            color: irow.valueColor
-            elide: Text.ElideRight
-            font {
-                pixelSize: 12
-                bold: true
-                family: "ZedMono Nerd Font"
-            }
-            Layout.fillWidth: true
         }
     }
 

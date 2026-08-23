@@ -22,7 +22,7 @@ BarBlock {
 
     property string hostName: QuickState.hostName
 
-    property bool playerListOpen: false
+    property bool playerListOpen: false // reserved for a future chooser popup
     property bool showQsPopup: false
     property bool showPowerPopup: false
     // 0 = hidden, 1 = reboot presets, 2 = shutdown presets
@@ -254,13 +254,50 @@ BarBlock {
                                     Layout.fillWidth: true
                                 }
 
-                                Rectangle {
-                                    id: controls
-                                    Layout.preferredWidth: 32
+                                // utility cluster — power sits alone until hovered,
+                                // then the rest of the row slides out to its left
+                                Item {
+                                    id: ctrlCluster
+
                                     Layout.preferredHeight: 32
                                     Layout.alignment: Qt.AlignRight
-                                    radius: 6
-                                    color: caffeineMouse.containsMouse ? Qt.rgba(0.98, 0.70, 0.53, 0.15) : "transparent"
+                                    implicitWidth: clusterRow.implicitWidth
+                                    width: ctrlCluster.revealed ? implicitWidth : 32
+                                    clip: true
+
+                                    // stays open while the power popup is up so the row doesn't slam shut
+                                    readonly property bool revealed: clusterHover.hovered || root.showPowerPopup
+
+                                    Behavior on width {
+                                        NumberAnimation {
+                                            duration: 200
+                                            easing.type: Easing.OutCubic
+                                        }
+                                    }
+
+                                    HoverHandler {
+                                        id: clusterHover
+                                    }
+
+                                    RowLayout {
+                                        id: clusterRow
+                                        anchors.right: parent.right
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        spacing: 10
+                                        opacity: ctrlCluster.revealed ? 1 : 0
+
+                                        Behavior on opacity {
+                                            NumberAnimation {
+                                                duration: 150
+                                            }
+                                        }
+
+                                        Rectangle {
+                                            id: controls
+                                            Layout.preferredWidth: 32
+                                            Layout.preferredHeight: 32
+                                            radius: 6
+                                            color: caffeineMouse.containsMouse ? Qt.rgba(0.98, 0.70, 0.53, 0.15) : "transparent"
 
                                     Text {
                                         anchors.centerIn: parent
@@ -379,6 +416,8 @@ BarBlock {
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: root.showPowerPopup = !root.showPowerPopup
+                                    }
+                                }
                                     }
                                 }
                             }
@@ -683,9 +722,10 @@ BarBlock {
                                     }
                                 }
 
-                                // player switcher — sits next to the + button
+                                // player switcher — glyph shows the app in control;
+                                // click cycles, right-click jumps to the first playing player
                                 TrackButton {
-                                    text: "\uf0ec"
+                                    text: MprisState.appGlyph(MprisState.cardPlayer)
                                     ghost: true
                                     accentColor: MprisState.pinIdentity.length > 0 ? "#f1fa8c" : Qt.rgba(1, 1, 1, 0.6)
                                     onClicked: MprisState.cycleCardPin()
@@ -694,6 +734,13 @@ BarBlock {
                                         top: parent.top
                                         rightMargin: 30
                                         topMargin: 2
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        acceptedButtons: Qt.RightButton
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: MprisState.jumpToPlaying()
                                     }
                                 }
 
@@ -798,14 +845,7 @@ BarBlock {
 
                                                 Text {
                                                     Layout.fillWidth: true
-                                                    // show which player is being controlled when several exist
-                                                    text: {
-                                                        const p = MprisState.cardPlayer;
-                                                        let t = p?.trackArtist || "";
-                                                        if (p && Mpris.players.values.length > 1)
-                                                            t += (t.length > 0 ? "  ·  " : "") + (p.identity || "");
-                                                        return t;
-                                                    }
+                                                    text: MprisState.cardPlayer?.trackArtist || ""
                                                     color: "#b8bfcb"
                                                     font {
                                                         pixelSize: 9
@@ -1008,65 +1048,6 @@ BarBlock {
                                     anchors.margins: 14
                                     spacing: 6
 
-                                    // ── Top bar ──
-                                    RowLayout {
-                                        Layout.fillWidth: true
-                                        spacing: 6
-
-                                        Item {
-                                            Layout.fillWidth: true
-                                        }
-
-                                        Rectangle {
-                                            visible: MiscState.showPlayerChooser
-                                            implicitHeight: 20
-                                            radius: height / 2
-                                            color: Qt.rgba(0, 0, 0, 0.35)
-                                            Layout.preferredWidth: expPill.implicitWidth + 16
-
-                                            RowLayout {
-                                                id: expPill
-                                                anchors.fill: parent
-                                                anchors.leftMargin: 7
-                                                anchors.rightMargin: 7
-                                                spacing: 4
-                                                Rectangle {
-                                                    implicitWidth: 5
-                                                    implicitHeight: 5
-                                                    radius: 2.5
-                                                    color: MprisState.cardPlayer?.isPlaying ? "#88FF00" : "#6272a4"
-                                                }
-                                                Text {
-                                                    text: MprisState.cardPlayer?.identity || ""
-                                                    color: "#f8f8f2"
-                                                    font {
-                                                        pixelSize: 7
-                                                        family: "FantasqueSansM Nerd Font"
-                                                        bold: true
-                                                    }
-                                                    elide: Text.ElideRight
-                                                }
-                                            }
-
-                                            MouseArea {
-                                                anchors.fill: parent
-                                                cursorShape: Qt.PointingHandCursor
-                                                onClicked: playerListOpen = !playerListOpen
-                                            }
-                                        }
-
-                                        Text {
-                                            visible: MiscState.showPlayerChooser
-                                            text: Mpris.players.length + " player(s)"
-                                            color: "#6272a4"
-                                            font {
-                                                pixelSize: 7
-                                                family: "ZedMono Nerd Font"
-                                            }
-                                            Layout.rightMargin: 24
-                                        }
-                                    }
-
                                     Item {
                                         Layout.fillHeight: true
                                     }
@@ -1231,9 +1212,10 @@ BarBlock {
                                     }
                                 }
 
-                                // player switcher — sits next to the − button
+                                // player switcher — glyph shows the app in control;
+                                // click cycles, right-click jumps to the first playing player
                                 TrackButton {
-                                    text: "\uf0ec"
+                                    text: MprisState.appGlyph(MprisState.cardPlayer)
                                     ghost: true
                                     accentColor: MprisState.pinIdentity.length > 0 ? "#f1fa8c" : Qt.rgba(1, 1, 1, 0.6)
                                     onClicked: MprisState.cycleCardPin()
@@ -1242,6 +1224,13 @@ BarBlock {
                                         top: parent.top
                                         rightMargin: 30
                                         topMargin: 2
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        acceptedButtons: Qt.RightButton
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: MprisState.jumpToPlaying()
                                     }
                                 }
 
