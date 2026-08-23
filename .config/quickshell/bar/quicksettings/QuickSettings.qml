@@ -753,15 +753,21 @@ BarBlock {
                                 // player switcher — glyph shows the app in control;
                                 // click cycles, right-click jumps to the first playing player
                                 TrackButton {
+                                    id: compactSwitcher
+
+                                    // small and unobtrusive — brightens on hover
                                     z: 10
+                                    implicitWidth: 22
+                                    implicitHeight: 22
+                                    opacity: swCompactHover.hovered ? 1 : 0.5
                                     text: MprisState.appGlyph(MprisState.cardPlayer)
                                     ghost: true
                                     accentColor: MprisState.pinIdentity.length > 0 ? "#f1fa8c" : Qt.rgba(1, 1, 1, 0.6)
                                     onClicked: MprisState.cycleCardPin()
                                     anchors {
-                                        left: parent.left
+                                        right: parent.right
                                         bottom: parent.bottom
-                                        leftMargin: 6
+                                        rightMargin: 6
                                         bottomMargin: 6
                                     }
 
@@ -772,6 +778,10 @@ BarBlock {
                                         onClicked: MprisState.jumpToPlaying()
                                     }
                                 }
+
+                                    HoverHandler {
+                                        id: swCompactHover
+                                    }
 
                                 RowLayout {
                                     anchors.fill: parent
@@ -1244,15 +1254,21 @@ BarBlock {
                                 // player switcher — glyph shows the app in control;
                                 // click cycles, right-click jumps to the first playing player
                                 TrackButton {
+                                    id: expandedSwitcher
+
+                                    // small and unobtrusive — brightens on hover
                                     z: 10
+                                    implicitWidth: 22
+                                    implicitHeight: 22
+                                    opacity: swExpHover.hovered ? 1 : 0.5
                                     text: MprisState.appGlyph(MprisState.cardPlayer)
                                     ghost: true
                                     accentColor: MprisState.pinIdentity.length > 0 ? "#f1fa8c" : Qt.rgba(1, 1, 1, 0.6)
                                     onClicked: MprisState.cycleCardPin()
                                     anchors {
-                                        left: parent.left
+                                        right: parent.right
                                         bottom: parent.bottom
-                                        leftMargin: 6
+                                        rightMargin: 6
                                         bottomMargin: 6
                                     }
 
@@ -1263,6 +1279,10 @@ BarBlock {
                                         onClicked: MprisState.jumpToPlaying()
                                     }
                                 }
+
+                                    HoverHandler {
+                                        id: swExpHover
+                                    }
 
                                 // ── volume HUD — value only, scrimmed over the expanded art ──
                                 Rectangle {

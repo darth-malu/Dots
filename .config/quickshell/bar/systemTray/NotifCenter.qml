@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Widgets
 import qs.customItems
 import qs.services
 
@@ -8,6 +9,7 @@ BarBlock {
     id: root
 
     required property var host
+    visible: MiscState.showNotifTray
 
     readonly property var history: {
         const all = NotificationState.allNotifs;
@@ -164,6 +166,16 @@ BarBlock {
 
                             readonly property bool urgent: histRow.modelData.urgency === 2
 
+                            // the app's own icon — image first, theme icon fallback
+                            readonly property string iconUrl: {
+                                const n = histRow.modelData;
+                                const img = String(n?.image ?? "");
+                                if (img.length > 0)
+                                    return NotificationState.getImage(img);
+                                const app = String(n?.appIcon ?? "");
+                                return app.length > 0 ? NotificationState.getImage(app) : "";
+                            }
+
                             Layout.fillWidth: true
                             implicitHeight: 32
                             radius: 7
@@ -176,10 +188,29 @@ BarBlock {
                                 spacing: 8
 
                                 Rectangle {
-                                    implicitWidth: 5
-                                    implicitHeight: 5
-                                    radius: 2.5
-                                    color: histRow.urgent ? "#ff5555" : "#bd93f9"
+                                    implicitWidth: 22
+                                    implicitHeight: 22
+                                    radius: 5
+                                    color: "#343746"
+
+                                    IconImage {
+                                        anchors.fill: parent
+                                        anchors.margins: 3
+                                        visible: histRow.iconUrl != ""
+                                        source: histRow.iconUrl
+                                        asynchronous: true
+                                    }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        visible: histRow.iconUrl == ""
+                                        text: "\uf0f3"
+                                        color: "#6272a4"
+                                        font {
+                                            pixelSize: 11
+                                            family: "Symbols Nerd Font Mono"
+                                        }
+                                    }
                                 }
 
                                 ColumnLayout {

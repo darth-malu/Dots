@@ -25,8 +25,11 @@ Singleton {
     // badge count for the qs bell
     readonly property int criticalCount: allNotifs.filter(n => n.urgency === 2).length
 
-    // history is capped so the panel never grows unbounded
+    // notifications carried over from a previous generation are already in
+    // the history — re-adding them on every reload is what caused doubles
     function pushHistory(notif) {
+        if (root.allNotifs.some(n => n.id === notif.id))
+            return;
         allNotifs = [notif, ...allNotifs];
         if (allNotifs.length > 25)
             allNotifs = allNotifs.slice(0, 25);
@@ -48,6 +51,10 @@ Singleton {
         if (notif.summary == "Connection established" && notif.appName != "Shell")
             return;
 
+        // carried over from the last reload — already recorded, never re-queue
+        if (notif.lastGeneration)
+            return;
+
         // music toasts are redundant while quicksettings is open — never queue them
         if (isMusic && MiscState.qsOpen) {
             root.pushHistory(notif);
@@ -55,9 +62,6 @@ Singleton {
         }
 
         root.pushHistory(notif);
-
-        if (notif.lastGeneration) // if notif was carried over from last reload
-            return;
 
         // if (isSpotifyAd) return;
 

@@ -197,19 +197,6 @@ Item {
             }
         }
 
-        // green accent rail marks the connected network, anchored to the right edge
-        Rectangle {
-            visible: parent.isConnected
-            anchors.right: parent.right
-            anchors.topMargin: 10
-            anchors.bottomMargin: 10
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            width: 3
-            radius: 1.5
-            color: "#50fa7b"
-        }
-
         onEditingChanged: {
             pskEdit.clear();
             showPw = false;
@@ -265,7 +252,7 @@ Item {
 
             Text {
                 text: netrow.hiddenNet ? "hidden network" : netrow.ssidName
-                color: netrow.hiddenNet ? "#6272a4" : "#f8f8f2"
+                color: netrow.hiddenNet ? "#6272a4" : netrow.isConnected && MiscState.wifiGreenName ? "#50fa7b" : "#f8f8f2"
                 font.italic: netrow.hiddenNet
                 elide: Text.ElideRight
                 font {

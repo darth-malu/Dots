@@ -62,6 +62,11 @@ Singleton {
     property bool showWifi: true
     property bool showEthernet: true
     property bool showBattery: true
+    property bool showNotifTray: true
+
+    // wifi popup — green highlighted name for the connected network
+    // (false = classic white name, only the dot marks the connection)
+    property bool wifiGreenName: true
 
     // ethernet popup — session totals always visible (false = old behaviour,
     // totals only shown together with the traffic graphs)

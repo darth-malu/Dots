@@ -943,6 +943,34 @@ Item {
                             }
                         }
 
+                        // connected-network design — highlighted green name vs classic dot only
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 10
+
+                            ColumnLayout {
+                                spacing: 0
+                                Layout.fillWidth: true
+
+                                Text {
+                                    text: "Connected highlight"
+                                    color: "#f8f8f2"
+                                    font { pixelSize: 12; family: "Quicksand"; bold: true }
+                                }
+
+                                Text {
+                                    text: MiscState.wifiGreenName ? "connected name tinted green" : "classic white name, dot indicator only"
+                                    color: "#6272a4"
+                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                }
+                            }
+
+                            TogglePill {
+                                on: MiscState.wifiGreenName
+                                onToggled: MiscState.wifiGreenName = !MiscState.wifiGreenName
+                            }
+                        }
+
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 6
@@ -1338,7 +1366,8 @@ Item {
                                 { icon: "\uf293", label: "Bluetooth", key: "showBluetooth" },
                                 { icon: "\uf1eb", label: "Wi-Fi", key: "showWifi" },
                                 { icon: "\uf1e6", label: "Ethernet", key: "showEthernet" },
-                                { icon: "\uf240", label: "Battery", key: "showBattery" }
+                                { icon: "\uf240", label: "Battery", key: "showBattery" },
+                                { icon: "\uf0a2", label: "Notifications", key: "showNotifTray" }
                             ]
 
                             delegate: RowLayout {
