@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Services.Notifications
 import qs.services
 
 PanelWindow {
@@ -52,7 +53,8 @@ PanelWindow {
                 }
                 Timer {
                     id: notifTimer
-                    running: true
+                    // critical notifications persist until explicitly dismissed
+                    running: notifBox.n.urgency != NotificationUrgency.Critical
                     interval: (notifBox.n.expireTimeout > 0 && notifBox.n.expireTimeout < 10 ? notifBox.n.expireTimeout : 4) * 1000
                     onTriggered: {
                         NotificationState.notifDismissByNotif(notifBox.n);

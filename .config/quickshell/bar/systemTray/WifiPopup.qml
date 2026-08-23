@@ -189,6 +189,7 @@ Item {
         implicitHeight: netCol.implicitHeight + 16
         // the row being edited is isolated behind a purple tint; plain hover gets a subtle wash
         color: editing ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.14) : rowHover.containsMouse ? Qt.rgba(1, 1, 1, 0.07) : "transparent"
+        opacity: isConnected ? 1 : 0.9
 
         Behavior on color {
             ColorAnimation {
@@ -196,7 +197,18 @@ Item {
             }
         }
 
-        // connected network carries no rail/dot — its green name says it all
+        // green accent rail marks the connected network, anchored to the right edge
+        Rectangle {
+            visible: parent.isConnected
+            anchors.right: parent.right
+            anchors.topMargin: 10
+            anchors.bottomMargin: 10
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            width: 3
+            radius: 1.5
+            color: "#50fa7b"
+        }
 
         onEditingChanged: {
             pskEdit.clear();
@@ -253,7 +265,7 @@ Item {
 
             Text {
                 text: netrow.hiddenNet ? "hidden network" : netrow.ssidName
-                color: netrow.hiddenNet ? "#6272a4" : netrow.isConnected ? "#50fa7b" : "#b8bfcb"
+                color: netrow.hiddenNet ? "#6272a4" : "#f8f8f2"
                 font.italic: netrow.hiddenNet
                 elide: Text.ElideRight
                 font {
@@ -307,6 +319,15 @@ Item {
                         root.editSsid = netrow.editing ? "" : netrow.ssidName;
                     }
                 }
+            }
+
+            // connected dot — rightmost indicator on the row
+            Rectangle {
+                visible: netrow.isConnected
+                implicitWidth: 5
+                implicitHeight: 5
+                radius: 2.5
+                color: "#50fa7b"
             }
         }
 
@@ -653,7 +674,7 @@ Item {
                     anchors.margins: 14
                     spacing: 8
 
-                    // ── Header zone — icon · connected ssid · graph toggle · power ──
+                    // ── Header zone — icon · iface name · graph toggle · power ──
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 7
@@ -665,18 +686,13 @@ Item {
                         }
 
                         Text {
-                            // connected network as plain text — no indicator needed
-                            visible: NetworkState.wifiConnected && (NetworkState.activeNetwork?.name ?? "").length > 0
-                            text: NetworkState.activeNetwork?.name ?? ""
-                            color: "#50fa7b"
-                            elide: Text.ElideMiddle
-                            Layout.fillWidth: true
-                            Layout.maximumWidth: 140
-                            font { pixelSize: 10; bold: true; family: "ZedMono Nerd Font" }
+                            visible: (root.adapter?.name ?? "").length > 0
+                            text: root.adapter?.name ?? ""
+                            color: "#f8f8f2"
+                            font { pixelSize: 12; bold: true; family: "Quicksand" }
                         }
 
                         Item {
-                            visible: !(NetworkState.wifiConnected && (NetworkState.activeNetwork?.name ?? "").length > 0)
                             Layout.fillWidth: true
                         }
 
@@ -806,14 +822,28 @@ Item {
                                 spacing: 5
 
                                 RowLayout {
+                                    visible: MiscState.showNetTotals || NetworkState.wifiGraphEnabled
                                     Layout.fillWidth: true
                                     spacing: 8
 
                                     Text {
-                                        text: `total \u2193 ${root.netRoot.fmtBytes(root.netRoot.ifaceRxTotal)}`
-                                        color: "#6272a4"
-                                        font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                        text: `\u2193 ${root.netRoot.fmtBytes(root.netRoot.ifaceRxTotal)}`
+                                        color: "#bd93f9"
+                                        font { pixelSize: 10; bold: true; family: "ZedMono Nerd Font" }
                                     }
+
+                                    Item { Layout.fillWidth: true }
+
+                                    Text {
+                                        text: `\u2191 ${root.netRoot.fmtBytes(root.netRoot.ifaceTxTotal)}`
+                                        color: "#ff79c6"
+                                        font { pixelSize: 10; bold: true; family: "ZedMono Nerd Font" }
+                                    }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 8
 
                                     Item { Layout.fillWidth: true }
 
@@ -849,31 +879,37 @@ Item {
                         }
                     }
 
-                    // ── Networks zone — known & available lists on a recessed panel ──
-                    Rectangle {
+                    // ── Networks zone — flat list split into known / available ──
+                    ColumnLayout {
                         visible: Networking.wifiEnabled && root.networks.length > 0
                         Layout.fillWidth: true
-                        implicitHeight: netsZone.implicitHeight + 20
-                        radius: 10
-                        color: "#21222c"
+                        spacing: 4
 
-                        ColumnLayout {
-                            id: netsZone
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.top: parent.top
-                            anchors.margins: 8
-                            spacing: 3
+                        Text {
+                            visible: root.knownNets.length > 0
+                            text: `known \u00b7 ${root.knownNets.length}`
+                            color: "#6272a4"
+                            font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                            Layout.leftMargin: 4
+                        }
 
-                            Repeater {
-                                model: root.knownNets
-                                delegate: NetRow {}
-                            }
+                        Repeater {
+                            model: root.knownNets
+                            delegate: NetRow {}
+                        }
 
-                            Repeater {
-                                model: root.unknownNets
-                                delegate: NetRow {}
-                            }
+                        Text {
+                            visible: root.unknownNets.length > 0
+                            text: `available \u00b7 ${root.unknownNets.length}`
+                            color: "#6272a4"
+                            font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                            Layout.leftMargin: 4
+                            Layout.topMargin: 6
+                        }
+
+                        Repeater {
+                            model: root.unknownNets
+                            delegate: NetRow {}
                         }
                     }
 

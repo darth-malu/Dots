@@ -15,6 +15,23 @@ Singleton {
 
     property var lastNotif: null
 
+    // arrival time (ms epoch) per notification id — QObject props can't be added dynamically
+    property var notifTimes: ({})
+
+    function notifTs(notif) {
+        return root.notifTimes[notif.id] ?? 0;
+    }
+
+    // badge count for the qs bell
+    readonly property int criticalCount: allNotifs.filter(n => n.urgency === 2).length
+
+    // history is capped so the panel never grows unbounded
+    function pushHistory(notif) {
+        allNotifs = [notif, ...allNotifs];
+        if (allNotifs.length > 25)
+            allNotifs = allNotifs.slice(0, 25);
+    }
+
     function togglePanel() {
         if (notifOverlayOpen && !notifPanelOpen)
             notifOverlayOpen = false;
@@ -33,11 +50,11 @@ Singleton {
 
         // music toasts are redundant while quicksettings is open — never queue them
         if (isMusic && MiscState.qsOpen) {
-            allNotifs = [notif, ...allNotifs];
+            root.pushHistory(notif);
             return;
         }
 
-        allNotifs = [notif, ...allNotifs];
+        root.pushHistory(notif);
 
         if (notif.lastGeneration) // if notif was carried over from last reload
             return;
@@ -162,14 +179,7 @@ Singleton {
         onNotification: notif => {
             notif.tracked = true;
             root.lastNotif = notif;
-
-            // let isDuplicate = root.allNotifs.some(existingNotif => (existingNotif.id === notif.id));
-
-            // if (!isDuplicate) {
-            //     root.onNewNotif(notif);
-            // } else {
-            //     Quickshell.execDetached(["notify-send", "Duplicate Id blocked" + notif.id]);
-            // }
+            root.notifTimes[notif.id] = Date.now();
 
             root.onNewNotif(notif);
             notif.closed.connect(() => {

@@ -1,0 +1,268 @@
+import QtQuick
+import QtQuick.Layouts
+import Quickshell
+import qs.customItems
+import qs.services
+
+BarBlock {
+    id: root
+
+    required property var host
+
+    readonly property var history: {
+        const all = NotificationState.allNotifs;
+        return [...all.filter(n => n.urgency === 2), ...all.filter(n => n.urgency !== 2)];
+    }
+
+    onClicked: NetworkState.notifCenterVisible = !NetworkState.notifCenterVisible
+
+    content: Item {
+        implicitWidth: 18
+        implicitHeight: 18
+
+        Text {
+            anchors.centerIn: parent
+            text: "\uf0a2"
+            color: NetworkState.notifCenterVisible || NotificationState.criticalCount > 0 ? "#bd93f9" : "#6272a4"
+            font {
+                pixelSize: 14
+                family: "Symbols Nerd Font Mono"
+            }
+        }
+
+        // red dot while an undismissed critical exists
+        Rectangle {
+            visible: NotificationState.criticalCount > 0
+            anchors.right: parent.right
+            anchors.top: parent.top
+            implicitWidth: 6
+            implicitHeight: 6
+            radius: 3
+            color: "#ff5555"
+        }
+    }
+
+    LazyLoader {
+        loading: true
+
+        PopupWindow {
+            id: notifPopup
+
+            visible: NetworkState.notifCenterVisible
+            grabFocus: true
+            color: "transparent"
+
+            anchor.window: root.host
+            anchor.rect.x: {
+                let g = root.mapToGlobal(0, 0);
+                return g.x + (root.width / 2) - (width / 2);
+            }
+
+            anchor.rect.y: 33
+
+            implicitWidth: 320
+            implicitHeight: centerCol.implicitHeight + 24
+
+            Rectangle {
+                anchors.fill: parent
+                radius: 12
+                color: "#282a36"
+                border.width: 1
+                border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
+
+                Shortcut {
+                    sequence: "Escape"
+                    onActivated: NetworkState.notifCenterVisible = false
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    z: -1
+                    onClicked: NetworkState.notifCenterVisible = false
+                }
+
+                ColumnLayout {
+                    id: centerCol
+
+                    anchors.fill: parent
+                    anchors.margins: 12
+                    spacing: 8
+
+                    // ticks the "x ago" labels without per-row timers
+                    property real nowTs: Date.now()
+
+                    Timer {
+                        interval: 15000
+                        running: NetworkState.notifCenterVisible
+                        repeat: true
+                        triggeredOnStart: true
+                        onTriggered: centerCol.nowTs = Date.now()
+                    }
+
+                    // header row — count · clear-all chip
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        Text {
+                            text: {
+                                const n = NotificationState.allNotifs.length;
+                                return n === 0 ? "no notifications" : `${n} notification${n === 1 ? "" : "s"}`;
+                            }
+                            color: "#f8f8f2"
+                            font {
+                                pixelSize: 11
+                                bold: true
+                                family: "Quicksand"
+                            }
+                        }
+
+                        Item {
+                            Layout.fillWidth: true
+                        }
+
+                        Rectangle {
+                            visible: NotificationState.allNotifs.length > 0
+                            implicitWidth: clearTxt.implicitWidth + 14
+                            implicitHeight: 18
+                            radius: 9
+                            color: clearMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.15) : "#343746"
+
+                            Text {
+                                id: clearTxt
+
+                                anchors.centerIn: parent
+                                text: "\uf1f8  clear"
+                                color: clearMa.containsMouse ? "#ff5555" : "#b8bfcb"
+                                font {
+                                    pixelSize: 9
+                                    bold: true
+                                    family: "Symbols Nerd Font Mono, Quicksand"
+                                }
+                            }
+
+                            MouseArea {
+                                id: clearMa
+
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: NotificationState.closeAll()
+                            }
+                        }
+                    }
+
+                    // history rows — criticals pinned to the top
+                    Repeater {
+                        model: root.history
+
+                        delegate: Rectangle {
+                            id: histRow
+
+                            required property var modelData
+                            required property int index
+
+                            readonly property bool urgent: histRow.modelData.urgency === 2
+
+                            Layout.fillWidth: true
+                            implicitHeight: 32
+                            radius: 7
+                            color: histMouse.hovered ? Qt.rgba(1, 1, 1, 0.05) : histRow.urgent ? Qt.rgba(1, 0.33, 0.33, 0.08) : "transparent"
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 8
+                                anchors.rightMargin: 6
+                                spacing: 8
+
+                                Rectangle {
+                                    implicitWidth: 5
+                                    implicitHeight: 5
+                                    radius: 2.5
+                                    color: histRow.urgent ? "#ff5555" : "#bd93f9"
+                                }
+
+                                ColumnLayout {
+                                    spacing: 1
+                                    Layout.fillWidth: true
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: histRow.modelData.summary
+                                        color: histRow.urgent ? "#ff5555" : "#bd93f9"
+                                        elide: Text.ElideRight
+                                        font {
+                                            pixelSize: 10
+                                            bold: true
+                                            family: "Quicksand"
+                                        }
+                                    }
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        visible: histRow.modelData.body.length > 0
+                                        text: histRow.modelData.body.split(String.fromCharCode(10)).join(" ")
+                                        color: "#b8bfcb"
+                                        elide: Text.ElideRight
+                                        font {
+                                            pixelSize: 9
+                                            family: "Quicksand"
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    text: NotificationState.humanTime(Math.floor(NotificationState.notifTs(histRow.modelData) / 1000), Math.floor(centerCol.nowTs / 1000))
+                                    color: "#6272a4"
+                                    font {
+                                        pixelSize: 8
+                                        family: "ZedMono Nerd Font"
+                                    }
+                                }
+
+                                Text {
+                                    text: "\uf00d"
+                                    color: rowCloseMa.containsMouse ? "#ff5555" : "#6272a4"
+                                    font {
+                                        pixelSize: 10
+                                        family: "Symbols Nerd Font Mono"
+                                    }
+
+                                    MouseArea {
+                                        id: rowCloseMa
+
+                                        anchors.fill: parent
+                                        anchors.margins: -4
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            const idx = NotificationState.allNotifs.indexOf(histRow.modelData);
+                                            if (idx !== -1)
+                                                NotificationState.notifCloseByAll(idx);
+                                        }
+                                    }
+                                }
+                            }
+
+                            HoverHandler {
+                                id: histMouse
+                            }
+                        }
+                    }
+
+                    Text {
+                        visible: NotificationState.allNotifs.length === 0
+                        text: "nothing here yet"
+                        color: "#6272a4"
+                        font {
+                            pixelSize: 10
+                            italic: true
+                            family: "Quicksand"
+                        }
+                        Layout.alignment: Qt.AlignHCenter
+                    }
+                }
+            }
+        }
+    }
+}

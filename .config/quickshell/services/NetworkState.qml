@@ -11,6 +11,7 @@ Singleton {
     property bool netPopupVisible: false
     property bool btPopupVisible: false
     property bool wifiPopupVisible: false
+    property bool notifCenterVisible: false
 
     readonly property WifiDevice adapter: Networking.devices.values.find(d => d.type === DeviceType.Wifi) ?? null
     readonly property WifiNetwork activeNetwork: root.adapter ? root.adapter.networks.values.find(network => network.connected) : null

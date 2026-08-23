@@ -112,7 +112,7 @@ BarBlock {
 
         // +24 for the shadow gutter around the card
         implicitWidth: 364
-        implicitHeight: Math.min(qsContent.implicitHeight + 40, Screen.desktopAvailableHeight * 0.7)
+        implicitHeight: Math.min(qsContent.implicitHeight + 36, Screen.desktopAvailableHeight * 0.7)
 
         // drop shadow drawn from a proxy silhouette so the real card never
         // passes through the effect (stays pixel-crisp and fully interactive)
@@ -140,7 +140,6 @@ BarBlock {
             anchors.margins: 12
             radius: 12
             color: "#282a36"
-            border.color: "#44475a"
 
             Shortcut {
                 sequence: "Escape"
@@ -155,7 +154,7 @@ BarBlock {
 
             ScrollView {
                 anchors.fill: parent
-                anchors.margins: 8
+                anchors.margins: 3
                 clip: true
                 ScrollBar.vertical.policy: ScrollBar.AsNeeded
                 ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
@@ -254,18 +253,18 @@ BarBlock {
                                     Layout.fillWidth: true
                                 }
 
-                                // utility cluster — power sits alone until hovered,
-                                // then the rest of the row slides out to its left
+                                // utility cluster — power stays put; hovering it
+                                // slides the rest of the row out to its left
                                 Item {
                                     id: ctrlCluster
 
                                     Layout.preferredHeight: 32
                                     Layout.alignment: Qt.AlignRight
-                                    implicitWidth: clusterRow.implicitWidth
+                                    implicitWidth: revealGroup.width + 10 + 32
                                     width: ctrlCluster.revealed ? implicitWidth : 32
                                     clip: true
 
-                                    // stays open while the power popup is up so the row doesn't slam shut
+                                    // stays open while a popup card is up so the row doesn't slam shut
                                     readonly property bool revealed: clusterHover.hovered || root.showPowerPopup
 
                                     Behavior on width {
@@ -279,12 +278,23 @@ BarBlock {
                                         id: clusterHover
                                     }
 
-                                    RowLayout {
-                                        id: clusterRow
-                                        anchors.right: parent.right
+                                    // the hover-revealed buttons — fade + slide as one unit
+                                    Item {
+                                        id: revealGroup
+
+                                        anchors.left: parent.left
                                         anchors.verticalCenter: parent.verticalCenter
-                                        spacing: 10
+                                        width: ctrlCluster.revealed ? hiddenRow.implicitWidth : 0
+                                        height: 32
+                                        clip: true
                                         opacity: ctrlCluster.revealed ? 1 : 0
+
+                                        Behavior on width {
+                                            NumberAnimation {
+                                                duration: 200
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
 
                                         Behavior on opacity {
                                             NumberAnimation {
@@ -292,132 +302,149 @@ BarBlock {
                                             }
                                         }
 
-                                        Rectangle {
-                                            id: controls
-                                            Layout.preferredWidth: 32
-                                            Layout.preferredHeight: 32
-                                            radius: 6
-                                            color: caffeineMouse.containsMouse ? Qt.rgba(0.98, 0.70, 0.53, 0.15) : "transparent"
+                                        RowLayout {
+                                            id: hiddenRow
 
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: CaffeineService.enabled ? "" : "󰾪"
-                                        color: CaffeineService.enabled ? "#ffb86c" : "#6272a4"
-                                        font {
-                                            pixelSize: 16
-                                            family: "Symbols Nerd Font Mono"
+                                            anchors.left: parent.left
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            spacing: 10
+
+                                            Rectangle {
+                                                id: controls
+
+                                                Layout.preferredWidth: 32
+                                                Layout.preferredHeight: 32
+                                                radius: 6
+                                                color: caffeineMouse.containsMouse ? Qt.rgba(0.98, 0.70, 0.53, 0.15) : "transparent"
+
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: CaffeineService.enabled ? "" : "󰾪"
+                                                    color: CaffeineService.enabled ? "#ffb86c" : "#6272a4"
+                                                    font {
+                                                        pixelSize: 16
+                                                        family: "Symbols Nerd Font Mono"
+                                                    }
+                                                }
+
+                                                MouseArea {
+                                                    id: caffeineMouse
+
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: CaffeineService.toggle()
+                                                }
+                                            }
+
+                                            Rectangle {
+                                                id: nasBtn
+
+                                                // NAS remount shortcut only makes sense on carthage
+                                                visible: root.hostName === "carthage"
+                                                Layout.preferredWidth: 32
+                                                Layout.preferredHeight: 32
+                                                radius: 6
+                                                // grey when everything is mounted, orange when a NAS share is missing;
+                                                // bg + border only appear on hover
+                                                color: !nasBtnMouse.containsMouse ? "transparent" : root.nasAllMounted ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 0.72, 0.42, 0.16)
+                                                border.width: nasBtnMouse.containsMouse ? 1 : 0
+                                                border.color: root.nasAllMounted ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 0.72, 0.42, 0.35)
+
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: "\uf4a6"
+                                                    color: {
+                                                        if (root.nasAllMounted)
+                                                            return nasBtnMouse.containsMouse ? "#9aa3b2" : "#6272a4";
+                                                        return nasBtnMouse.containsMouse ? "#ffd9a8" : "#ffb86c";
+                                                    }
+                                                    font {
+                                                        pixelSize: 16
+                                                        family: "Symbols Nerd Font Mono"
+                                                    }
+                                                }
+
+                                                Behavior on color {
+                                                    ColorAnimation {
+                                                        duration: 120
+                                                    }
+                                                }
+
+                                                MouseArea {
+                                                    id: nasBtnMouse
+
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: {
+                                                        Quickshell.execDetached(["sh", "-c", "for m in Hyogo Mutsu Yuri; do systemctl is-active \"media-$m.mount\" >/dev/null 2>&1 || systemctl restart \"media-$m.mount\"; done"]);
+                                                        root.nasAllMounted = true;
+                                                        nasRecheck.restart();
+                                                    }
+                                                }
+                                            }
+
+                                            Rectangle {
+
+                                                Layout.preferredWidth: 32
+                                                Layout.preferredHeight: 32
+                                                radius: 6
+                                                color: settingsBtnMouse.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, 0.15) : "transparent"
+
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: ""
+                                                    color: "#bd93f9"
+                                                    font {
+                                                        pixelSize: 16
+                                                        family: "Symbols Nerd Font Mono"
+                                                    }
+                                                }
+
+                                                MouseArea {
+                                                    id: settingsBtnMouse
+
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: {
+                                                        root.showQsPopup = false;
+                                                        MiscState.toggleSettings = true;
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
 
-                                    MouseArea {
-                                        id: caffeineMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: CaffeineService.toggle()
-                                    }
-                                }
+                                    // power — always visible on the right edge
+                                    Rectangle {
 
-                                Rectangle {
-                                    id: nasBtn
+                                        anchors.right: parent.right
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: 32
+                                        height: 32
+                                        radius: 6
+                                        color: powerBtnMouse.containsMouse ? Qt.rgba(0.95, 0.55, 0.66, 0.15) : "transparent"
 
-                                    // NAS remount shortcut only makes sense on carthage
-                                    visible: root.hostName === "carthage"
-                                    Layout.preferredWidth: 32
-                                    Layout.preferredHeight: 32
-                                    radius: 6
-                                    // grey when everything is mounted, orange when a NAS share is missing;
-                                    // bg + border only appear on hover
-                                    color: !nasBtnMouse.containsMouse ? "transparent" : root.nasAllMounted ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 0.72, 0.42, 0.16)
-                                    border.width: nasBtnMouse.containsMouse ? 1 : 0
-                                    border.color: root.nasAllMounted ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 0.72, 0.42, 0.35)
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        // text: "\uf4a6"
-                                        text: "\uf4a6"
-                                        color: {
-                                            if (root.nasAllMounted)
-                                                return nasBtnMouse.containsMouse ? "#9aa3b2" : "#6272a4";
-                                            return nasBtnMouse.containsMouse ? "#ffd9a8" : "#ffb86c";
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: ""
+                                            color: root.showPowerPopup ? "#ff5555" : "#6272a4"
+                                            font {
+                                                pixelSize: 16
+                                                family: "Symbols Nerd Font Mono"
+                                            }
                                         }
-                                        font {
-                                            pixelSize: 16
-                                            family: "Symbols Nerd Font Mono"
+
+                                        MouseArea {
+                                            id: powerBtnMouse
+
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: root.showPowerPopup = !root.showPowerPopup
                                         }
-                                    }
-
-                                    Behavior on color {
-                                        ColorAnimation {
-                                            duration: 120
-                                        }
-                                    }
-
-                                    MouseArea {
-                                        id: nasBtnMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            Quickshell.execDetached(["sh", "-c", "for m in Hyogo Mutsu Yuri; do systemctl is-active \"media-$m.mount\" >/dev/null 2>&1 || systemctl restart \"media-$m.mount\"; done"]);
-                                            root.nasAllMounted = true;
-                                            nasRecheck.restart();
-                                        }
-                                    }
-                                }
-
-                                Rectangle {
-                                    Layout.preferredWidth: 32
-                                    Layout.preferredHeight: 32
-                                    radius: 6
-                                    color: settingsBtnMouse.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, 0.15) : "transparent"
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: ""
-                                        color: "#bd93f9"
-                                        font {
-                                            pixelSize: 16
-                                            family: "Symbols Nerd Font Mono"
-                                        }
-                                    }
-
-                                    MouseArea {
-                                        id: settingsBtnMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            root.showQsPopup = false;
-                                            MiscState.toggleSettings = true;
-                                        }
-                                    }
-                                }
-
-                                Rectangle {
-                                    Layout.preferredWidth: 32
-                                    Layout.preferredHeight: 32
-                                    radius: 6
-                                    color: powerBtnMouse.containsMouse ? Qt.rgba(0.95, 0.55, 0.66, 0.15) : "transparent"
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: ""
-                                        color: root.showPowerPopup ? "#ff5555" : "#6272a4"
-                                        font {
-                                            pixelSize: 16
-                                            family: "Symbols Nerd Font Mono"
-                                        }
-                                    }
-
-                                    MouseArea {
-                                        id: powerBtnMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: root.showPowerPopup = !root.showPowerPopup
-                                    }
-                                }
                                     }
                                 }
                             }
@@ -465,6 +492,7 @@ BarBlock {
                                 }
                             }
                         }
+
 
                         // ═══ REBOOT / SHUTDOWN MENU ═══
                         Card {
@@ -725,15 +753,16 @@ BarBlock {
                                 // player switcher — glyph shows the app in control;
                                 // click cycles, right-click jumps to the first playing player
                                 TrackButton {
+                                    z: 10
                                     text: MprisState.appGlyph(MprisState.cardPlayer)
                                     ghost: true
                                     accentColor: MprisState.pinIdentity.length > 0 ? "#f1fa8c" : Qt.rgba(1, 1, 1, 0.6)
                                     onClicked: MprisState.cycleCardPin()
                                     anchors {
-                                        right: parent.right
-                                        top: parent.top
-                                        rightMargin: 30
-                                        topMargin: 2
+                                        left: parent.left
+                                        bottom: parent.bottom
+                                        leftMargin: 6
+                                        bottomMargin: 6
                                     }
 
                                     MouseArea {
@@ -825,7 +854,7 @@ BarBlock {
                                         RowLayout {
                                             Layout.fillWidth: true
                                             Layout.fillHeight: true
-                                            Layout.rightMargin: 30
+                                            Layout.rightMargin: 34
                                             spacing: 4
 
                                             ColumnLayout {
@@ -1215,15 +1244,16 @@ BarBlock {
                                 // player switcher — glyph shows the app in control;
                                 // click cycles, right-click jumps to the first playing player
                                 TrackButton {
+                                    z: 10
                                     text: MprisState.appGlyph(MprisState.cardPlayer)
                                     ghost: true
                                     accentColor: MprisState.pinIdentity.length > 0 ? "#f1fa8c" : Qt.rgba(1, 1, 1, 0.6)
                                     onClicked: MprisState.cycleCardPin()
                                     anchors {
-                                        right: parent.right
-                                        top: parent.top
-                                        rightMargin: 30
-                                        topMargin: 2
+                                        left: parent.left
+                                        bottom: parent.bottom
+                                        leftMargin: 6
+                                        bottomMargin: 6
                                     }
 
                                     MouseArea {

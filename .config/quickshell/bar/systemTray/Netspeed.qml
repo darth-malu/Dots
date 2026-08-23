@@ -378,7 +378,7 @@ Loader {
                         anchors.margins: 12
                         spacing: 8
 
-                        // ── header zone: icon · graph toggle · connectivity switch ──
+                        // ── header zone: icon · iface · link speed · graph toggle · switch ──
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 7
@@ -389,7 +389,20 @@ Loader {
                                 font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
                             }
 
+                            Text {
+                                text: root.ethIfName.length > 0 ? root.ethIfName : "no device"
+                                color: "#f8f8f2"
+                                font { pixelSize: 12; bold: true; family: "Quicksand" }
+                            }
+
                             Item { Layout.fillWidth: true }
+
+                            Text {
+                                visible: root.ethUp
+                                text: NetworkState.ethernet?.linkSpeed ? `${NetworkState.ethernet.linkSpeed} Mb/s` : "linked"
+                                color: "#6272a4"
+                                font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                            }
 
                             Rectangle {
                                 Layout.alignment: Qt.AlignVCenter
@@ -445,42 +458,10 @@ Loader {
                             }
                         }
 
-                        // ── connection zone — flat on the card, no recessed panel ──
+                        // ── connection zone — flat, mirrors the wifi traffic design ──
                         ColumnLayout {
                             Layout.fillWidth: true
                             spacing: 7
-
-                            RowLayout {
-                                spacing: 6
-
-                                Rectangle {
-                                    implicitWidth: 6
-                                    implicitHeight: 6
-                                    radius: 3
-                                    color: root.ethUp ? "#50fa7b" : "#6272a4"
-                                }
-
-                                Text {
-                                    text: root.ethIfName.length > 0 ? root.ethIfName : "no device"
-                                    color: "#f8f8f2"
-                                    font { pixelSize: 11; bold: true; family: "Quicksand" }
-                                }
-
-                                Item { Layout.fillWidth: true }
-
-                                Text {
-                                    visible: root.ethUp
-                                    text: NetworkState.ethernet?.linkSpeed ? `${NetworkState.ethernet.linkSpeed} Mb/s` : "linked"
-                                    color: "#6272a4"
-                                    font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                                }
-                            }
-
-                            Rectangle {
-                                Layout.fillWidth: true
-                                implicitHeight: 1
-                                color: Qt.rgba(1, 1, 1, 0.06)
-                            }
 
                             // addresses shrunk to a single quiet mono line
                             Text {
@@ -495,32 +476,31 @@ Loader {
                                 font { pixelSize: 9; family: "ZedMono Nerd Font" }
                             }
 
-                                // ── session totals — persistent by default, toggle in settings ──
+                            Rectangle {
+                                Layout.fillWidth: true
+                                implicitHeight: 1
+                                color: Qt.rgba(1, 1, 1, 0.06)
+                            }
+
+                                // ── session totals — arrows carry the direction, both ways ──
                                 RowLayout {
                                     visible: MiscState.showNetTotals || root.ethGraphs
                                     Layout.fillWidth: true
                                     spacing: 8
 
                                     Text {
-                                        text: "total"
-                                        color: "#6272a4"
-                                        font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
-                                        Layout.preferredWidth: 56
-                                    }
-
-                                    Text {
                                         text: `\u2193 ${root.fmtBytes(root.ethRxTotal)}`
                                         color: "#bd93f9"
-                                        font { pixelSize: 11; bold: true; family: "ZedMono Nerd Font" }
+                                        font { pixelSize: 10; bold: true; family: "ZedMono Nerd Font" }
                                     }
+
+                                    Item { Layout.fillWidth: true }
 
                                     Text {
                                         text: `\u2191 ${root.fmtBytes(root.ethTxTotal)}`
                                         color: "#ff79c6"
-                                        font { pixelSize: 11; bold: true; family: "ZedMono Nerd Font" }
+                                        font { pixelSize: 10; bold: true; family: "ZedMono Nerd Font" }
                                     }
-
-                                    Item { Layout.fillWidth: true }
                                 }
 
                                 // ── Live traffic graphs — live rates right ──

@@ -46,6 +46,10 @@ RowLayout {
             BtPopup {
                 host: root.host
             }
+
+            NotifCenter {
+                host: root.host
+            }
         }
     }
 
