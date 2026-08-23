@@ -183,13 +183,11 @@ BarBlock {
                         spacing: 6
 
                         Text {
-                            text: "memory"
-                            color: "#6272a4"
+                            text: "\uf1c0"
+                            color: "#bd93f9"
                             font {
-                                pixelSize: 9
-                                bold: true
-                                family: "Quicksand"
-                                letterSpacing: 1
+                                pixelSize: 12
+                                family: "Symbols Nerd Font Mono"
                             }
                         }
 

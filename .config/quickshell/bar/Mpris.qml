@@ -230,12 +230,9 @@ Item {
                             if (mprisRoot.showVolume) {
                                 var vol = Math.max(0, Math.min(MprisState.player?.volume ?? 0, 1));
                                 ctx.fillStyle = vol <= 0.001 ? "#6272a4" : "#FF7EB3";
-                                ctx.textAlign = "center";
-                                ctx.textBaseline = "middle";
-                                ctx.font = `9px "Symbols Nerd Font Mono"`;
-                                ctx.fillText(vol <= 0.001 ? "\uf026" : "\uf028", cx - 3, cy + 0.5);
 
-                                // waves emanating from the speaker cone
+                                // waves emanating from the speaker cone — the speaker
+                                // glyph itself is a crisp Text overlay (canvas glyphs blur)
                                 ctx.lineCap = "round";
                                 ctx.lineWidth = 1.4;
                                 var ox = cx - 0.5;
@@ -283,6 +280,19 @@ Item {
                                 progressRing.requestPaint();
                             }
                         }
+                    }
+
+                    // crisp speaker/mute glyph over the canvas waves
+                    Text {
+                        anchors.centerIn: parent
+                        anchors.horizontalCenterOffset: -3
+                        visible: mprisRoot.showVolume
+                        text: {
+                            var v = Math.max(0, Math.min(MprisState.player?.volume ?? 0, 1));
+                            return v <= 0.001 ? "\uf026" : "\uf028";
+                        }
+                        color: (MprisState.player?.volume ?? 0) <= 0.001 ? "#6272a4" : "#FF7EB3"
+                        font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
                     }
 
                     BarText {

@@ -173,14 +173,14 @@ Item {
         // stored password fetched from NetworkManager for the reveal button
         property string savedPw: ""
 
-        // quickshell's WifiNetwork has no connectWithPsk — join secured networks via nmcli
+        // quickshell's WifiNetwork has no connectWithPsk — join via nmcli with feedback
         function submitPw() {
             const psk = pwField.text.trim();
             if (!netrow.modelData || psk.length < 8)
                 return;
             root.passwordNetwork = null;
             pwField.clear();
-            Quickshell.execDetached(["sh", "-c", `nmcli dev wifi connect '${root.esc(netrow.ssidName)}' password '${root.esc(psk)}'`]);
+            root.requestConnect(netrow.ssidName, psk);
         }
 
         radius: 8
@@ -248,7 +248,7 @@ Item {
                     if (netrow.isConnected) {
                         netrow.modelData.disconnect();
                     } else if (netrow.isKnown || !root.needsPsk(netrow.modelData.security)) {
-                        netrow.modelData.connect();
+                        root.requestConnect(netrow.ssidName, "");
                     } else {
                         // secured and unknown: ask for the password first
                         root.passwordNetwork = netrow.modelData;
@@ -301,10 +301,10 @@ Item {
                 font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
             }
 
-            // settings editor toggle for known networks
+            // settings editor toggle for known networks — becomes a close button while editing
             Text {
                 visible: netrow.isKnown && netrow.ssidName.length > 0
-                text: "\uf044"
+                text: netrow.editing ? "\uf00d" : "\uf044"
                 color: editMa.containsMouse || netrow.editing ? "#bd93f9" : "#6272a4"
                 font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
 
@@ -674,44 +674,33 @@ Item {
                     anchors.margins: 14
                     spacing: 8
 
-                    // ── Header: status left · graph + power toggles right ──
+                    // ── Header zone — icon · title · graph toggle · power ──
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 6
+                        spacing: 7
 
-                        // status text (no background) — click to inspect the current connection
-                        Item {
-                            Layout.alignment: Qt.AlignVCenter
-                            Layout.maximumWidth: 170
-                            implicitWidth: wifiPillText.implicitWidth
-                            implicitHeight: wifiPillText.implicitHeight
-
-                            Text {
-                                id: wifiPillText
-                                anchors.centerIn: parent
-                                width: parent.width
-                                elide: Text.ElideRight
-                                text: !root.adapter ? "no adapter"
-                                    : NetworkState.wifiConnected ? (NetworkState.activeNetwork?.name ?? "?") + " · " + Math.round((NetworkState.activeNetwork?.signalStrength ?? 0) * 100) + "%"
-                                    : Networking.wifiEnabled ? "idle"
-                                    : "off"
-                                color: !root.adapter ? "#6272a4"
-                                    : NetworkState.wifiConnected ? "#50fa7b"
-                                    : Networking.wifiEnabled ? "#bd93f9"
-                                    : "#6272a4"
-                                font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                anchors.margins: -6
-                                cursorShape: Qt.PointingHandCursor
-                                enabled: NetworkState.wifiConnected
-                                onClicked: root.showDetails = !root.showDetails
-                            }
+                        Text {
+                            text: "\uf1eb"
+                            color: "#bd93f9"
+                            font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
                         }
 
-                        Item { Layout.fillWidth: true }
+                        Text {
+                            text: "wi-fi"
+                            color: "#f8f8f2"
+                            font { pixelSize: 12; bold: true; family: "Quicksand" }
+                            Layout.fillWidth: true
+                        }
+
+                        // connected network as plain text — no indicator needed
+                        Text {
+                            visible: NetworkState.wifiConnected && (NetworkState.activeNetwork?.name ?? "").length > 0
+                            text: NetworkState.activeNetwork?.name ?? ""
+                            color: "#50fa7b"
+                            elide: Text.ElideMiddle
+                            Layout.maximumWidth: 120
+                            font { pixelSize: 10; bold: true; family: "ZedMono Nerd Font" }
+                        }
 
                         Rectangle {
                             visible: root.adapter !== null
@@ -769,139 +758,169 @@ Item {
                         }
                     }
 
-
-                    // ── Current connection details (click status pill) ──
-                    ColumnLayout {
-                        visible: root.showDetails && NetworkState.wifiConnected
+                    // ── Connection zone — details & live traffic on a raised panel ──
+                    Rectangle {
+                        visible: root.showDetails || (NetworkState.wifiGraphEnabled && root.netRoot !== null)
                         Layout.fillWidth: true
-                        spacing: 4
+                        implicitHeight: connZone.implicitHeight
+                        radius: 10
+                        color: "#21222c"
 
-                        Repeater {
-                            model: [
-                                { label: "ssid", value: NetworkState.activeNetwork?.name ?? "-" },
-                                { label: "band", value: root.bandFor(NetworkState.activeNetwork?.name ?? "") || "-" },
-                                { label: "signal", value: Math.round((NetworkState.activeNetwork?.signalStrength ?? 0) * 100) + "%" },
-                                { label: "security", value: NetworkState.activeNetwork != null ? root.secLabel(NetworkState.activeNetwork.security) : "-" },
-                                { label: "ipv4", value: root.wifiIp.length > 0 ? root.wifiIp : "-" },
-                                { label: "device", value: root.adapter?.name ?? "-" }
-                            ]
-
-                            RowLayout {
-                                required property var modelData
-                                spacing: 8
-                                Layout.fillWidth: true
-
-                                Text {
-                                    text: modelData.label
-                                    color: "#6272a4"
-                                    font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
-                                    Layout.preferredWidth: 56
-                                }
-
-                                Text {
-                                    text: modelData.value
-                                    color: "#f8f8f2"
-                                    elide: Text.ElideRight
-                                    font { pixelSize: 12; family: "ZedMono Nerd Font" }
-                                    Layout.fillWidth: true
-                                }
-                            }
-                        }
-                    }
-
-
-                    // ── Upload/download traffic graphs + totals ──
-                    ColumnLayout {
-                        visible: NetworkState.wifiGraphEnabled && root.netRoot !== null
-                        Layout.fillWidth: true
-                        spacing: 5
-
-                        RowLayout {
-                            Layout.fillWidth: true
+                        ColumnLayout {
+                            id: connZone
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.margins: 10
                             spacing: 8
 
+                            // current connection details
+                            ColumnLayout {
+                                visible: root.showDetails && NetworkState.wifiConnected
+                                Layout.fillWidth: true
+                                spacing: 5
+
+                                Repeater {
+                                    model: [
+                                        { label: "ssid", value: NetworkState.activeNetwork?.name ?? "-" },
+                                        { label: "band", value: root.bandFor(NetworkState.activeNetwork?.name ?? "") || "-" },
+                                        { label: "signal", value: Math.round((NetworkState.activeNetwork?.signalStrength ?? 0) * 100) + "%" },
+                                        { label: "security", value: NetworkState.activeNetwork != null ? root.secLabel(NetworkState.activeNetwork.security) : "-" },
+                                        { label: "ipv4", value: root.wifiIp.length > 0 ? root.wifiIp : "-" },
+                                        { label: "device", value: root.adapter?.name ?? "-" }
+                                    ]
+
+                                    RowLayout {
+                                        required property var modelData
+                                        spacing: 8
+                                        Layout.fillWidth: true
+
+                                        Text {
+                                            text: modelData.label
+                                            color: "#6272a4"
+                                            font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                                            Layout.preferredWidth: 56
+                                        }
+
+                                        Text {
+                                            text: modelData.value
+                                            color: "#f8f8f2"
+                                            elide: Text.ElideRight
+                                            font { pixelSize: 12; bold: true; family: "ZedMono Nerd Font" }
+                                            Layout.fillWidth: true
+                                        }
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                visible: root.showDetails && NetworkState.wifiConnected && NetworkState.wifiGraphEnabled && root.netRoot !== null
+                                Layout.fillWidth: true
+                                implicitHeight: 1
+                                color: "#343746"
+                            }
+
+                            // upload/download traffic graphs + totals
+                            ColumnLayout {
+                                visible: NetworkState.wifiGraphEnabled && root.netRoot !== null
+                                Layout.fillWidth: true
+                                spacing: 5
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 8
+
+                                    Text {
+                                        text: `total \u2193 ${root.netRoot.fmtBytes(root.netRoot.ifaceRxTotal)}`
+                                        color: "#6272a4"
+                                        font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                    }
+
+                                    Item { Layout.fillWidth: true }
+
+                                    Text {
+                                        text: `\u2193 ${root.netRoot.fmtRate(root.netRoot.rxRate)}`
+                                        color: "#bd93f9"
+                                        font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                                    }
+
+                                    Text {
+                                        text: `\u2191 ${root.netRoot.fmtRate(root.netRoot.txRate)}`
+                                        color: "#ff79c6"
+                                        font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                                    }
+                                }
+
+                                TrafficGraph {
+                                    accent: "#bd93f9"
+                                    history: root.netRoot.rxHistory
+                                    peak: root.netRoot.peakRx
+                                    tick: root.netRoot.graphTick
+                                    maxLen: root.netRoot.historyMax
+                                }
+
+                                TrafficGraph {
+                                    accent: "#ff79c6"
+                                    history: root.netRoot.txHistory
+                                    peak: root.netRoot.peakTx
+                                    tick: root.netRoot.graphTick
+                                    maxLen: root.netRoot.historyMax
+                                }
+                            }
+                        }
+                    }
+
+                    // ── Networks zone — known & available lists on a recessed panel ──
+                    Rectangle {
+                        visible: Networking.wifiEnabled && root.networks.length > 0
+                        Layout.fillWidth: true
+                        implicitHeight: netsZone.implicitHeight
+                        radius: 10
+                        color: "#21222c"
+
+                        ColumnLayout {
+                            id: netsZone
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.margins: 8
+                            spacing: 4
+
                             Text {
-                                text: `total ↓ ${root.netRoot.fmtBytes(root.netRoot.ifaceRxTotal)}`
+                                visible: root.knownNets.length > 0
+                                text: `known \u00b7 ${root.knownNets.length}`
                                 color: "#6272a4"
-                                font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                                Layout.leftMargin: 4
+                                Layout.topMargin: 2
                             }
 
-                            Item { Layout.fillWidth: true }
+                            Repeater {
+                                model: root.knownNets
+                                delegate: NetRow {}
+                            }
 
                             Text {
-                                text: `↓ ${root.netRoot.fmtRate(root.netRoot.rxRate)}`
-                                color: "#bd93f9"
-                                font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                                visible: root.unknownNets.length > 0
+                                text: `available \u00b7 ${root.unknownNets.length}`
+                                color: "#6272a4"
+                                font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                                Layout.leftMargin: 4
+                                Layout.topMargin: 10
                             }
 
-                            Text {
-                                text: `↑ ${root.netRoot.fmtRate(root.netRoot.txRate)}`
-                                color: "#ff79c6"
-                                font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                            Repeater {
+                                model: root.unknownNets
+                                delegate: NetRow {}
                             }
                         }
-
-                        TrafficGraph {
-                            accent: "#bd93f9"
-                            history: root.netRoot.rxHistory
-                            peak: root.netRoot.peakRx
-                            tick: root.netRoot.graphTick
-                            maxLen: root.netRoot.historyMax
-                        }
-
-                        TrafficGraph {
-                            accent: "#ff79c6"
-                            history: root.netRoot.txHistory
-                            peak: root.netRoot.peakTx
-                            tick: root.netRoot.graphTick
-                            maxLen: root.netRoot.historyMax
-                        }
-                    }
-
-
-
-                    // ── Known networks ──
-                    Text {
-                        visible: Networking.wifiEnabled && root.knownNets.length > 0
-                        text: `known · ${root.knownNets.length}`
-                        color: "#6272a4"
-                        font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
-                    }
-
-                    Repeater {
-                        model: Networking.wifiEnabled ? root.knownNets : []
-                        delegate: NetRow {}
-                    }
-
-                    // ── Available (unknown) networks ──
-                    Text {
-                        visible: Networking.wifiEnabled && root.unknownNets.length > 0
-                        text: `available · ${root.unknownNets.length}`
-                        color: "#6272a4"
-                        Layout.topMargin: 12
-                        font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
-                    }
-
-                    Repeater {
-                        model: Networking.wifiEnabled ? root.unknownNets : []
-                        delegate: NetRow {}
                     }
 
                     Text {
                         visible: Networking.wifiEnabled && root.networks.length === 0 && root.adapter !== null
-                        text: "scanning for networks…"
+                        text: "scanning for networks\u2026"
                         color: "#6272a4"
                         font { pixelSize: 10; family: "Quicksand"; italic: true }
-                        Layout.alignment: Qt.AlignHCenter
-                    }
-
-                    // poll-rate ghost footer
-                    Text {
-                        visible: root.adapter !== null
-                        text: NetworkState.wifiGraphEnabled ? "live · polls 1s" : "auto-scan while open"
-                        color: "#6272a4"
-                        opacity: 0.45
-                        font { pixelSize: 8; letterSpacing: 2; family: "ZedMono Nerd Font" }
                         Layout.alignment: Qt.AlignHCenter
                     }
                 }
@@ -988,6 +1007,46 @@ Item {
 
     function esc(s) {
         return String(s).replace(/'/g, "'\\''");
+    }
+
+    // ── connect with feedback — nmcli stderr surfaces as a notification ──
+    property string pendingSsid: ""
+
+    function requestConnect(ssid, psk) {
+        if (!ssid || ssid.length === 0)
+            return;
+        pendingSsid = ssid;
+        connProc.cmd = "nmcli --wait 15 dev wifi connect '" + esc(ssid) + "'"
+            + (psk && psk.length > 0 ? " password '" + esc(psk) + "'" : "");
+        connProc.running = true;
+    }
+
+    Process {
+        id: connProc
+        property string cmd: ""
+        property string errBuf: ""
+        command: ["sh", "-c", connProc.cmd]
+        running: false
+
+        stdout: SplitParser {
+            onRead: data => {}
+        }
+
+        stderr: SplitParser {
+            onRead: data => connProc.errBuf += data
+        }
+
+        onExited: {
+            if (connProc.cmd.length === 0)
+                return;
+            const trimmed = connProc.errBuf.trim();
+            if (trimmed.length > 0 && !/successfully activated|Connection activation/i.test(trimmed)) {
+                const msg = trimmed.split("\n").pop() || "connection failed";
+                Quickshell.execDetached(["notify-send", "-a", "Shell", "Wi-Fi · " + root.pendingSsid, msg]);
+            }
+            connProc.errBuf = "";
+            connProc.cmd = "";
+        }
     }
 
     function setAutoconnect(ssid, on) {

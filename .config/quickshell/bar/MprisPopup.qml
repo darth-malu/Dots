@@ -97,6 +97,8 @@ ColumnLayout {
                     implicitWidth: 30
                     implicitHeight: 30
                     radius: 6
+                    // dark tile behind browser glyphs so they read as icons, not art
+                    color: prow.isBrowser ? "#21222c" : "transparent"
 
                     Image {
                         anchors.fill: parent

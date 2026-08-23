@@ -132,7 +132,8 @@ WrapperMouseArea {
                         color: rootMouseArea.accent
                         font {
                             pixelSize: 12
-                            family: "Quicksand"
+                            // second family catches uap/nerd codepoints glyph-by-glyph
+                            family: "Quicksand, Symbols Nerd Font Mono"
                             weight: Font.Bold
                             bold: true
                         }
@@ -151,7 +152,8 @@ WrapperMouseArea {
                     color: "#b8bfcb"
                     font {
                         pixelSize: 12
-                        family: "Quicksand"
+                        // second family catches uap/nerd codepoints glyph-by-glyph
+                        family: "Quicksand, Symbols Nerd Font Mono"
                         weight: Font.Medium
                     }
                 }

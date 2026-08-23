@@ -75,6 +75,12 @@ BarBlock {
             return "\uf294";
         }
 
+        // human-readable device class from the bluez icon name
+        readonly property string devType: {
+            const s = String(modelData?.icon ?? "").replace(/^audio-|^input-/, "");
+            return s.length > 0 ? s : "";
+        }
+
         // the bluez media player exported by this device over MPRIS (for volume)
         readonly property var btPlayer: {
             if (!drow.isConnected)
@@ -139,9 +145,15 @@ BarBlock {
                 Layout.fillWidth: true
             }
 
-            // address · state word — the informational line
+            // address · device class · state word — the informational line
             Text {
-                text: (drow.modelData?.address ?? "?") + " · " + drow.stateWord
+                text: {
+                    const parts = [drow.modelData?.address ?? "?"];
+                    if (drow.devType.length > 0)
+                        parts.push(drow.devType);
+                    parts.push(drow.stateWord);
+                    return parts.join(" · ");
+                }
                 color: drow.isBlocked ? "#ff5555" : drow.isConnected ? "#50fa7b" : "#6272a4"
                 elide: Text.ElideRight
                 font { pixelSize: 9; family: "ZedMono Nerd Font"; letterSpacing: 0.5 }
@@ -151,7 +163,7 @@ BarBlock {
 
         RowLayout {
             visible: drow.modelData?.batteryAvailable === true
-            spacing: 3
+            spacing: 4
 
             Text {
                 text: "\uf240"
@@ -159,6 +171,23 @@ BarBlock {
                     : drow.modelData && drow.modelData.battery > 0.2 ? "#f1fa8c"
                     : "#ff5555"
                 font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+            }
+
+            // mini battery bar
+            Rectangle {
+                implicitWidth: 26
+                implicitHeight: 3
+                radius: 1.5
+                color: Qt.rgba(1, 1, 1, 0.08)
+
+                Rectangle {
+                    width: parent.width * Math.min(Math.max(drow.modelData?.battery ?? 0, 0), 1)
+                    height: parent.height
+                    radius: 1.5
+                    color: drow.modelData && drow.modelData.battery > 0.5 ? "#50fa7b"
+                        : drow.modelData && drow.modelData.battery > 0.2 ? "#f1fa8c"
+                        : "#ff5555"
+                }
             }
 
             Text {
@@ -210,7 +239,7 @@ BarBlock {
 
             anchor.rect.y: 33
 
-            implicitWidth: 250
+            implicitWidth: 280
             implicitHeight: card.implicitHeight + 28
 
             Rectangle {

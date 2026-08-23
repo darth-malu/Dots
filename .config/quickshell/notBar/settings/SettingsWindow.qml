@@ -204,79 +204,6 @@ Item {
                                 }
                             }
 
-                            Rectangle {
-                                Layout.fillWidth: true
-                                Layout.leftMargin: 8
-                                Layout.rightMargin: 8
-                                implicitHeight: 60
-                                radius: 8
-                                color: Qt.rgba(0.54, 0.57, 0.96, 0.06)
-                                Layout.bottomMargin: 12
-
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.margins: 8
-                                    spacing: 10
-
-                                    Rectangle {
-                                        implicitWidth: 44
-                                        implicitHeight: 44
-                                        radius: 22
-                                        color: "#343746"
-
-                                        Image {
-                                            id: avatarImg
-                                            anchors.fill: parent
-                                            source: MiscState.avatarUrl
-                                            fillMode: Image.PreserveAspectCrop
-                                            asynchronous: true
-                                            visible: status === Image.Ready
-                                        }
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: ""
-                                            color: "#6272a4"
-                                            font { pixelSize: 20; family: "Symbols Nerd Font Mono" }
-                                            visible: avatarImg.status !== Image.Ready
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: MiscState.pickAvatar()
-                                        }
-                                    }
-
-                                    ColumnLayout {
-                                        spacing: 1
-                                        Layout.fillWidth: true
-
-                                        Text {
-                                            text: root.hostName
-                                            color: "#f8f8f2"
-                                            font { pixelSize: 12; family: "Quicksand"; bold: true }
-                                            elide: Text.ElideRight
-                                            Layout.fillWidth: true
-                                        }
-
-                                        Text {
-                                            text: root.isOnline ? "Connected" : "Offline"
-                                            color: root.isOnline ? "#50fa7b" : "#ff5555"
-                                            font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                                            elide: Text.ElideRight
-                                            Layout.fillWidth: true
-                                        }
-                                    }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: MiscState.pickAvatar()
-                                }
-                            }
-
                             Repeater {
                                 model: root.categories
 
@@ -1382,7 +1309,7 @@ Item {
                             model: [
                                 { icon: "\uf293", label: "Bluetooth", key: "showBluetooth" },
                                 { icon: "\uf1eb", label: "Wi-Fi", key: "showWifi" },
-                                { icon: "\uf6ff", label: "Ethernet", key: "showEthernet" },
+                                { icon: "\uf1e6", label: "Ethernet", key: "showEthernet" },
                                 { icon: "\uf240", label: "Battery", key: "showBattery" }
                             ]
 

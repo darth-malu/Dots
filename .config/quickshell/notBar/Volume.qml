@@ -75,7 +75,7 @@ Scope {
 
     PanelWindow {
         id: osdWindow
-        visible: root.shouldShowOsd
+        visible: root.shouldShowOsd && !MiscState.qsOpen
         anchors.right: true
         margins.right: screen.width / 95
         exclusiveZone: 0
@@ -108,18 +108,29 @@ Scope {
                     anchors.bottom: parent.bottom
                     height: 22
 
-                    Text {
+                    Row {
                         anchors.centerIn: parent
-                        text: root.isMuted ? "" : Math.floor((ifAudioNode?.volume ?? 0) * 100)
-                        color: root.volColor
-                        font {
-                            pixelSize: root.isMuted ? 16 : 14
-                            family: root.isMuted ? "Symbols Nerd Font Mono" : "monofur Nerd Font"
-                            bold: true
-                            letterSpacing: root.isMuted ? 0 : 1
+                        spacing: 3
+
+                        // channel glyph — speaker for output, mic for input
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root.osdIsMic ? "\uf130" : "\uf028"
+                            color: "#6272a4"
+                            font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
                         }
-                        // style: Text.Normal
-                        // styleColor: Qt.rgba(0, 0, 0, 0.4)
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root.nodeMuted ? (root.osdIsMic ? "\uf131" : "\uf026") : Math.floor(root.nodeVolume * 100)
+                            color: root.volColor
+                            font {
+                                pixelSize: root.nodeMuted ? 16 : 14
+                                family: root.nodeMuted ? "Symbols Nerd Font Mono" : "monofur Nerd Font"
+                                bold: true
+                                letterSpacing: root.nodeMuted ? 0 : 1
+                            }
+                        }
                     }
                 }
 
@@ -134,8 +145,8 @@ Scope {
                         rightMargin: 4
                         bottomMargin: 0
                     }
-                    // height: (parent.height - bottomDeck.height - 12) * (ifAudioNode?.volume ?? 0)
-                    height: (parent.height - bottomDeck.height - 4) * (ifAudioNode?.volume ?? 0)
+                    // height: (parent.height - bottomDeck.height - 12) * (nodeVolume)
+                    height: (parent.height - bottomDeck.height - 4) * root.nodeVolume
                     radius: 3
                     color: root.volColor
 

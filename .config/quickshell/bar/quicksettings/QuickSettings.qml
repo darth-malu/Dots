@@ -185,13 +185,12 @@ BarBlock {
                                 spacing: 10
 
                                 // avatar — click to choose a new one
-                                Rectangle {
+                                ClippingRectangle {
                                     id: avatarBox
                                     Layout.preferredWidth: 40
                                     Layout.preferredHeight: 40
-                                    radius: 20
+                                    radius: height / 2
                                     color: avatarMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "#343746"
-                                    clip: true
 
                                     Image {
                                         id: avatarImg
