@@ -31,45 +31,6 @@ BarBlock {
     property bool shuffleOn: false
     property bool loopOn: false
 
-    // true while every NAS share (Hyogo/Mutsu/Yuri) is mounted.
-    // parsed straight from /proc/mounts — no subprocess spawns per refresh
-    property bool nasAllMounted: true
-
-    function checkNasShares() {
-        const t = nasMounts.text();
-        root.nasAllMounted = t.includes("/Hyogo") && t.includes("/Mutsu") && t.includes("/Yuri");
-    }
-
-    FileView {
-        id: nasMounts
-        path: "/proc/mounts"
-
-        onInternalTextChanged: root.checkNasShares()
-    }
-
-    // background refresh — only polled while the popup is open (the NAS state
-    // lives on that button); a fresh read happens on open so it's never stale
-    Timer {
-        interval: 10000
-        running: root.showQsPopup
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: nasMounts.reload()
-    }
-    Timer {
-        id: nasRecheck
-        // fast re-poll after a remount click so the button color recovers quickly
-        interval: 2000
-        running: false
-        repeat: true
-        onTriggered: {
-            if (root.nasAllMounted)
-                stop();
-            else
-                nasMounts.reload();
-        }
-    }
-
     // ── volume OSD ──
     onLeftClicked: {
         root.showQsPopup = !root.showQsPopup;
@@ -80,8 +41,6 @@ BarBlock {
         if (!showQsPopup) {
             showPowerPopup = false;
             timerPicker = 0;
-        } else {
-            nasMounts.reload();
         }
     }
     Component.onCompleted: MiscState.qsOpen = showQsPopup
@@ -110,9 +69,9 @@ BarBlock {
         }
         anchor.rect.y: 33
 
-        // +24 for the shadow gutter around the card
-        implicitWidth: 364
-        implicitHeight: Math.min(qsContent.implicitHeight + 36, Screen.desktopAvailableHeight * 0.7)
+        // +16 for the shadow gutter around the card
+        implicitWidth: 344
+        implicitHeight: Math.min(qsContent.implicitHeight + 16, Screen.desktopAvailableHeight * 0.7)
 
         // drop shadow drawn from a proxy silhouette so the real card never
         // passes through the effect (stays pixel-crisp and fully interactive)
@@ -128,7 +87,7 @@ BarBlock {
         Rectangle {
             id: shadowProxy
             anchors.fill: parent
-            anchors.margins: 12
+            anchors.margins: 8
             radius: 12
             visible: false
             color: "#282a36"
@@ -137,7 +96,7 @@ BarBlock {
         Rectangle {
             id: qsCard
             anchors.fill: parent
-            anchors.margins: 12
+            anchors.margins: 8
             radius: 12
             color: "#282a36"
 
@@ -156,7 +115,7 @@ BarBlock {
                 anchors.fill: parent
                 anchors.margins: 2
                 clip: true
-                ScrollBar.vertical.policy: ScrollBar.AsNeeded
+                ScrollBar.vertical.policy: ScrollBar.AlwaysOff
                 ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
                 ColumnLayout {
@@ -338,54 +297,6 @@ BarBlock {
                                             }
 
                                             Rectangle {
-                                                id: nasBtn
-
-                                                // NAS remount shortcut only makes sense on carthage
-                                                visible: root.hostName === "carthage"
-                                                Layout.preferredWidth: 32
-                                                Layout.preferredHeight: 32
-                                                radius: 6
-                                                // grey when everything is mounted, orange when a NAS share is missing;
-                                                // bg + border only appear on hover
-                                                color: !nasBtnMouse.containsMouse ? "transparent" : root.nasAllMounted ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 0.72, 0.42, 0.16)
-                                                border.width: nasBtnMouse.containsMouse ? 1 : 0
-                                                border.color: root.nasAllMounted ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 0.72, 0.42, 0.35)
-
-                                                Text {
-                                                    anchors.centerIn: parent
-                                                    text: "\uf4a6"
-                                                    color: {
-                                                        if (root.nasAllMounted)
-                                                            return nasBtnMouse.containsMouse ? "#9aa3b2" : "#6272a4";
-                                                        return nasBtnMouse.containsMouse ? "#ffd9a8" : "#ffb86c";
-                                                    }
-                                                    font {
-                                                        pixelSize: 16
-                                                        family: "Symbols Nerd Font Mono"
-                                                    }
-                                                }
-
-                                                Behavior on color {
-                                                    ColorAnimation {
-                                                        duration: 120
-                                                    }
-                                                }
-
-                                                MouseArea {
-                                                    id: nasBtnMouse
-
-                                                    anchors.fill: parent
-                                                    hoverEnabled: true
-                                                    cursorShape: Qt.PointingHandCursor
-                                                    onClicked: {
-                                                        Quickshell.execDetached(["sh", "-c", "for m in Hyogo Mutsu Yuri; do systemctl is-active \"media-$m.mount\" >/dev/null 2>&1 || systemctl restart \"media-$m.mount\"; done"]);
-                                                        root.nasAllMounted = true;
-                                                        nasRecheck.restart();
-                                                    }
-                                                }
-                                            }
-
-                                            Rectangle {
 
                                                 Layout.preferredWidth: 32
                                                 Layout.preferredHeight: 32
@@ -473,22 +384,36 @@ BarBlock {
                                     color: "#50fa7b"
                                     label: "Reboot"
                                     highlighted: PowerTimer.mode === "reboot"
-                                    cmd: ""
-                                    onActivated: root.timerPicker = root.timerPicker === 1 ? 0 : 1
+                                    // left-click runs it now, right-click opens the timer slider
+                                    cmd: "systemctl reboot"
+                                    onActivated: root.showQsPopup = false
+                                    onTimerRequested: root.timerPicker = root.timerPicker === 1 ? 0 : 1
                                 }
                                 QsPower {
                                     icon: "\uf011"
                                     color: "#ff5555"
                                     label: "Shutdown"
                                     highlighted: PowerTimer.mode === "poweroff"
-                                    cmd: ""
-                                    onActivated: root.timerPicker = root.timerPicker === 2 ? 0 : 2
+                                    cmd: "systemctl poweroff"
+                                    onActivated: root.showQsPopup = false
+                                    onTimerRequested: root.timerPicker = root.timerPicker === 2 ? 0 : 2
                                 }
                                 QsPower {
                                     icon: "\uf08b"
                                     color: "#bd93f9"
                                     label: "Exit"
                                     cmd: "loginctl terminate-user $USER"
+                                }
+                            }
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: "right-click restart / shutdown to schedule"
+                                color: "#6272a4"
+                                font {
+                                    pixelSize: 8
+                                    family: "Quicksand"
+                                    letterSpacing: 0.5
                                 }
                             }
                         }
@@ -502,19 +427,27 @@ BarBlock {
                             icon: ""
                             visible: root.timerPicker !== 0
                             Layout.topMargin: -4
-                            cardPadding: 8
+                            cardPadding: 10
 
                             readonly property bool isReboot: root.timerPicker === 1
                             readonly property string modeName: isReboot ? "Reboot" : "Shutdown"
                             // a matching timer is armed; menu stays open as live confirmation
                             readonly property bool live: PowerTimer.active && PowerTimer.mode === (isReboot ? "reboot" : "poweroff")
 
+                            // slider selection, minutes — committed on release
+                            property int selMin: 15
+
+                            function fmtMin(mins) {
+                                const h = Math.floor(mins / 60);
+                                const m = mins % 60;
+                                if (h > 0 && m > 0)
+                                    return h + "h " + m + "m";
+                                if (h > 0)
+                                    return h + "h";
+                                return mins + "m";
+                            }
+
                             function pick(minutes) {
-                                if (minutes <= 0) {
-                                    root.showQsPopup = false;
-                                    Quickshell.execDetached(["systemctl", isReboot ? "reboot" : "poweroff"]);
-                                    return;
-                                }
                                 if (isReboot)
                                     PowerTimer.scheduleReboot(minutes * 60);
                                 else
@@ -523,64 +456,154 @@ BarBlock {
 
                             ColumnLayout {
                                 Layout.fillWidth: true
-                                spacing: 5
+                                spacing: 6
 
-                                Text {
-                                    text: timerCard.live ? timerCard.modeName + " in " + PowerTimer.formatTime(PowerTimer.remaining) : timerCard.modeName + " after:"
-                                    color: timerCard.live ? (timerCard.isReboot ? "#50fa7b" : "#ff5555") : "#6272a4"
-                                    font {
-                                        pixelSize: 9
-                                        bold: true
-                                        family: "Quicksand"
-                                        letterSpacing: 1
-                                    }
-                                }
-
+                                // ── prompt / live countdown ──
                                 RowLayout {
                                     Layout.fillWidth: true
-                                    spacing: 4
 
-                                    TimerChip {
-                                        txt: "now"
-                                        danger: true
-                                        onPicked: timerCard.pick(0)
+                                    Text {
+                                        text: timerCard.live ? timerCard.modeName + " in " + PowerTimer.formatTime(PowerTimer.remaining) : timerCard.modeName + " after:"
+                                        color: timerCard.live ? (timerCard.isReboot ? "#50fa7b" : "#ff5555") : "#6272a4"
+                                        font {
+                                            pixelSize: 9
+                                            bold: true
+                                            family: "Quicksand"
+                                            letterSpacing: 1
+                                        }
                                     }
-                                    TimerChip {
-                                        txt: "5m"
-                                        onPicked: timerCard.pick(5)
+
+                                    Item {
+                                        Layout.fillWidth: true
                                     }
-                                    TimerChip {
-                                        txt: "10m"
-                                        onPicked: timerCard.pick(10)
-                                    }
-                                    TimerChip {
-                                        txt: "15m"
-                                        onPicked: timerCard.pick(15)
+
+                                    Text {
+                                        visible: !timerCard.live && timerSlider.pressed
+                                        text: timerCard.fmtMin(timerCard.selMin)
+                                        color: timerCard.isReboot ? "#50fa7b" : "#ff5555"
+                                        font {
+                                            pixelSize: 12
+                                            bold: true
+                                            family: "ZedMono Nerd Font"
+                                        }
                                     }
                                 }
 
-                                RowLayout {
+                                // ── delay slider — release to arm the timer ──
+                                Slider {
+                                    id: timerSlider
+
+                                    from: 5
+                                    to: 240
+                                    stepSize: 5
+                                    value: timerCard.selMin
+
                                     Layout.fillWidth: true
-                                    spacing: 4
+                                    Layout.leftMargin: 4
+                                    Layout.rightMargin: 4
 
-                                    TimerChip {
-                                        txt: "30m"
-                                        onPicked: timerCard.pick(30)
+                                    background: Rectangle {
+                                        implicitHeight: 18
+                                        color: "transparent"
+
+                                        Rectangle {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: parent.width
+                                            height: 5
+                                            radius: 2.5
+                                            color: "#343746"
+                                        }
+
+                                        Rectangle {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: timerSlider.visualPosition * parent.width
+                                            height: 5
+                                            radius: 2.5
+                                            color: timerCard.isReboot ? "#50fa7b" : "#ff5555"
+                                        }
                                     }
-                                    TimerChip {
-                                        txt: "1h"
-                                        onPicked: timerCard.pick(60)
+
+                                    handle: Rectangle {
+                                        x: timerSlider.leftPadding + timerSlider.visualPosition * (timerSlider.availableWidth - width)
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: 14
+                                        height: 14
+                                        radius: 7
+                                        color: timerSlider.pressed ? "#f8f8f2" : "#282a36"
+                                        border.color: timerCard.isReboot ? "#50fa7b" : "#ff5555"
+                                        border.width: 2
+
+                                        Behavior on color {
+                                            ColorAnimation { duration: 100 }
+                                        }
                                     }
-                                    TimerChip {
-                                        txt: "2h"
-                                        onPicked: timerCard.pick(120)
-                                    }
-                                    TimerChip {
-                                        txt: "4h"
-                                        onPicked: timerCard.pick(240)
+
+                                    onMoved: timerCard.selMin = value
+                                    onPressedChanged: {
+                                        if (!pressed) {
+                                            timerCard.selMin = value;
+                                            timerCard.pick(value);
+                                        }
                                     }
                                 }
 
+                                // ── scale hints at their real positions ──
+                                Item {
+                                    Layout.fillWidth: true
+                                    implicitHeight: 11
+
+                                    Repeater {
+                                        model: [
+                                            { min: 30, label: "30m" },
+                                            { min: 60, label: "1h" },
+                                            { min: 120, label: "2h" },
+                                            { min: 180, label: "3h" }
+                                        ]
+
+                                        Text {
+                                            required property var modelData
+
+                                            x: {
+                                                const frac = (modelData.min - timerSlider.from) / (timerSlider.to - timerSlider.from);
+                                                return 4 + (parent.width - 8) * frac - width / 2;
+                                            }
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: modelData.label
+                                            color: "#6272a4"
+                                            font {
+                                                pixelSize: 8
+                                                bold: true
+                                                family: "ZedMono Nerd Font"
+                                            }
+                                        }
+                                    }
+
+                                    Text {
+                                        anchors.left: parent.left
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: "5m"
+                                        color: "#6272a4"
+                                        font {
+                                            pixelSize: 8
+                                            bold: true
+                                            family: "ZedMono Nerd Font"
+                                        }
+                                    }
+
+                                    Text {
+                                        anchors.right: parent.right
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: "4h"
+                                        color: "#6272a4"
+                                        font {
+                                            pixelSize: 8
+                                            bold: true
+                                            family: "ZedMono Nerd Font"
+                                        }
+                                    }
+                                }
+
+                                // ── cancel while a matching timer is armed ──
                                 TimerChip {
                                     visible: timerCard.live
                                     txt: "cancel " + (PowerTimer.mode === "reboot" ? "reboot" : "shutdown") + " · " + PowerTimer.formatTime(PowerTimer.remaining)

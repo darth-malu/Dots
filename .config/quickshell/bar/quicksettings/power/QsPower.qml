@@ -11,8 +11,10 @@ Item {
 
     // full accent color while a matching power timer is pending
     property bool highlighted: false
-    // emitted on every click; empty cmd keeps the menus open instead of running a command
+    // emitted on every left-click; empty cmd keeps the menus open instead of running a command
     signal activated
+    // emitted on right-click — used by reboot/shutdown to open the timer slider UI
+    signal timerRequested
 
     Layout.fillWidth: true
     Layout.preferredHeight: 46
@@ -39,7 +41,7 @@ Item {
 
         // gentle breathing while a matching timer is pending
         SequentialAnimation on opacity {
-            running: powerBtnBg.highlighted
+            running: btn.highlighted
             loops: Animation.Infinite
             alwaysRunToEnd: true
             NumberAnimation {
@@ -100,11 +102,18 @@ Item {
     MouseArea {
         id: mouseArea
         anchors.fill: parent
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onPressed: parent.scaleVal = 0.9
         onReleased: parent.scaleVal = 1
-        onClicked: {
+        onClicked: mouse => {
+            // right-click arms the timer UI instead of firing the action
+            if (mouse.button === Qt.RightButton) {
+                parent.scaleVal = 1;
+                btn.timerRequested();
+                return;
+            }
             if (btn.cmd.length > 0) {
                 root.showQsPopup = false;
                 root.showPowerPopup = false;

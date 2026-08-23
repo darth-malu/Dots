@@ -2,6 +2,7 @@ pragma Singleton
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import QtMultimedia
 
 Singleton {
     id: root
@@ -9,9 +10,31 @@ Singleton {
     property alias enabled: props.enabled
     readonly property alias enabledSince: props.enabledSince
 
+    // toggle feedback — distinct chirp per direction plus a matching toast
+    SoundEffect {
+        id: sfxOn
+        source: Qt.resolvedUrl("../wav/mixkit-positive-interface-beep-221.wav")
+    }
+
+    SoundEffect {
+        id: sfxOff
+        source: Qt.resolvedUrl("../wav/mixkit-censorship-beep-1082.wav")
+    }
+
+    function announce() {
+        if (props.enabled) {
+            sfxOn.play();
+            Quickshell.execDetached(["notify-send", "-a", "Shell", "-i", "preferences-system-windows-effect", "Caffeine on", "Screen will stay awake"]);
+        } else {
+            sfxOff.play();
+            Quickshell.execDetached(["notify-send", "-a", "Shell", "-i", "preferences-desktop-screensaver", "Caffeine off", "Idle sleep re-enabled"]);
+        }
+    }
+
     onEnabledChanged: {
         if (enabled)
             props.enabledSince = new Date();
+        root.announce();
     }
 
     PersistentProperties {

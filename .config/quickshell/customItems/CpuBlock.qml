@@ -153,7 +153,7 @@ BarBlock {
             id: procPopup
             visible: MiscState.showCpuProcs
             grabFocus: true
-            color: "transparent"
+            color: MiscState.popupSolidBg ? "#282a36" : "transparent"
 
             anchor.window: cpu.host
             anchor.rect.x: {

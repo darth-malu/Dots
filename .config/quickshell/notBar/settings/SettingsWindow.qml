@@ -15,31 +15,37 @@ Item {
 
     property int currentCategory: 0
 
-    // small shared toggle switch used by the connections page
-    component TogglePill: Rectangle {
-        id: pill
+    // ── shared switch pill — one control, one look, everywhere ──
+    component SwitchPill: Rectangle {
+        id: sp
 
         property bool on: false
         signal toggled()
 
         Layout.alignment: Qt.AlignVCenter
-        implicitWidth: 26
-        implicitHeight: 14
-        radius: 7
-        color: on ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.35) : "#343746"
+        implicitWidth: 36
+        implicitHeight: 20
+        radius: 10
+        color: on ? "#bd93f9" : "#44475a"
+
+        Behavior on color {
+            ColorAnimation {
+                duration: 120
+            }
+        }
 
         Rectangle {
-            x: pill.on ? parent.width - width - 2 : 2
-            anchors.verticalCenter: parent.verticalCenter
-            implicitWidth: 10
-            implicitHeight: 10
-            radius: 5
-            color: pill.on ? "#bd93f9" : "#6272a4"
+            width: 16
+            height: 16
+            radius: 8
+            color: "#282a36"
+            x: sp.on ? parent.width - width - 2 : 2
+            y: (parent.height - height) / 2
 
             Behavior on x {
                 NumberAnimation {
                     duration: 120
-                    easing.type: Easing.OutQuad
+                    easing.type: Easing.OutCubic
                 }
             }
         }
@@ -47,14 +53,169 @@ Item {
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
-            onClicked: pill.toggled()
+            onClicked: sp.toggled()
         }
+    }
+
+    // ── single-line setting row: glyph · label · (state caption) · switch ──
+    component SettingRow: RowLayout {
+        id: sr
+
+        required property string icon
+        required property string label
+        property string caption
+        property bool checked
+        signal flipped()
+
+        spacing: 12
+        Layout.fillWidth: true
+        Layout.preferredHeight: 38
+
+        Text {
+            text: sr.icon
+            color: sr.checked ? "#bd93f9" : "#6272a4"
+            font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+            Layout.preferredWidth: 20
+            horizontalAlignment: Text.AlignHCenter
+        }
+
+        Text {
+            text: sr.label
+            color: "#f8f8f2"
+            font { pixelSize: 12; family: "Quicksand"; bold: true }
+            Layout.alignment: Qt.AlignVCenter
+            elide: Text.ElideRight
+        }
+
+        Item { Layout.fillWidth: true }
+
+        Text {
+            visible: sr.caption.length > 0
+            text: sr.caption
+            color: sr.checked ? "#bd93f9" : "#6272a4"
+            font { pixelSize: 10; family: "ZedMono Nerd Font" }
+            Layout.alignment: Qt.AlignVCenter
+        }
+
+        SwitchPill {
+            on: sr.checked
+            onToggled: sr.flipped()
+        }
+    }
+
+    // ── poll-rate slider row: glyph · label · live value · slider ──
+    component PollRow: ColumnLayout {
+        id: pr
+
+        required property string icon
+        required property string label
+        required property int minMs
+        required property int maxMs
+        required property int stepMs
+        property int valueMs
+        // fired when the user releases/moves the slider to a new value
+        signal committed(int ms)
+
+        spacing: 6
+        Layout.fillWidth: true
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+
+            Text {
+                text: pr.icon
+                color: "#bd93f9"
+                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                Layout.preferredWidth: 20
+                horizontalAlignment: Text.AlignHCenter
+            }
+
+            Text {
+                text: pr.label
+                color: "#f8f8f2"
+                font { pixelSize: 12; family: "Quicksand"; bold: true }
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            Item { Layout.fillWidth: true }
+
+            Text {
+                text: root.fmtMs(pr.valueMs)
+                color: "#bd93f9"
+                font { pixelSize: 11; bold: true; family: "ZedMono Nerd Font" }
+                Layout.alignment: Qt.AlignVCenter
+            }
+        }
+
+        Slider {
+            id: sld
+
+            from: pr.minMs
+            to: pr.maxMs
+            stepSize: pr.stepMs
+            value: pr.valueMs
+
+            Layout.fillWidth: true
+            Layout.leftMargin: 4
+            Layout.rightMargin: 4
+
+            background: Rectangle {
+                implicitHeight: 18
+                color: "transparent"
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width
+                    height: 5
+                    radius: 2.5
+                    color: "#343746"
+                }
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: sld.visualPosition * parent.width
+                    height: 5
+                    radius: 2.5
+                    color: "#bd93f9"
+                }
+            }
+
+            handle: Rectangle {
+                x: sld.leftPadding + sld.visualPosition * (sld.availableWidth - width)
+                anchors.verticalCenter: parent.verticalCenter
+                width: 14
+                height: 14
+                radius: 7
+                color: sld.pressed ? "#ff79c6" : "#f8f8f2"
+                border.color: "#bd93f9"
+                border.width: 2
+
+                Behavior on color {
+                    ColorAnimation { duration: 100 }
+                }
+            }
+
+            onMoved: {
+                pr.valueMs = value;
+                pr.committed(value);
+            }
+        }
+    }
+
+    function fmtMs(ms) {
+        if (ms >= 1000) {
+            const s = Math.round(ms / 100) / 10;
+            return (Number.isInteger(s) ? s : s.toFixed(1)) + "s";
+        }
+        return ms + "ms";
     }
 
     readonly property var categories: [
         { icon: "\uf080", label: "Bar" },
         { icon: "\uf144", label: "Media" },
         { icon: "\uf1eb", label: "Connections" },
+        { icon: "\uf2db", label: "Performance" },
     ]
 
     readonly property string hostName: QuickState.hostName
@@ -253,7 +414,11 @@ Item {
                                 Layout.rightMargin: 12
                                 implicitHeight: 36
                                 radius: 8
-                                color: "transparent"
+                                color: closeMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.12) : "transparent"
+
+                                Behavior on color {
+                                    ColorAnimation { duration: 100 }
+                                }
 
                                 RowLayout {
                                     anchors {
@@ -264,7 +429,7 @@ Item {
                                     spacing: 10
 
                                     Text {
-                                        text: ""
+                                        text: ""
                                         color: "#ff5555"
                                         font {
                                             pixelSize: 14
@@ -284,7 +449,9 @@ Item {
                                 }
 
                                 MouseArea {
+                                    id: closeMa
                                     anchors.fill: parent
+                                    hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: MiscState.toggleSettings = false
                                 }
@@ -300,14 +467,14 @@ Item {
                         Item {
                             anchors {
                                 fill: parent
-                                margins: 24
-                                topMargin: 28
+                                margins: 20
+                                topMargin: 16
                             }
 
                             Flickable {
                                 anchors.fill: parent
                                 contentWidth: parent.width
-                                contentHeight: pageLoader.implicitHeight + 16
+                                contentHeight: pageLoader.implicitHeight + 8
                                 clip: true
                                 boundsBehavior: Flickable.StopAtBounds
                                 ScrollBar.vertical: ScrollBar { policy: ScrollBar.AlwaysOff }
@@ -317,7 +484,8 @@ Item {
                                     width: parent.width
                                     sourceComponent: root.currentCategory === 0 ? barPage
                                         : root.currentCategory === 1 ? mediaPage
-                                        : connectionsPage
+                                        : root.currentCategory === 2 ? connectionsPage
+                                        : performancePage
                                 }
                             }
                         }
@@ -326,42 +494,15 @@ Item {
             }
         }
 
-        // ── Media page — mpris pill behaviour + marquee toggle ──
+        // ═══ BAR ═══
         Component {
-            id: mediaPage
+            id: barPage
 
             ColumnLayout {
-                spacing: 16
-
-                RowLayout {
-                    spacing: 10
-
-                    Text {
-                        text: "\uf144"
-                        color: "#bd93f9"
-                        font { pixelSize: 20; family: "Symbols Nerd Font Mono" }
-                    }
-
-                    Text {
-                        text: "Media"
-                        color: "#f8f8f2"
-                        font {
-                            pixelSize: 20
-                            bold: true
-                            family: "Quicksand"
-                        }
-                    }
-                }
-
-                Text {
-                    text: "Media player pill, popups and title scrolling."
-                    color: "#b8bfcb"
-                    font { pixelSize: 11; family: "ZedMono Nerd Font" }
-                    Layout.bottomMargin: 8
-                }
+                spacing: 12
 
                 Card {
-                    title: "MPRIS"
+                    title: "Style"
                     icon: ""
                     accent: "#bd93f9"
 
@@ -369,767 +510,42 @@ Item {
                         spacing: 0
                         Layout.fillWidth: true
 
-                        RowLayout {
-                            spacing: 10
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 36
-
-                            Text {
-                                text: "\uf03e"
-                                color: "#bd93f9"
-                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                                Layout.preferredWidth: 20
-                                horizontalAlignment: Text.AlignHCenter
-                            }
-
-                            ColumnLayout {
-                                spacing: 0
-                                Layout.fillWidth: true
-
-                                Text {
-                                    text: "Album art"
-                                    color: "#f8f8f2"
-                                    font { pixelSize: 12; family: "Quicksand"; bold: true }
-                                }
-
-                                Text {
-                                    text: MprisState.mprisArtVisible ? "Cover art shown on pill & popup" : "Art hidden everywhere"
-                                    color: "#6272a4"
-                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                                }
-                            }
-
-                            Item {
-                                Layout.fillWidth: true
-                            }
-
-                            Rectangle {
-                                Layout.alignment: Qt.AlignVCenter
-                                implicitWidth: 36
-                                implicitHeight: 20
-                                radius: 10
-                                color: MprisState.mprisArtVisible ? "#bd93f9" : "#44475a"
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: 120
-                                    }
-                                }
-
-                                Rectangle {
-                                    width: 16
-                                    height: 16
-                                    radius: 8
-                                    color: "#282a36"
-                                    x: MprisState.mprisArtVisible ? parent.width - width - 2 : 2
-                                    y: (parent.height - height) / 2
-                                    Behavior on x {
-                                        NumberAnimation {
-                                            duration: 120
-                                            easing.type: Easing.OutCubic
-                                        }
-                                    }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: MprisState.mprisArtVisible = !MprisState.mprisArtVisible
-                                }
-                            }
+                        SettingRow {
+                            icon: ""
+                            label: "Floating bar"
+                            caption: BarState.barStyle === 0 ? "rounded · 28px" : ""
+                            checked: BarState.barStyle === 0
+                            onFlipped: BarState.barStyle = 0
                         }
 
-                        // Separator
-                        Rectangle {
-                            Layout.fillWidth: true
-                            height: 1
-                            color: "#343746"
-                            Layout.leftMargin: 28
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                        SettingRow {
+                            icon: "\ueac1"
+                            label: "Solid bar"
+                            caption: BarState.barStyle === 1 ? "radius 4 · 2px gap" : ""
+                            checked: BarState.barStyle === 1
+                            onFlipped: BarState.barStyle = 1
                         }
 
-                        RowLayout {
-                            spacing: 10
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 36
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
 
-                            Text {
-                                text: "\ue01c"
-                                color: "#bd93f9"
-                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                                Layout.preferredWidth: 20
-                                horizontalAlignment: Text.AlignHCenter
-                            }
-
-                            ColumnLayout {
-                                spacing: 0
-                                Layout.fillWidth: true
-
-                                Text {
-                                    text: "Progress Ring"
-                                    color: "#f8f8f2"
-                                    font { pixelSize: 12; family: "Quicksand"; bold: true }
-                                }
-
-                                Text {
-                                    text: "Visible on pill"
-                                    color: "#6272a4"
-                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                                }
-                            }
-
-                            Item {
-                                Layout.fillWidth: true
-                            }
-
-                            Rectangle {
-                                Layout.alignment: Qt.AlignVCenter
-                                implicitWidth: 36
-                                implicitHeight: 20
-                                radius: 10
-                                color: MprisState.showMprisProgress ? "#bd93f9" : "#44475a"
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: 120
-                                    }
-                                }
-
-                                Rectangle {
-                                    width: 16
-                                    height: 16
-                                    radius: 8
-                                    color: "#282a36"
-                                    x: MprisState.showMprisProgress ? parent.width - width - 2 : 2
-                                    y: (parent.height - height) / 2
-                                    Behavior on x {
-                                        NumberAnimation {
-                                            duration: 120
-                                            easing.type: Easing.OutCubic
-                                        }
-                                    }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: MprisState.showMprisProgress = !MprisState.showMprisProgress
-                                }
-                            }
+                        SettingRow {
+                            icon: "\ueb7c"
+                            label: "Transparent bar"
+                            caption: BarState.barStyle === 2 ? "no bg · flush top" : ""
+                            checked: BarState.barStyle === 2
+                            onFlipped: BarState.barStyle = 2
                         }
 
-                        // Separator
-                        Rectangle {
-                            Layout.fillWidth: true
-                            height: 1
-                            color: "#343746"
-                            Layout.leftMargin: 28
-                        }
-
-                        RowLayout {
-                            spacing: 10
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 36
-
-                            Text {
-                                text: "\ue03c"
-                                color: "#bd93f9"
-                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                                Layout.preferredWidth: 20
-                                horizontalAlignment: Text.AlignHCenter
-                            }
-
-                            ColumnLayout {
-                                spacing: 0
-                                Layout.fillWidth: true
-
-                                Text {
-                                    text: "Hide when idle"
-                                    color: "#f8f8f2"
-                                    font { pixelSize: 12; family: "Quicksand"; bold: true }
-                                }
-
-                                Text {
-                                    text: MprisState.hideWhenIdle ? "Pill hides when paused" : "Always show pill"
-                                    color: "#6272a4"
-                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                                }
-                            }
-
-                            Item {
-                                Layout.fillWidth: true
-                            }
-
-                            Rectangle {
-                                Layout.alignment: Qt.AlignVCenter
-                                implicitWidth: 36
-                                implicitHeight: 20
-                                radius: 10
-                                color: MprisState.hideWhenIdle ? "#bd93f9" : "#44475a"
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: 120
-                                    }
-                                }
-
-                                Rectangle {
-                                    width: 16
-                                    height: 16
-                                    radius: 8
-                                    color: "#282a36"
-                                    x: MprisState.hideWhenIdle ? parent.width - width - 2 : 2
-                                    y: (parent.height - height) / 2
-                                    Behavior on x {
-                                        NumberAnimation {
-                                            duration: 120
-                                            easing.type: Easing.OutCubic
-                                        }
-                                    }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: MprisState.hideWhenIdle = !MprisState.hideWhenIdle
-                                }
-                            }
-                        }
-
-                        // Separator
-                        Rectangle {
-                            Layout.fillWidth: true
-                            height: 1
-                            color: "#343746"
-                            Layout.leftMargin: 28
-                        }
-
-                        RowLayout {
-                            spacing: 10
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 36
-
-                            Text {
-                                text: "\uf07c"
-                                color: "#bd93f9"
-                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                                Layout.preferredWidth: 20
-                                horizontalAlignment: Text.AlignHCenter
-                            }
-
-                            ColumnLayout {
-                                spacing: 0
-                                Layout.fillWidth: true
-
-                                Text {
-                                    text: "Marquee titles"
-                                    color: "#f8f8f2"
-                                    font { pixelSize: 12; family: "Quicksand"; bold: true }
-                                }
-
-                                Text {
-                                    text: MprisState.marqueeEnabled ? "Long titles scroll" : "Long titles truncate"
-                                    color: "#6272a4"
-                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                                }
-                            }
-
-                            Item {
-                                Layout.fillWidth: true
-                            }
-
-                            Rectangle {
-                                Layout.alignment: Qt.AlignVCenter
-                                implicitWidth: 36
-                                implicitHeight: 20
-                                radius: 10
-                                color: MprisState.marqueeEnabled ? "#bd93f9" : "#44475a"
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: 120
-                                    }
-                                }
-
-                                Rectangle {
-                                    width: 16
-                                    height: 16
-                                    radius: 8
-                                    color: "#282a36"
-                                    x: MprisState.marqueeEnabled ? parent.width - width - 2 : 2
-                                    y: (parent.height - height) / 2
-                                    Behavior on x {
-                                        NumberAnimation {
-                                            duration: 120
-                                            easing.type: Easing.OutCubic
-                                        }
-                                    }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: MprisState.marqueeEnabled = !MprisState.marqueeEnabled
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Text {
-                    text: "Now Playing"
-                    color: "#f8f8f2"
-                    font {
-                        pixelSize: 20
-                        bold: true
-                        family: "Quicksand"
-                    }
-                }
-
-                Text {
-                    text: "Configure now playing controls visibility."
-                    color: "#b8bfcb"
-                    font {
-                        pixelSize: 11
-                        family: "ZedMono Nerd Font"
-                    }
-                    Layout.bottomMargin: 8
-                }
-
-                Card {
-                    title: "Now Playing"
-                    icon: ""
-                    accent: "#bd93f9"
-
-                    ColumnLayout {
-                        spacing: 0
-                        Layout.fillWidth: true
-
-                        RowLayout {
-                            spacing: 10
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 36
-
-                            Text {
-                                text: ""
-                                color: MiscState.showShuffle ? "#bd93f9" : "#6272a4"
-                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                                Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
-                            }
-
-                            ColumnLayout {
-                                spacing: 0
-                                Layout.fillWidth: true
-                                Text {
-                                    text: "Shuffle"
-                                    color: "#f8f8f2"
-                                    font { pixelSize: 12; family: "Quicksand"; bold: true }
-                                }
-                                Text {
-                                    text: "Show shuffle button in controls"
-                                    color: "#6272a4"
-                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                                }
-                            }
-
-                            Item { Layout.fillWidth: true }
-
-                            Rectangle {
-                                Layout.alignment: Qt.AlignVCenter
-                                implicitWidth: 36; implicitHeight: 20; radius: 10
-                                color: MiscState.showShuffle ? "#bd93f9" : "#44475a"
-                                Behavior on color { ColorAnimation { duration: 120 } }
-
-                                Rectangle {
-                                    width: 16; height: 16; radius: 8
-                                    color: "#282a36"
-                                    x: MiscState.showShuffle ? parent.width - width - 2 : 2
-                                    y: (parent.height - height) / 2
-                                    Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                                    onClicked: MiscState.showShuffle = !MiscState.showShuffle
-                                }
-                            }
-                        }
-
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 28 }
-
-                        RowLayout {
-                            spacing: 10
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 36
-
-                            Text {
-                                text: ""
-                                color: MiscState.showLoop ? "#bd93f9" : "#6272a4"
-                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                                Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
-                            }
-
-                            ColumnLayout {
-                                spacing: 0
-                                Layout.fillWidth: true
-                                Text {
-                                    text: "Loop"
-                                    color: "#f8f8f2"
-                                    font { pixelSize: 12; family: "Quicksand"; bold: true }
-                                }
-                                Text {
-                                    text: "Show loop button in controls"
-                                    color: "#6272a4"
-                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                                }
-                            }
-
-                            Item { Layout.fillWidth: true }
-
-                            Rectangle {
-                                Layout.alignment: Qt.AlignVCenter
-                                implicitWidth: 36; implicitHeight: 20; radius: 10
-                                color: MiscState.showLoop ? "#bd93f9" : "#44475a"
-                                Behavior on color { ColorAnimation { duration: 120 } }
-
-                                Rectangle {
-                                    width: 16; height: 16; radius: 8
-                                    color: "#282a36"
-                                    x: MiscState.showLoop ? parent.width - width - 2 : 2
-                                    y: (parent.height - height) / 2
-                                    Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                                    onClicked: MiscState.showLoop = !MiscState.showLoop
-                                }
-                            }
-                        }
-
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 28 }
-
-                        RowLayout {
-                            spacing: 10
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 36
-
-                            Text {
-                                text: ""
-                                color: MiscState.showPlayerChooser ? "#bd93f9" : "#6272a4"
-                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                                Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
-                            }
-
-                            ColumnLayout {
-                                spacing: 0
-                                Layout.fillWidth: true
-                                Text {
-                                    text: "Player Chooser"
-                                    color: "#f8f8f2"
-                                    font { pixelSize: 12; family: "Quicksand"; bold: true }
-                                }
-                                Text {
-                                    text: "Show player switcher in now playing"
-                                    color: "#6272a4"
-                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                                }
-                            }
-
-                            Item { Layout.fillWidth: true }
-
-                            Rectangle {
-                                Layout.alignment: Qt.AlignVCenter
-                                implicitWidth: 36; implicitHeight: 20; radius: 10
-                                color: MiscState.showPlayerChooser ? "#bd93f9" : "#44475a"
-                                Behavior on color { ColorAnimation { duration: 120 } }
-
-                                Rectangle {
-                                    width: 16; height: 16; radius: 8
-                                    color: "#282a36"
-                                    x: MiscState.showPlayerChooser ? parent.width - width - 2 : 2
-                                    y: (parent.height - height) / 2
-                                    Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                                    onClicked: MiscState.showPlayerChooser = !MiscState.showPlayerChooser
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        Component {
-            id: connectionsPage
-
-            ColumnLayout {
-                spacing: 16
-
-                RowLayout {
-                    spacing: 10
-
-                    Text {
-                        text: "\uf1eb"
-                        color: "#8be9fd"
-                        font { pixelSize: 20; family: "Symbols Nerd Font Mono" }
-                    }
-
-                    Text {
-                        text: "Connections"
-                        color: "#f8f8f2"
-                        font {
-                            pixelSize: 20
-                            bold: true
-                            family: "Quicksand"
-                        }
-                    }
-                }
-
-                Text {
-                    text: "Preferences that live beyond the bar module popups."
-                    color: "#b8bfcb"
-                    font {
-                        pixelSize: 11
-                        family: "ZedMono Nerd Font"
-                    }
-                    Layout.bottomMargin: 8
-                }
-
-                Card {
-                    title: "Wi-Fi"
-                    icon: "\uf1eb"
-                    accent: "#bd93f9"
-
-                    ColumnLayout {
-                        spacing: 10
-                        Layout.fillWidth: true
-
-                        // connected-network design — highlighted green name vs classic dot only
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 10
-
-                            ColumnLayout {
-                                spacing: 0
-                                Layout.fillWidth: true
-
-                                Text {
-                                    text: "Connected highlight"
-                                    color: "#f8f8f2"
-                                    font { pixelSize: 12; family: "Quicksand"; bold: true }
-                                }
-
-                                Text {
-                                    text: MiscState.wifiGreenName ? "connected name tinted green" : "classic white name, dot indicator only"
-                                    color: "#6272a4"
-                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                                }
-                            }
-
-                            TogglePill {
-                                on: MiscState.wifiGreenName
-                                onToggled: MiscState.wifiGreenName = !MiscState.wifiGreenName
-                            }
-                        }
-                    }
-                }
-
-                Card {
-                    title: "Ethernet"
-                    icon: "\uf796"
-                    accent: "#8be9fd"
-
-                    ColumnLayout {
-                        spacing: 10
-                        Layout.fillWidth: true
-
-                        // session totals — persistent vs graphs-only (old behaviour)
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 10
-
-                            ColumnLayout {
-                                spacing: 0
-                                Layout.fillWidth: true
-
-                                Text {
-                                    text: "Session totals"
-                                    color: "#f8f8f2"
-                                    font { pixelSize: 12; family: "Quicksand"; bold: true }
-                                }
-
-                                Text {
-                                    text: MiscState.showNetTotals ? "upload/download totals always visible" : "totals shown only with traffic graphs"
-                                    color: "#6272a4"
-                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                                }
-                            }
-
-                            TogglePill {
-                                on: MiscState.showNetTotals
-                                onToggled: MiscState.showNetTotals = !MiscState.showNetTotals
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        Component {
-            id: barPage
-
-            ColumnLayout {
-                spacing: 16
-
-                RowLayout {
-                    spacing: 10
-
-                    Text {
-                        text: "\uf080"
-                        color: "#50fa7b"
-                        font { pixelSize: 20; family: "Symbols Nerd Font Mono" }
-                    }
-
-                    Text {
-                        text: "Bar"
-                        color: "#f8f8f2"
-                        font {
-                            pixelSize: 20
-                            bold: true
-                            family: "Quicksand"
-                        }
-                    }
-                }
-
-                Text {
-                    text: "Customize the appearance and behavior of the top bar."
-                    color: "#b8bfcb"
-                    font {
-                        pixelSize: 11
-                        family: "ZedMono Nerd Font"
-                    }
-                    Layout.bottomMargin: 8
-                }
-
-                Card {
-                    title: "Style"
-                    icon: ""
-                    accent: "#bd93f9"
-
-                    ColumnLayout {
-                        spacing: 0
-                        Layout.fillWidth: true
-
-                        RowLayout {
-                            spacing: 10
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 36
-
-                            Text {
-                                text: ""
-                                color: "#bd93f9"
-                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                                Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
-                            }
-
-                            ColumnLayout {
-                                spacing: 0
-                                Layout.fillWidth: true
-
-                                Text {
-                                    text: "Bar Style"
-                                    color: "#f8f8f2"
-                                    font { pixelSize: 12; family: "Quicksand"; bold: true }
-                                }
-
-                                Text {
-                                    text: BarState.modernBarStyle ? "Rounded · 28px" : "Flat · 24px"
-                                    color: "#6272a4"
-                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                                }
-                            }
-
-                            Item { Layout.fillWidth: true }
-
-                            Rectangle {
-                                Layout.alignment: Qt.AlignVCenter
-                                implicitWidth: 36; implicitHeight: 20; radius: 10
-                                color: BarState.modernBarStyle ? "#bd93f9" : "#44475a"
-
-                                Behavior on color { ColorAnimation { duration: 120 } }
-
-                                Rectangle {
-                                    width: 16; height: 16; radius: 8
-                                    color: "#282a36"
-                                    x: BarState.modernBarStyle ? parent.width - width - 2 : 2
-                                    y: (parent.height - height) / 2
-
-                                    Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: BarState.modernBarStyle = !BarState.modernBarStyle
-                                }
-                            }
-                        }
-
-                        // Separator
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 28 }
-
-                        RowLayout {
-                            spacing: 10
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 36
-
-                            Text {
-                                text: ""
-                                color: "#bd93f9"
-                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                                Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter
-                            }
-
-                            ColumnLayout {
-                                spacing: 0
-                                Layout.fillWidth: true
-
-                                Text {
-                                    text: "Popup Background"
-                                    color: "#f8f8f2"
-                                    font { pixelSize: 12; family: "Quicksand"; bold: true }
-                                }
-
-                                Text {
-                                    text: MiscState.popupSolidBg ? "Solid" : "Transparent"
-                                    color: "#6272a4"
-                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                                }
-                            }
-
-                            Item { Layout.fillWidth: true }
-
-                            Rectangle {
-                                Layout.alignment: Qt.AlignVCenter
-                                implicitWidth: 36; implicitHeight: 20; radius: 10
-                                color: MiscState.popupSolidBg ? "#bd93f9" : "#44475a"
-
-                                Behavior on color { ColorAnimation { duration: 120 } }
-
-                                Rectangle {
-                                    width: 16; height: 16; radius: 8
-                                    color: "#282a36"
-                                    x: MiscState.popupSolidBg ? parent.width - width - 2 : 2
-                                    y: (parent.height - height) / 2
-
-                                    Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: MiscState.popupSolidBg = !MiscState.popupSolidBg
-                                }
-                            }
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                        SettingRow {
+                            icon: "\ueb7c"
+                            label: "Popup background"
+                            caption: MiscState.popupSolidBg ? "solid" : "transparent"
+                            checked: MiscState.popupSolidBg
+                            onFlipped: MiscState.popupSolidBg = !MiscState.popupSolidBg
                         }
                     }
                 }
@@ -1152,56 +568,257 @@ Item {
                                 { icon: "\uf0a2", label: "Notifications", key: "showNotifTray" }
                             ]
 
-                            delegate: RowLayout {
-                                id: modrow
+                            delegate: ColumnLayout {
+                                id: modCell
 
                                 required property var modelData
+                                required property int index
 
-                                spacing: 10
+                                spacing: 0
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: 36
 
-                                Text {
-                                    text: modrow.modelData.icon
-                                    color: MiscState[modrow.modelData.key] ? "#bd93f9" : "#6272a4"
-                                    font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                                    Layout.preferredWidth: 20
-                                    horizontalAlignment: Text.AlignHCenter
+                                SettingRow {
+                                    icon: modCell.modelData.icon
+                                    label: modCell.modelData.label
+                                    checked: MiscState[modCell.modelData.key]
+                                    onFlipped: MiscState[modCell.modelData.key] = !MiscState[modCell.modelData.key]
                                 }
 
-                                Text {
-                                    text: modrow.modelData.label
-                                    color: "#f8f8f2"
-                                    font { pixelSize: 12; family: "Quicksand"; bold: true }
-                                    Layout.alignment: Qt.AlignVCenter
-                                }
-
-                                Item { Layout.fillWidth: true }
-
+                                // separator between module rows
                                 Rectangle {
-                                    readonly property bool on: MiscState[modrow.modelData.key]
-                                    Layout.alignment: Qt.AlignVCenter
-                                    implicitWidth: 36; implicitHeight: 20; radius: 10
-                                    color: on ? "#bd93f9" : "#44475a"
-
-                                    Behavior on color { ColorAnimation { duration: 120 } }
-
-                                    Rectangle {
-                                        width: 16; height: 16; radius: 8
-                                        color: "#282a36"
-                                        x: parent.on ? parent.width - width - 2 : 2
-                                        y: (parent.height - height) / 2
-
-                                        Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                                    }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: MiscState[modrow.modelData.key] = !MiscState[modrow.modelData.key]
-                                    }
+                                    visible: modCell.index < 4
+                                    Layout.fillWidth: true
+                                    height: 1
+                                    color: "#343746"
+                                    Layout.leftMargin: 32
                                 }
                             }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ═══ MEDIA ═══
+        Component {
+            id: mediaPage
+
+            ColumnLayout {
+                spacing: 12
+
+                Card {
+                    title: "MPRIS"
+                    icon: ""
+                    accent: "#bd93f9"
+
+                    ColumnLayout {
+                        spacing: 0
+                        Layout.fillWidth: true
+
+                        SettingRow {
+                            icon: "\uf03e"
+                            label: "Album art"
+                            checked: MprisState.mprisArtVisible
+                            onFlipped: MprisState.mprisArtVisible = !MprisState.mprisArtVisible
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                        SettingRow {
+                            icon: "\ue01c"
+                            label: "Progress ring"
+                            checked: MprisState.showMprisProgress
+                            onFlipped: MprisState.showMprisProgress = !MprisState.showMprisProgress
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                        SettingRow {
+                            icon: "\ue03c"
+                            label: "Hide when idle"
+                            checked: MprisState.hideWhenIdle
+                            onFlipped: MprisState.hideWhenIdle = !MprisState.hideWhenIdle
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                        SettingRow {
+                            icon: "\uf07c"
+                            label: "Marquee titles"
+                            checked: MprisState.marqueeEnabled
+                            onFlipped: MprisState.marqueeEnabled = !MprisState.marqueeEnabled
+                        }
+                    }
+                }
+
+                Card {
+                    title: "Now Playing"
+                    icon: ""
+                    accent: "#bd93f9"
+
+                    ColumnLayout {
+                        spacing: 0
+                        Layout.fillWidth: true
+
+                        SettingRow {
+                            icon: ""
+                            label: "Shuffle button"
+                            checked: MiscState.showShuffle
+                            onFlipped: MiscState.showShuffle = !MiscState.showShuffle
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                        SettingRow {
+                            icon: ""
+                            label: "Loop button"
+                            checked: MiscState.showLoop
+                            onFlipped: MiscState.showLoop = !MiscState.showLoop
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                        SettingRow {
+                            icon: ""
+                            label: "Player chooser"
+                            checked: MiscState.showPlayerChooser
+                            onFlipped: MiscState.showPlayerChooser = !MiscState.showPlayerChooser
+                        }
+                    }
+                }
+            }
+        }
+
+        // ═══ CONNECTIONS ═══
+        Component {
+            id: connectionsPage
+
+            ColumnLayout {
+                spacing: 12
+
+                Card {
+                    title: "Wi-Fi"
+                    icon: "\uf1eb"
+                    accent: "#bd93f9"
+
+                    ColumnLayout {
+                        spacing: 0
+                        Layout.fillWidth: true
+
+                        SettingRow {
+                            icon: "\uf1eb"
+                            label: "Connected highlight"
+                            caption: MiscState.wifiGreenName ? "green name" : "classic"
+                            checked: MiscState.wifiGreenName
+                            onFlipped: MiscState.wifiGreenName = !MiscState.wifiGreenName
+                        }
+                    }
+                }
+
+                Card {
+                    title: "Ethernet"
+                    icon: "\uf796"
+                    accent: "#8be9fd"
+
+                    ColumnLayout {
+                        spacing: 0
+                        Layout.fillWidth: true
+
+                        SettingRow {
+                            icon: "\uf796"
+                            label: "Session totals"
+                            caption: MiscState.showNetTotals ? "always visible" : "with graphs"
+                            checked: MiscState.showNetTotals
+                            onFlipped: MiscState.showNetTotals = !MiscState.showNetTotals
+                        }
+                    }
+                }
+            }
+        }
+
+        // ═══ PERFORMANCE ═══
+        Component {
+            id: performancePage
+
+            ColumnLayout {
+                spacing: 12
+
+                Card {
+                    title: "Poll Rates"
+                    icon: "\uf2db"
+                    accent: "#bd93f9"
+
+                    ColumnLayout {
+                        spacing: 14
+                        Layout.fillWidth: true
+                        Layout.topMargin: 4
+
+                        PollRow {
+                            icon: "\uf4bc"
+                            label: "CPU · Memory"
+                            minMs: 500
+                            maxMs: 10000
+                            stepMs: 250
+                            valueMs: ResourcesState.cpuMemInterval
+                            onCommitted: ms => ResourcesState.cpuMemInterval = ms
+                        }
+
+                        PollRow {
+                            icon: "\uf1eb"
+                            label: "Network speed"
+                            minMs: 250
+                            maxMs: 5000
+                            stepMs: 250
+                            valueMs: NetworkState.netInterval
+                            onCommitted: ms => NetworkState.netInterval = ms
+                        }
+
+                        PollRow {
+                            icon: "\uf0a0"
+                            label: "Disk usage"
+                            minMs: 5000
+                            maxMs: 60000
+                            stepMs: 5000
+                            valueMs: ResourcesState.diskInterval
+                            onCommitted: ms => ResourcesState.diskInterval = ms
+                        }
+
+                        PollRow {
+                            icon: "\uf240"
+                            label: "Battery history"
+                            minMs: 10000
+                            maxMs: 120000
+                            stepMs: 5000
+                            valueMs: BatteryState.batteryInterval
+                            onCommitted: ms => BatteryState.batteryInterval = ms
+                        }
+                    }
+                }
+
+                Card {
+                    title: "Notes"
+                    icon: "\uf05a"
+                    accent: "#8be9fd"
+
+                    ColumnLayout {
+                        spacing: 4
+                        Layout.fillWidth: true
+                        Layout.topMargin: 2
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: "· Lower rates feel snappier, higher rates save battery."
+                            color: "#b8bfcb"
+                            font { pixelSize: 11; family: "ZedMono Nerd Font" }
+                            wrapMode: Text.WordWrap
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: "· Values persist across config reloads."
+                            color: "#b8bfcb"
+                            font { pixelSize: 11; family: "ZedMono Nerd Font" }
+                            wrapMode: Text.WordWrap
                         }
                     }
                 }

@@ -5,51 +5,42 @@ import Quickshell
 import Quickshell.Wayland
 import qs.services
 
+// Fullscreen logout / session overlay.
+// Left-click fires the action immediately · right-click on restart /
+// shutdown opens an inline delay slider · any pending PowerTimer
+// countdown is mirrored here live and can be cancelled.
 Item {
     id: root
 
-    property color backgroundColor: "#e60c0c0c"
-    property color buttonColor: "#282a36"
-    property color buttonHoverColor: "#bd93f9"
-    property color buttonTextColor: "#f8f8f2"
+    // 0 = hidden · 2 = restart scheduler · 3 = shutdown scheduler
+    // (values mirror the button indices in `buttons` below)
+    property int timerPicker: 0
+
+    // palette
+    readonly property color fg: "#f8f8f2"
+    readonly property color dim: "#b8bfcb"
+    readonly property color faint: "#6272a4"
+    readonly property color line: "#313244"
+    readonly property color cardBg: Qt.rgba(24 / 255, 24 / 255, 37 / 255, 0.92)
 
     default property list<QtObject> _unused
 
-    // timer duration slider — holds the LogoutButton being scheduled
-    property var pickerButton: null
-
     function close() {
-        root.pickerButton = null;
         MiscState.logoutOpen = false;
+        timerPicker = 0;
     }
 
-    function fmtMin(m) {
-        if (m < 60)
-            return m + "m";
-        const h = Math.floor(m / 60);
-        const r = m % 60;
-        return h + "h" + (r > 0 ? " " + r + "m" : "");
-    }
+    property list<LogoutButton> buttons: [lockBtn, exitBtn, rebootBtn, shutdownBtn]
 
-    function schedule(mins) {
-        const btn = root.pickerButton;
-        if (!btn)
-            return;
-        const what = btn.timerCmd.indexOf("-r") >= 0 ? "Reboot" : "Shutdown";
-        Quickshell.execDetached(["sh", "-c",
-            `${btn.timerCmd} +${mins} && notify-send -a WLogout '${what} scheduled' 'in ${root.fmtMin(mins)}'` +
-            ` || notify-send -u critical -a WLogout '${what} timer failed' 'shutdown rejected the request'`]);
-        root.close();
+    function fmtMin(mins) {
+        const h = Math.floor(mins / 60);
+        const m = mins % 60;
+        if (h > 0 && m > 0)
+            return h + "h " + m + "m";
+        if (h > 0)
+            return h + "h";
+        return mins + "m";
     }
-
-    function cancelPending() {
-        Quickshell.execDetached(["sh", "-c",
-            `shutdown -c && notify-send -a WLogout 'Timer cancelled' 'pending shutdown/reboot cleared'` +
-            ` || notify-send -a WLogout 'Nothing to cancel' 'no pending timer'`]);
-        root.close();
-    }
-
-    property list<LogoutButton> buttons: [lockBtn, exitBtn, restartTimerBtn, shutdownTimerBtn]
 
     Variants {
         model: Quickshell.screens
@@ -61,429 +52,605 @@ Item {
             screen: modelData
             visible: MiscState.logoutOpen
 
+            exclusionMode: ExclusionMode.Ignore
+            WlrLayershell.layer: WlrLayer.Overlay
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
-        exclusionMode: ExclusionMode.Ignore
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+            // actions fire without going through close(), so reset here too
+            onVisibleChanged: {
+                if (!visible)
+                    root.timerPicker = 0;
+            }
 
-        color: "transparent"
+            color: "transparent"
 
-        contentItem {
-            focus: true
-            Keys.onPressed: event => {
-                if (event.key == Qt.Key_Escape) {
-                    if (root.pickerButton)
-                        root.pickerButton = null;
-                    else
+            contentItem {
+                focus: true
+                Keys.onPressed: event => {
+                    if (event.key == Qt.Key_Escape)
                         root.close();
-                } else if ((event.key == Qt.Key_Return || event.key == Qt.Key_Enter) && root.pickerButton && sld.value > 0) {
-                    // Enter confirms the slider value
-                    root.schedule(sld.value);
-                } else if (!root.pickerButton) {
-                    for (let i = 0; i < buttons.length; i++) {
-                        let button = buttons[i];
-                        if (event.key == button.keybind) {
-                            if (button.timerCmd.length > 0)
-                                root.pickerButton = button;
-                            else
-                                button.exec();
-                        }
-                    }
+                    else
+                        for (let i = 0; i < buttons.length; i++)
+                            if (event.key == buttons[i].keybind)
+                                buttons[i].exec();
                 }
             }
-        }
 
-        anchors {
-            top: true
-            left: true
-            bottom: true
-            right: true
-        }
+            anchors {
+                top: true
+                left: true
+                bottom: true
+                right: true
+            }
 
-        Rectangle {
-            color: backgroundColor
-            anchors.fill: parent
-
-            MouseArea {
+            // ── backdrop — soft vertical dim ──
+            Rectangle {
                 anchors.fill: parent
-                onClicked: root.close()
-
-                ColumnLayout {
-                    anchors.centerIn: parent
-                    spacing: 12
-
-                    Text {
-                        text: ""
-                        visible: root.pickerButton === null
-                        color: "#ff5555"
-                        font {
-                            pixelSize: 32
-                            family: "Symbols Nerd Font Mono"
-                        }
-                        horizontalAlignment: Text.AlignHCenter
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.bottomMargin: 8
+                gradient: Gradient {
+                    GradientStop {
+                        position: 0
+                        color: "#ee101018"
                     }
+                    GradientStop {
+                        position: 1
+                        color: "#f5181825"
+                    }
+                }
 
-                    Grid {
-                        visible: root.pickerButton === null
-                        columns: 2
-                        columnSpacing: 16
-                        rowSpacing: 16
-                        Layout.alignment: Qt.AlignHCenter
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: root.close()
 
-                        Repeater {
-                            model: buttons
-                            delegate: Rectangle {
-                                required property LogoutButton modelData
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        spacing: 28
 
-                                width: 120
-                                height: 100
+                        // ═══ main card ═══
+                        Rectangle {
+                            id: sheet
 
-                                radius: 12
-                                color: ma.containsMouse ? buttonHoverColor : buttonColor
-                                border.color: ma.containsMouse ? Qt.lighter(buttonHoverColor, 1.2) : "#343746"
-                                border.width: 1
+                            Layout.alignment: Qt.AlignHCenter
+                            implicitWidth: 620
+                            implicitHeight: innerCol.implicitHeight + 72
+                            radius: 26
+                            color: root.cardBg
+                            border.width: 1
+                            border.color: root.line
 
-                                Behavior on color { ColorAnimation { duration: 120 } }
-                                Behavior on border.color { ColorAnimation { duration: 120 } }
+                            // swallows clicks so the backdrop-close
+                            // doesn't fire from dead space inside the card
+                            MouseArea {
+                                anchors.fill: parent
+                            }
 
+                            ColumnLayout {
+                                id: innerCol
+
+                                anchors.centerIn: parent
+                                width: parent.width - 72
+                                spacing: 30
+
+                                // ── session title ──
                                 ColumnLayout {
-                                    anchors.centerIn: parent
-                                    spacing: 8
+                                    Layout.alignment: Qt.AlignHCenter
+                                    spacing: 6
 
                                     Text {
                                         Layout.alignment: Qt.AlignHCenter
-                                        text: modelData.icon
-                                        color: ma.containsMouse ? "#282a36" : buttonTextColor
+                                        text: QuickState.hostName
+                                        color: root.fg
                                         font {
-                                            pixelSize: 28
-                                            family: "Symbols Nerd Font Mono"
-                                        }
-                                        Behavior on color { ColorAnimation { duration: 120 } }
-                                    }
-
-                                    Text {
-                                        Layout.alignment: Qt.AlignHCenter
-                                        text: modelData.text
-                                        color: ma.containsMouse ? "#282a36" : buttonTextColor
-                                        font {
-                                            pointSize: 12
+                                            pixelSize: 21
                                             bold: true
                                             family: "Quicksand"
+                                            letterSpacing: 3
                                         }
-
-                                        Behavior on color { ColorAnimation { duration: 120 } }
                                     }
-                                }
-
-                                MouseArea {
-                                    id: ma
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        if (modelData.timerCmd.length > 0)
-                                            root.pickerButton = modelData;
-                                        else
-                                            modelData.exec();
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // ─── timer duration picker — modern slider, 0 = off ───
-                    ColumnLayout {
-                        visible: root.pickerButton !== null
-                        spacing: 14
-
-                        // action icon + title
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: root.pickerButton ? root.pickerButton.icon : ""
-                            color: "#bd93f9"
-                            font {
-                                pixelSize: 34
-                                family: "Symbols Nerd Font Mono"
-                            }
-                            horizontalAlignment: Text.AlignHCenter
-                        }
-
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: root.pickerButton ? root.pickerButton.text : ""
-                            color: "#f8f8f2"
-                            font {
-                                pointSize: 16
-                                bold: true
-                                family: "Quicksand"
-                            }
-                            horizontalAlignment: Text.AlignHCenter
-                        }
-
-                        // live readout
-                        Text {
-                            id: readout
-                            property int mins: sld.value
-                            Layout.alignment: Qt.AlignHCenter
-                            text: mins === 0 ? "off" : root.fmtMin(mins)
-                            color: mins === 0 ? "#6272a4" : "#bd93f9"
-                            font {
-                                pixelSize: 40
-                                bold: true
-                                family: "ZedMono Nerd Font"
-                            }
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: 120
-                                }
-                            }
-                        }
-
-                        Slider {
-                            id: sld
-
-                            from: 0
-                            to: 240
-                            stepSize: 5
-                            value: 0
-
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 12
-                            Layout.rightMargin: 12
-
-                            background: Rectangle {
-                                implicitHeight: 24
-                                color: "transparent"
-
-                                // track + filled portion
-                                Rectangle {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: parent.width
-                                    height: 6
-                                    radius: 3
-                                    color: "#343746"
-                                }
-
-                                Rectangle {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: sld.visualPosition * parent.width
-                                    height: 6
-                                    radius: 3
-                                    color: "#bd93f9"
-                                }
-
-                                // minor ticks every 15 min (majors live under the labels)
-                                Repeater {
-                                    model: 15
 
                                     Rectangle {
-                                        required property int index
-                                        x: ((index + 1) / 16) * parent.width - 1
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        width: 2
-                                        height: 10
+                                        Layout.alignment: Qt.AlignHCenter
+                                        implicitWidth: 56
+                                        implicitHeight: 2
                                         radius: 1
-                                        color: (index + 1) % 4 === 0 ? "#bd93f9" : "#44475a"
-                                        opacity: (index + 1) % 4 === 0 ? 0.9 : 0.55
+                                        gradient: Gradient {
+                                            orientation: Gradient.Horizontal
+                                            GradientStop {
+                                                position: 0
+                                                color: "transparent"
+                                            }
+                                            GradientStop {
+                                                position: 0.5
+                                                color: Qt.rgba(0.74, 0.58, 0.98, 0.7)
+                                            }
+                                            GradientStop {
+                                                position: 1
+                                                color: "transparent"
+                                            }
+                                        }
+                                    }
+
+                                    Text {
+                                        Layout.alignment: Qt.AlignHCenter
+                                        text: "end session?"
+                                        color: root.faint
+                                        font {
+                                            pixelSize: 10
+                                            bold: true
+                                            family: "Quicksand"
+                                            letterSpacing: 5
+                                            capitalization: Font.AllUppercase
+                                        }
                                     }
                                 }
-                            }
 
-                            handle: Rectangle {
-                                x: sld.leftPadding + sld.visualPosition * (sld.availableWidth - width)
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: 18
-                                height: 18
-                                radius: 9
-                                color: sld.pressed ? "#ff79c6" : "#f8f8f2"
-                                border.color: "#bd93f9"
-                                border.width: 2
+                                // ── action row ──
+                                RowLayout {
+                                    Layout.alignment: Qt.AlignHCenter
+                                    spacing: 34
 
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: 100
+                                    Repeater {
+                                        model: root.buttons
+
+                                        delegate: Item {
+                                            id: actionBtn
+
+                                            required property LogoutButton modelData
+                                            required property int index
+
+                                            // restart / shutdown carry schedulers
+                                            readonly property bool schedulable: index >= 2
+                                            // matching timer currently armed
+                                            readonly property bool armed: schedulable
+                                                && ((index === 2 && PowerTimer.mode === "reboot")
+                                                    || (index === 3 && PowerTimer.mode === "poweroff"))
+                                            // this button's scheduler panel is open
+                                            readonly property bool picked: root.timerPicker === index
+
+                                            implicitWidth: btnCol.implicitWidth
+                                            implicitHeight: btnCol.implicitHeight
+
+                                            ColumnLayout {
+                                                id: btnCol
+                                                spacing: 10
+
+                                                Item {
+                                                    Layout.alignment: Qt.AlignHCenter
+                                                    Layout.preferredWidth: circle.width + 16
+                                                    Layout.preferredHeight: circle.height + 16
+
+                                                    // soft halo behind the circle on hover / while armed
+                                                    Rectangle {
+                                                        anchors.centerIn: circle
+                                                        width: circle.width * 1.22
+                                                        height: width
+                                                        radius: width / 2
+                                                        color: Qt.rgba(actionBtn.modelData.accent.r, actionBtn.modelData.accent.g, actionBtn.modelData.accent.b, actionBtn.armed ? 0.14 : 0.0)
+                                                        opacity: ma.containsMouse || actionBtn.armed ? 1 : 0
+                                                        visible: opacity > 0
+
+                                                        Behavior on opacity {
+                                                            NumberAnimation { duration: 180 }
+                                                        }
+                                                    }
+
+                                                    Rectangle {
+                                                        id: circle
+
+                                                        anchors.centerIn: parent
+                                                        width: 88
+                                                        height: 88
+                                                        radius: height / 2
+                                                        color: ma.containsMouse ? Qt.rgba(actionBtn.modelData.accent.r, actionBtn.modelData.accent.g, actionBtn.modelData.accent.b, 0.16)
+                                                            : actionBtn.armed ? Qt.rgba(actionBtn.modelData.accent.r, actionBtn.modelData.accent.g, actionBtn.modelData.accent.b, 0.10)
+                                                            : "#21222c"
+                                                        border.width: ma.containsMouse ? 1.5 : actionBtn.armed || actionBtn.picked ? 1.5 : 1
+                                                        border.color: ma.containsMouse || actionBtn.armed || actionBtn.picked ? actionBtn.modelData.accent : root.line
+
+                                                        Behavior on color { ColorAnimation { duration: 140 } }
+                                                        Behavior on border.color { ColorAnimation { duration: 140 } }
+                                                        Behavior on scale {
+                                                            NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                                                        }
+
+                                                        scale: ma.pressed ? 0.94 : ma.containsMouse ? 1.06 : 1
+
+                                                        SequentialAnimation on opacity {
+                                                            running: actionBtn.armed
+                                                            loops: Animation.Infinite
+                                                            alwaysRunToEnd: true
+                                                            NumberAnimation { to: 0.55; duration: 700 }
+                                                            NumberAnimation { to: 1; duration: 700 }
+                                                        }
+
+                                                        Text {
+                                                            anchors.centerIn: parent
+                                                            text: actionBtn.modelData.icon
+                                                            color: ma.containsMouse || actionBtn.armed ? actionBtn.modelData.accent : root.dim
+                                                            font {
+                                                                pixelSize: 30
+                                                                family: "Symbols Nerd Font Mono"
+                                                            }
+
+                                                            Behavior on color { ColorAnimation { duration: 140 } }
+                                                        }
+
+                                                        // dot marking an armed timer
+                                                        Rectangle {
+                                                            anchors.top: parent.top
+                                                            anchors.right: parent.right
+                                                            anchors.margins: 10
+                                                            width: 9
+                                                            height: 9
+                                                            radius: 4.5
+                                                            visible: actionBtn.armed
+                                                            color: actionBtn.modelData.accent
+                                                            border.width: 2
+                                                            border.color: "#181825"
+                                                        }
+                                                    }
+
+                                                    MouseArea {
+                                                        id: ma
+                                                        anchors.fill: parent
+                                                        hoverEnabled: true
+                                                        cursorShape: Qt.PointingHandCursor
+                                                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                                        onClicked: mouse => {
+                                                            if (mouse.button === Qt.RightButton && actionBtn.schedulable) {
+                                                                root.timerPicker = actionBtn.picked ? 0 : actionBtn.index;
+                                                                return;
+                                                            }
+                                                            if (mouse.button === Qt.LeftButton)
+                                                                actionBtn.modelData.exec();
+                                                        }
+                                                    }
+                                                }
+
+                                                // label + keycap hint
+                                                ColumnLayout {
+                                                    Layout.alignment: Qt.AlignHCenter
+                                                    spacing: 5
+
+                                                    Text {
+                                                        Layout.alignment: Qt.AlignHCenter
+                                                        text: actionBtn.modelData.text
+                                                        color: ma.containsMouse || actionBtn.armed ? root.fg : root.dim
+                                                        font {
+                                                            pixelSize: 11
+                                                            bold: true
+                                                            family: "Quicksand"
+                                                            letterSpacing: 1
+                                                        }
+
+                                                        Behavior on color { ColorAnimation { duration: 140 } }
+                                                    }
+
+                                                    Rectangle {
+                                                        Layout.alignment: Qt.AlignHCenter
+                                                        implicitWidth: keyTxt.implicitWidth + 12
+                                                        implicitHeight: 17
+                                                        radius: 5
+                                                        color: ma.containsMouse ? Qt.rgba(actionBtn.modelData.accent.r, actionBtn.modelData.accent.g, actionBtn.modelData.accent.b, 0.15) : "#262636"
+                                                        border.width: 1
+                                                        border.color: ma.containsMouse ? Qt.rgba(actionBtn.modelData.accent.r, actionBtn.modelData.accent.g, actionBtn.modelData.accent.b, 0.45) : root.line
+
+                                                        Behavior on color { ColorAnimation { duration: 140 } }
+                                                        Behavior on border.color { ColorAnimation { duration: 140 } }
+
+                                                        Text {
+                                                            id: keyTxt
+                                                            anchors.centerIn: parent
+                                                            text: actionBtn.modelData.keybindChar
+                                                            color: ma.containsMouse ? actionBtn.modelData.accent : root.faint
+                                                            font {
+                                                                pixelSize: 9
+                                                                bold: true
+                                                                family: "ZedMono Nerd Font"
+                                                            }
+
+                                                            Behavior on color { ColorAnimation { duration: 140 } }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
-                            }
 
-                            Component.onCompleted: forceActiveFocus()
-                        }
+                                // ═══ scheduler / live countdown ═══
+                                ColumnLayout {
+                                    id: timerZone
 
-                        // scale labels
-                        Item {
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 12
-                            Layout.rightMargin: 12
-                            implicitHeight: 14
+                                    readonly property bool isReboot: root.timerPicker === 2
+                                    readonly property string modeName: root.timerPicker === 2 ? "Restart" : "Shutdown"
+                                    readonly property color tint: isReboot ? "#50fa7b" : "#ff5555"
+                                    // selection, minutes — armed on release
+                                    property int selMin: 15
 
-                            Repeater {
-                                model: ["0", "1h", "2h", "3h", "4h"]
+                                    visible: root.timerPicker !== 0 || PowerTimer.active
+                                    Layout.fillWidth: true
+                                    spacing: 10
 
-                                Text {
-                                    required property string modelData
-                                    required property int index
+                                    // ── delay slider ──
+                                    ColumnLayout {
+                                        visible: root.timerPicker !== 0
+                                        Layout.fillWidth: true
+                                        spacing: 6
 
-                                    property real frac: index / 4
+                                        RowLayout {
+                                            Layout.fillWidth: true
 
-                                    x: index === 0 ? 0 : index === 4 ? parent.width - width : frac * parent.width - width / 2
-                                    text: modelData
-                                    color: Math.abs(sld.value - index * 60) < 1 ? "#bd93f9" : "#6272a4"
-                                    font {
-                                        pixelSize: 9
-                                        bold: true
-                                        family: "ZedMono Nerd Font"
+                                            Text {
+                                                text: timerZone.modeName + " after:"
+                                                color: timerZone.tint
+                                                font {
+                                                    pixelSize: 10
+                                                    bold: true
+                                                    family: "Quicksand"
+                                                    letterSpacing: 2
+                                                    capitalization: Font.AllUppercase
+                                                }
+                                            }
+
+                                            Item { Layout.fillWidth: true }
+
+                                            Text {
+                                                visible: delaySlider.pressed
+                                                text: root.fmtMin(timerZone.selMin)
+                                                color: timerZone.tint
+                                                font {
+                                                    pixelSize: 14
+                                                    bold: true
+                                                    family: "ZedMono Nerd Font"
+                                                }
+                                            }
+                                        }
+
+                                        Slider {
+                                            id: delaySlider
+
+                                            from: 5
+                                            to: 240
+                                            stepSize: 5
+                                            value: timerZone.selMin
+
+                                            Layout.fillWidth: true
+                                            Layout.leftMargin: 4
+                                            Layout.rightMargin: 4
+
+                                            background: Rectangle {
+                                                implicitHeight: 18
+                                                color: "transparent"
+
+                                                Rectangle {
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    width: parent.width
+                                                    height: 6
+                                                    radius: 3
+                                                    color: "#343746"
+                                                }
+
+                                                Rectangle {
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    width: delaySlider.visualPosition * parent.width
+                                                    height: 6
+                                                    radius: 3
+                                                    color: timerZone.tint
+                                                }
+                                            }
+
+                                            handle: Rectangle {
+                                                x: delaySlider.leftPadding + delaySlider.visualPosition * (delaySlider.availableWidth - width)
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                width: 18
+                                                height: 18
+                                                radius: 9
+                                                color: delaySlider.pressed ? root.fg : "#282a36"
+                                                border.color: timerZone.tint
+                                                border.width: 2
+
+                                                Behavior on color {
+                                                    ColorAnimation { duration: 100 }
+                                                }
+                                            }
+
+                                            onMoved: timerZone.selMin = value
+                                            onPressedChanged: {
+                                                if (!pressed) {
+                                                    timerZone.selMin = value;
+                                                    if (root.timerPicker === 2)
+                                                        PowerTimer.scheduleReboot(value * 60);
+                                                    else
+                                                        PowerTimer.schedulePoweroff(value * 60);
+                                                }
+                                            }
+                                        }
+
+                                        // scale hints at their real positions
+                                        Item {
+                                            Layout.fillWidth: true
+                                            implicitHeight: 12
+
+                                            Repeater {
+                                                model: [
+                                                    { min: 30, label: "30m" },
+                                                    { min: 60, label: "1h" },
+                                                    { min: 120, label: "2h" },
+                                                    { min: 180, label: "3h" }
+                                                ]
+
+                                                Text {
+                                                    required property var modelData
+
+                                                    x: 4 + (parent.width - 8) * ((modelData.min - 5) / 235) - width / 2
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    text: modelData.label
+                                                    color: root.faint
+                                                    font {
+                                                        pixelSize: 8
+                                                        bold: true
+                                                        family: "ZedMono Nerd Font"
+                                                    }
+                                                }
+                                            }
+
+                                            Text {
+                                                anchors.left: parent.left
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                text: "5m"
+                                                color: root.faint
+                                                font {
+                                                    pixelSize: 8
+                                                    bold: true
+                                                    family: "ZedMono Nerd Font"
+                                                }
+                                            }
+
+                                            Text {
+                                                anchors.right: parent.right
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                text: "4h"
+                                                color: root.faint
+                                                font {
+                                                    pixelSize: 8
+                                                    bold: true
+                                                    family: "ZedMono Nerd Font"
+                                                }
+                                            }
+                                        }
                                     }
-                                    Behavior on color {
-                                        ColorAnimation {
-                                            duration: 120
+
+                                    // ── live countdown banner ──
+                                    Rectangle {
+                                        id: liveBanner
+
+                                        visible: PowerTimer.active
+                                        readonly property color tint: PowerTimer.mode === "reboot" ? "#50fa7b" : "#ff5555"
+
+                                        Layout.alignment: Qt.AlignHCenter
+                                        implicitWidth: liveRow.implicitWidth + 40
+                                        implicitHeight: liveRow.implicitHeight + 20
+                                        radius: height / 2
+                                        color: Qt.rgba(tint.r, tint.g, tint.b, 0.10)
+                                        border.width: 1
+                                        border.color: Qt.rgba(tint.r, tint.g, tint.b, 0.45)
+
+                                        RowLayout {
+                                            id: liveRow
+                                            anchors.centerIn: parent
+                                            spacing: 12
+
+                                            Text {
+                                                text: PowerTimer.mode === "reboot" ? "\uf021" : "\uf011"
+                                                color: liveBanner.tint
+                                                font { pixelSize: 15; family: "Symbols Nerd Font Mono" }
+                                            }
+
+                                            Text {
+                                                text: (PowerTimer.mode === "reboot" ? "Restarting" : "Shutting down") + " in "
+                                                color: root.dim
+                                                font { pixelSize: 11; bold: true; family: "Quicksand" }
+                                            }
+
+                                            Text {
+                                                readonly property color tint: PowerTimer.mode === "reboot" ? "#50fa7b" : "#ff5555"
+
+                                                text: PowerTimer.formatTime(PowerTimer.remaining)
+                                                color: tint
+                                                font {
+                                                    pixelSize: 16
+                                                    bold: true
+                                                    family: "ZedMono Nerd Font"
+                                                }
+                                            }
+
+                                            Rectangle {
+                                                implicitWidth: cancelTxt.implicitWidth + 20
+                                                implicitHeight: 24
+                                                radius: 12
+                                                color: cancelMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.18) : "#343746"
+                                                border.width: 1
+                                                border.color: cancelMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.5) : "transparent"
+
+                                                Behavior on color { ColorAnimation { duration: 120 } }
+                                                Behavior on border.color { ColorAnimation { duration: 120 } }
+
+                                                Text {
+                                                    id: cancelTxt
+                                                    anchors.centerIn: parent
+                                                    text: "\uf00d  cancel"
+                                                    color: cancelMa.containsMouse ? "#ff5555" : root.dim
+                                                    font { pixelSize: 9; bold: true; family: "Symbols Nerd Font Mono, Quicksand" }
+                                                }
+
+                                                MouseArea {
+                                                    id: cancelMa
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: PowerTimer.cancel()
+                                                }
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
 
-                        RowLayout {
+                        // ── footer hint ──
+                        Text {
                             Layout.alignment: Qt.AlignHCenter
-                            spacing: 8
-
-                            Rectangle {
-                                width: 72
-                                height: 32
-                                radius: 8
-                                color: bkma.containsMouse ? "#44475a" : "transparent"
-                                border.color: "#343746"
-                                border.width: 1
-
-                                Behavior on color { ColorAnimation { duration: 120 } }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "\uf060 back"
-                                    color: bkma.containsMouse ? "#f8f8f2" : "#6272a4"
-                                    font {
-                                        pixelSize: 11
-                                        family: "Symbols Nerd Font Mono"
-                                    }
-                                    Behavior on color { ColorAnimation { duration: 120 } }
-                                }
-
-                                MouseArea {
-                                    id: bkma
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.pickerButton = null
-                                }
-                            }
-
-                            Rectangle {
-                                width: 158
-                                height: 32
-                                radius: 8
-                                color: cma.containsMouse ? "#ff5555" : "transparent"
-                                border.color: cma.containsMouse ? "#ff5555" : "#343746"
-                                border.width: 1
-
-                                Behavior on color { ColorAnimation { duration: 120 } }
-                                Behavior on border.color { ColorAnimation { duration: 120 } }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "\uf014 cancel pending"
-                                    color: cma.containsMouse ? "#282a36" : "#6272a4"
-                                    font {
-                                        pixelSize: 11
-                                        family: "Symbols Nerd Font Mono"
-                                    }
-                                    Behavior on color { ColorAnimation { duration: 120 } }
-                                }
-
-                                MouseArea {
-                                    id: cma
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.cancelPending()
-                                }
-                            }
-
-                            Rectangle {
-                                property bool ready: readout.mins > 0
-
-                                width: 128
-                                height: 36
-                                radius: 8
-                                opacity: ready ? 1 : 0.35
-                                color: !ready ? "#21222c" : sma.containsMouse ? "#ff79c6" : buttonHoverColor
-                                border.color: ready ? Qt.lighter(buttonHoverColor, 1.2) : "#343746"
-                                border.width: 1
-
-                                Behavior on color { ColorAnimation { duration: 120 } }
-                                Behavior on opacity { NumberAnimation { duration: 120 } }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "\uf073 schedule"
-                                    color: !readout.mins ? "#6272a4" : "#282a36"
-                                    font {
-                                        pixelSize: 11
-                                        bold: true
-                                        family: "Symbols Nerd Font Mono"
-                                    }
-                                }
-
-                                MouseArea {
-                                    id: sma
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: readout.mins > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                    onClicked: {
-                                        if (readout.mins > 0)
-                                            root.schedule(readout.mins);
-                                    }
-                                }
-
-                                Behavior on border.color { ColorAnimation { duration: 120 } }
+                            text: "click  run    ·    right-click restart / shutdown to schedule    ·    esc  dismiss"
+                            color: Qt.rgba(0.38, 0.42, 0.51, 0.85)
+                            font {
+                                pixelSize: 9
+                                family: "ZedMono Nerd Font"
+                                letterSpacing: 1
                             }
                         }
                     }
                 }
             }
         }
-    }
     }
 
     LogoutButton {
         id: lockBtn
         command: "loginctl lock-session"
         keybind: Qt.Key_L
+        keybindChar: "L"
         text: "Lock"
         icon: "\uf023"
+        accent: "#bd93f9"
     }
 
     LogoutButton {
         id: exitBtn
         command: "loginctl terminate-user $USER"
         keybind: Qt.Key_E
+        keybindChar: "E"
         text: "Logout"
         icon: "\uf08b"
+        accent: "#ff79c6"
     }
 
     LogoutButton {
-        id: restartTimerBtn
-        keybind: Qt.Key_T
-        text: "Restart Timer"
+        id: rebootBtn
+        command: "systemctl reboot"
+        keybind: Qt.Key_R
+        keybindChar: "R"
+        text: "Restart"
         icon: "\uf021"
-        timerCmd: "shutdown -r"
+        accent: "#50fa7b"
     }
 
     LogoutButton {
-        id: shutdownTimerBtn
-        keybind: Qt.Key_Y
-        text: "Shutdown Timer"
+        id: shutdownBtn
+        command: "systemctl poweroff"
+        keybind: Qt.Key_S
+        keybindChar: "S"
+        text: "Shutdown"
         icon: "\uf011"
-        timerCmd: "shutdown -h"
+        accent: "#ff5555"
     }
 }

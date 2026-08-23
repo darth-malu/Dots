@@ -13,6 +13,15 @@ Singleton {
     property bool wifiPopupVisible: false
     property bool notifCenterVisible: false
 
+    // ── adjustable poll rate (settings > performance) — netspeed refresh, ms ──
+    PersistentProperties {
+        id: pollProps
+        property int netInterval: 1000
+        reloadableId: "netPollRate"
+    }
+
+    property alias netInterval: pollProps.netInterval
+
     readonly property WifiDevice adapter: Networking.devices.values.find(d => d.type === DeviceType.Wifi) ?? null
     readonly property WifiNetwork activeNetwork: root.adapter ? root.adapter.networks.values.find(network => network.connected) : null
     readonly property bool wifiEnabled: Networking.wifiEnabled

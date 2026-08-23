@@ -40,7 +40,11 @@ BarBlock {
         return raw.length > 0 ? raw.split("\n") : [];
     }
 
-    onLeftClicked: allDisksPopup.visible = !allDisksPopup.visible
+    onLeftClicked: {
+        allDisksPopup.visible = !allDisksPopup.visible;
+        if (NasState.available)
+            NasState.kickRecheck(1);
+    }
     onRightClicked: showUsage = !showUsage
 
     content: RowLayout {
@@ -139,6 +143,162 @@ BarBlock {
                 anchors.fill: parent
                 anchors.margins: 12
                 spacing: 0
+
+                // ── NAS zone — per-share mount controls + unmounted tally ──
+                ColumnLayout {
+                    visible: NasState.available
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Text {
+                            text: "\uf4a6"
+                            color: NasState.allMounted ? "#50fa7b" : "#ffb86c"
+                            font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
+                        }
+
+                        Text {
+                            text: "NAS"
+                            color: "#f8f8f2"
+                            font { pixelSize: 10; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                        }
+
+                        Text {
+                            readonly property int missing: NasState.unmountedCount
+                            text: missing === 0 ? "all mounted" : `${missing} unmounted`
+                            color: missing === 0 ? "#50fa7b" : "#ffb86c"
+                            font { pixelSize: 9; bold: true; family: "Quicksand" }
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        // one-click remount of every missing share
+                        Rectangle {
+                            visible: NasState.unmountedCount > 0
+                            implicitWidth: mountAllTxt.implicitWidth + 14
+                            implicitHeight: 18
+                            radius: 9
+                            color: mountAllMa.containsMouse ? Qt.rgba(0.31, 0.98, 0.48, 0.15) : "#343746"
+
+                            Text {
+                                id: mountAllTxt
+                                anchors.centerIn: parent
+                                text: "\ueb5b  mount all"
+                                color: mountAllMa.containsMouse ? "#50fa7b" : "#b8bfcb"
+                                font { pixelSize: 9; bold: true; family: "Symbols Nerd Font Mono, Quicksand" }
+                            }
+
+                            MouseArea {
+                                id: mountAllMa
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: NasState.mountAll()
+                            }
+                        }
+                    }
+
+                    Repeater {
+                        model: NasState.shares
+
+                        Rectangle {
+                            id: nasRow
+
+                            required property var modelData
+
+                            readonly property bool mounted: NasState.isMounted(nasRow.modelData)
+
+                            Layout.fillWidth: true
+                            implicitHeight: 24
+                            radius: 6
+                            color: nasRowMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.04) : "transparent"
+
+                            MouseArea {
+                                id: nasRowMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                            }
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 8
+                                anchors.rightMargin: 4
+                                spacing: 8
+
+                                // live status dot
+                                Rectangle {
+                                    implicitWidth: 7
+                                    implicitHeight: 7
+                                    radius: 3.5
+                                    color: nasRow.mounted ? "#50fa7b" : "#ff5555"
+                                }
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: nasRow.modelData.name
+                                    color: "#f8f8f2"
+                                    font { pixelSize: 10; bold: true; family: "Quicksand" }
+                                }
+
+                                Text {
+                                    text: nasRow.modelData.target
+                                    color: "#6272a4"
+                                    font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                }
+
+                                // mount / unmount action chip
+                                Rectangle {
+                                    implicitWidth: nasActionTxt.implicitWidth + 14
+                                    implicitHeight: 18
+                                    radius: 9
+                                    color: {
+                                        if (!nasBtnMouse.containsMouse)
+                                            return nasRow.mounted ? "transparent" : "#343746";
+                                        return nasRow.mounted ? Qt.rgba(1, 0.33, 0.33, 0.15) : Qt.rgba(0.31, 0.98, 0.48, 0.15);
+                                    }
+                                    border.width: nasRow.mounted && !nasBtnMouse.containsMouse ? 1 : 0
+                                    border.color: Qt.rgba(1, 1, 1, 0.12)
+
+                                    Behavior on color {
+                                        ColorAnimation { duration: 120 }
+                                    }
+
+                                    Text {
+                                        id: nasActionTxt
+                                        anchors.centerIn: parent
+                                        text: nasRow.mounted ? "\uf07c unmount" : "\ueb5b mount"
+                                        color: {
+                                            if (!nasBtnMouse.containsMouse)
+                                                return nasRow.mounted ? "#b8bfcb" : "#50fa7b";
+                                            return nasRow.mounted ? "#ff5555" : "#50fa7b";
+                                        }
+                                        font { pixelSize: 9; bold: true; family: "Symbols Nerd Font Mono, Quicksand" }
+                                    }
+
+                                    MouseArea {
+                                        id: nasBtnMouse
+                                        anchors.fill: parent
+                                        anchors.margins: -4
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: nasRow.mounted ? NasState.unmount(nasRow.modelData) : NasState.mount(nasRow.modelData)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 1
+                        color: Qt.rgba(1, 1, 1, 0.06)
+                        Layout.topMargin: 4
+                        Layout.bottomMargin: 4
+                    }
+                }
 
                 // ── data zone — flat table straight on the popup, no recessed panel ──
                 ColumnLayout {

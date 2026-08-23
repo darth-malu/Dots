@@ -52,7 +52,7 @@ BarBlock {
 
             visible: NetworkState.notifCenterVisible
             grabFocus: true
-            color: "transparent"
+            color: MiscState.popupSolidBg ? "#282a36" : "transparent"
 
             anchor.window: root.host
             anchor.rect.x: {
@@ -166,6 +166,9 @@ BarBlock {
 
                             readonly property bool urgent: histRow.modelData.urgency === 2
 
+                            // brief check-mark feedback after copying the content
+                            property bool copied: false
+
                             // the app's own icon — image first, theme icon fallback
                             readonly property string iconUrl: {
                                 const n = histRow.modelData;
@@ -248,6 +251,42 @@ BarBlock {
                                     font {
                                         pixelSize: 9
                                         family: "ZedMono Nerd Font"
+                                    }
+                                }
+
+                                // copy summary + body to the clipboard
+                                Text {
+                                    text: histRow.copied ? "\uf00c" : "\uf328"
+                                    color: histRow.copied ? "#50fa7b" : rowCopyMa.containsMouse ? "#bd93f9" : "#6272a4"
+                                    font {
+                                        pixelSize: 12
+                                        family: "Symbols Nerd Font Mono"
+                                    }
+
+                                    Behavior on color {
+                                        ColorAnimation { duration: 120 }
+                                    }
+
+                                    MouseArea {
+                                        id: rowCopyMa
+
+                                        anchors.fill: parent
+                                        anchors.margins: -6
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            const n = histRow.modelData;
+                                            const text = [n.summary, n.body].filter(s => s && s.length > 0).join("\n");
+                                            Quickshell.execDetached(["sh", "-c", `printf %s '${text.replace(/'/g, "'\\''")}' | wl-copy`]);
+                                            histRow.copied = true;
+                                            copiedTimer.restart();
+                                        }
+                                    }
+
+                                    Timer {
+                                        id: copiedTimer
+                                        interval: 900
+                                        onTriggered: histRow.copied = false
                                     }
                                 }
 

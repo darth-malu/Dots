@@ -140,7 +140,7 @@ BarBlock {
             id: memPopup
             visible: MiscState.showMemProcs
             grabFocus: true
-            color: "transparent"
+            color: MiscState.popupSolidBg ? "#282a36" : "transparent"
 
             anchor.window: memory.host
             anchor.rect.x: {

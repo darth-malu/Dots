@@ -43,6 +43,19 @@ Singleton {
         path: "file:///proc/uptime"
     }
 
+    // ── adjustable poll rates (settings > performance) ──
+    // cpu/mem sampling and disk usage polling intervals, in ms
+    PersistentProperties {
+        id: pollProps
+        property int cpuMemInterval: 2000
+        property int diskInterval: 10000
+        reloadableId: "resourcesPollRates"
+    }
+
+    // exposed for the settings > performance sliders
+    property alias cpuMemInterval: pollProps.cpuMemInterval
+    property alias diskInterval: pollProps.diskInterval
+
     Timer {
         id: uptimeTimer
         interval: 30000
@@ -78,7 +91,7 @@ Singleton {
 
     Timer {
         id: cpuUsage
-        interval: 2000
+        interval: root.cpuMemInterval
         running: true
         repeat: true
         triggeredOnStart: true
@@ -228,7 +241,7 @@ Singleton {
 
     Timer {
         id: diskTimer
-        interval: 10000
+        interval: root.diskInterval
         running: true
         repeat: true
         triggeredOnStart: true

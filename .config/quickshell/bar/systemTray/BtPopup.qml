@@ -229,7 +229,7 @@ BarBlock {
             id: btPopup
             visible: NetworkState.btPopupVisible
             grabFocus: true
-            color: "transparent"
+            color: MiscState.popupSolidBg ? "#282a36" : "transparent"
 
             anchor.window: root.host
             anchor.rect.x: {

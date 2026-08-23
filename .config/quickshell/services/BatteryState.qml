@@ -28,6 +28,18 @@ Singleton {
         source: Qt.resolvedUrl("../customItems/game_ready.wav")
     }
 
+    // low-battery attention cue — crisp double beep
+    SoundEffect {
+        id: sfxLow
+        source: Qt.resolvedUrl("../wav/mixkit-censorship-beep-1082.wav")
+    }
+
+    // critical battery — insistent ringtone so it cannot be missed
+    SoundEffect {
+        id: sfxCritical
+        source: Qt.resolvedUrl("../wav/mixkit-vintage-telephone-ringtone-1356.wav")
+    }
+
     function plugEvent(summary, body, icon) {
         if (root.outputMuted)
             notify(summary, body, icon);
@@ -65,8 +77,17 @@ Singleton {
     property bool graphEnabled: false
     property var levelHistory: []
 
+    // ── adjustable poll rate (settings > performance) — history sampling, ms ──
+    PersistentProperties {
+        id: pollProps
+        property int batteryInterval: 30000
+        reloadableId: "batteryPollRate"
+    }
+
+    property alias batteryInterval: pollProps.batteryInterval
+
     Timer {
-        interval: 30000
+        interval: root.batteryInterval
         running: root.available
         repeat: true
         triggeredOnStart: true
@@ -96,12 +117,11 @@ Singleton {
         return root.fmtTime(root.isCharging ? root.battery.timeToFull : root.battery.timeToEmpty);
     }
 
-    function notify(summary, body, icon, urgency = "normal", sound = false) {
+    function notify(summary, body, icon, urgency = "normal") {
         const safeSummary = summary.replace(/'/g, "'\\''");
         const safeBody = body.replace(/'/g, "'\\''");
         const assetPath = `/home/malu/.config/quickshell/assets/battery/${icon}.png`;
-        const bell = sound ? " && canberra-gtk-play -i bell" : "";
-        const cmd = `notify-send '${safeSummary}' '${safeBody}' -u ${urgency} -t 8000 -i ${assetPath} -a Shell${bell}`;
+        const cmd = `notify-send '${safeSummary}' '${safeBody}' -u ${urgency} -t 8000 -i ${assetPath} -a Shell`;
         Quickshell.execDetached(["sh", "-c", cmd]);
     }
 
@@ -148,10 +168,12 @@ Singleton {
         if (pct <= criticalThreshold && !warnedCritical) {
             warnedLow = true;
             warnedCritical = true;
-            notify("Critical battery", `${pct}%${left ? ` · ~${left} left` : ""} — plug in now`, "warning-battery", "critical", true);
+            sfxCritical.play();
+            notify("Critical battery", `${pct}%${left ? ` · ~${left} left` : ""} — plug in now`, "warning-battery", "critical");
         } else if (pct <= lowThreshold && !warnedLow) {
             warnedLow = true;
-            notify("Low battery", `${pct}%${left ? ` · ~${left} remaining` : ""}`, "low-battery", "normal", true);
+            sfxLow.play();
+            notify("Low battery", `${pct}%${left ? ` · ~${left} remaining` : ""}`, "low-battery", "normal");
         }
     }
 
@@ -167,7 +189,8 @@ Singleton {
         repeat: true
         onTriggered: {
             const left = root.timeLeftText();
-            root.notify("Battery still critical", `${root.pctDisplay}%${left ? ` · ~${left} left` : ""} — plug in now`, "warning-battery", "critical", true);
+            sfxCritical.play();
+            root.notify("Battery still critical", `${root.pctDisplay}%${left ? ` · ~${left} left` : ""} — plug in now`, "warning-battery", "critical");
         }
     }
 }

@@ -7,6 +7,7 @@ import Quickshell.Services.SystemTray
 import Quickshell.Widgets
 import qs.customItems
 import qs.services
+import qs.bar
 import qs.bar.quicksettings
 
 RowLayout {
@@ -144,4 +145,7 @@ RowLayout {
     QuickSettings {
         host: root.host
     }
+
+    // coffee cup — appears right of quicksettings while caffeine mode is on
+    Caffeine {}
 }

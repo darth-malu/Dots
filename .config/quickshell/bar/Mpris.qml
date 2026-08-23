@@ -26,6 +26,7 @@ Item {
     property bool showArtPopup: false
     readonly property bool pillVisible: MprisState.hideWhenIdle ? showPlaying : (MprisState.player !== null)
 
+    // survives across the pill's show/hide so timers keep working
     Timer {
         id: hideVolumeTimer
         interval: 1000
@@ -73,6 +74,12 @@ Item {
                 hideVolumeTimer.restart();
             }
         }
+
+        // ── the wrapper's ONE managed child — extra visual children get
+        // unparented from the scene, so spot + pill must live in here.
+        // never anchored/sized by hand: MarginWrapperManager owns its geometry ──
+        Item {
+            id: content
 
         // ── hidden-pill volume spot ──
         // when the pill is tucked away (hide when idle), scrolling its old
@@ -407,6 +414,7 @@ Item {
                     }
                 }
             }
+        }
         }
     }
 

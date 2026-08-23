@@ -185,12 +185,10 @@ Singleton {
         let title = p.trackTitle || "Unknown Title";
         let artist = p.trackArtist || "Unknown Artist";
         let album = p.trackAlbum || "Unknown Album";
-        let art = p.trackArtUrl || "audio-x-generic";
-        if (root.isBrowserPlayer(p))
-            art = dEntry || "audio-x-generic";
-        // let len = p.length;
         let uid = p.uniqueId;
         let dEntry = p.desktopEntry;
+        // browsers never expose art — fall back to their desktop entry icon
+        let art = root.isBrowserPlayer(p) ? (dEntry || "audio-x-generic") : (p.trackArtUrl || "audio-x-generic");
         let vol = p.volumeSupported ? p.volume.toFixed(2) * 100 + "%" : "--";
 
         if (title.startsWith('Listen to music,'))

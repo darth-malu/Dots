@@ -1,15 +1,14 @@
-remove grooves/grid in traffic graph
-If caffeine mode toggle on...play sound effect and show icon on bar on the right of quicksettings and a notification to match
-Check pop up background functionality for correctness And allow revamp non tranparent bar look...have 2px top margin...border radius 4 on bar itself .
-Improve UI/UX of battery at low state (notifications, and instead of canberra detached use sound effect.
-Modify Nas to pop up a UI for mounting individual drives and showing how many are unmounted and move it to mounts popup from quicksettings
-Move Restart timer functionality of Slider into the quicksettings....Revamp wlogout design...looks tacky and aesthetics are off. And show any live shutdown timers.
-Add option to copy content from notifications tray
-My mpris module no longer shows up.fix it
-Also remove redundant double title, icon in settings. For the tab title and as header...remove the headers in the tabs
-
-check quicksettings popup. if it reacts well with transparent/solid toggle in settings and if in general its okay.
-Use space efficiently...it seems to have unused huge margins on all sides
-Refine arrangement, readabilty to a comfortable view of Settings...it looks unproffesional currently.
-Remove descriptors in media>mpris
-Add option in settings to adjust poll rates for the different modules 
+DONE remove grooves/grid in traffic graph
+DONE caffeine: sound effect + breathing cup on bar right of quicksettings + matching notification
+DONE popup bg toggle verified correct (frame reacts, cards stay solid); flat bar revamped: 2px top margin, radius 4
+DONE battery low UX: sfx instead of canberra, pulsing critical ring, warning banner with time-to-empty
+DONE NAS moved to mounts popup: per-share mount/unmount UI + unmounted tally (services/NasState.qml)
+DONE restart timer lives in quicksettings timerCard; wlogout redesigned; live shutdown/reboot countdown + cancel in overlay
+DONE copy-content button per notification row (wl-copy)
+DONE mpris module visibility fixed (WrapperMouseArea single-child + dEntry TDZ)
+DONE removed redundant tab headers in settings
+DONE quicksettings popup reacts correctly to transparent/solid toggle
+DONE space efficiency: QS popup 364→344w, frame 12→8, gutter 36→16
+DONE settings arrangement/readability rewritten: unified SwitchPill/SettingRow rows, no descriptor clutter
+DONE removed descriptors in media>mpris
+DONE settings > Performance tab: poll-rate sliders for cpu/mem, network, disk, battery history (persisted)

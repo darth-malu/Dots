@@ -63,6 +63,26 @@ RowLayout {
                 batteryBlock.showPopup = !batteryBlock.showPopup;
         }
 
+        // ── critical pulse — a breathing red ring so a dying battery is unmissable ──
+        Rectangle {
+            visible: batteryBlock.isCritical
+            anchors.fill: parent
+            anchors.margins: -3
+            radius: 7
+            color: "transparent"
+            border.color: "#ff5555"
+            border.width: 1
+            opacity: 0
+
+            SequentialAnimation on opacity {
+                running: batteryBlock.isCritical
+                loops: Animation.Infinite
+                alwaysRunToEnd: true
+                NumberAnimation { to: 0.85; duration: 650; easing.type: Easing.InOutSine }
+                NumberAnimation { to: 0.15; duration: 650; easing.type: Easing.InOutSine }
+            }
+        }
+
         // ── Battery body (fixed width — never resizes with the value) ──
         Rectangle {
             id: batteryBody
@@ -213,6 +233,54 @@ RowLayout {
                     margins: 14
                 }
                 spacing: 10
+
+                // ── low/critical banner — mirrors the bar pulse with an actionable line ──
+                Rectangle {
+                    visible: batteryBlock.isLow || batteryBlock.isCritical
+                    Layout.fillWidth: true
+                    implicitHeight: warnRow.implicitHeight + 12
+                    radius: 8
+                    color: Qt.rgba(1, 0.33, 0.33, batteryBlock.isCritical ? 0.14 : 0.08)
+                    border.width: 1
+                    border.color: Qt.rgba(1, 0.33, 0.33, batteryBlock.isCritical ? 0.5 : 0.3)
+
+                    RowLayout {
+                        id: warnRow
+                        anchors.fill: parent
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 10
+                        spacing: 8
+
+                        Text {
+                            text: batteryBlock.isCritical ? "" : ""
+                            color: "#ff5555"
+                            font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: {
+                                if (batteryBlock.isCritical) {
+                                    const t = BatteryState.fmtTime(batteryBlock.bat.timeToEmpty);
+                                    return `Battery critical — ${batteryBlock.pct}%${t ? ` (~${t} left)` : ""}. Plug in now to avoid data loss.`;
+                                }
+                                const t = BatteryState.fmtTime(batteryBlock.bat.timeToEmpty);
+                                return `Battery low — ${batteryBlock.pct}%${t ? ` (~${t} remaining)` : ""}. Find a charger soon.`;
+                            }
+                            color: batteryBlock.isCritical ? "#ff5555" : "#ffb86c"
+                            wrapMode: Text.WordWrap
+                            font { pixelSize: 11; bold: true; family: "Quicksand" }
+                        }
+                    }
+
+                    SequentialAnimation on opacity {
+                        running: batteryBlock.isCritical && visible
+                        loops: Animation.Infinite
+                        alwaysRunToEnd: true
+                        NumberAnimation { to: 0.55; duration: 800 }
+                        NumberAnimation { to: 1; duration: 800 }
+                    }
+                }
 
                 // ── Header ──
                 RowLayout {

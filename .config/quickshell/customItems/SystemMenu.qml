@@ -101,6 +101,7 @@ BarBlock {
         id: menuPopup
         visible: root.showMenu
         grabFocus: true
+        color: MiscState.popupSolidBg ? "#282a36" : "transparent"
 
         anchor.window: root.host
         anchor.rect.x: {

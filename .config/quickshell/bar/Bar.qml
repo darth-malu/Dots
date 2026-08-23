@@ -30,16 +30,18 @@ ShellRoot {
 
             aboveWindows: false
             color: 'transparent'
-            implicitHeight: BarState.modernBarStyle ? 28 : 24
+            implicitHeight: BarState.barStyle === 0 ? 28 : 26
 
             margins {
                 right: 10
-                left: BarState.modernBarStyle ? 10 : 6
+                left: BarState.barStyle === 0 ? 10 : 6
+                // transparent setup sits flush with the top edge
+                top: BarState.barStyle === 1 ? 2 : 0
             }
 
-            // Modern background with rounded bottom corners
+            // Floating background with rounded bottom corners
             Rectangle {
-                visible: BarState.modernBarStyle
+                visible: BarState.barStyle === 0
                 anchors.fill: parent
                 color: Qt.rgba(24 / 255, 24 / 255, 37 / 255, 0.75)
                 bottomLeftRadius: 10
@@ -71,6 +73,21 @@ ShellRoot {
                     }
                 }
             }
+
+            // Solid (non-transparent) background — full slab, radius 4,
+            // hanging 2px off the top edge so it reads as a crisp panel
+            Rectangle {
+                visible: BarState.barStyle === 1
+                anchors.fill: parent
+                radius: 4
+                color: "#181825"
+                border.width: 1
+                border.color: "#313244"
+                z: -1
+            }
+
+            // Transparent setup — no background at all, modules float on the
+            // wallpaper; bar sits flush with the top edge (no top margin)
 
             anchors {
                 top: true

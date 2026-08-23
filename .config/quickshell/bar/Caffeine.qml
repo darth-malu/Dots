@@ -1,39 +1,38 @@
 import Quickshell
 import QtQuick
-import Quickshell.Wayland
 import qs.services
-import qs.themes
 import qs.customItems
 
-BarText {
+// bar indicator — only occupies space while caffeine mode is active;
+// sits to the right of quicksettings, click toggles it back off
+BarBlock {
     id: root
-    anchors.verticalCenter: parent.verticalCenter
-    text: ""
-    // pointSize: 10
-    // symbolSize: 5
-    color: CaffeineService.enabled ? Themes.mprisIndicatorColor : Qt.rgba(1, 1, 1, 0.35)
-    property bool caffeineOn: CaffeineService.enabled
-    property Item mouseArea: mouseArea
-    property int colorIndex: 0
 
-    PersistentProperties {
-        id: coloR
-        property color rangi: CaffeineService.enabled ? Themes.mprisIndicatorColor : Qt.rgba(1, 1, 1, 0.35)
-        reloadableId: "idleColor"
-    }
+    visible: CaffeineService.enabled
 
-    IdleMonitor {
-        id: idleMonitor
-        enabled: root.caffeineOn
-        timeout: 5             // Seconds - before reporting idle state // FIXME: does not react
-        respectInhibitors: true
-    }
+    onClicked: CaffeineService.toggle()
 
-    MouseArea {
-        id: mouseArea
-        anchors.fill: parent
-        onClicked: {
-            CaffeineService.toggle();
+    content: Item {
+        implicitWidth: 16
+        implicitHeight: 16
+
+        Text {
+            anchors.centerIn: parent
+            text: ""
+            color: "#ffb86c"
+            font {
+                pixelSize: 13
+                family: "Symbols Nerd Font Mono"
+            }
+        }
+
+        // soft breathing so the active state draws the eye without shouting
+        SequentialAnimation on opacity {
+            running: root.visible
+            loops: Animation.Infinite
+            alwaysRunToEnd: true
+            NumberAnimation { to: 0.55; duration: 900; easing.type: Easing.InOutSine }
+            NumberAnimation { to: 1; duration: 900; easing.type: Easing.InOutSine }
         }
     }
 }

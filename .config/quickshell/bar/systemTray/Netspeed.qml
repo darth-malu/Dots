@@ -22,7 +22,7 @@ Loader {
 
         color: NetworkState.netspeedVisible ? Qt.rgba(0.74, 0.58, 0.98, 0.15) : "transparent"
 
-        property int refreshInterval: 1000
+        property int refreshInterval: NetworkState.netInterval
         property string iface
 
         property real rxRate
@@ -340,7 +340,7 @@ Loader {
                 id: netPopup
                 visible: NetworkState.netPopupVisible
                 grabFocus: true
-                color: "transparent"
+                color: MiscState.popupSolidBg ? "#282a36" : "transparent"
 
                 anchor.window: loaderBig.host
                 anchor.rect.x: {
@@ -588,15 +588,6 @@ Loader {
             onPaint: {
                 const ctx = getContext("2d");
                 ctx.clearRect(0, 0, width, height);
-
-                ctx.strokeStyle = "rgba(255, 255, 255, 0.06)";
-                ctx.lineWidth = 1;
-                for (let i = 1; i <= 2; i++) {
-                    ctx.beginPath();
-                    ctx.moveTo(0, Math.round(height * i / 3));
-                    ctx.lineTo(width, Math.round(height * i / 3));
-                    ctx.stroke();
-                }
 
                 const h = tgraph.history ?? [];
                 if (h.length < 2)
