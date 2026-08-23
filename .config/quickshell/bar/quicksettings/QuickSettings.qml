@@ -562,6 +562,12 @@ BarBlock {
                             readonly property bool mprisVolume: MprisState.cardPlayer?.volumeSupported ?? false
                             readonly property int currentVolume: Math.round((mprisVolume ? MprisState.cardPlayer?.volume ?? 0 : extVol) * 100)
 
+                            // visibility-first volume tint — hotter as it gets louder
+                            readonly property color volumeColor: currentVolume <= 0 ? "#6272a4"
+                                : currentVolume > 80 ? "#ff79c6"
+                                : currentVolume > 50 ? "#c6a0f6"
+                                : "#bd93f9"
+
                             Timer {
                                 id: volumeBadgeTimer
                                 interval: 800
@@ -731,13 +737,13 @@ BarBlock {
                                             visible: compactArtImage.status !== Image.Ready
                                         }
 
-                                        // ── volume HUD — scrims OVER the art while scrolling ──
+                                        // ── volume HUD — value only, scrimmed over the art ──
                                         Rectangle {
                                             anchors.fill: parent
                                             radius: 6
                                             color: Qt.rgba(0, 0, 0, 0.55)
                                             border.width: 1
-                                            border.color: Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.4)
+                                            border.color: Qt.rgba(nowPlayingCard.volumeColor.r, nowPlayingCard.volumeColor.g, nowPlayingCard.volumeColor.b, 0.5)
                                             visible: nowPlayingCard.showVolumeBadge
                                             opacity: visible ? 1 : 0
                                             Behavior on opacity {
@@ -747,54 +753,14 @@ BarBlock {
                                                 }
                                             }
 
-                                            ColumnLayout {
+                                            Text {
                                                 anchors.centerIn: parent
-                                                spacing: 3
-
-                                                Text {
-                                                    Layout.alignment: Qt.AlignHCenter
-                                                    text: nowPlayingCard.currentVolume <= 0 ? "\uf026" : "\uf028"
-                                                    color: nowPlayingCard.currentVolume <= 0 ? "#6272a4" : "#bd93f9"
-                                                    font {
-                                                        pixelSize: 13
-                                                        family: "Symbols Nerd Font Mono"
-                                                    }
-                                                }
-
-                                                Text {
-                                                    Layout.alignment: Qt.AlignHCenter
-                                                    text: `${nowPlayingCard.currentVolume}%`
-                                                    color: nowPlayingCard.currentVolume <= 0 ? "#6272a4" : nowPlayingCard.dominantColor
-                                                    font {
-                                                        pixelSize: 15
-                                                        bold: true
-                                                        family: "ZedMono Nerd Font"
-                                                    }
-                                                }
-
-                                                Item {
-                                                    Layout.preferredWidth: 44
-                                                    Layout.preferredHeight: 4
-                                                    Layout.alignment: Qt.AlignHCenter
-
-                                                    Rectangle {
-                                                        anchors.fill: parent
-                                                        radius: 2
-                                                        color: Qt.rgba(1, 1, 1, 0.14)
-                                                    }
-
-                                                    Rectangle {
-                                                        width: parent.width * Math.min(nowPlayingCard.currentVolume / 100, 1)
-                                                        height: parent.height
-                                                        radius: 2
-                                                        color: nowPlayingCard.dominantColor
-                                                        Behavior on width {
-                                                            NumberAnimation {
-                                                                duration: 120
-                                                                easing.type: Easing.OutQuad
-                                                            }
-                                                        }
-                                                    }
+                                                text: `${nowPlayingCard.currentVolume}%`
+                                                color: nowPlayingCard.volumeColor
+                                                font {
+                                                    pixelSize: 17
+                                                    bold: true
+                                                    family: "ZedMono Nerd Font"
                                                 }
                                             }
                                         }
@@ -859,8 +825,10 @@ BarBlock {
 
                                         // ── Progress bar ──
                                         Item {
+                                            id: seekBar
+
                                             Layout.fillWidth: true
-                                            Layout.preferredHeight: 6
+                                            Layout.preferredHeight: 10
                                             Layout.rightMargin: 6
 
                                             readonly property real ratio: {
@@ -875,24 +843,74 @@ BarBlock {
                                                 return Math.min(pos / len, 1);
                                             }
 
+                                            HoverHandler {
+                                                id: seekHover
+                                            }
+
+                                            // track — thickens slightly under the cursor
                                             Rectangle {
                                                 anchors.left: parent.left
                                                 anchors.right: parent.right
                                                 anchors.verticalCenter: parent.verticalCenter
-                                                height: 3
-                                                radius: 1.5
-                                                color: Qt.rgba(1, 1, 1, 0.08)
+                                                height: seekHover.hovered ? 5 : 3
+                                                radius: height / 2
+                                                color: Qt.rgba(1, 1, 1, 0.09)
 
+                                                Behavior on height {
+                                                    NumberAnimation {
+                                                        duration: 120
+                                                        easing.type: Easing.OutQuad
+                                                    }
+                                                }
+
+                                                // fill with a soft sheen toward the playhead
                                                 Rectangle {
-                                                    width: parent.width * parent.parent.ratio
+                                                    width: parent.width * seekBar.ratio
                                                     height: parent.height
-                                                    radius: 1.5
+                                                    radius: height / 2
                                                     color: nowPlayingCard.dominantColor
+
                                                     Behavior on width {
                                                         NumberAnimation {
                                                             duration: 200
                                                             easing.type: Easing.Linear
                                                         }
+                                                    }
+
+                                                    Rectangle {
+                                                        anchors.fill: parent
+                                                        radius: parent.radius
+                                                        visible: seekHover.hovered
+                                                        gradient: Gradient {
+                                                            orientation: Gradient.Horizontal
+                                                            GradientStop {
+                                                                position: 0
+                                                                color: Qt.rgba(1, 1, 1, 0)
+                                                            }
+                                                            GradientStop {
+                                                                position: 1
+                                                                color: Qt.rgba(1, 1, 1, 0.25)
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            // playhead knob — appears on hover
+                                            Rectangle {
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                x: (parent.width - width) * seekBar.ratio
+                                                width: seekHover.hovered ? 9 : 0
+                                                height: width
+                                                radius: width / 2
+                                                color: "#f8f8f2"
+                                                border.width: 2
+                                                border.color: nowPlayingCard.dominantColor
+
+                                                Behavior on width {
+                                                    NumberAnimation {
+                                                        duration: 120
+                                                        easing.type: Easing.OutQuad
                                                     }
                                                 }
                                             }
@@ -1227,13 +1245,13 @@ BarBlock {
                                     }
                                 }
 
-                                // ── volume HUD — scrim OVER the expanded art while scrolling ──
+                                // ── volume HUD — value only, scrimmed over the expanded art ──
                                 Rectangle {
                                     anchors.fill: parent
                                     radius: 10
                                     color: Qt.rgba(0, 0, 0, 0.6)
                                     border.width: 1
-                                    border.color: Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.4)
+                                    border.color: Qt.rgba(nowPlayingCard.volumeColor.r, nowPlayingCard.volumeColor.g, nowPlayingCard.volumeColor.b, 0.5)
                                     visible: nowPlayingCard.showVolumeBadge
                                     opacity: visible ? 1 : 0
                                     Behavior on opacity {
@@ -1243,54 +1261,14 @@ BarBlock {
                                         }
                                     }
 
-                                    ColumnLayout {
+                                    Text {
                                         anchors.centerIn: parent
-                                        spacing: 6
-
-                                        Text {
-                                            Layout.alignment: Qt.AlignHCenter
-                                            text: nowPlayingCard.currentVolume <= 0 ? "\uf026" : "\uf028"
-                                            color: nowPlayingCard.currentVolume <= 0 ? "#6272a4" : nowPlayingCard.dominantColor
-                                            font {
-                                                pixelSize: 26
-                                                family: "Symbols Nerd Font Mono"
-                                            }
-                                        }
-
-                                        Text {
-                                            Layout.alignment: Qt.AlignHCenter
-                                            text: `${nowPlayingCard.currentVolume}%`
-                                            color: nowPlayingCard.currentVolume <= 0 ? "#6272a4" : nowPlayingCard.dominantColor
-                                            font {
-                                                pixelSize: 30
-                                                bold: true
-                                                family: "ZedMono Nerd Font"
-                                            }
-                                        }
-
-                                        Item {
-                                            Layout.preferredWidth: 140
-                                            Layout.preferredHeight: 5
-                                            Layout.alignment: Qt.AlignHCenter
-
-                                            Rectangle {
-                                                anchors.fill: parent
-                                                radius: 2.5
-                                                color: Qt.rgba(1, 1, 1, 0.14)
-                                            }
-
-                                            Rectangle {
-                                                width: parent.width * Math.min(nowPlayingCard.currentVolume / 100, 1)
-                                                height: parent.height
-                                                radius: 2.5
-                                                color: nowPlayingCard.dominantColor
-                                                Behavior on width {
-                                                    NumberAnimation {
-                                                        duration: 120
-                                                        easing.type: Easing.OutQuad
-                                                    }
-                                                }
-                                            }
+                                        text: `${nowPlayingCard.currentVolume}%`
+                                        color: nowPlayingCard.volumeColor
+                                        font {
+                                            pixelSize: 34
+                                            bold: true
+                                            family: "ZedMono Nerd Font"
                                         }
                                     }
                                 }

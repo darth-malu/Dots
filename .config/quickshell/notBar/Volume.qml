@@ -8,34 +8,15 @@ import qs.services
 Scope {
     id: root
     property bool shouldShowOsd: VolumeState.shouldShowOsd
-    property var defaultSink: VolumeState.defaultSink
-    property var defaultSource: VolumeState.defaultSource
     property var ifAudioNode: VolumeState.isAudioNode
-    property bool isMuted: VolumeState.isMuted
 
-    // which channel the OSD is currently displaying (output vs microphone)
-    property bool osdIsMic: false
-
-    // values are snapshotted at the moment of the volume event — displaying
-    // them directly can never go stale or desync from what triggered the OSD
-    property real osdVolume: 0
-    property bool osdMuted: false
-
-    function trigger(fromMic) {
-        const a = fromMic ? (root.defaultSource?.audio ?? null) : root.ifAudioNode;
-        if (!a)
-            return;
-        root.osdIsMic = fromMic;
-        root.osdVolume = a.volume;
-        root.osdMuted = a.muted;
-        root.shouldShowOsd = true;
-        hideTimer.restart();
-    }
+    readonly property real nodeVolume: ifAudioNode?.volume ?? 0
+    readonly property bool nodeMuted: ifAudioNode?.muted ?? false
 
     readonly property color volColor: {
-        if (root.osdMuted)
+        if (root.nodeMuted)
             return "#6272a4";
-        var v = root.osdVolume;
+        var v = root.nodeVolume;
         if (v > 0.8)
             return "#ff79c6";
         if (v > 0.5)
@@ -44,30 +25,20 @@ Scope {
     }
 
     PwObjectTracker {
-        objects: [root.defaultSink, root.defaultSource]
+        objects: [VolumeState.defaultSink]
     }
 
     Connections {
         target: root.ifAudioNode ?? null
 
         function onVolumeChanged() {
-            root.trigger(false);
+            root.shouldShowOsd = true;
+            hideTimer.restart();
         }
 
         function onMutedChanged() {
-            root.trigger(false);
-        }
-    }
-
-    Connections {
-        target: root.defaultSource?.audio ?? null
-
-        function onVolumeChanged() {
-            root.trigger(true);
-        }
-
-        function onMutedChanged() {
-            root.trigger(true);
+            root.shouldShowOsd = true;
+            hideTimer.restart();
         }
     }
 
@@ -112,28 +83,15 @@ Scope {
                     anchors.bottom: parent.bottom
                     height: 22
 
-                    Row {
+                    Text {
                         anchors.centerIn: parent
-                        spacing: 3
-
-                        // channel glyph — speaker for output, mic for input
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: root.osdIsMic ? "\uf130" : "\uf028"
-                            color: "#6272a4"
-                            font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
-                        }
-
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: root.osdMuted ? (root.osdIsMic ? "\uf131" : "\uf026") : Math.floor(root.osdVolume * 100)
-                            color: root.volColor
-                            font {
-                                pixelSize: root.osdMuted ? 16 : 14
-                                family: root.osdMuted ? "Symbols Nerd Font Mono" : "monofur Nerd Font"
-                                bold: true
-                                letterSpacing: root.osdMuted ? 0 : 1
-                            }
+                        text: Math.floor(root.nodeVolume * 100)
+                        color: root.volColor
+                        font {
+                            pixelSize: 14
+                            family: "monofur Nerd Font"
+                            bold: true
+                            letterSpacing: 1
                         }
                     }
                 }
@@ -144,13 +102,11 @@ Scope {
                         left: parent.left
                         right: parent.right
                         bottom: bottomDeck.top
-                        // margins: 6
                         leftMargin: 4
                         rightMargin: 4
                         bottomMargin: 0
                     }
-                    // height: (parent.height - bottomDeck.height - 12) * (nodeVolume)
-                    height: (parent.height - bottomDeck.height - 4) * root.osdVolume
+                    height: (parent.height - bottomDeck.height - 4) * root.nodeVolume
                     radius: 3
                     color: root.volColor
 
@@ -158,17 +114,6 @@ Scope {
                         NumberAnimation {
                             duration: 100
                         }
-                    }
-
-                    Rectangle {
-                        anchors {
-                            left: parent.left
-                            right: parent.right
-                            top: parent.top
-                        }
-                        height: parent.height * 0.4
-                        radius: 5
-                        color: Qt.rgba(1, 1, 1, 0.06)
                     }
                 }
             }

@@ -287,10 +287,9 @@ Item {
                         }
                     }
 
-                    // crisp speaker/mute glyph over the canvas waves
+                    // crisp speaker/mute glyph centered over the ring
                     Text {
                         anchors.centerIn: parent
-                        anchors.horizontalCenterOffset: -3
                         visible: mprisRoot.showVolume
                         text: {
                             var v = Math.max(0, Math.min(MprisState.player?.volume ?? 0, 1));
