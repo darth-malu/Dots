@@ -755,6 +755,8 @@ BarBlock {
                                 TrackButton {
                                     id: compactSwitcher
 
+                                    // only when enabled in settings > media > now playing
+                                    visible: MiscState.showPlayerChooser
                                     // small and unobtrusive — brightens on hover
                                     z: 10
                                     implicitWidth: 22
@@ -1258,6 +1260,8 @@ BarBlock {
                                 TrackButton {
                                     id: expandedSwitcher
 
+                                    // only when enabled in settings > media > now playing
+                                    visible: MiscState.showPlayerChooser
                                     // small and unobtrusive — brightens on hover
                                     z: 10
                                     implicitWidth: 22

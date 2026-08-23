@@ -13,8 +13,8 @@ Item {
 
     required property var host
 
-    width: mprisRoot.pillVisible ? pill.implicitWidth : 0
-    height: mprisRoot.pillVisible ? pill.implicitHeight : 0
+    width: mprisRoot.pillVisible ? pill.implicitWidth : idleVolumeSpot.width
+    height: mprisRoot.pillVisible ? pill.implicitHeight : idleVolumeSpot.height
     implicitWidth: width
     implicitHeight: height
 
@@ -71,6 +71,101 @@ Item {
                 MprisState.player.volume = vol / 100;
                 mprisRoot.showVolume = true;
                 hideVolumeTimer.restart();
+            }
+        }
+
+        // ── hidden-pill volume spot ──
+        // when the pill is tucked away (hide when idle), scrolling its old
+        // slot still adjusts volume — the ring + speaker flash on during the
+        // scroll and fade out shortly after it stops
+        Item {
+            id: idleVolumeSpot
+
+            visible: !mprisRoot.pillVisible && MprisState.player !== null
+            implicitWidth: visible ? 26 : 0
+            implicitHeight: mprisRoot.host ? mprisRoot.host.height : 30
+
+            MouseArea {
+                anchors.fill: parent
+                acceptedButtons: Qt.NoButton
+                hoverEnabled: false
+
+                onWheel: event => {
+                    const p = MprisState.player;
+                    if (!p || !p.volumeSupported)
+                        return;
+                    let vol = p.volume * 100;
+                    vol += event.angleDelta.y > 0 ? 4 : -4;
+                    vol = Math.max(0, Math.min(vol, 100));
+                    p.volume = vol / 100;
+                    mprisRoot.showVolume = true;
+                    hideVolumeTimer.restart();
+                }
+            }
+
+            Canvas {
+                id: idleVolRing
+                anchors.fill: parent
+                anchors.margins: 2
+                antialiasing: true
+                visible: mprisRoot.showVolume
+
+                onVisibleChanged: requestPaint()
+
+                Connections {
+                    target: mprisRoot
+                    function onShowVolumeChanged() {
+                        idleVolRing.requestPaint();
+                    }
+                }
+
+                Connections {
+                    target: MprisState.player
+                    function onVolumeChanged() {
+                        if (mprisRoot.showVolume)
+                            idleVolRing.requestPaint();
+                    }
+                }
+
+                onPaint: {
+                    var ctx = getContext("2d");
+                    ctx.clearRect(0, 0, width, height);
+
+                    var frac = Math.max(0, Math.min(MprisState.player?.volume ?? 0, 1));
+                    var r = Math.min(width, height) / 2 - 1.5;
+
+                    ctx.beginPath();
+                    ctx.arc(width / 2, height / 2, r, 0, Math.PI * 2);
+                    ctx.strokeStyle = Qt.rgba(1, 0.71, 0.76, 0.25);
+                    ctx.lineWidth = 2.5;
+                    ctx.stroke();
+
+                    if (frac > 0.004) {
+                        ctx.beginPath();
+                        var full = frac >= 0.9985;
+                        if (full) {
+                            ctx.arc(width / 2, height / 2, r, 0, Math.PI * 2);
+                            ctx.lineCap = "butt";
+                        } else {
+                            ctx.arc(width / 2, height / 2, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac);
+                            ctx.lineCap = "round";
+                        }
+                        ctx.strokeStyle = "#bd93f9";
+                        ctx.lineWidth = 2.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            Text {
+                anchors.centerIn: parent
+                visible: mprisRoot.showVolume
+                text: {
+                    var v = Math.max(0, Math.min(MprisState.player?.volume ?? 0, 1));
+                    return v <= 0.001 ? "\uf026" : "\uf028";
+                }
+                color: (MprisState.player?.volume ?? 0) <= 0.001 ? "#6272a4" : "#FF7EB3"
+                font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
             }
         }
 

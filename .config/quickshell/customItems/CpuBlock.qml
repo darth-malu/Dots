@@ -11,8 +11,6 @@ BarBlock {
 
     required property var host
 
-    property bool showTemp: false
-
     readonly property int cpuPercent: ResourcesState.cpuUsageString
     readonly property real cpuTemp: ResourcesState.cpuTemp
 
@@ -41,10 +39,7 @@ BarBlock {
     }
 
     onClicked: mouse => {
-        if (mouse.button === Qt.LeftButton)
-            showTemp = !showTemp;
-        else if (mouse.button === Qt.RightButton)
-            MiscState.showCpuProcs = !MiscState.showCpuProcs;
+        MiscState.showCpuProcs = !MiscState.showCpuProcs;
     }
 
     content: RowLayout {
@@ -93,10 +88,10 @@ BarBlock {
             }
         }
 
+        // live usage readout beside the gauge ring
         BarText {
-            id: tempText
-            visible: cpu.showTemp
-            symbolText: `${cpu.cpuTemp}°`
+            id: usageText
+            symbolText: `${cpu.cpuPercent}%`
             baseColor: cpu.cpuColor
             pointSize: 11
         }
@@ -210,16 +205,6 @@ BarBlock {
 
                         Item {
                             Layout.fillWidth: true
-                        }
-
-                        Text {
-                            text: `${cpu.cpuPercent}% ·`
-                            color: cpu.cpuColor
-                            font {
-                                pixelSize: 12
-                                bold: true
-                                family: "ZedMono Nerd Font"
-                            }
                         }
 
                         Text {

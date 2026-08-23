@@ -73,19 +73,6 @@ ColumnLayout {
                 }
             }
 
-            // accent rail marks the active (bar-controlled) player
-            Rectangle {
-                visible: parent.isActive
-                anchors.left: parent.left
-                anchors.topMargin: 10
-                anchors.bottomMargin: 10
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                width: 3
-                radius: 1.5
-                color: "#bd93f9"
-            }
-
             RowLayout {
                 anchors.fill: parent
                 anchors.leftMargin: 12
