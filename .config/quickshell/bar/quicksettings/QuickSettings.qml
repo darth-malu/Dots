@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Window
 import QtQuick.Layouts
 import QtQuick.Controls
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris
@@ -129,14 +130,35 @@ BarBlock {
         }
         anchor.rect.y: 33
 
-        implicitWidth: 340
-        implicitHeight: Math.min(qsContent.implicitHeight + 16, Screen.desktopAvailableHeight * 0.7)
+        // +24 for the shadow gutter around the card
+        implicitWidth: 364
+        implicitHeight: Math.min(qsContent.implicitHeight + 40, Screen.desktopAvailableHeight * 0.7)
+
+        // drop shadow drawn from a proxy silhouette so the real card never
+        // passes through the effect (stays pixel-crisp and fully interactive)
+        MultiEffect {
+            anchors.fill: parent
+            source: shadowProxy
+            shadowEnabled: true
+            shadowBlur: 0.85
+            shadowColor: Qt.rgba(0, 0, 0, 0.6)
+            shadowVerticalOffset: 5
+        }
 
         Rectangle {
+            id: shadowProxy
             anchors.fill: parent
+            anchors.margins: 12
             radius: 12
-            layer.enabled: true
-            layer.samples: 8
+            visible: false
+            color: "#282a36"
+        }
+
+        Rectangle {
+            id: qsCard
+            anchors.fill: parent
+            anchors.margins: 12
+            radius: 12
             color: "#282a36"
             border.color: "#44475a"
 
@@ -568,6 +590,27 @@ BarBlock {
                                 onTriggered: nowPlayingCard.showVolumeBadge = false
                             }
 
+                            // scroll anywhere on the card (compact OR expanded) to adjust
+                            // player volume — a HUD replaces the art while active;
+                            // players without MPRIS volume fall back to wpctl
+                            WheelHandler {
+                                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                                onWheel: ev => {
+                                    const p = MprisState.cardPlayer;
+                                    if (!(p?.canControl))
+                                        return;
+                                    if (nowPlayingCard.mprisVolume) {
+                                        MprisState.adjustVolume(p, ev.angleDelta.y > 0);
+                                    } else {
+                                        nowPlayingCard.extVol = Math.max(0, Math.min(nowPlayingCard.extVol + (ev.angleDelta.y > 0 ? 0.05 : -0.05), 1));
+                                        MprisState.adjustVolume(p, ev.angleDelta.y > 0);
+                                    }
+                                    nowPlayingCard.showVolumeBadge = true;
+                                    volumeBadgeTimer.restart();
+                                    ev.accepted = true;
+                                }
+                            }
+
                             // ── Hidden helpers ──
                             Item {
                                 visible: false
@@ -637,27 +680,6 @@ BarBlock {
                                 id: compactView
                                 visible: root.compactNowPlaying
                                 anchors.fill: parent
-
-                                // scroll anywhere on the card to adjust player volume —
-                                // album art is replaced by a themed readout while active;
-                                // players without MPRIS volume fall back to pactl
-                                WheelHandler {
-                                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                                    onWheel: ev => {
-                                        const p = MprisState.cardPlayer;
-                                        if (!(p?.canControl))
-                                            return;
-                                        if (nowPlayingCard.mprisVolume) {
-                                            MprisState.adjustVolume(p, ev.angleDelta.y > 0);
-                                        } else {
-                                            nowPlayingCard.extVol = Math.max(0, Math.min(nowPlayingCard.extVol + (ev.angleDelta.y > 0 ? 0.05 : -0.05), 1));
-                                            MprisState.adjustVolume(p, ev.angleDelta.y > 0);
-                                        }
-                                        nowPlayingCard.showVolumeBadge = true;
-                                        volumeBadgeTimer.restart();
-                                        ev.accepted = true;
-                                    }
-                                }
 
                                 // TODO: have trackbutton here
                                 TrackButton {
@@ -729,56 +751,68 @@ BarBlock {
                                             visible: compactArtImage.status !== Image.Ready && !nowPlayingCard.showVolumeBadge
                                         }
 
-                                        // ── temporary volume readout (scroll the card) ──
-                                        // replaces the art in place — no overlay scrim;
-                                        // tinted with the card's dominant color so it
-                                        // matches whatever is playing
-                                        ColumnLayout {
-                                            anchors.centerIn: parent
+                                        // ── volume HUD — covers the whole art while scrolling ──
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            radius: 6
+                                            color: "#21222c"
+                                            border.width: 1
+                                            border.color: Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.4)
                                             visible: nowPlayingCard.showVolumeBadge
-                                            spacing: 3
-
-                                            Text {
-                                                Layout.alignment: Qt.AlignHCenter
-                                                text: nowPlayingCard.currentVolume <= 0 ? "\uf026" : "\uf028"
-                                                color: nowPlayingCard.dominantColor
-                                                font {
-                                                    pixelSize: 13
-                                                    family: "Symbols Nerd Font Mono"
+                                            opacity: visible ? 1 : 0
+                                            Behavior on opacity {
+                                                NumberAnimation {
+                                                    duration: 140
+                                                    easing.type: Easing.OutQuad
                                                 }
                                             }
 
-                                            Text {
-                                                Layout.alignment: Qt.AlignHCenter
-                                                text: nowPlayingCard.currentVolume
-                                                color: nowPlayingCard.dominantColor
-                                                font {
-                                                    pixelSize: 17
-                                                    bold: true
-                                                    family: "monofur Nerd Font"
-                                                }
-                                            }
+                                            ColumnLayout {
+                                                anchors.centerIn: parent
+                                                spacing: 3
 
-                                            Item {
-                                                Layout.preferredWidth: 40
-                                                Layout.preferredHeight: 4
-                                                Layout.alignment: Qt.AlignHCenter
-
-                                                Rectangle {
-                                                    anchors.fill: parent
-                                                    radius: 2
-                                                    color: Qt.rgba(1, 1, 1, 0.14)
+                                                Text {
+                                                    Layout.alignment: Qt.AlignHCenter
+                                                    text: nowPlayingCard.currentVolume <= 0 ? "\uf026" : "\uf028"
+                                                    color: nowPlayingCard.currentVolume <= 0 ? "#6272a4" : "#bd93f9"
+                                                    font {
+                                                        pixelSize: 13
+                                                        family: "Symbols Nerd Font Mono"
+                                                    }
                                                 }
 
-                                                Rectangle {
-                                                    width: parent.width * Math.min(nowPlayingCard.currentVolume / 100, 1)
-                                                    height: parent.height
-                                                    radius: 2
-                                                    color: nowPlayingCard.dominantColor
-                                                    Behavior on width {
-                                                        NumberAnimation {
-                                                            duration: 120
-                                                            easing.type: Easing.OutQuad
+                                                Text {
+                                                    Layout.alignment: Qt.AlignHCenter
+                                                    text: `${nowPlayingCard.currentVolume}%`
+                                                    color: "#f8f8f2"
+                                                    font {
+                                                        pixelSize: 15
+                                                        bold: true
+                                                        family: "ZedMono Nerd Font"
+                                                    }
+                                                }
+
+                                                Item {
+                                                    Layout.preferredWidth: 44
+                                                    Layout.preferredHeight: 4
+                                                    Layout.alignment: Qt.AlignHCenter
+
+                                                    Rectangle {
+                                                        anchors.fill: parent
+                                                        radius: 2
+                                                        color: Qt.rgba(1, 1, 1, 0.14)
+                                                    }
+
+                                                    Rectangle {
+                                                        width: parent.width * Math.min(nowPlayingCard.currentVolume / 100, 1)
+                                                        height: parent.height
+                                                        radius: 2
+                                                        color: nowPlayingCard.dominantColor
+                                                        Behavior on width {
+                                                            NumberAnimation {
+                                                                duration: 120
+                                                                easing.type: Easing.OutQuad
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -793,9 +827,12 @@ BarBlock {
                                         spacing: 2
 
                                         // ── Title + row ──
+                                        // right margin keeps the marquee clear of the
+                                        // + / player-switch buttons in the top-right
                                         RowLayout {
                                             Layout.fillWidth: true
                                             Layout.fillHeight: true
+                                            Layout.rightMargin: 30
                                             spacing: 4
 
                                             ColumnLayout {
@@ -1207,6 +1244,74 @@ BarBlock {
                                         top: parent.top
                                         rightMargin: 30
                                         topMargin: 2
+                                    }
+                                }
+
+                                // ── volume HUD — replaces the entire expanded card while scrolling ──
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: 10
+                                    color: "#21222c"
+                                    border.width: 1
+                                    border.color: Qt.rgba(nowPlayingCard.dominantColor.r, nowPlayingCard.dominantColor.g, nowPlayingCard.dominantColor.b, 0.4)
+                                    visible: nowPlayingCard.showVolumeBadge
+                                    opacity: visible ? 1 : 0
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: 140
+                                            easing.type: Easing.OutQuad
+                                        }
+                                    }
+
+                                    ColumnLayout {
+                                        anchors.centerIn: parent
+                                        spacing: 6
+
+                                        Text {
+                                            Layout.alignment: Qt.AlignHCenter
+                                            text: nowPlayingCard.currentVolume <= 0 ? "\uf026" : "\uf028"
+                                            color: nowPlayingCard.currentVolume <= 0 ? "#6272a4" : "#bd93f9"
+                                            font {
+                                                pixelSize: 26
+                                                family: "Symbols Nerd Font Mono"
+                                            }
+                                        }
+
+                                        Text {
+                                            Layout.alignment: Qt.AlignHCenter
+                                            text: `${nowPlayingCard.currentVolume}%`
+                                            color: "#f8f8f2"
+                                            font {
+                                                pixelSize: 30
+                                                bold: true
+                                                family: "ZedMono Nerd Font"
+                                            }
+                                        }
+
+                                        Item {
+                                            Layout.preferredWidth: 140
+                                            Layout.preferredHeight: 5
+                                            Layout.alignment: Qt.AlignHCenter
+
+                                            Rectangle {
+                                                anchors.fill: parent
+                                                radius: 2.5
+                                                color: Qt.rgba(1, 1, 1, 0.14)
+                                            }
+
+                                            Rectangle {
+                                                width: parent.width * Math.min(nowPlayingCard.currentVolume / 100, 1)
+                                                height: parent.height
+                                                radius: 2.5
+                                                color: nowPlayingCard.dominantColor
+                                                Behavior on width {
+                                                    NumberAnimation {
+                                                        duration: 120
+                                                        easing.type: Easing.OutQuad
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }

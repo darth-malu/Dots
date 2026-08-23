@@ -1120,6 +1120,34 @@ Item {
                                 }
                             }
                         }
+
+                        // session totals — persistent vs graphs-only (old behaviour)
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 10
+
+                            ColumnLayout {
+                                spacing: 0
+                                Layout.fillWidth: true
+
+                                Text {
+                                    text: "Session totals"
+                                    color: "#f8f8f2"
+                                    font { pixelSize: 12; family: "Quicksand"; bold: true }
+                                }
+
+                                Text {
+                                    text: MiscState.showNetTotals ? "upload/download totals always visible" : "totals shown only with traffic graphs"
+                                    color: "#6272a4"
+                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                }
+                            }
+
+                            TogglePill {
+                                on: MiscState.showNetTotals
+                                onToggled: MiscState.showNetTotals = !MiscState.showNetTotals
+                            }
+                        }
                     }
                 }
             }

@@ -759,10 +759,11 @@ Item {
                     }
 
                     // ── Connection zone — details & live traffic on a raised panel ──
+                    // height = inner column + both margins (anchored children don't size parents)
                     Rectangle {
                         visible: root.showDetails || (NetworkState.wifiGraphEnabled && root.netRoot !== null)
                         Layout.fillWidth: true
-                        implicitHeight: connZone.implicitHeight
+                        implicitHeight: connZone.implicitHeight + 20
                         radius: 10
                         color: "#21222c"
 
@@ -817,7 +818,7 @@ Item {
                                 visible: root.showDetails && NetworkState.wifiConnected && NetworkState.wifiGraphEnabled && root.netRoot !== null
                                 Layout.fillWidth: true
                                 implicitHeight: 1
-                                color: "#343746"
+                                color: Qt.rgba(1, 1, 1, 0.06)
                             }
 
                             // upload/download traffic graphs + totals
@@ -874,7 +875,7 @@ Item {
                     Rectangle {
                         visible: Networking.wifiEnabled && root.networks.length > 0
                         Layout.fillWidth: true
-                        implicitHeight: netsZone.implicitHeight
+                        implicitHeight: netsZone.implicitHeight + 20
                         radius: 10
                         color: "#21222c"
 
@@ -883,7 +884,7 @@ Item {
                             anchors.left: parent.left
                             anchors.right: parent.right
                             anchors.top: parent.top
-                            anchors.margins: 8
+                            anchors.margins: 10
                             spacing: 4
 
                             Text {

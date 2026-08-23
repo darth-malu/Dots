@@ -293,8 +293,9 @@ Loader {
                 }
             }
 
+            // ── rates (original design) ──
             RowLayout {
-                visible: NetworkState.netspeedVisible
+                visible: NetworkState.netspeedVisible && root.online
                 spacing: 5
 
                 Item {
@@ -310,13 +311,6 @@ Loader {
                     }
                 }
 
-                Rectangle {
-                    visible: false
-                    implicitWidth: 1
-                    implicitHeight: 10
-                    color: "#44475a"
-                }
-
                 BarText {
                     text: root.fmtRate(root.txRate)
                     color: "#ff79c6"
@@ -324,6 +318,17 @@ Loader {
                         pixelSize: 10
                         family: "ZedMono Nerd Font"
                     }
+                }
+            }
+
+            // offline ghost instead of a wall of zeros
+            BarText {
+                visible: NetworkState.netspeedVisible && !root.online
+                text: "offline"
+                color: "#6272a4"
+                font {
+                    pixelSize: 10
+                    family: "ZedMono Nerd Font"
                 }
             }
         }
@@ -371,32 +376,23 @@ Loader {
                         id: card
                         anchors.fill: parent
                         anchors.margins: 14
-                        spacing: 7
+                        spacing: 10
 
-                        // ── Header: link details left · graph toggle + connectivity switch right ──
+                        // ── header zone: icon + title · graph toggle + connectivity switch ──
                         RowLayout {
                             Layout.fillWidth: true
-                            spacing: 8
+                            spacing: 7
 
-                            ColumnLayout {
-                                spacing: 2
+                            Text {
+                                text: "\uf1e6"
+                                color: "#bd93f9"
+                                font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
+                            }
 
-                                RowLayout {
-                                    spacing: 6
-
-                                    Rectangle {
-                                        implicitWidth: 6
-                                        implicitHeight: 6
-                                        radius: 3
-                                        color: root.ethUp ? "#50fa7b" : "#6272a4"
-                                    }
-
-                                    Text {
-                                        text: root.ethIfName.length > 0 ? root.ethIfName : "no device"
-                                        color: "#f8f8f2"
-                                        font { pixelSize: 11; bold: true; family: "Quicksand" }
-                                    }
-                                }
+                            Text {
+                                text: "ethernet"
+                                color: "#f8f8f2"
+                                font { pixelSize: 12; bold: true; family: "Quicksand" }
                             }
 
                             Item { Layout.fillWidth: true }
@@ -455,70 +451,137 @@ Loader {
                             }
                         }
 
-
-                        InfoRow {
-                            label: "ipv4"
-                            value: root.ipAddr.length > 0 ? root.ipAddr : "unavailable"
-                            valueColor: root.ipAddr.length > 0 ? "#f8f8f2" : "#6272a4"
-                        }
-
-                        InfoRow {
-                            label: "gateway"
-                            value: root.gateway.length > 0 ? root.gateway : "-"
-                        }
-
-
-                        // ── Live traffic graphs — total on the left, live rates on the right ──
-                        RowLayout {
-                            visible: root.ethGraphs
+                        // ── connection zone ──
+                        Rectangle {
                             Layout.fillWidth: true
-                            spacing: 8
+                            radius: 10
+                            color: "#21222c"
+                            implicitHeight: connZone.implicitHeight + 20
 
-                            Text {
-                                text: `total ↓ ${root.fmtBytes(root.ethRxTotal)}  ↑ ${root.fmtBytes(root.ethTxTotal)}`
-                                color: "#6272a4"
-                                font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                            }
+                            ColumnLayout {
+                                id: connZone
+                                anchors.fill: parent
+                                anchors.margins: 10
+                                spacing: 7
 
-                            Item { Layout.fillWidth: true }
+                                RowLayout {
+                                    spacing: 6
 
-                            Text {
-                                text: `↓ ${root.fmtRate(root.rxRate)}`
-                                color: "#bd93f9"
-                                font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
-                            }
+                                    Rectangle {
+                                        implicitWidth: 6
+                                        implicitHeight: 6
+                                        radius: 3
+                                        color: root.ethUp ? "#50fa7b" : "#6272a4"
+                                    }
 
-                            Text {
-                                text: `↑ ${root.fmtRate(root.txRate)}`
-                                color: "#ff79c6"
-                                font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                                    Text {
+                                        text: root.ethIfName.length > 0 ? root.ethIfName : "no device"
+                                        color: "#f8f8f2"
+                                        font { pixelSize: 11; bold: true; family: "Quicksand" }
+                                    }
+
+                                    Item { Layout.fillWidth: true }
+
+                                    Text {
+                                        visible: root.ethUp
+                                        text: NetworkState.ethernet?.linkSpeed ? `${NetworkState.ethernet.linkSpeed} Mb/s` : "linked"
+                                        color: "#6272a4"
+                                        font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                    }
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    implicitHeight: 1
+                                    color: Qt.rgba(1, 1, 1, 0.06)
+                                }
+
+                                InfoRow {
+                                    label: "ipv4"
+                                    value: root.ipAddr.length > 0 ? root.ipAddr : "unavailable"
+                                    valueColor: root.ipAddr.length > 0 ? "#f8f8f2" : "#6272a4"
+                                }
+
+                                InfoRow {
+                                    label: "gateway"
+                                    value: root.gateway.length > 0 ? root.gateway : "-"
+                                }
+
+                                // ── session totals — persistent by default, toggle in settings ──
+                                RowLayout {
+                                    visible: MiscState.showNetTotals || root.ethGraphs
+                                    Layout.fillWidth: true
+                                    spacing: 8
+
+                                    Text {
+                                        text: "total"
+                                        color: "#6272a4"
+                                        font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                                        Layout.preferredWidth: 56
+                                    }
+
+                                    Text {
+                                        text: `\u2193 ${root.fmtBytes(root.ethRxTotal)}`
+                                        color: "#bd93f9"
+                                        font { pixelSize: 11; bold: true; family: "ZedMono Nerd Font" }
+                                    }
+
+                                    Text {
+                                        text: `\u2191 ${root.fmtBytes(root.ethTxTotal)}`
+                                        color: "#ff79c6"
+                                        font { pixelSize: 11; bold: true; family: "ZedMono Nerd Font" }
+                                    }
+
+                                    Item { Layout.fillWidth: true }
+                                }
+
+                                // ── Live traffic graphs — live rates right ──
+                                RowLayout {
+                                    visible: root.ethGraphs
+                                    Layout.fillWidth: true
+                                    spacing: 8
+
+                                    Item { Layout.fillWidth: true }
+
+                                    Text {
+                                        text: `↓ ${root.fmtRate(root.rxRate)}`
+                                        color: "#bd93f9"
+                                        font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                                    }
+
+                                    Text {
+                                        text: `↑ ${root.fmtRate(root.txRate)}`
+                                        color: "#ff79c6"
+                                        font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                                    }
+                                }
+
+                                TrafficGraph {
+                                    visible: root.ethGraphs
+                                    accent: "#bd93f9"
+                                    history: root.rxHistory
+                                    peak: root.peakRx
+                                    tick: root.graphTick
+                                    maxLen: root.historyMax
+                                }
+
+                                TrafficGraph {
+                                    visible: root.ethGraphs
+                                    accent: "#ff79c6"
+                                    history: root.txHistory
+                                    peak: root.peakTx
+                                    tick: root.graphTick
+                                    maxLen: root.historyMax
+                                }
                             }
                         }
 
-                        TrafficGraph {
-                            visible: root.ethGraphs
-                            accent: "#bd93f9"
-                            history: root.rxHistory
-                            peak: root.peakRx
-                            tick: root.graphTick
-                            maxLen: root.historyMax
-                        }
-
-                        TrafficGraph {
-                            visible: root.ethGraphs
-                            accent: "#ff79c6"
-                            history: root.txHistory
-                            peak: root.peakTx
-                            tick: root.graphTick
-                            maxLen: root.historyMax
-                        }
-
-                        // ── Link speed + poll rate — ghosted footer, bottom center ──
+                        // ── ghost footer ──
                         Text {
                             Layout.alignment: Qt.AlignHCenter
                             visible: root.ethIfName.length > 0
                             text: root.ethUp
-                                ? (NetworkState.ethernet?.linkSpeed ? `${NetworkState.ethernet.linkSpeed} Mb/s · polls 1s` : "linked · polls 1s")
+                                ? "polls 1s"
                                 : root.ethConnected ? "connecting…" : "no link"
                             color: "#6272a4"
                             opacity: 0.55

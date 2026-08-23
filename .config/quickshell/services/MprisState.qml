@@ -75,9 +75,7 @@ Singleton {
         const kw = ((p.desktopEntry && p.desktopEntry.length > 2 ? p.desktopEntry : p.identity || "").split(" ")[0] || "").toLowerCase().replace(/[^a-z0-9]/g, "");
         if (kw.length < 3)
             return;
-        Quickshell.execDetached(["sh", "-c",
-            `id=$(wpctl status | awk -v kw='${kw}' '/^[[:space:]]*└?─? ?Streams:/{s=1;next} /^Video|^Audio|^Endpoints/{s=0} s && /^[[:space:]]*[0-9]+\\./ && index(tolower($0), kw) { match($0, /[0-9]+/); print substr($0, RSTART, RLENGTH); exit }'); ` +
-            `[ -n "$id" ] && wpctl set-volume "$id" ${up ? "0.05+" : "0.05-"}`]);
+        Quickshell.execDetached(["sh", "-c", `id=$(wpctl status | awk -v kw='${kw}' '/^[[:space:]]*└?─? ?Streams:/{s=1;next} /^Video|^Audio|^Endpoints/{s=0} s && /^[[:space:]]*[0-9]+\\./ && index(tolower($0), kw) { match($0, /[0-9]+/); print substr($0, RSTART, RLENGTH); exit }'); ` + `[ -n "$id" ] && wpctl set-volume "$id" ${up ? "0.05+" : "0.05-"}`]);
     }
 
     property var ignored: ["mpv", "whatsapp", "undefined"]
@@ -179,7 +177,7 @@ Singleton {
         if (title.startsWith('Listen to music,'))
             return;
 
-        Quickshell.execDetached(["notify-send", "-a", "mzichi", "-i", art, `󰎍    ${title}`, `      ${dEntry} \n󰥓    ${artist}\n    ${album}`]);
+        Quickshell.execDetached(["notify-send", "-a", "mzichi", "-i", art, `󰎍  ${title}`, `   \n  ${artist}\n  ${album}`]);
 
         /* NOTE xesam
         + genre

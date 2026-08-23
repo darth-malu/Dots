@@ -96,7 +96,9 @@ Item {
                     Layout.preferredWidth: pill.height - 4
                     Layout.preferredHeight: pill.height - 4
 
-                    ClippingWrapperRectangle {
+                    // ClippingRectangle (not ClippingWrapperRectangle) — the wrapper
+                    // variant manages child geometry and breaks anchored images
+                    ClippingRectangle {
                         id: albumArt
                         visible: MprisState.mprisArtVisible
                         anchors.fill: parent
@@ -195,13 +197,24 @@ Item {
                     Canvas {
                         id: progressRing
                         anchors.fill: parent
-                        anchors.margins: 1.5
+                        anchors.margins: 2
                         antialiasing: true
                         visible: MprisState.showMprisProgress || mprisRoot.showVolume
 
                         property real progress: 0
 
+                        onProgressChanged: requestPaint()
                         onVisibleChanged: requestPaint()
+
+                        function updateProgress() {
+                            var p = MprisState.player;
+                            if (!p || !(p.length > 0)) {
+                                progress = 0;
+                                return;
+                            }
+                            var pos = Math.max(0, Math.min(p.position ?? 0, p.length));
+                            progress = pos / p.length;
+                        }
 
                         Connections {
                             target: mprisRoot
@@ -216,6 +229,14 @@ Item {
                                 if (mprisRoot.showVolume)
                                     progressRing.requestPaint();
                             }
+                            // live position/length tracking keeps the ring honest
+                            // across seeks and track changes (timer is just a fallback)
+                            function onPositionChanged() {
+                                progressRing.updateProgress();
+                            }
+                            function onLengthChanged() {
+                                progressRing.updateProgress();
+                            }
                         }
 
                         onPaint: {
@@ -226,6 +247,12 @@ Item {
                             var cy = height / 2;
                             var r = Math.min(cx, cy) - 1.5;
 
+                            var frac;
+                            if (mprisRoot.showVolume)
+                                frac = Math.max(0, Math.min(MprisState.player?.volume ?? 0, 1));
+                            else
+                                frac = progressRing.progress;
+
                             // dim track
                             ctx.beginPath();
                             ctx.arc(cx, cy, r, 0, Math.PI * 2);
@@ -233,22 +260,20 @@ Item {
                             ctx.lineWidth = 2.5;
                             ctx.stroke();
 
-                            // value arc — song progress normally; while scrolling,
-                            // the ring temporarily becomes the volume level (purple)
-                            var frac;
-                            if (mprisRoot.showVolume)
-                                frac = Math.max(0, Math.min(MprisState.player?.volume ?? 0, 1));
-                            else
-                                frac = progressRing.progress;
-
-                            if (frac > 0.005) {
-                                ctx.beginPath();
+                            if (frac > 0.004) {
                                 var startAngle = -Math.PI / 2;
-                                var endAngle = startAngle + Math.PI * 2 * Math.min(frac, 0.999);
-                                ctx.arc(cx, cy, r, startAngle, endAngle);
+                                var full = frac >= 0.9985;
+                                ctx.beginPath();
+                                if (full) {
+                                    // complete circle avoids a round-cap nub at 12 o'clock
+                                    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                                    ctx.lineCap = "butt";
+                                } else {
+                                    ctx.arc(cx, cy, r, startAngle, startAngle + Math.PI * 2 * frac);
+                                    ctx.lineCap = "round";
+                                }
                                 ctx.strokeStyle = mprisRoot.showVolume ? "#bd93f9" : "#FF7EB3";
                                 ctx.lineWidth = 2.5;
-                                ctx.lineCap = "round";
                                 ctx.stroke();
                             }
                         }
@@ -258,15 +283,7 @@ Item {
                             interval: 200
                             repeat: true
                             running: MprisState.player?.isPlaying ?? false
-                            onTriggered: {
-                                var p = MprisState.player;
-                                if (p && p.length > 0) {
-                                    progressRing.progress = p.position / p.length;
-                                } else {
-                                    progressRing.progress = 0;
-                                }
-                                progressRing.requestPaint();
-                            }
+                            onTriggered: progressRing.updateProgress()
                         }
                     }
 
@@ -384,20 +401,21 @@ Item {
                     z: -1
                 }
 
-                // album art fills the popup
+                // album art fills the popup (respects the settings toggle)
                 Image {
                     anchors.fill: parent
                     source: MprisState.artFor(MprisState.player)
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
                     mipmap: true
+                    visible: MprisState.mprisArtVisible && status === Image.Ready
                 }
 
                 // browsers never get art — show their icon instead
                 Text {
                     anchors.centerIn: parent
-                    visible: MprisState.isBrowserPlayer(MprisState.player)
-                    text: MprisState.browserGlyph(MprisState.player)
+                    visible: !MprisState.mprisArtVisible || MprisState.isBrowserPlayer(MprisState.player)
+                    text: MprisState.isBrowserPlayer(MprisState.player) ? MprisState.browserGlyph(MprisState.player) : "🎵"
                     color: "#bd93f9"
                     font { pixelSize: 42; family: "Symbols Nerd Font Mono" }
                 }

@@ -63,6 +63,10 @@ Singleton {
     property bool showEthernet: true
     property bool showBattery: true
 
+    // ethernet popup — session totals always visible (false = old behaviour,
+    // totals only shown together with the traffic graphs)
+    property bool showNetTotals: true
+
     // ── Avatar (shared by quicksettings + settings sidebar) ──
     readonly property string avatarPath: {
         var home = Quickshell.env("HOME") || "/home/malu";

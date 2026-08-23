@@ -192,12 +192,16 @@ BarBlock {
                 }
 
                 // ── data zone ──
+                // implicitHeight is driven by the inner column — an anchored
+                // child does NOT give the wrapper its size on its own
                 Rectangle {
                     Layout.fillWidth: true
                     radius: 10
                     color: "#21222c"
+                    implicitHeight: mountZone.implicitHeight + 20
 
                     ColumnLayout {
+                        id: mountZone
                         anchors.fill: parent
                         anchors.margins: 10
                         spacing: 4
