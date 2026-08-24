@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Io
 import qs.services
 import qs.customItems
 
@@ -116,55 +115,6 @@ BarBlock {
         }
     }
 
-    Process {
-        id: procsProc
-        // aggregate cpu usage + real memory footprint (RSS) by process name
-        command: ["sh", "-c", "ps -eo pcpu,rss,comm --no-headers | awk '{c=$1; r=$2; $1=$2=\"\"; sub(/^ +/, \"\"); k=$0; cc[k]+=c; rr[k]+=r; cnt[k]++} END {for (k in cc) printf \"%.1f %d %d %s\\n\", cc[k], rr[k], cnt[k], k}' | sort -rn | head -10"]
-        property string buf: ""
-        running: false
-
-        stdout: SplitParser {
-            onRead: data => procsProc.buf += data + "\n"
-        }
-
-        onExited: {
-            const rows = [];
-            for (const line of procsProc.buf.trim().split("\n")) {
-                const p = line.trim().split(/\s+/);
-                if (p.length >= 4)
-                    rows.push({
-                        c: parseFloat(p[0]) || 0,
-                        kib: parseInt(p[1]) || 0,
-                        n: parseInt(p[2]) || 1,
-                        name: p.slice(3).join(" ")
-                    });
-            }
-            // update rows in place — reassigning a plain array model would tear
-            // down and recreate every delegate each tick (popup flicker)
-            while (procModel.count > rows.length)
-                procModel.remove(procModel.count - 1);
-            for (let i = 0; i < rows.length; i++) {
-                if (i < procModel.count)
-                    procModel.set(i, rows[i]);
-                else
-                    procModel.append(rows[i]);
-            }
-            procsProc.buf = "";
-        }
-    }
-
-    ListModel {
-        id: procModel
-    }
-
-    Timer {
-        interval: 2000
-        running: MiscState.showCpuProcs
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: procsProc.running = true
-    }
-
     LazyLoader {
         loading: true
 
@@ -266,7 +216,7 @@ BarBlock {
                     }
 
                     Repeater {
-                        model: procModel
+                        model: ResourcesState.cpuProcs
 
                         Rectangle {
                             id: prow
@@ -393,7 +343,7 @@ BarBlock {
                     }
 
                         Text {
-                            visible: procModel.count === 0
+                            visible: ResourcesState.cpuProcs.count === 0
                             text: "sampling…"
                             color: "#6272a4"
                             font {

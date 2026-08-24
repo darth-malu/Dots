@@ -15,13 +15,13 @@ import qs.bar.time
 RowLayout {
     id: root
 
-    // even spacing between the right-cluster groups (macOS style) —
     // matches rightBlock's module gap in Bar.qml
-    spacing: 14
+    spacing: 8
 
     Layout.alignment: Qt.AlignVCenter
 
     required property var host
+
     // when true the clock is embedded in this row (bar default layout)
     property bool clockInside: false
 
@@ -36,7 +36,7 @@ RowLayout {
     Component {
         id: connections
         RowLayout {
-            spacing: 14
+            spacing: 4
 
             Netspeed {
                 host: root.host
@@ -66,8 +66,9 @@ RowLayout {
             // REAL implicit size, not just Layout attached props — this
             // block lives inside a Loader, where attached Layout.* on the
             // delegate is inert; without these the pill collapses to 0×0
-            implicitWidth: trayRow.implicitWidth + 12
-            implicitHeight: Math.max(trayRow.implicitHeight, 22)
+            implicitWidth: trayRow.implicitWidth
+            // implicitHeight: Math.max(trayRow.implicitHeight, 22)
+            implicitHeight: trayRow.implicitHeight + 1
 
             // hide completely until SNI items actually register
             // (Repeater.count is reliably notified, unlike list .values)
@@ -81,20 +82,26 @@ RowLayout {
             border.color: glassy ? Qt.rgba(0.74, 0.58, 0.98, 0.28) : Qt.rgba(0.74, 0.58, 0.98, 0.18)
 
             Behavior on color {
-                ColorAnimation { duration: 160 }
+                ColorAnimation {
+                    duration: 160
+                }
             }
             Behavior on border.color {
-                ColorAnimation { duration: 160 }
+                ColorAnimation {
+                    duration: 160
+                }
             }
 
             content: RowLayout {
                 id: trayRow
 
-                spacing: 5
+                spacing: 6
 
                 // horizontal pill padding lives inside the content row so
                 // the slab's implicit width always covers it
-                Item { Layout.preferredWidth: 4 }
+                Item {
+                    Layout.preferredWidth: 1
+                }
 
                 Repeater {
                     id: systemTrayRepeater
@@ -107,50 +114,52 @@ RowLayout {
 
                         readonly property var item: modelData
                         readonly property bool hasMenu: item?.hasMenu ?? false
+
                         // menu only opens while this flag is armed — a stale
                         // QsMenuAnchor grabbing focus was closing it instantly
                         property bool menuArmed: false
+
                         onHasMenuChanged: if (!hasMenu)
                             menuArmed = false
 
-                        readonly property string tipText: {
-                            const t = item?.tooltipTitle?.trim();
-                            return (t && t.length > 0) ? t : (item?.title ?? item?.id ?? "");
-                        }
-
                         Layout.alignment: Qt.AlignVCenter
-                        implicitWidth: 26
-                        implicitHeight: 22
-                        radius: height / 2
-                        color: delegateMa.pressed ? Qt.rgba(0.741, 0.576, 0.976, 0.35)
-                            : delegateMa.containsMouse ? Qt.rgba(1, 1, 1, 0.14)
-                            : "transparent"
+                        implicitWidth: 13
+                        implicitHeight: 13
+                        color: "transparent"
 
                         Behavior on color {
-                            ColorAnimation { duration: 110 }
+                            ColorAnimation {
+                                duration: 110
+                            }
                         }
 
                         // gentle squish on press — tactile without being noisy
                         scale: delegateMa.pressed ? 0.86 : 1
+
                         Behavior on scale {
-                            NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                            NumberAnimation {
+                                duration: 90
+                                easing.type: Easing.OutCubic
+                            }
                         }
 
                         IconImage {
                             anchors.centerIn: parent
                             source: parent.item.icon
-                            implicitSize: 14
+                            implicitSize: 13
                             asynchronous: true
                             opacity: delegateMa.containsMouse || delegateMa.pressed ? 1 : 0.88
 
                             Behavior on opacity {
-                                NumberAnimation { duration: 110 }
+                                NumberAnimation {
+                                    duration: 110
+                                }
                             }
                         }
 
-                        ToolTip.visible: delegateMa.containsMouse && !menuAnchor.visible && delegate.tipText.length > 0
-                        ToolTip.delay: 450
-                        ToolTip.text: delegate.tipText
+                        // ToolTip.visible: delegateMa.containsMouse && !menuAnchor.visible && delegate.tipText.length > 0
+                        // ToolTip.delay: 450
+                        // ToolTip.text: delegate.tipText
 
                         MouseArea {
                             id: delegateMa
@@ -162,16 +171,22 @@ RowLayout {
 
                             onClicked: event => {
                                 if (event.button == Qt.LeftButton) {
-                                    try { delegate.item.activate(); } catch (e) {}
+                                    try {
+                                        delegate.item.activate();
+                                    } catch (e) {}
                                 } else if (event.button == Qt.RightButton) {
                                     if (delegate.hasMenu) {
                                         delegate.menuArmed = true;
                                         menuAnchor.open();
                                     } else {
-                                        try { delegate.item.activate(); } catch (e) {}
+                                        try {
+                                            delegate.item.activate();
+                                        } catch (e) {}
                                     }
                                 } else if (event.button == Qt.MiddleButton) {
-                                    try { delegate.item.secondaryActivate(); } catch (e) {}
+                                    try {
+                                        delegate.item.secondaryActivate();
+                                    } catch (e) {}
                                 }
                             }
                         }
@@ -181,6 +196,7 @@ RowLayout {
                             menu: delegate.menuArmed ? delegate.item.menu : null
 
                             anchor.window: delegate.QsWindow.window
+                            // NOTE: binds to the  systemtrayItem that called the menu
                             anchor.adjustment: PopupAdjustment.Flip
 
                             anchor.onAnchoring: {
@@ -195,7 +211,9 @@ RowLayout {
 
                 // horizontal pill padding lives inside the content row so
                 // the slab's implicit width always covers it
-                Item { Layout.preferredWidth: 4 }
+                Item {
+                    Layout.preferredWidth: 1
+                }
             }
         }
     }
@@ -246,13 +264,15 @@ RowLayout {
         interactive: false
 
         implicitWidth: cdRow.implicitWidth + 12
-        implicitHeight: cdRow.implicitHeight + 6
+        implicitHeight: cdRow.implicitHeight + 8
 
         radius: height / 2
         color: cdMouse.containsMouse ? Qt.rgba(PowerTimer.mode === "reboot" ? 0.31 : 1, PowerTimer.mode === "reboot" ? 0.98 : 0.33, PowerTimer.mode === "reboot" ? 0.48 : 0.33, 0.16) : Qt.rgba(1, 1, 1, 0.14)
 
         Behavior on color {
-            ColorAnimation { duration: 120 }
+            ColorAnimation {
+                duration: 120
+            }
         }
 
         // breathe when the action is under a minute away
@@ -260,8 +280,14 @@ RowLayout {
             running: PowerTimer.active && PowerTimer.remaining <= 60
             loops: Animation.Infinite
             alwaysRunToEnd: true
-            NumberAnimation { to: 0.45; duration: 500 }
-            NumberAnimation { to: 1; duration: 500 }
+            NumberAnimation {
+                to: 0.45
+                duration: 500
+            }
+            NumberAnimation {
+                to: 1
+                duration: 500
+            }
         }
 
         content: RowLayout {
@@ -272,13 +298,20 @@ RowLayout {
             Text {
                 text: PowerTimer.mode === "reboot" ? "\uf021" : "\uf011"
                 color: PowerTimer.mode === "reboot" ? "#50fa7b" : "#ff5555"
-                font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                font {
+                    pixelSize: 10
+                    family: "Symbols Nerd Font Mono"
+                }
             }
 
             Text {
                 text: PowerTimer.formatTime(PowerTimer.remaining)
                 color: "#f8f8f2"
-                font { pixelSize: 10; bold: true; family: "ZedMono Nerd Font" }
+                font {
+                    pixelSize: 10
+                    bold: true
+                    family: "ZedMono Nerd Font"
+                }
             }
         }
 
@@ -293,4 +326,5 @@ RowLayout {
 
     // coffee cup — appears right of quicksettings while caffeine mode is on
     Caffeine {}
+    Submap {}
 }

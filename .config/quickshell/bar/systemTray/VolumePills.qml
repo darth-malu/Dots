@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import qs.services
 
 // Speaker + mic glyphs for the bar — bare icons, no pill background,
@@ -40,7 +39,7 @@ RowLayout {
 
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 4
+            // spacing: 6
 
             Text {
                 text: {
@@ -59,14 +58,18 @@ RowLayout {
                 }
 
                 Behavior on color {
-                    ColorAnimation { duration: 120 }
+                    ColorAnimation {
+                        duration: 120
+                    }
                 }
             }
 
             // event-only readout — appears while scrolling, then fades
             Text {
+                Layout.leftMargin: 4
                 Layout.maximumWidth: 42
-                visible: vi.flashing || opacity > 0
+                // visible: vi.flashing || opacity > 0
+                visible: false
                 opacity: vi.flashing ? 1 : 0
                 Behavior on opacity {
                     NumberAnimation {

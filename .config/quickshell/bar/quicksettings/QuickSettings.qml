@@ -1,12 +1,8 @@
 import QtQuick
 import QtQuick.Window
 import QtQuick.Layouts
-import QtQuick.Controls
 import QtQuick.Effects
 import Quickshell
-import Quickshell.Io
-import Quickshell.Services.Mpris
-import Quickshell.Services.Pipewire
 import Quickshell.Widgets
 
 import qs.customItems
@@ -449,120 +445,120 @@ BarBlock {
 
                     // ═══ VOLUME ═══
                     ClippingRectangle {
-                    id: volumeCard
+                        id: volumeCard
 
-                    Layout.fillWidth: true
-                    Layout.bottomMargin: 8
-                    radius: 10
-                    color: "#21222c"
-                    border.width: 1
-                    border.color: Qt.rgba(0.74, 0.58, 0.98, 0.25)
-                    implicitHeight: volumeCol.implicitHeight + 16
+                        Layout.fillWidth: true
+                        Layout.bottomMargin: 8
+                        radius: 10
+                        color: "#21222c"
+                        border.width: 1
+                        border.color: Qt.rgba(0.74, 0.58, 0.98, 0.25)
+                        implicitHeight: volumeCol.implicitHeight + 16
 
-                    ColumnLayout {
-                    id: volumeCol
-                    anchors.fill: parent
-                    anchors.leftMargin: 12
-                    anchors.rightMargin: 12
-                    anchors.topMargin: 8
-                    anchors.bottomMargin: 8
-                    spacing: 5
+                        ColumnLayout {
+                            id: volumeCol
+                            anchors.fill: parent
+                            anchors.leftMargin: 12
+                            anchors.rightMargin: 12
+                            anchors.topMargin: 8
+                            anchors.bottomMargin: 8
+                            spacing: 5
 
-                    Brightness {
-                    Layout.fillWidth: true
-                    }
+                            Brightness {
+                                Layout.fillWidth: true
+                            }
 
-                    Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: 1
-                    visible: BrightnessState.available
-                    color: "#343746"
-                    }
+                            Rectangle {
+                                Layout.fillWidth: true
+                                implicitHeight: 1
+                                visible: BrightnessState.available
+                                color: "#343746"
+                            }
 
-                    ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 3
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 3
 
-                    RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 6
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 6
 
-                    SinkName {
-                    node: PipewireState.outputSink
-                    fallback: "output"
-                    accent: "#bd93f9"
-                    displayName: PipewireState.outputDisplayName
-                    }
+                                    SinkName {
+                                        node: PipewireState.outputSink
+                                        fallback: "output"
+                                        accent: "#bd93f9"
+                                        displayName: PipewireState.outputDisplayName
+                                    }
 
-                    Rectangle {
-                    id: pwBtn
+                                    Rectangle {
+                                        id: pwBtn
 
-                    // pw management shortcut (hyprpwcenter)
-                    implicitWidth: 18
-                    implicitHeight: 18
-                    radius: 5
-                    color: pwMouse.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "transparent"
+                                        // pw management shortcut (hyprpwcenter)
+                                        implicitWidth: 18
+                                        implicitHeight: 18
+                                        radius: 5
+                                        color: pwMouse.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "transparent"
 
-                    Behavior on color {
-                    ColorAnimation {
-                    duration: 120
-                    }
-                    }
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: 120
+                                            }
+                                        }
 
-                    Text {
-                    anchors.centerIn: parent
-                    text: "\uf013"
-                    color: pwMouse.containsMouse ? "#bd93f9" : "#6272a4"
-                    font {
-                    pixelSize: 10
-                    family: "Symbols Nerd Font Mono"
-                    }
-                    }
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "\uf013"
+                                            color: pwMouse.containsMouse ? "#bd93f9" : "#6272a4"
+                                            font {
+                                                pixelSize: 10
+                                                family: "Symbols Nerd Font Mono"
+                                            }
+                                        }
 
-                    MouseArea {
-                    id: pwMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                    root.showQsPopup = false;
-                    Quickshell.execDetached(["sh", "-c", "exec hyprpwcenter 2>/dev/null || exec pwvucontrol"]);
-                    }
-                    }
-                    }
-                    }
+                                        MouseArea {
+                                            id: pwMouse
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                root.showQsPopup = false;
+                                                Quickshell.execDetached(["sh", "-c", "exec hyprpwcenter 2>/dev/null || exec pwvucontrol"]);
+                                            }
+                                        }
+                                    }
+                                }
 
-                    VolumeSlider {
-                    id: outVol
-                    node: PipewireState.outputSink
-                    glyph: "\uf028"
-                    glyphMuted: "\uf026"
-                    accent: "#bd93f9"
-                    }
-                    }
+                                VolumeSlider {
+                                    id: outVol
+                                    node: PipewireState.outputSink
+                                    glyph: "\uf028"
+                                    glyphMuted: "\uf026"
+                                    accent: "#bd93f9"
+                                }
+                            }
 
-                    ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 3
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 3
 
-                    SinkName {
-                    node: PipewireState.inputSink
-                    fallback: "input"
-                    accent: "#8be9fd"
-                    }
+                                SinkName {
+                                    node: PipewireState.inputSink
+                                    fallback: "input"
+                                    accent: "#8be9fd"
+                                }
 
-                    VolumeSlider {
-                    id: inVol
-                    node: PipewireState.inputSink
-                    glyph: "\uf130"
-                    glyphMuted: "\uf131"
-                    accent: "#8be9fd"
+                                VolumeSlider {
+                                    id: inVol
+                                    node: PipewireState.inputSink
+                                    glyph: "\uf130"
+                                    glyphMuted: "\uf131"
+                                    accent: "#8be9fd"
+                                }
+                            }
+                        }
                     }
-                    }
-                    }
-                    }
+                }
             }
         }
     }
 }
-            }

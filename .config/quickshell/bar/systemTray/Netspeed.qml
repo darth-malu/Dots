@@ -270,7 +270,9 @@ Loader {
             spacing: 6
 
             // breathing room so text/icons never hug the pill edge
-            Item { Layout.preferredWidth: 4 }
+            // Item {
+            //     Layout.preferredWidth: 4
+            // }
 
             // ── Wifi icon — shown whenever the cable is NOT linked (exactly one net icon at all times) ──
             Item {
@@ -332,14 +334,21 @@ Loader {
                     Text {
                         text: "\u2b07"
                         color: "#bd93f9"
-                        font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+                        font {
+                            pixelSize: 9
+                            family: "Symbols Nerd Font Mono"
+                        }
                     }
 
                     Text {
                         Layout.preferredWidth: 26
                         text: root.fmtRate(root.rxRate)
                         color: "#e2d6fb"
-                        font { pixelSize: 10; weight: Font.DemiBold; family: "ZedMono Nerd Font" }
+                        font {
+                            pixelSize: 10
+                            weight: Font.DemiBold
+                            family: "ZedMono Nerd Font"
+                        }
                     }
                 }
 
@@ -357,14 +366,21 @@ Loader {
                     Text {
                         text: "\u2b06"
                         color: "#ff79c6"
-                        font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+                        font {
+                            pixelSize: 9
+                            family: "Symbols Nerd Font Mono"
+                        }
                     }
 
                     Text {
                         Layout.preferredWidth: 26
                         text: root.fmtRate(root.txRate)
                         color: "#ffd3ea"
-                        font { pixelSize: 10; weight: Font.DemiBold; family: "ZedMono Nerd Font" }
+                        font {
+                            pixelSize: 10
+                            weight: Font.DemiBold
+                            family: "ZedMono Nerd Font"
+                        }
                     }
                 }
             }
@@ -380,7 +396,9 @@ Loader {
                 }
             }
 
-            Item { Layout.preferredWidth: 4 }
+            // Item {
+            //     Layout.preferredWidth: 4
+            // }
         }
 
         LazyLoader {
@@ -436,16 +454,25 @@ Loader {
                             Text {
                                 text: "\uf0e8"
                                 color: "#bd93f9"
-                                font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
+                                font {
+                                    pixelSize: 13
+                                    family: "Symbols Nerd Font Mono"
+                                }
                             }
 
                             Text {
                                 text: root.ethIfName.length > 0 ? root.ethIfName : "no device"
                                 color: "#f8f8f2"
-                                font { pixelSize: 12; bold: true; family: "Quicksand" }
+                                font {
+                                    pixelSize: 12
+                                    bold: true
+                                    family: "Quicksand"
+                                }
                             }
 
-                            Item { Layout.fillWidth: true }
+                            Item {
+                                Layout.fillWidth: true
+                            }
 
                             Rectangle {
                                 Layout.alignment: Qt.AlignVCenter
@@ -458,7 +485,10 @@ Loader {
                                     anchors.centerIn: parent
                                     text: "\uf1fe"
                                     color: NetworkState.ethGraphsEnabled ? "#bd93f9" : "#6272a4"
-                                    font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+                                    font {
+                                        pixelSize: 11
+                                        family: "Symbols Nerd Font Mono"
+                                    }
                                 }
 
                                 MouseArea {
@@ -516,7 +546,10 @@ Loader {
                                 }
                                 color: "#b8bfcb"
                                 elide: Text.ElideMiddle
-                                font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                font {
+                                    pixelSize: 9
+                                    family: "ZedMono Nerd Font"
+                                }
                             }
 
                             Rectangle {
@@ -525,47 +558,57 @@ Loader {
                                 color: Qt.rgba(1, 1, 1, 0.06)
                             }
 
-                                // ── session totals — arrows carry the direction, both ways ──
-                                RowLayout {
-                                    visible: MiscState.showNetTotals || root.ethGraphs
+                            // ── session totals — arrows carry the direction, both ways ──
+                            RowLayout {
+                                visible: MiscState.showNetTotals || root.ethGraphs
+                                Layout.fillWidth: true
+                                spacing: 8
+
+                                Text {
+                                    text: `\u2193 ${root.fmtBytes(root.ethRxTotal)}`
+                                    color: "#bd93f9"
+                                    font {
+                                        pixelSize: 10
+                                        bold: true
+                                        family: "ZedMono Nerd Font"
+                                    }
+                                }
+
+                                Item {
                                     Layout.fillWidth: true
-                                    spacing: 8
+                                }
 
-                                    Text {
-                                        text: `\u2193 ${root.fmtBytes(root.ethRxTotal)}`
-                                        color: "#bd93f9"
-                                        font { pixelSize: 10; bold: true; family: "ZedMono Nerd Font" }
-                                    }
-
-                                    Item { Layout.fillWidth: true }
-
-                                    Text {
-                                        text: `\u2191 ${root.fmtBytes(root.ethTxTotal)}`
-                                        color: "#ff79c6"
-                                        font { pixelSize: 10; bold: true; family: "ZedMono Nerd Font" }
+                                Text {
+                                    text: `\u2191 ${root.fmtBytes(root.ethTxTotal)}`
+                                    color: "#ff79c6"
+                                    font {
+                                        pixelSize: 10
+                                        bold: true
+                                        family: "ZedMono Nerd Font"
                                     }
                                 }
+                            }
 
-                                // ── Live traffic graphs — current speed rendered inside each graph ──
-                                TrafficGraph {
-                                    visible: root.ethGraphs
-                                    accent: "#bd93f9"
-                                    history: root.rxHistory
-                                    peak: root.peakRx
-                                    tick: root.graphTick
-                                    maxLen: root.historyMax
-                                    label: root.fmtRate(root.rxRate)
-                                }
+                            // ── Live traffic graphs — current speed rendered inside each graph ──
+                            TrafficGraph {
+                                visible: root.ethGraphs
+                                accent: "#bd93f9"
+                                history: root.rxHistory
+                                peak: root.peakRx
+                                tick: root.graphTick
+                                maxLen: root.historyMax
+                                label: root.fmtRate(root.rxRate)
+                            }
 
-                                TrafficGraph {
-                                    visible: root.ethGraphs
-                                    accent: "#ff79c6"
-                                    history: root.txHistory
-                                    peak: root.peakTx
-                                    tick: root.graphTick
-                                    maxLen: root.historyMax
-                                    label: root.fmtRate(root.txRate)
-                                }
+                            TrafficGraph {
+                                visible: root.ethGraphs
+                                accent: "#ff79c6"
+                                history: root.txHistory
+                                peak: root.peakTx
+                                tick: root.graphTick
+                                maxLen: root.historyMax
+                                label: root.fmtRate(root.txRate)
+                            }
                         }
                     }
                 }

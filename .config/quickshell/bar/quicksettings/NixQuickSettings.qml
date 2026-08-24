@@ -3,12 +3,13 @@ import Quickshell.Widgets
 
 Rectangle {
     id: nixOsIcon
-    implicitWidth: 24
-    implicitHeight: 24
-    radius: 6
+    implicitWidth: img.width
+    implicitHeight: img.height
+    // radius: 6
     color: "transparent"
 
     IconImage {
+        id: img
         anchors.centerIn: parent
         implicitSize: 17
         source: Qt.resolvedUrl("../../svg/NixOS.svg")

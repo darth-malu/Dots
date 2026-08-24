@@ -18,10 +18,15 @@ RowLayout {
 
     property HyprlandMonitor monitor: Hyprland.monitorFor(screen)
 
-    // socket events + a short signature-checked poll keep both the
-    // workspace list and its app icons fresh; the cache keeps list identity
-    // stable between real changes so delegates don't churn
-    property int wsRev: 0
+    // socket events bump the shared WorkspaceService revision + a short
+    // poll keeps both the workspace list and its app icons fresh; the cache
+    // keeps list identity stable between real changes so delegates don't churn
+    readonly property int wsRev: WorkspaceService.revision
+
+    // event-driven list refresh — the service's coalesced revision bump
+    // replays here so workspace open/close still reflects immediately,
+    // not just at poll ticks
+    onWsRevChanged: root.refresh()
 
     // imperative refresh — bindings must never write their own dependencies,
     // or QML kills the loop and updates stall (the old binding-loop bug)
@@ -86,21 +91,8 @@ RowLayout {
         running: root.visible
         repeat: true
         onTriggered: {
-            root.wsRev++;
+            WorkspaceService.refresh();
             root.refresh();
-        }
-    }
-
-    Connections {
-        target: Hyprland
-
-        function onRawEvent(ev) {
-            const n = ev.name;
-            if (n === "workspace" || n === "destroyworkspace" || n === "moveworkspace"
-                || n === "movewindow" || n === "openwindow" || n === "closewindow" || n === "urgent") {
-                root.wsRev++;
-                root.refresh();
-            }
         }
     }
 

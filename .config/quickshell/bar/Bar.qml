@@ -66,7 +66,8 @@ ShellRoot {
 
                 RowLayout {
                     id: leftBlock
-                    spacing: 0.4
+                    // spacing: 0.4
+                    spacing: 10
                     Layout.alignment: Qt.AlignLeft
                     Layout.leftMargin: 6
 
@@ -87,7 +88,7 @@ ShellRoot {
                     id: rightBlock
                     Layout.alignment: Qt.AlignRight
                     // macOS menu-bar rhythm — one identical gap between modules
-                    spacing: 14
+                    spacing: 8 // 14::
 
                     Resources {
                         host: barr

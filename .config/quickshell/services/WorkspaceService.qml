@@ -185,6 +185,30 @@ Singleton {
         return !!root._urgentWsIds[wsId];
     }
 
+    // ── shared revision counter ──
+    // single coalesced refresh source for the bar workspace widgets —
+    // replaces their per-widget Connections blocks with divergent event
+    // lists. widgets keep their visible-gated poll Timers calling refresh()
+    // as the belt-and-suspenders fallback.
+    readonly property var _listEvents: new Set([
+        "workspace", "destroyworkspace", "moveworkspace", "movewindow",
+        "openwindow", "closewindow", "urgent", "changefloatingmode"
+    ])
+
+    property int revision: 0
+
+    property bool _revQueued: false
+
+    function refresh() {
+        if (_revQueued)
+            return; // coalesce bursts — one pass per event-loop cycle is enough
+        _revQueued = true;
+        Qt.callLater(() => {
+            _revQueued = false;
+            root.revision++;
+        });
+    }
+
     Connections {
         target: Hyprland
 
@@ -194,7 +218,9 @@ Singleton {
                 root._focusedAddress = (ev.data ?? "").split(",")[1] ?? "";
             else if (n === "activewindowv2")
                 root._focusedAddress = ev.data ?? "";
-            else if (n === "urgent") {
+
+            // urgency bookkeeping (tracked from socket events)
+            if (n === "urgent") {
                 const wsId = parseInt((ev.data ?? "").split(",")[1]);
                 if (!isNaN(wsId))
                     root._urgentWsIds[wsId] = true;
@@ -203,6 +229,10 @@ Singleton {
                 if (!isNaN(wsId))
                     delete root._urgentWsIds[wsId];
             }
+
+            // shared list-refresh signal for the workspace widgets
+            if (root._listEvents.has(n))
+                root.refresh();
         }
     }
 

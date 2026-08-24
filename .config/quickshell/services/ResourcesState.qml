@@ -38,6 +38,20 @@ Singleton {
     property bool resourcesVisible: false
     property string uptimeText: ""
 
+    // ── per-process popups (cpu / memory) ──
+    // sampling lives in the service so the bar blocks stay pure rendering;
+    // models are updated in place so delegates never churn between ticks
+    readonly property alias cpuProcs: cpuProcsModel
+    readonly property alias memProcs: memProcsModel
+
+    ListModel {
+        id: cpuProcsModel
+    }
+
+    ListModel {
+        id: memProcsModel
+    }
+
     FileView {
         id: uptimeFile
         path: "file:///proc/uptime"
@@ -286,5 +300,90 @@ Singleton {
         }
     }
 
+    // ── per-process sampling (moved from CpuBlock / MemoryBlock) ──
+
+    // shared in-place model update — reassigning a plain array model would
+    // tear down and recreate every delegate each tick (popup flicker)
+    function updateProcModel(model, rows) {
+        while (model.count > rows.length)
+            model.remove(model.count - 1);
+        for (let i = 0; i < rows.length; i++) {
+            if (i < model.count)
+                model.set(i, rows[i]);
+            else
+                model.append(rows[i]);
+        }
+    }
+
+    Process {
+        id: procsProc
+        // aggregate cpu usage + real memory footprint (RSS) by process name
+        command: ["sh", "-c", "ps -eo pcpu,rss,comm --no-headers | awk '{c=$1; r=$2; $1=$2=\"\"; sub(/^ +/, \"\"); k=$0; cc[k]+=c; rr[k]+=r; cnt[k]++} END {for (k in cc) printf \"%.1f %d %d %s\\n\", cc[k], rr[k], cnt[k], k}' | sort -rn | head -10"]
+        property string buf: ""
+        running: false
+
+        stdout: SplitParser {
+            onRead: data => procsProc.buf += data + "\n"
+        }
+
+        onExited: {
+            const rows = [];
+            for (const line of procsProc.buf.trim().split("\n")) {
+                const p = line.trim().split(/\s+/);
+                if (p.length >= 4)
+                    rows.push({
+                        c: parseFloat(p[0]) || 0,
+                        kib: parseInt(p[1]) || 0,
+                        n: parseInt(p[2]) || 1,
+                        name: p.slice(3).join(" ")
+                    });
+            }
+            root.updateProcModel(cpuProcsModel, rows);
+            procsProc.buf = "";
+        }
+    }
+
+    Timer {
+        interval: 2000
+        running: MiscState.showCpuProcs
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: procsProc.running = true
+    }
+
+    Process {
+        id: memProcsProc
+        // aggregate the real memory footprint (RSS) by process name
+        command: ["sh", "-c", "ps -eo rss,comm --no-headers | awk '{r=$1; $1=\"\"; sub(/^ +/, \"\"); k=$0; rr[k]+=r; cnt[k]++} END {for (k in rr) printf \"%d %d %s\\n\", rr[k], cnt[k], k}' | sort -rn | head -10"]
+        property string buf: ""
+        running: false
+
+        stdout: SplitParser {
+            onRead: data => memProcsProc.buf += data + "\n"
+        }
+
+        onExited: {
+            const rows = [];
+            for (const line of memProcsProc.buf.trim().split("\n")) {
+                const p = line.trim().split(/\s+/);
+                if (p.length >= 3)
+                    rows.push({
+                        kib: parseInt(p[0]) || 0,
+                        c: parseInt(p[1]) || 1,
+                        n: p.slice(2).join(" ")
+                    });
+            }
+            root.updateProcModel(memProcsModel, rows);
+            memProcsProc.buf = "";
+        }
+    }
+
+    Timer {
+        interval: 5000
+        running: MiscState.showMemProcs
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: memProcsProc.running = true
+    }
 
 }

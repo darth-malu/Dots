@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Io
 import qs.services
 import qs.customItems
 
@@ -88,54 +87,6 @@ BarBlock {
         }
     }
 
-    Process {
-        id: memProcsProc
-        // aggregate the real memory footprint (RSS) by process name
-        command: ["sh", "-c", "ps -eo rss,comm --no-headers | awk '{r=$1; $1=\"\"; sub(/^ +/, \"\"); k=$0; rr[k]+=r; cnt[k]++} END {for (k in rr) printf \"%d %d %s\\n\", rr[k], cnt[k], k}' | sort -rn | head -10"]
-        property string buf: ""
-        running: false
-
-        stdout: SplitParser {
-            onRead: data => memProcsProc.buf += data + "\n"
-        }
-
-        onExited: {
-            const rows = [];
-            for (const line of memProcsProc.buf.trim().split("\n")) {
-                const p = line.trim().split(/\s+/);
-                if (p.length >= 3)
-                    rows.push({
-                        kib: parseInt(p[0]) || 0,
-                        c: parseInt(p[1]) || 1,
-                        n: p.slice(2).join(" ")
-                    });
-            }
-            // update rows in place — reassigning a plain array model would tear
-            // down and recreate every delegate each tick (popup flicker)
-            while (procModel.count > rows.length)
-                procModel.remove(procModel.count - 1);
-            for (let i = 0; i < rows.length; i++) {
-                if (i < procModel.count)
-                    procModel.set(i, rows[i]);
-                else
-                    procModel.append(rows[i]);
-            }
-            memProcsProc.buf = "";
-        }
-    }
-
-    ListModel {
-        id: procModel
-    }
-
-    Timer {
-        interval: 5000
-        running: MiscState.showMemProcs
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: memProcsProc.running = true
-    }
-
     LazyLoader {
         loading: true
 
@@ -213,7 +164,7 @@ BarBlock {
                     }
 
                     Repeater {
-                        model: procModel
+                        model: ResourcesState.memProcs
 
                         Rectangle {
                             id: mrow
@@ -229,7 +180,7 @@ BarBlock {
                                 : frac > 0.06 ? "#ffb86c"
                                 : frac > 0.02 ? "#50fa7b"
                                 : "#8be9fd"
-                            readonly property real relMax: procModel.count > 0 ? Math.max(procModel.get(0).kib, 1) : 1
+                            readonly property real relMax: ResourcesState.memProcs.count > 0 ? Math.max(ResourcesState.memProcs.get(0).kib, 1) : 1
 
                             radius: 8
                             Layout.fillWidth: true
@@ -330,7 +281,7 @@ BarBlock {
                     }
 
                     Text {
-                        visible: procModel.count === 0
+                        visible: ResourcesState.memProcs.count === 0
                         text: "sampling…"
                         color: "#6272a4"
                         font {
