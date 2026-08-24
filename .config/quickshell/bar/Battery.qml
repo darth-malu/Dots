@@ -100,7 +100,7 @@ RowLayout {
 
                 width: Math.max(0, (parent.width - 4) * Math.min(Math.max(batteryBlock.percentage, 0), 1))
                 radius: 2.5
-                color: batteryBody.blareLo
+                color: batteryBlock.isLow || batteryBlock.isCritical ? batteryBody.blareLo : batteryBlock.accentColor
 
                 SequentialAnimation on color {
                     running: batteryBlock.isLow || batteryBlock.isCritical
@@ -180,7 +180,7 @@ RowLayout {
             implicitWidth: 2
             implicitHeight: 7
             radius: 1
-            color: batteryBody.blareLo
+            color: batteryBlock.isLow || batteryBlock.isCritical ? batteryBody.blareLo : batteryBlock.accentColor
 
             SequentialAnimation on color {
                 running: batteryBlock.isLow || batteryBlock.isCritical

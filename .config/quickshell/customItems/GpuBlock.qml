@@ -16,6 +16,16 @@ BarBlock {
 
     readonly property color gpuColor: gpuPercent > 80 ? "#ff79c6" : gpuPercent > 60 ? "#c6a0f6" : "#50fa7b"
 
+    function tempColor(t) {
+        if (t >= 75)
+            return "#ff5555";
+        if (t >= 62)
+            return "#ffb86c";
+        if (t >= 45)
+            return "#f1fa8c";
+        return "#8be9fd";
+    }
+
     onClicked: mouse => {
         if (mouse.button === Qt.LeftButton)
             showPercent = !showPercent;
@@ -81,7 +91,7 @@ BarBlock {
             id: tempText
             visible: gpu.showTemp
             symbolText: `${gpu.gpuTemp}°`
-            baseColor: gpu.gpuColor
+            baseColor: gpu.tempColor(gpu.gpuTemp)
             pointSize: 11
         }
     }

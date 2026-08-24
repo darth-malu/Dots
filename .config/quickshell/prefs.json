@@ -9,9 +9,9 @@
     "showNotifTray": false,
     "showPlayerChooser": true,
     "showShuffle": true,
-    "showSysTray": false,
+    "showSysTray": true,
     "showVolumeIn": false,
-    "showVolumeOut": false,
+    "showVolumeOut": true,
     "showWifi": true,
     "wifiGreenName": true
 }

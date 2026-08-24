@@ -47,6 +47,8 @@ RowLayout {
     Component {
         id: connections
         RowLayout {
+            spacing: 7
+
             Netspeed {
                 host: root.host
             }
@@ -175,7 +177,6 @@ RowLayout {
 
     VolumePills {
         Layout.alignment: Qt.AlignVCenter
-        Layout.leftMargin: 2
         host: root.host
         visible: MiscState.showVolumeOut || MiscState.showVolumeIn
     }

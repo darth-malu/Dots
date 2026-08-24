@@ -784,20 +784,35 @@ Item {
                     Rectangle {
                         id: wifiTile
 
-                        Layout.fillWidth: true
-                        implicitHeight: 74
-                        radius: 10
-                        color: "#21222c"
-                        border.width: 1
-                        border.color: NetworkState.wifiConnected ? Qt.rgba(0.741, 0.576, 0.976, 0.4) : "#313244"
+                        // state machine: 2 = connected · 1 = radio on, idle · 0 = radio off
+                        readonly property int state: NetworkState.wifiConnected ? 2 : NetworkState.wifiEnabled ? 1 : 0
+                        readonly property bool on: NetworkState.wifiEnabled
+                        readonly property string ssid: NetworkState.activeNetwork?.name ?? ""
 
-                        Behavior on border.color {
-                            ColorAnimation { duration: 150 }
+                        Layout.fillWidth: true
+                        implicitHeight: 78
+                        radius: 10
+                        color: wifiMa.containsMouse ? "#262838" : "#21222c"
+                        border.width: 1
+                        border.color: [Qt.rgba(1, 0.33, 0.33, 0.35), Qt.rgba(0.741, 0.576, 0.976, 0.35), Qt.rgba(0.545, 0.914, 0.992, 0.55)][state]
+
+                        Behavior on border.color { ColorAnimation { duration: 180 } }
+                        Behavior on color { ColorAnimation { duration: 120 } }
+
+                        // left accent rail matching the state color
+                        Rectangle {
+                            x: 1
+                            y: 1
+                            width: 3
+                            height: parent.height - 2
+                            radius: 2
+                            color: ["#ff5555", "#bd93f9", "#8be9fd"][wifiTile.state]
+                            opacity: 0.85
                         }
 
                         ColumnLayout {
                             anchors.centerIn: parent
-                            spacing: 5
+                            spacing: 4
 
                             IconImage {
                                 Layout.alignment: Qt.AlignHCenter
@@ -808,11 +823,8 @@ Item {
 
                             Text {
                                 Layout.alignment: Qt.AlignHCenter
-                                text: {
-                                    const n = NetworkState.activeNetwork?.name;
-                                    return NetworkState.wifiConnected && n ? n : "Wi-Fi off";
-                                }
-                                color: NetworkState.wifiConnected ? "#f8f8f2" : "#6272a4"
+                                text: wifiTile.state === 2 && wifiTile.ssid ? wifiTile.ssid : wifiTile.on ? "Not connected" : "Wi-Fi radio off"
+                                color: wifiTile.state === 2 ? "#f8f8f2" : "#b8bfcb"
                                 elide: Text.ElideRight
                                 maximumLineCount: 1
                                 font { pixelSize: 11; bold: true; family: "Quicksand" }
@@ -820,32 +832,76 @@ Item {
 
                             Text {
                                 Layout.alignment: Qt.AlignHCenter
-                                text: NetworkState.adapter?.connected
-                                    ? "signal " + Math.round(NetworkState.activeNetwork?.strength ?? 0) + "%"
-                                    : NetworkState.wifiEnabled ? "idle" : "disabled"
-                                color: "#6272a4"
+                                text: wifiTile.state === 2
+                                    ? "connected · " + Math.round(NetworkState.activeNetwork?.strength ?? 0) + "% signal"
+                                    : wifiTile.on ? "radio on · scanning" : "radio off"
+                                color: ["#ff8c8c", "#bd93f9", "#8be9fd"][wifiTile.state]
                                 font { pixelSize: 9; family: "ZedMono Nerd Font" }
                             }
+                        }
+
+                        // hover tab naming the click action
+                        Rectangle {
+                            visible: wifiMa.containsMouse
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            anchors.margins: 6
+                            implicitWidth: wifiTabLbl.implicitWidth + 14
+                            implicitHeight: 18
+                            radius: 9
+                            color: Qt.rgba(0.741, 0.576, 0.976, 0.16)
+                            border.width: 1
+                            border.color: Qt.rgba(0.741, 0.576, 0.976, 0.45)
+
+                            Text {
+                                id: wifiTabLbl
+
+                                anchors.centerIn: parent
+                                text: wifiTile.on ? "click to turn off" : "click to turn on"
+                                color: "#e2d6fb"
+                                font { pixelSize: 8; bold: true; family: "ZedMono Nerd Font" }
+                            }
+                        }
+
+                        MouseArea {
+                            id: wifiMa
+
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: NetworkState.setWifiEnabled(!NetworkState.wifiEnabled)
                         }
                     }
 
                     Rectangle {
                         id: ethTile
 
-                        Layout.fillWidth: true
-                        implicitHeight: 74
-                        radius: 10
-                        color: "#21222c"
-                        border.width: 1
-                        border.color: NetworkState.ethernet?.hasLink ? Qt.rgba(0.545, 0.914, 0.992, 0.4) : "#313244"
+                        // state machine: 2 = link up · 1 = cable plugged, no carrier · 0 = disconnected/off
+                        readonly property int state: NetworkState.ethernet?.hasLink ? 2 : NetworkState.ethernet?.connected ? 1 : 0
 
-                        Behavior on border.color {
-                            ColorAnimation { duration: 150 }
+                        Layout.fillWidth: true
+                        implicitHeight: 78
+                        radius: 10
+                        color: ethMa.containsMouse ? "#262838" : "#21222c"
+                        border.width: 1
+                        border.color: [Qt.rgba(1, 0.33, 0.33, 0.35), Qt.rgba(0.941, 0.98, 0.549, 0.4), Qt.rgba(0.314, 0.98, 0.482, 0.55)][state]
+
+                        Behavior on border.color { ColorAnimation { duration: 180 } }
+                        Behavior on color { ColorAnimation { duration: 120 } }
+
+                        Rectangle {
+                            x: 1
+                            y: 1
+                            width: 3
+                            height: parent.height - 2
+                            radius: 2
+                            color: ["#ff5555", "#f1fa8c", "#50fa7b"][ethTile.state]
+                            opacity: 0.85
                         }
 
                         ColumnLayout {
                             anchors.centerIn: parent
-                            spacing: 5
+                            spacing: 4
 
                             IconImage {
                                 Layout.alignment: Qt.AlignHCenter
@@ -856,8 +912,8 @@ Item {
 
                             Text {
                                 Layout.alignment: Qt.AlignHCenter
-                                text: NetworkState.ethernet?.hasLink ? "Ethernet" : "No cable"
-                                color: NetworkState.ethernet?.hasLink ? "#f8f8f2" : "#6272a4"
+                                text: ["Ethernet off", "No carrier", "Ethernet"][ethTile.state]
+                                color: ethTile.state === 2 ? "#f8f8f2" : "#b8bfcb"
                                 elide: Text.ElideRight
                                 maximumLineCount: 1
                                 font { pixelSize: 11; bold: true; family: "Quicksand" }
@@ -865,25 +921,42 @@ Item {
 
                             Text {
                                 Layout.alignment: Qt.AlignHCenter
-                                text: NetworkState.ethernet?.hasLink ? "link up" : "disconnected"
-                                color: "#6272a4"
+                                text: ["disconnected", "cable detected", "gigabit link up"][ethTile.state]
+                                color: ["#ff8c8c", "#f1fa8c", "#50fa7b"][ethTile.state]
                                 font { pixelSize: 9; family: "ZedMono Nerd Font" }
                             }
                         }
-                    }
-                }
 
-                Card {
-                    title: "Internet"
-                    icon: "\uf0ac"
-                    accent: "#8be9fd"
+                        Rectangle {
+                            visible: ethMa.containsMouse
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            anchors.margins: 6
+                            implicitWidth: ethTabLbl.implicitWidth + 14
+                            implicitHeight: 18
+                            radius: 9
+                            color: Qt.rgba(0.314, 0.98, 0.482, 0.12)
+                            border.width: 1
+                            border.color: Qt.rgba(0.314, 0.98, 0.482, 0.45)
 
-                    SettingRow {
-                        icon: "\uf1eb"
-                        label: "Internet access"
-                        caption: NetworkState.internetEnabled ? "on" : "off"
-                        checked: NetworkState.internetEnabled
-                        onFlipped: NetworkState.setInternetEnabled(!NetworkState.internetEnabled)
+                            Text {
+                                id: ethTabLbl
+
+                                anchors.centerIn: parent
+                                text: ethTile.state > 0 ? "click to disconnect" : "click to connect"
+                                color: "#d6ffe6"
+                                font { pixelSize: 8; bold: true; family: "ZedMono Nerd Font" }
+                            }
+                        }
+
+                        MouseArea {
+                            id: ethMa
+
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: NetworkState.setEthernetEnabled(!(ethTile.state > 0))
+                        }
                     }
                 }
 
@@ -1057,7 +1130,7 @@ Item {
                 property bool open: false
 
                 Layout.fillWidth: true
-                implicitHeight: headRow.implicitHeight + (topic.open ? bodyCol.implicitHeight + 34 : 0)
+                implicitHeight: headRow.implicitHeight + (topic.open ? bodyCol.implicitHeight + 32 : 0)
                 radius: 10
                 color: Qt.rgba(1, 1, 1, 0.02)
                 border.width: 1
@@ -1098,15 +1171,19 @@ Item {
                         }
 
                         ColumnLayout {
+                            Layout.fillWidth: true
                             spacing: 1
 
                             Text {
+                                Layout.fillWidth: true
                                 text: topic.title
                                 color: "#f8f8f2"
+                                elide: Text.ElideRight
                                 font { pixelSize: 13; bold: true; family: "Quicksand" }
                             }
 
                             Text {
+                                Layout.fillWidth: true
                                 visible: !topic.open && topic.summary.length > 0
                                 text: topic.summary
                                 color: "#6272a4"
@@ -1115,19 +1192,16 @@ Item {
                             }
                         }
 
-                        Item { Layout.fillWidth: true }
-
                         Text {
                             text: topic.open ? "\uf077" : "\uf078"
                             color: "#6272a4"
                             font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
                         }
-                    }
 
-                    MouseArea {
-                        anchors.fill: headRow
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: topic.open = !topic.open
+                        TapHandler {
+                            gesturePolicy: TapHandler.ReleaseWithinBounds
+                            onTapped: topic.open = !topic.open
+                        }
                     }
 
                     ColumnLayout {
@@ -1141,9 +1215,9 @@ Item {
             }
 
             component HelpLine: Text {
-                property string bullet: "·"
+                // bullet prefix applied on completion — bindings stay literal
+                Component.onCompleted: text = "·  " + text
                 Layout.fillWidth: true
-                text: bullet.length > 0 ? bullet + "  " + parent.text : parent.text
                 color: "#b8bfcb"
                 wrapMode: Text.WordWrap
                 font { pixelSize: 11; family: "Quicksand" }
@@ -1192,7 +1266,7 @@ Item {
 
                     HelpLine { text: "Click the clock in the bar to open the calendar popup." }
                     HelpLine { text: "Pick a day, then type your task in the input at the bottom." }
-                    HelpLine { text: "Include a time like \u201cPay rent 14:30\u201d for an alert at that time — leave it out for an all-day reminder." }
+                    HelpLine { text: "The time field starts at the current hour — scroll or type on the HH/MM chips to adjust; every reminder is timed." }
                     HelpLine { text: "Dots on day cells show how many reminders are pending. The list below the calendar has check (done) and ✕ (remove) buttons." }
                     HelpLine { text: "When one is due you get a critical notification plus a chime. Reminders persist in ~/.config/quickshell/reminders.json." }
                     HelpLine { text: "You can also manage them from the terminal:" }
@@ -1207,8 +1281,8 @@ Item {
                     summary: "low / critical warnings · history graph"
 
                     HelpLine { text: "Low battery warns at 20%, critical at 10% — each fires once per discharge and re-arms when you plug in." }
-                    HelpLine { text: "While critical and still unplugged, a reminder repeats every 5 minutes until the charger is connected." }
-                    HelpLine { text: "Left-click the bar pill for details and power profiles; right-click toggles the percentage inside the pill. The pill itself blares when low or critical." }
+                    HelpLine { text: "Crossing a threshold plays a chime once per discharge and the pill blares orange/red until plugged in — no popup spam." }
+                    HelpLine { text: "Left-click the bar pill for details, history graph and power profiles; right-click toggles the percentage inside the pill." }
                     HelpLine { text: "The chart icon in the popup enables a one-hour charge-history graph." }
                 }
 
@@ -1217,9 +1291,9 @@ Item {
                     title: "Speed test"
                     summary: "ping · download · upload via Cloudflare"
 
-                    HelpLine { text: "Find it at the bottom of the Wi-Fi popup and in Settings → Connections." }
+                    HelpLine { text: "Find it at the bottom of the Wi-Fi popup from the bar tray icon." }
                     HelpLine { text: "It measures latency (best of 3), a 50 MB download and an 8 MB upload against Cloudflare's speed endpoints using curl — no extra packages needed." }
-                    HelpLine { text: "The square button cancels a running test; the circular arrow reruns a finished one." }
+                    HelpLine { text: "The Start/Stop pill cancels a running test; result tiles stay populated until you run again." }
                 }
 
                 HelpTopic {
@@ -1228,7 +1302,7 @@ Item {
                     summary: "pin players · wheel cycling · chip mute"
 
                     HelpLine { text: "With more than one player running, hover the bottom-left of the Now Playing card in quicksettings — a faint ⋯ button appears. Click it to open the player strip." }
-                    HelpLine { text: "Scroll the strip to cycle players, click a chip to pin that player, right-click any chip to mute/unmute it." }
+                    HelpLine { text: "Scroll the strip to cycle players, click a chip to pin that player, right-click any chip to mute/unmute it. Right- or middle-click anywhere on the card mutes the active player." }
                     HelpLine { text: "The strip auto-closes after ~1 s when the pointer leaves. It can be turned off in Settings → Media → Now Playing." }
                 }
 
@@ -1256,7 +1330,7 @@ Item {
                     title: "Network"
                     summary: "wifi / ethernet toggles · traffic graphs"
 
-                    HelpLine { text: "Corner buttons on the status tiles in Settings → Connections switch the Wi-Fi radio off/on and disconnect/reconnect Ethernet." }
+                    HelpLine { text: "In Settings → Connections, click the Wi-Fi tile to toggle the radio and the Ethernet tile to connect/disconnect — hover shows the action, colors track state." }
                     HelpLine { text: "Plugging in Ethernet automatically drops Wi-Fi once so traffic takes the faster link — reconnecting manually afterwards is respected." }
                     HelpLine { text: "Both popups support live traffic graphs (chart-icon in the header) and session totals; right-click the bar module toggles the rate readout on the bar itself." }
                 }

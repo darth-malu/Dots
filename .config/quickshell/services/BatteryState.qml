@@ -145,16 +145,13 @@ Singleton {
         if (!root.available || root.isPluggedIn)
             return;
         const pct = root.pctDisplay;
-        const left = timeLeftText();
         if (pct <= criticalThreshold && !warnedCritical) {
             warnedLow = true;
             warnedCritical = true;
             Sfx.play("mixkit-vintage-telephone-ringtone-1356.wav");
-            notify("Critical battery", `${pct}%${left ? ` · ~${left} left` : ""} — plug in now`, "warning-battery", "critical");
         } else if (pct <= lowThreshold && !warnedLow) {
             warnedLow = true;
             Sfx.play("mixkit-censorship-beep-1082.wav");
-            notify("Low battery", `${pct}%${left ? ` · ~${left} remaining` : ""}`, "low-battery", "normal");
         }
     }
 
@@ -162,16 +159,4 @@ Singleton {
 
     // covers boot/already-low-on-unplug cases where the percentage never changes
     Component.onCompleted: Qt.callLater(evalWarnings)
-
-    // keep nagging every 5 minutes while critically low and still off the charger
-    Timer {
-        interval: 300000
-        running: root.available && root.isCritical && !root.isPluggedIn
-        repeat: true
-        onTriggered: {
-            const left = root.timeLeftText();
-            Sfx.play("mixkit-vintage-telephone-ringtone-1356.wav");
-            root.notify("Battery still critical", `${root.pctDisplay}%${left ? ` · ~${left} left` : ""} — plug in now`, "warning-battery", "critical");
-        }
-    }
 }

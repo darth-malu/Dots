@@ -435,32 +435,35 @@ BarBlock {
                         onTimerPicked: mode => root.timerPicker = mode
                     }
 
-                    // dark deck behind the media + audio cards — the cards
-                    // pop out of it instead of floating loose on the card bg
+                    // dark deck behind the media + audio cards — the
+                    // cards pop out of it instead of floating loose
                     Rectangle {
-                        z: -1
+                        id: audioDeck
+
+                        Layout.fillWidth: true
+                        Layout.leftMargin: -10
+                        Layout.rightMargin: -10
+                        Layout.topMargin: -10
+
                         radius: 14
                         color: MiscState.popupSolidBg ? "#191a24" : Qt.rgba(0.075, 0.078, 0.106, 0.72)
                         border.width: 1
                         border.color: Qt.rgba(1, 1, 1, 0.05)
 
-                        anchors {
-                            left: parent.left
-                            right: parent.right
-                            top: nowPlayingCard.top
-                            bottom: volumeCard.bottom
-                            topMargin: -10
-                            bottomMargin: 2
-                            leftMargin: -10
-                            rightMargin: -10
-                        }
-
                         Behavior on color {
                             ColorAnimation { duration: 160 }
                         }
-                    }
 
-                    // ═══ NOW PLAYING ═══
+                        ColumnLayout {
+                            anchors {
+                                fill: parent
+                                leftMargin: 10
+                                rightMargin: 10
+                                topMargin: 10
+                                bottomMargin: 12
+                            }
+                            spacing: 8
+
                     NowPlaying {
                         id: nowPlayingCard
 
@@ -471,6 +474,7 @@ BarBlock {
                     }
 
                     // ═══ VOLUME ═══
+
                 ClippingRectangle {
                     id: volumeCard
 
@@ -584,6 +588,8 @@ BarBlock {
                         }
                     }
                 }
+                        }
+                    }
             }
         }
     }

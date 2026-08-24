@@ -2,11 +2,19 @@
     "reminders": [
         {
             "date": "2026-08-24",
-            "done": false,
+            "done": true,
             "id": 1787537830251,
             "notified": true,
             "text": "jj",
             "time": "05:15"
+        },
+        {
+            "date": "2026-08-24",
+            "done": false,
+            "id": 1787539639048,
+            "notified": true,
+            "text": "ll",
+            "time": "05:45"
         }
     ]
 }

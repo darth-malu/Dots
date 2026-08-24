@@ -11,7 +11,9 @@ Singleton {
     id: root
 
     // [{id, text, date: "YYYY-MM-DD", time: "HH:mm", done, notified}]
-    property var reminders: prefs.reminders
+    // deliberately NOT bound to prefs — a binding plus the write-back in
+    // onRemindersChanged formed a circular dependency (binding-loop warn)
+    property var reminders: []
 
     // ── persistent store ──
     FileView {
@@ -20,6 +22,7 @@ Singleton {
         path: Quickshell.env("HOME") + "/.config/quickshell/reminders.json"
         watchChanges: false
         onAdapterUpdated: writeAdapter()
+        onLoaded: root.reminders = prefs.reminders ?? []
 
         JsonAdapter {
             id: prefs
@@ -50,6 +53,11 @@ Singleton {
             })
             .sort((a, b) => (a.date + (a.time || "99:99")).localeCompare(b.date + (b.time || "99:99")));
     }
+
+    // everything still pending (incl. past-due) — what the popup displays
+    readonly property var pending: reminders
+        .filter(r => !r.done)
+        .sort((a, b) => (a.date + (a.time || "99:99")).localeCompare(b.date + (b.time || "99:99")));
 
     // reminder dot count for a calendar day cell
     function countForDate(year, month, day) {
@@ -138,7 +146,7 @@ Singleton {
         }
 
         function list(): string {
-            return JSON.stringify(root.upcoming);
+            return JSON.stringify(root.pending);
         }
 
         // ids are epoch-millis — passed as strings to dodge the 32-bit IPC int

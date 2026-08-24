@@ -90,7 +90,6 @@ RowLayout {
 
             // click anywhere on the chip focuses and selects for typing
             TapHandler {
-                gesturePolicy: TapHandler.PressWithinBounds
                 onTapped: {
                     segInput.forceActiveFocus();
                     segInput.selectAll();

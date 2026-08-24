@@ -239,8 +239,10 @@ BarBlock {
                         }
 
                         Text {
-                            text: `${Math.round(cpu.tempMin)}.${Math.round(cpu.tempMax)}°`
-                            color: cpu.tempColor(Math.min(cpu.tempMin, cpu.cpuTemp))
+                            // each extreme carries its own state color
+                            text: `<font color="${cpu.tempColor(cpu.tempMin)}">${Math.round(cpu.tempMin)}</font>.<font color="${cpu.tempColor(cpu.tempMax)}">${Math.round(cpu.tempMax)}</font>°`
+                            textFormat: Text.StyledText
+                            color: "#f8f8f2"
                             font {
                                 pixelSize: 12
                                 bold: true

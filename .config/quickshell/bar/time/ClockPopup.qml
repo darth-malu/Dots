@@ -469,11 +469,12 @@ ColumnLayout {
                     Keys.onEscapePressed: root.clearSelection()
                 }
             }
+        }
     }
 
     // ── reminders block: its own card below the calendar ──
     Rectangle {
-        visible: !root.yearView && ReminderState.upcoming.length > 0
+        visible: !root.yearView && ReminderState.pending.length > 0
         Layout.fillWidth: true
         implicitHeight: remCol.implicitHeight + 22
         radius: 10
@@ -517,7 +518,7 @@ ColumnLayout {
                         id: remCount
 
                         anchors.centerIn: parent
-                        text: ReminderState.upcoming.length
+                        text: ReminderState.pending.length
                         color: "#bd93f9"
                         font { pixelSize: 8; bold: true; family: "ZedMono Nerd Font" }
                     }
@@ -525,7 +526,7 @@ ColumnLayout {
             }
 
         Repeater {
-            model: ReminderState.upcoming.slice(0, 4)
+            model: ReminderState.pending.slice(0, 6)
 
             delegate: Rectangle {
                 id: remRow
@@ -563,17 +564,18 @@ ColumnLayout {
                     }
 
                     Text {
+                        readonly property bool overdue: remRow.modelData.date + (remRow.modelData.time || "99:99") < ReminderState.todayKey + Qt.formatDateTime(new Date(), "HH:mm")
                         text: {
                             const p = remRow.modelData.date.split("-");
                             const d = new Date(parseInt(p[0]), parseInt(p[1]) - 1, parseInt(p[2]));
                             const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
                             const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-                            let s = days[d.getDay()] + " " + months[d.getMonth()] + " " + d.getDate();
+                            let s = (overdue ? "⚠ " : "") + days[d.getDay()] + " " + months[d.getMonth()] + " " + d.getDate();
                             if (remRow.modelData.time)
                                 s += " · " + remRow.modelData.time;
                             return s;
                         }
-                        color: "#b8bfcb"
+                        color: overdue ? "#ff8c8c" : "#b8bfcb"
                         font { pixelSize: 9; family: "ZedMono Nerd Font" }
                     }
 
@@ -617,5 +619,4 @@ ColumnLayout {
         }
     }
     }
-}
 }
