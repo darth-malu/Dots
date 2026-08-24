@@ -152,18 +152,12 @@ BarBlock {
                     anchors.fill: parent
                     anchors.margins: 8
                     onTaskSubmitted: (day, month, year, task) => {
+                        // the reminder itself is already stored by
+                        // ReminderState (ClockPopup.submitInput) — this hook
+                        // only closes the popup and mirrors the day in the
+                        // legacy tracked-date map for org-capture users
                         MiscState.showPopup = false;
                         MiscState.toggleTrackedDate(year, month, day);
-
-                        var m = (month + 1) < 10 ? '0' + (month + 1) : '' + (month + 1);
-                        var d = day < 10 ? '0' + day : '' + day;
-                        var key = year + '-' + m + '-' + d;
-                        var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                        // month is already 0-based here (comes straight from the MonthGrid model)
-                        var dt = new Date(year, month, day);
-                        var dayName = days[dt.getDay()];
-                        var initial = "* TODO " + task + "\n  SCHEDULED: <" + key + " " + dayName + ">";
-                        Quickshell.execDetached(['emacsclient', '-c', '-n', '-e', '(progn (setq org-capture-initial "' + initial + '") (org-capture nil "t"))']);
                     }
                 }
 

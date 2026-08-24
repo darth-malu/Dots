@@ -68,7 +68,8 @@ Singleton {
 
     Timer {
         interval: root.batteryInterval
-        running: root.available
+        // sample only while the popup graph can display it — idle cost zero
+        running: root.available && root.graphEnabled
         repeat: true
         triggeredOnStart: true
         onTriggered: {

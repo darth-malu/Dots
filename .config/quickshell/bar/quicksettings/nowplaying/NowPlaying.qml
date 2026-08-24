@@ -936,11 +936,11 @@ leftMargin: 6
                         }
                     }
 
-                // middle-click anywhere on the card mutes /
+                // middle- OR right-click anywhere on the card mutes /
                 // unmutes the player in control — the volume
                 // HUD flashes the state as feedback
                 TapHandler {
-                    acceptedButtons: Qt.MiddleButton
+                    acceptedButtons: Qt.MiddleButton | Qt.RightButton
                     gesturePolicy: TapHandler.ReleaseWithinBounds
                     onTapped: {
                         const p = MprisState.cardPlayer;

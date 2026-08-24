@@ -180,7 +180,15 @@ RowLayout {
             implicitWidth: 2
             implicitHeight: 7
             radius: 1
-            color: batteryBlock.accentColor
+            color: batteryBody.blareLo
+
+            SequentialAnimation on color {
+                running: batteryBlock.isLow || batteryBlock.isCritical
+                loops: Animation.Infinite
+                alwaysRunToEnd: true
+                ColorAnimation { to: batteryBody.blareHi; duration: 340 }
+                ColorAnimation { to: batteryBody.blareLo; duration: 340 }
+            }
 
             Behavior on color {
                 ColorAnimation {
@@ -264,10 +272,10 @@ RowLayout {
                             text: {
                                 if (batteryBlock.isCritical) {
                                     const t = BatteryState.fmtTime(batteryBlock.bat.timeToEmpty);
-                                    return `Battery critical — ${batteryBlock.pctDisplay}%${t ? ` (~${t} left)` : ""}. Plug in now to avoid data loss.`;
+                                    return `Battery critical — ${batteryBlock.pctDisplay}%${t ? ` (~${t} left)` : ""}`;
                                 }
                                 const t = BatteryState.fmtTime(batteryBlock.bat.timeToEmpty);
-                                return `Battery low — ${batteryBlock.pctDisplay}%${t ? ` (~${t} remaining)` : ""}. Find a charger soon.`;
+                                return `Battery low — ${batteryBlock.pctDisplay}%${t ? ` (~${t} remaining)` : ""}`;
                             }
                             color: batteryBlock.isCritical ? "#ff5555" : "#ffb86c"
                             wrapMode: Text.WordWrap

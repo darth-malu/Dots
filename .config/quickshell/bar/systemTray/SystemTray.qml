@@ -174,6 +174,8 @@ RowLayout {
     }
 
     VolumePills {
+        Layout.alignment: Qt.AlignVCenter
+        Layout.leftMargin: 2
         host: root.host
         visible: MiscState.showVolumeOut || MiscState.showVolumeIn
     }
@@ -181,16 +183,19 @@ RowLayout {
     // battery sits just left of the clock
     Battery {
         host: root.host
+        Layout.alignment: Qt.AlignVCenter
     }
 
     // clock lives in this row, right where quicksettings used to sit
     ClockWidget {
         host: root.host
         visible: root.clockInside
+        Layout.alignment: Qt.AlignVCenter
     }
 
     QuickSettings {
         host: root.host
+        Layout.alignment: Qt.AlignVCenter
     }
 
     // live countdown pill while a reboot/shutdown timer is armed —
