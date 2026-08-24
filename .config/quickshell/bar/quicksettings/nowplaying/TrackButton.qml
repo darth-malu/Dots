@@ -3,6 +3,8 @@ import QtQuick
 Item {
     property string text
     property color accentColor: "#bd93f9"
+    // rest-state glyph color — override for quiet buttons (chevrons etc.)
+    property color idleColor: Qt.rgba(1, 1, 1, 0.7)
     property bool active: false
     property bool flat: false
     property bool ghost: false
@@ -60,7 +62,7 @@ Item {
     Text {
         anchors.centerIn: parent
         text: parent.text
-        color: mouseArea.containsMouse ? parent.accentColor : (parent.active ? parent.accentColor : Qt.rgba(1, 1, 1, 0.7))
+        color: mouseArea.containsMouse || parent.active ? parent.accentColor : parent.idleColor
         font {
             pixelSize: 12
             family: "Symbols Nerd Font Mono"

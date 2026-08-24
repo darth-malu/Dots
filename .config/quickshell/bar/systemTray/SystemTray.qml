@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import Quickshell
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 import Quickshell.Services.SystemTray
 import Quickshell.Widgets
 import qs.customItems
@@ -112,24 +113,44 @@ RowLayout {
                         onHasMenuChanged: if (!hasMenu)
                             menuArmed = false
 
+                        readonly property string tipText: {
+                            const t = item?.tooltipTitle?.trim();
+                            return (t && t.length > 0) ? t : (item?.title ?? item?.id ?? "");
+                        }
+
                         Layout.alignment: Qt.AlignVCenter
-                        implicitWidth: 24
+                        implicitWidth: 26
                         implicitHeight: 22
-                        radius: 6
+                        radius: height / 2
                         color: delegateMa.pressed ? Qt.rgba(0.741, 0.576, 0.976, 0.35)
-                            : delegateMa.containsMouse ? Qt.rgba(1, 1, 1, 0.16)
+                            : delegateMa.containsMouse ? Qt.rgba(1, 1, 1, 0.14)
                             : "transparent"
 
                         Behavior on color {
                             ColorAnimation { duration: 110 }
                         }
 
+                        // gentle squish on press — tactile without being noisy
+                        scale: delegateMa.pressed ? 0.86 : 1
+                        Behavior on scale {
+                            NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                        }
+
                         IconImage {
                             anchors.centerIn: parent
                             source: parent.item.icon
-                            implicitSize: 13
+                            implicitSize: 14
                             asynchronous: true
+                            opacity: delegateMa.containsMouse || delegateMa.pressed ? 1 : 0.88
+
+                            Behavior on opacity {
+                                NumberAnimation { duration: 110 }
+                            }
                         }
+
+                        ToolTip.visible: delegateMa.containsMouse && !menuAnchor.visible && delegate.tipText.length > 0
+                        ToolTip.delay: 450
+                        ToolTip.text: delegate.tipText
 
                         MouseArea {
                             id: delegateMa

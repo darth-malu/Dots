@@ -102,7 +102,11 @@ RowLayout {
 
             property bool isActive: (Hyprland.focusedMonitor?.activeWorkspace?.id ?? -1) === (ws?.id ?? -2)
 
-            readonly property bool urgent: ws?.urgent ?? false
+            // urgency lives in WorkspaceService (tracked from socket events)
+            readonly property bool urgent: {
+                const _rev = root.wsRev;
+                return WorkspaceService.isUrgent(ws?.id ?? -1);
+            }
             readonly property bool hovered: mouseArea.containsMouse
 
             // live app icons for this workspace — updated imperatively by
@@ -140,9 +144,12 @@ RowLayout {
                 ColorAnimation { duration: 120 }
             }
 
-            implicitHeight: content.implicitHeight + 8
-            Layout.preferredWidth: content.implicitWidth + 16
-            Layout.preferredHeight: content.implicitHeight + 8
+            // slim pills — tight vertical fit everywhere, and the active
+            // workspace gets the leanest horizontal padding so it reads as
+            // a sleek highlight instead of a chunky container
+            implicitHeight: content.implicitHeight + 4
+            Layout.preferredWidth: content.implicitWidth + (isActive ? 8 : 12)
+            Layout.preferredHeight: content.implicitHeight + 4
 
             // urgent workspaces pulse until visited
             SequentialAnimation on opacity {
@@ -161,7 +168,7 @@ RowLayout {
             content: RowLayout {
                 id: iconRow
 
-                spacing: 5
+                spacing: 4
 
                 BarText {
                     text: String(rootBlock.ws?.id ?? "")

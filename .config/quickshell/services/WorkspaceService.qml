@@ -2,7 +2,6 @@ pragma Singleton
 import Quickshell
 import QtQuick
 import Quickshell.Hyprland
-
 Singleton {
     id: root
     readonly property var workspaces: Hyprland.workspaces.values.filter(w => !w.name.startsWith("special"))
@@ -110,7 +109,14 @@ Singleton {
         "bottles": "com.usebottles.bottles",
         "inkscape": "org.inkscape.Inkscape",
         "gimp": "gimp",
-        "blueman": "blueman-manager"
+        "blueman": "blueman-manager",
+        "alacritty": "Alacritty",
+        "wezterm": "wezterm",
+        "qutebrowser": "qutebrowser",
+        "zathura": "org.pwmt.zathura",
+        "pavucontrol": "pavucontrol",
+        "stremio": "com.stremio.Stremio",
+        "freetube": "io.freetubeapp.FreeTube"
     }
 
     // longest substring match wins so "chrome-xyz-pwa" hits before bare rules
@@ -124,8 +130,19 @@ Singleton {
                 bestLen = k.length;
             }
         }
+        if (best)
+            return best;
+        // games run under their own app id (steam_app_123456) — fold to steam
+        if (/steam_app_\d+|^steamm?$/.test(c))
+            return "steam";
+        // no static rule — ask the freedesktop database before giving up
+        try {
+            const entry = DesktopEntries.byId(c) ?? DesktopEntries.heuristicLookup(c);
+            if (entry?.icon)
+                return entry.icon;
+        } catch (e) {}
         // standard fallback every freedesktop theme ships
-        return best ?? "application-x-executable";
+        return "application-x-executable";
     }
 
     // deduped [{source, count}] for every client living on this workspace;
@@ -159,6 +176,15 @@ Singleton {
     // ── focused-window tracking (address granularity, from IPC events) ──
     property string _focusedAddress: ""
 
+    // HyprlandWorkspace carries no urgent flag in this quickshell build,
+    // so workspace ids with an urgent window are tracked from the socket;
+    // visiting a workspace clears it
+    property var _urgentWsIds: ({})
+
+    function isUrgent(wsId) {
+        return !!root._urgentWsIds[wsId];
+    }
+
     Connections {
         target: Hyprland
 
@@ -168,6 +194,15 @@ Singleton {
                 root._focusedAddress = (ev.data ?? "").split(",")[1] ?? "";
             else if (n === "activewindowv2")
                 root._focusedAddress = ev.data ?? "";
+            else if (n === "urgent") {
+                const wsId = parseInt((ev.data ?? "").split(",")[1]);
+                if (!isNaN(wsId))
+                    root._urgentWsIds[wsId] = true;
+            } else if (n === "workspace") {
+                const wsId = parseInt(ev.data ?? "");
+                if (!isNaN(wsId))
+                    delete root._urgentWsIds[wsId];
+            }
         }
     }
 

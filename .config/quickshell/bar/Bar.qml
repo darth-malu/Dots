@@ -21,6 +21,9 @@ ShellRoot {
         PanelWindow {
             id: barr
             WlrLayershell.namespace: "tildeBar"
+            // OnDemand lets tray/quicksettings popups hold their grabs —
+            // with None they get dismissed as soon as focus moves elsewhere
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
             required property var modelData
             visible: root.enableBar
 

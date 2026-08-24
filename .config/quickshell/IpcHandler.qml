@@ -1,5 +1,6 @@
 import qs.services
 import QtQuick
+import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris
 import qs.notBar.rofi.openWindows
@@ -143,6 +144,34 @@ Item {
         target: 'SysTray'
         function toggle(): void {
             MiscState.toggleSysTray = !MiscState.toggleSysTray;
+        }
+    }
+
+    // TEMP: debug probe for tray icon screen positions (remove after testing)
+    function walkTray(item, out) {
+        if (!item || typeof item !== "object" || !item.children)
+            return;
+        if ((item.objectName ?? "").indexOf("trayIconDelegate") >= 0) {
+            const p = item.mapToGlobal(0, 0);
+            out.push(`${item.tipText} x=${Math.round(p.x)} y=${Math.round(p.y)} w=${item.width} h=${item.height}`);
+        }
+        for (let i = 0; i < item.children.length; i++)
+            walkTray(item.children[i], out);
+    }
+
+    IpcHandler {
+        id: trayDebugHandler
+        target: 'trayDebug'
+        function positions(): string {
+            const out = [];
+            const wins = Quickshell.windows;
+            for (const w of wins) {
+                if (w?.contentItem)
+                    walkTray(w.contentItem, out);
+            }
+            if (out.length === 0)
+                out.push(`no delegates; windows=${wins.length} toggleSysTray=${MiscState.toggleSysTray}`);
+            return out.join("\n");
         }
     }
 

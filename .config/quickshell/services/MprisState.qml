@@ -75,13 +75,14 @@ Singleton {
         for (let i = 0; i < list.length; i++)
             if (list[i].identity === cur)
                 idx = i;
+        // stepping always hands the card to the landed player;
+        // release happens by clicking the current row again
         const next = list[(idx + 1) % list.length];
-        // cycling onto the already-shown player releases the pin instead
-        root.pinIdentity = next.identity === cur && root.pinIdentity.length > 0 ? "" : next.identity;
+        root.pinIdentity = next.identity;
     }
 
     // step the card's player forward/back through the chooser strip
-    // (wheel scrolling); landing on the shown player releases the pin
+    // (wheel scrolling); every stop pins that player
     function moveCardPin(dir) {
         const list = root.controlPlayers;
         if (list.length === 0)
@@ -95,8 +96,7 @@ Singleton {
             idx = dir > 0 ? 0 : list.length - 1;
         else
             idx = (idx + dir + list.length) % list.length;
-        const next = list[idx];
-        root.pinIdentity = next.identity === cur && root.pinIdentity.length > 0 ? "" : next.identity;
+        root.pinIdentity = list[idx].identity;
     }
 
     // right-click on the switcher — pin the first player that is actually playing

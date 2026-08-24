@@ -16,8 +16,8 @@ BarBlock {
 
     required property var host
 
-    // inline % readout beside the gauge · toggled by right-click
-    property bool showUsage: true
+    // inline % readout beside the gauge · hidden by default, right-click reveals
+    property bool showUsage: false
 
     readonly property int cpuPercent: ResourcesState.cpuUsageString
     readonly property real cpuTemp: ResourcesState.cpuTemp

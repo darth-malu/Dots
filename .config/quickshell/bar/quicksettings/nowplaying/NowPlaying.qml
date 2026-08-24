@@ -12,179 +12,25 @@ import qs.bar.quicksettings.nowplaying
 // ═══ NOW PLAYING ═══
 // self-contained media card — compact strip + expanded art view.
 // Set `compactNowPlaying` from the host to switch views.
+// A chevron at the bottom-right extends the card below the track
+// buttons, revealing a stream list to pick the controlled player from.
 ClippingRectangle {
     id: card
 
     required property bool compactNowPlaying
 
-    component PlayerStrip: Item {
-        id: strip
+    // ── player chooser state ──
+    // chevron toggles the reveal; needs a real choice to offer
+    property bool chooserOpen: false
 
-        implicitWidth: 20
-        implicitHeight: 20
+    readonly property bool chooserAvailable: MiscState.showPlayerChooser && MprisState.controlPlayers.length > 1
 
-        readonly property bool multi: MprisState.controlPlayers.length > 1
-        readonly property color accent: MprisState.pinIdentity.length > 0 ? "#f1fa8c" : Qt.rgba(1, 1, 1, 0.65)
-
-        // generous invisible hover zone around the bottom-left corner
-        MouseArea {
-            id: zoneMa
-            anchors.fill: parent
-            anchors.margins: -26
-            hoverEnabled: true
-            acceptedButtons: Qt.NoButton
-        }
-
-        // launcher button — only fades in while the region is hovered
-        Rectangle {
-            id: launchBtn
-
-            anchors.centerIn: parent
-            width: 20
-            height: 20
-            radius: height / 2
-            visible: strip.multi && !strip.open
-            opacity: zoneMa.containsMouse || launchMa.containsMouse ? 1 : 0
-
-            Behavior on opacity {
-                NumberAnimation { duration: 130 }
-            }
-
-            color: launchMa.containsMouse ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(0, 0, 0, 0.4)
-            border.width: 1
-            border.color: strip.accent
-
-            Text {
-                anchors.centerIn: parent
-                text: "\uf142" // kebab / list glyph
-                color: "#f8f8f2"
-                font {
-                    pixelSize: 9
-                    family: "Symbols Nerd Font Mono"
-                }
-            }
-
-            MouseArea {
-                id: launchMa
-
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-
-                onClicked: mouse => {
-                    if (mouse.button === Qt.RightButton)
-                        MprisState.jumpToPlaying();
-                    else
-                        strip.open = !strip.open;
-                }
-            }
-        }
-
-        // expanded chip row
-        Row {
-            id: chipRow
-
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 5
-            opacity: strip.open ? 1 : 0
-            visible: opacity > 0
-
-            Behavior on opacity {
-                NumberAnimation { duration: 150 }
-            }
-
-            Repeater {
-                model: MprisState.controlPlayers
-
-                delegate: Item {
-                    id: chip
-
-                    required property var modelData
-
-                    readonly property bool isCurrent: modelData.identity === (MprisState.cardPlayer?.identity ?? "")
-                    readonly property bool hovered: chipMa.containsMouse
-
-                    width: 20
-                    height: 20
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: height / 2
-                        color: chip.isCurrent ? Qt.rgba(1, 1, 1, 0.14)
-                            : chip.hovered ? Qt.rgba(1, 1, 1, 0.08)
-                            : Qt.rgba(0, 0, 0, 0.4)
-                        border.width: chip.isCurrent ? 1 : 0
-                        border.color: strip.accent
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: MprisState.appGlyph(chip.modelData)
-                        color: "#f8f8f2"
-                        opacity: chip.isCurrent ? 1 : 0.6
-                        font {
-                            pixelSize: 11
-                            family: "Symbols Nerd Font Mono"
-                        }
-                    }
-
-                    MouseArea {
-                        id: chipMa
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-
-                        onClicked: mouse => {
-                            if (mouse.button === Qt.RightButton) {
-                                // right-click a player chip → mute/unmute it
-                                if (chip.modelData?.canControl)
-                                    MprisState.toggleMute(chip.modelData);
-                                return;
-                            }
-                            // clicking the shown player releases an explicit pin
-                            MprisState.pinIdentity = chip.isCurrent && MprisState.pinIdentity.length > 0
-                                ? "" : chip.modelData.identity;
-                            strip.open = false;
-                        }
-                    }
-                }
-            }
-        }
-
-        // wheel over the open strip steps through players too
-        WheelHandler {
-            enabled: strip.open
-            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-            onWheel: ev => {
-                MprisState.moveCardPin(ev.angleDelta.y > 0 ? -1 : 1);
-                ev.accepted = true;
-            }
-        }
-
-        // close when the pointer leaves the whole area
-        property bool open: false
-        onOpenChanged: {
-            if (!zoneMa.containsMouse && !chipHover.hovered)
-                closeTimer.restart();
-        }
-
-        HoverHandler {
-            id: chipHover
-        }
-
-        Timer {
-            id: closeTimer
-
-            interval: 900
-            onTriggered: {
-                if (!zoneMa.containsMouse && !chipHover.hovered && !launchMa.containsMouse)
-                    strip.open = false;
-            }
-        }
+    onChooserAvailableChanged: {
+        if (!chooserAvailable)
+            chooserOpen = false;
     }
 
+    readonly property int baseCardHeight: compactNowPlaying ? 82 : 260
                     radius: 10
                     visible: MprisState.cardPlayer !== null
                     color: {
@@ -192,12 +38,30 @@ ClippingRectangle {
                             return Qt.rgba(card.dominantColor.r, card.dominantColor.g, card.dominantColor.b, 0.12);
                         return "#21222c";
                     }
-                    implicitHeight: card.compactNowPlaying ? 82 : 260
+                    implicitHeight: baseCardHeight + (chooserAvailable && chooserOpen ? chooserPanel.implicitHeight : 0)
                     Behavior on implicitHeight {
                         NumberAnimation {
                             duration: 250
                             easing.type: Easing.OutCubic
                         }
+                    }
+
+                    // chevron that extends the card to reveal the stream list —
+                    // flips over while the drawer is open
+                    component ChooserChevron: TrackButton {
+                        width: 20
+                        height: 20
+                        ghost: true
+                        text: "\uf078"
+                        idleColor: Qt.rgba(1, 1, 1, 0.32)
+                        accentColor: Qt.rgba(1, 1, 1, 0.75)
+                        rotation: card.chooserOpen ? 180 : 0
+
+                        Behavior on rotation {
+                            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                        }
+
+                        onClicked: card.chooserOpen = !card.chooserOpen
                     }
 
                     property color dominantColor: "#bd93f9"
@@ -320,10 +184,17 @@ ClippingRectangle {
                     }
 
                     // ── COMPACT VIEW ──
+                    // pinned to the card top with its base height so the
+                    // chooser drawer can claim the space below it
                     Item {
                         id: compactView
                         visible: card.compactNowPlaying
-                        anchors.fill: parent
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            top: parent.top
+                        }
+                        height: baseCardHeight
 
                         // TODO: have trackbutton here
                         TrackButton {
@@ -341,21 +212,16 @@ ClippingRectangle {
                             }
                         }
 
-                        // player chooser strip — appears only when more
-                        // than one player exists; hover reveals, wheel picks
-                        PlayerStrip {
-                            id: compactSwitcher
-
-                            visible: MiscState.showPlayerChooser && MprisState.controlPlayers.length > 0
-                            z: 10
+                        // player chooser toggle — rides at the track-button
+                        // level on the right edge; only with >1 player live
+                        ChooserChevron {
+                            visible: card.chooserAvailable
                             anchors {
-left: parent.left
-                                bottom: parent.bottom
-leftMargin: 6
-                                bottomMargin: 6
+                                right: parent.right
+                                verticalCenter: compactPlay.verticalCenter
+                                rightMargin: 2
                             }
                         }
-
                         RowLayout {
                             anchors.fill: parent
                             // spacing: 10
@@ -591,6 +457,8 @@ leftMargin: 6
                                         onClicked: MprisState.cardPlayer?.previous()
                                     }
                                     TrackButton {
+                                        id: compactPlay
+
                                         text: MprisState.cardPlayer?.isPlaying ? "\uf04c" : "\uf04b"
                                         flat: true
                                         accentColor: "#bd93f9"
@@ -614,8 +482,14 @@ leftMargin: 6
                         Item {
                             visible: !card.compactNowPlaying
                             // art fills the card edge-to-edge — no gap
-                            // between the border container and the image
-                            anchors.fill: parent
+                            // between the border container and the image;
+                            // base height keeps the chooser drawer below it
+                            anchors {
+                                left: parent.left
+                                right: parent.right
+                                top: parent.top
+                            }
+                            height: baseCardHeight
 
                         // controls always start tucked away
                         onVisibleChanged: {
@@ -877,16 +751,14 @@ leftMargin: 6
                             }
                         }
 
-                        // player chooser strip — hover reveals, wheel picks
-                        PlayerStrip {
-                            id: expandedSwitcher
-
-                            visible: MiscState.showPlayerChooser && MprisState.controlPlayers.length > 0
-                            z: 10
+                        // player chooser toggle — bottom-right chevron,
+                        // lifted to the track-text level
+                        ChooserChevron {
+                            visible: card.chooserAvailable
                             anchors {
-left: parent.left
+                                right: parent.right
                                 bottom: parent.bottom
-leftMargin: 6
+                                rightMargin: 6
                                 bottomMargin: 6
                             }
                         }
@@ -931,6 +803,173 @@ leftMargin: 6
                                         letterSpacing: 6
                                         family: "Quicksand"
                                     }
+                                }
+                            }
+                        }
+                    }
+
+                    // ── PLAYER CHOOSER DRAWER ──
+                    // revealed below the track buttons by the bottom-right
+                    // chevron; lists every MPRIS stream — click to hand the
+                    // card over, right-click to mute that stream, wheel to
+                    // step through them
+                    Rectangle {
+                        id: chooserPanel
+
+                        visible: card.chooserAvailable && opacity > 0
+                        opacity: card.chooserOpen ? 1 : 0
+                        Behavior on opacity {
+                            NumberAnimation { duration: 160; easing.type: Easing.OutQuad }
+                        }
+
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            bottom: parent.bottom
+                        }
+                        implicitHeight: chooserCol.implicitHeight + 14
+                        // slightly darker floor so the drawer reads as its own zone
+                        color: Qt.rgba(0, 0, 0, 0.25)
+
+                        // hairline divider in the dominant color ties it to the art
+                        Rectangle {
+                            anchors.top: parent.top
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            height: 1
+                            color: Qt.rgba(card.dominantColor.r, card.dominantColor.g, card.dominantColor.b, 0.4)
+                        }
+
+                        // wheel anywhere on the drawer steps through players
+                        WheelHandler {
+                            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                            onWheel: ev => {
+                                MprisState.moveCardPin(ev.angleDelta.y > 0 ? -1 : 1);
+                                ev.accepted = true;
+                            }
+                        }
+
+                        ColumnLayout {
+                            id: chooserCol
+
+                            anchors {
+                                left: parent.left
+                                right: parent.right
+                                top: parent.top
+                                margins: 7
+                                topMargin: 8
+                            }
+                            spacing: 2
+
+                            Repeater {
+                                model: MprisState.controlPlayers
+
+                                delegate: Rectangle {
+                                    id: streamRow
+
+                                    required property var modelData
+
+                                    readonly property bool isCurrent: modelData.identity === (MprisState.cardPlayer?.identity ?? "")
+                                    readonly property bool isPinned: MprisState.pinIdentity === modelData.identity
+                                    readonly property bool isPlaying: {
+                                        try {
+                                            return modelData.playbackState === MprisPlaybackState.Playing;
+                                        } catch (e) {
+                                            return false;
+                                        }
+                                    }
+                                    readonly property bool isMuted: MprisState.isMuted(modelData)
+
+                                    Layout.fillWidth: true
+                                    implicitHeight: 24
+                                    radius: 6
+                                    color: rowMa.containsMouse ? Qt.rgba(1, 1, 1, 0.08)
+                                        : isCurrent ? Qt.rgba(1, 1, 1, 0.05)
+                                        : "transparent"
+
+                                    Behavior on color {
+                                        ColorAnimation { duration: 110 }
+                                    }
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 8
+                                        anchors.rightMargin: 8
+                                        spacing: 8
+
+                                        Text {
+                                            text: MprisState.appGlyph(streamRow.modelData)
+                                            color: streamRow.isCurrent ? card.dominantColor : "#6272a4"
+                                            font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+                                        }
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: streamRow.modelData?.identity ?? ""
+                                            elide: Text.ElideRight
+                                            color: streamRow.isCurrent ? "#f8f8f2" : "#b8bfcb"
+                                            font {
+                                                pixelSize: 10
+                                                bold: streamRow.isCurrent
+                                                family: "Quicksand"
+                                            }
+                                        }
+
+                                        // muted marker
+                                        Text {
+                                            visible: streamRow.isMuted
+                                            text: "\uf026"
+                                            color: "#ff5555"
+                                            font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+                                        }
+
+                                        // playing marker
+                                        Text {
+                                            visible: streamRow.isPlaying
+                                            text: "\uf04b"
+                                            color: "#50fa7b"
+                                            font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
+                                        }
+
+                                        // pin marker — this player drives the card
+                                        Text {
+                                            visible: streamRow.isPinned
+                                            text: "\uf08d"
+                                            color: "#f1fa8c"
+                                            font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: rowMa
+
+                                        anchors.fill: parent
+                                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+
+                                        onClicked: mouse => {
+                                            if (mouse.button === Qt.RightButton) {
+                                                if (streamRow.modelData?.canControl)
+                                                    MprisState.toggleMute(streamRow.modelData);
+                                                return;
+                                            }
+                                            // clicking the shown player releases an explicit pin
+                                            MprisState.pinIdentity = streamRow.isCurrent && MprisState.pinIdentity.length > 0
+                                                ? "" : streamRow.modelData.identity;
+                                        }
+                                    }
+                                }
+                            }
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: "click switches · right-click mutes · scroll steps"
+                                color: "#6272a4"
+                                font {
+                                    pixelSize: 8
+                                    family: "Quicksand"
+                                    letterSpacing: 0.5
                                 }
                             }
                         }
