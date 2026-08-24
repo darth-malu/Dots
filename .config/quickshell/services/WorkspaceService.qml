@@ -1,5 +1,6 @@
 pragma Singleton
 import Quickshell
+import Quickshell.Io
 import QtQuick
 import Quickshell.Hyprland
 Singleton {
@@ -233,6 +234,21 @@ Singleton {
             // shared list-refresh signal for the workspace widgets
             if (root._listEvents.has(n))
                 root.refresh();
+        }
+    }
+
+    // TEMP stale-icons diagnosis — remove with [icondbg] logs
+    IpcHandler {
+        target: "hdbg"
+
+        function tls(): string {
+            const out = [];
+            for (const ws of Hyprland.workspaces.values)
+                out.push(`ws${ws.id}: ${ws.toplevels?.values.length ?? -1}tls`);
+            return out.join(" | ");
+        }
+        function bump(): void {
+            root.refresh();
         }
     }
 

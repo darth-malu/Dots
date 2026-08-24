@@ -60,6 +60,19 @@ ShellRoot {
                 right: true
             }
 
+            // declared BEFORE panel so every module sits on top: wheels over
+            // modules with their own handlers (mpris volume, pills, sliders)
+            // are consumed there first; empty bar space falls through here
+            // and steps workspaces
+            MouseArea {
+                acceptedButtons: Qt.NoButton
+                anchors.fill: parent
+                onWheel: wheel => {
+                    console.log(`[scrolldbg] bar wheel y=${wheel.angleDelta.y}`);
+                    HyprlandService.stepWorkspace(wheel.angleDelta.y > 0);
+                }
+            }
+
             RowLayout {
                 id: panel
                 anchors.fill: parent
@@ -96,25 +109,6 @@ ShellRoot {
                     SystemTray {
                         host: barr
                         clockInside: true
-                    }
-                }
-            }
-
-            MouseArea {
-                id: nullspaceMA
-                acceptedButtons: Qt.NoButton
-                anchors.fill: parent
-                onWheel: wheel => {
-                    var pos = mapToItem(rightBlock, wheel.x, wheel.y);
-                    if (rightBlock.contains(Qt.point(pos.x, pos.y))) {
-                        wheel.accepted = false;
-                        return;
-                    }
-
-                    if (wheel.angleDelta.y > 0) {
-                        Hyprland.dispatch('workspace "m-1"');
-                    } else if (wheel.angleDelta.y < 0) {
-                        Hyprland.dispatch('workspace "m+1"');
                     }
                 }
             }

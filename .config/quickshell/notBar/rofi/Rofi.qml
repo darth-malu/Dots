@@ -80,8 +80,17 @@ PanelWindow {
             RowLayout {
                 spacing: 10
 
+                // nix logo fronts the app launcher; other modes keep glyphs
+                IconImage {
+                    visible: RofiState.toggleAppLauncher && !RofiState.toggleOpenWindows
+                    source: Qt.resolvedUrl("../../svg/NixOS.svg")
+                    implicitSize: 16
+                    asynchronous: true
+                }
+
                 Text {
-                    text: RofiState.toggleOpenWindows ? "\uf2d0" : RofiState.toggleAppLauncher ? "\uf009" : "\uf0ea"
+                    visible: !(RofiState.toggleAppLauncher && !RofiState.toggleOpenWindows)
+                    text: RofiState.toggleOpenWindows ? "\uf2d0" : "\uf0ea"
                     color: Themes.rofiAccent
                     font {
                         pixelSize: 13

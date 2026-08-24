@@ -7,7 +7,7 @@ import qs.customItems
 
 ColumnLayout {
     id: root
-    spacing: 6
+    spacing: 8
     // explicit content width — child implicit widths are unreliable here
     implicitWidth: yearView ? 564 : 264
 

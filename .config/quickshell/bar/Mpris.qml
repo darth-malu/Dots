@@ -62,7 +62,7 @@ Item {
                 MprisState.player?.next();
             else if (mouse.button == Qt.ForwardButton) {
                 if (MprisState.player?.identity === "Music Player Daemon")
-                    Quickshell.execDetached(["hyprctl", "dispatch", "togglespecialworkspace", "nc"]);
+                    HyprlandService.dispatch('hl.dsp.workspace.toggle_special("nc")');
                 else {
                     MprisState.player?.raise();
                 }

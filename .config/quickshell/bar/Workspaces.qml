@@ -81,7 +81,7 @@ RowLayout {
 
             onClicked: () => {
                 if (ws)
-                    ws.activate();
+                    HyprlandService.gotoWorkspace(ws.id);
             }
 
             // urgent workspaces pulse until visited

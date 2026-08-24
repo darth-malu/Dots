@@ -85,6 +85,32 @@ PanelWindow {
                         border.color: Qt.rgba(Themes.rofiBorder.r, Themes.rofiBorder.g, Themes.rofiBorder.b, 0.3)
                     }
                     Keys.onEscapePressed: root.close()
+                    // arrows steer the grid from the search field
+                    property int gridCols: Math.max(1, Math.floor(grid.width / grid.cellWidth))
+                    Keys.onLeftPressed: event => {
+                        if (grid.count === 0)
+                            return;
+                        grid.currentIndex = grid.currentIndex > 0 ? grid.currentIndex - 1 : grid.count - 1;
+                        event.accepted = true;
+                    }
+                    Keys.onRightPressed: event => {
+                        if (grid.count === 0)
+                            return;
+                        grid.currentIndex = grid.currentIndex < grid.count - 1 ? grid.currentIndex + 1 : 0;
+                        event.accepted = true;
+                    }
+                    Keys.onUpPressed: event => {
+                        if (grid.count === 0)
+                            return;
+                        grid.currentIndex = Math.max(0, grid.currentIndex - search.gridCols);
+                        event.accepted = true;
+                    }
+                    Keys.onDownPressed: event => {
+                        if (grid.count === 0)
+                            return;
+                        grid.currentIndex = Math.min(grid.count - 1, grid.currentIndex + search.gridCols);
+                        event.accepted = true;
+                    }
                     Keys.onReturnPressed: {
                         if (grid.currentItem) {
                             root.copyEmoji(grid.currentItem.char_);
@@ -176,6 +202,8 @@ PanelWindow {
                 cellHeight: 42
                 model: root.results
                 boundsBehavior: Flickable.StopAtBounds
+                // fresh query → highlight the first match for Enter
+                onCountChanged: currentIndex = count > 0 ? 0 : -1
 
                 ScrollBar.vertical: ScrollBar {
                     policy: grid.contentHeight > grid.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff

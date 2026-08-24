@@ -12,7 +12,7 @@ import qs.services
 RowLayout {
     id: root
 
-    spacing: 5
+    spacing: 8
     // breathing room before the next module (active window)
     Layout.rightMargin: 14
 
@@ -70,6 +70,8 @@ RowLayout {
         });
         list.sort((a, b) => a.id - b.id);
         const sig = list.map(w => String(w.id)).join(",");
+        // TEMP icondbg: per-ws toplevel counts vs displayed list
+        console.log(`[icondbg] doRefresh sig=${sig} rev=${root.wsRev} tls=[${list.map(w => (w.toplevels?.values.length ?? -1)).join(",")}]`);
         if (sig !== _listSig) {
             _listSig = sig;
             _listCache = list;
@@ -158,15 +160,17 @@ RowLayout {
             border.width: isActive ? 1 : 0
             border.color: urgent ? "#ff5555" : Themes.activeHasClientsBorder
 
-            color: isActive ? Qt.rgba(0.741, 0.576, 0.976, 0.18)
-                : hovered ? Qt.rgba(1, 1, 1, 0.07)
-                : "transparent"
+            color: isActive ? Qt.rgba(0.741, 0.576, 0.976, 0.18) : hovered ? Qt.rgba(1, 1, 1, 0.07) : "transparent"
 
             Behavior on color {
-                ColorAnimation { duration: 120 }
+                ColorAnimation {
+                    duration: 120
+                }
             }
             Behavior on border.color {
-                ColorAnimation { duration: 120 }
+                ColorAnimation {
+                    duration: 120
+                }
             }
 
             // slim pills — tight vertical fit everywhere, and the active
@@ -181,13 +185,19 @@ RowLayout {
                 running: rootBlock.urgent && !rootBlock.isActive
                 loops: Animation.Infinite
                 alwaysRunToEnd: true
-                NumberAnimation { to: 0.45; duration: 420 }
-                NumberAnimation { to: 1; duration: 420 }
+                NumberAnimation {
+                    to: 0.45
+                    duration: 420
+                }
+                NumberAnimation {
+                    to: 1
+                    duration: 420
+                }
             }
 
             onClicked: function () {
                 if (ws)
-                    Hyprland.dispatch(`workspace ${ws.id}`);
+                    HyprlandService.gotoWorkspace(ws.id);
             }
 
             content: RowLayout {

@@ -98,7 +98,8 @@ BarBlock {
             anchor.rect.y: 33
 
             // widen for the full-year grid so the 12 mini months get room to breathe
-            implicitWidth: clockPopup.yearView ? 580 : 280
+            // (content implicitWidth + 2×14 popup margins, matching Battery/Mpris cards)
+            implicitWidth: clockPopup.yearView ? 592 : 292
             Behavior on implicitWidth {
                 NumberAnimation {
                     duration: 150
@@ -106,7 +107,7 @@ BarBlock {
                 }
             }
             // size to actual content so the year view fits its grid without dead space
-            implicitHeight: clockPopup.implicitHeight + 16
+            implicitHeight: clockPopup.implicitHeight + 28
             Behavior on implicitHeight {
                 NumberAnimation {
                     duration: 150
@@ -124,10 +125,10 @@ BarBlock {
             }
 
             Rectangle {
-                radius: 10
+                radius: 12
                 anchors.fill: parent
                 border.width: 1
-                border.color: Qt.rgba(0.74, 0.58, 0.98, 0.35)
+                border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
                 color: MiscState.popupCardBg
 
                 Shortcut {
@@ -159,7 +160,7 @@ BarBlock {
                         left: parent.left
                         right: parent.right
                         top: parent.top
-                        margins: 8
+                        margins: 14
                     }
                     onTaskSubmitted: (day, month, year, task) => {
                         // the reminder itself is already stored by

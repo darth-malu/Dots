@@ -33,7 +33,6 @@ Rectangle {
     signal altLeftClicked
     signal rightClicked
     signal middleClicked
-    signal wheel(var event)
 
     color: "transparent"
 
@@ -57,7 +56,8 @@ Rectangle {
             else if (mouse.button === Qt.MiddleButton)
                 root.middleClicked();
         }
-        onWheel: event => root.wheel(event)
+        // no onWheel here — an unconsumed handler would eat scrolls meant
+        // for the bar's workspace overlay beneath the modules
     }
 
     Item {
