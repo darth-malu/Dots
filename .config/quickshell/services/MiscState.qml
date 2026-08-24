@@ -123,7 +123,7 @@ Singleton {
 
             property bool popupSolidBg: false
             property bool showSysTray: true
-            property bool showPlayerChooser: false
+            property bool showPlayerChooser: true
             property bool showShuffle: false
             property bool showLoop: false
             property bool wifiGreenName: true

@@ -739,7 +739,16 @@ Item {
                         Layout.fillWidth: true
 
                         SettingRow {
-                            icon: ""
+                            icon: "\uf2d1"
+                            label: "Player chooser"
+                            checked: MiscState.showPlayerChooser
+                            onFlipped: MiscState.showPlayerChooser = !MiscState.showPlayerChooser
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                        SettingRow {
+                            icon: "\uf074"
                             label: "Shuffle button"
                             checked: MiscState.showShuffle
                             onFlipped: MiscState.showShuffle = !MiscState.showShuffle
@@ -748,7 +757,7 @@ Item {
                         Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
 
                         SettingRow {
-                            icon: ""
+                            icon: "\uf079"
                             label: "Loop button"
                             checked: MiscState.showLoop
                             onFlipped: MiscState.showLoop = !MiscState.showLoop

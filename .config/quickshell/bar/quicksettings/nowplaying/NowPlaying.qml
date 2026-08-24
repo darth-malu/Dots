@@ -346,7 +346,7 @@ ClippingRectangle {
                         PlayerStrip {
                             id: compactSwitcher
 
-                            visible: MprisState.controlPlayers.length > 1
+                            visible: MiscState.showPlayerChooser && MprisState.controlPlayers.length > 0
                             z: 10
                             anchors {
 left: parent.left
@@ -587,19 +587,19 @@ leftMargin: 6
                                     TrackButton {
                                         text: "\uf048"
                                         flat: true
-                                        accentColor: card.dominantColor
+                                        accentColor: "#8be9fd"
                                         onClicked: MprisState.cardPlayer?.previous()
                                     }
                                     TrackButton {
                                         text: MprisState.cardPlayer?.isPlaying ? "\uf04c" : "\uf04b"
                                         flat: true
-                                        accentColor: card.dominantColor
+                                        accentColor: "#bd93f9"
                                         onClicked: MprisState.cardPlayer?.togglePlaying()
                                     }
                                     TrackButton {
                                         text: "\uf050"
                                         flat: true
-                                        accentColor: card.dominantColor
+                                        accentColor: "#ff79c6"
                                         onClicked: MprisState.cardPlayer?.next()
                                     }
                                     Item {
@@ -764,7 +764,7 @@ leftMargin: 6
                                         text: "\uf074"
                                         visible: MiscState.showShuffle
                                         active: MprisState.cardPlayer?.shuffle ?? false
-                                        accentColor: MprisState.cardPlayer?.shuffle ? "#f1fa8c" : Qt.rgba(1, 1, 1, 0.6)
+                                        accentColor: MprisState.cardPlayer?.shuffle ? "#ff79c6" : Qt.rgba(1, 1, 1, 0.45)
                                         onClicked: {
                                             var p = MprisState.cardPlayer;
                                             if (p?.canControl && p?.shuffleSupported)
@@ -773,24 +773,24 @@ leftMargin: 6
                                     }
                                     TrackButton {
                                         text: "\uf049"
-                                        accentColor: Qt.rgba(1, 1, 1, 0.8)
+                                        accentColor: "#8be9fd"
                                         onClicked: MprisState.cardPlayer?.previous()
                                     }
                                     TrackButton {
                                         text: MprisState.cardPlayer?.isPlaying ? "\uf04c" : "\uf04b"
-                                        accentColor: "#ffffff"
+                                        accentColor: "#bd93f9"
                                         onClicked: MprisState.cardPlayer?.togglePlaying()
                                     }
                                     TrackButton {
                                         text: "\uf050"
-                                        accentColor: Qt.rgba(1, 1, 1, 0.8)
+                                        accentColor: "#ff79c6"
                                         onClicked: MprisState.cardPlayer?.next()
                                     }
                                     TrackButton {
                                         text: "\uf079"
                                         visible: MiscState.showLoop
                                         active: MprisState.cardPlayer?.loopState !== MprisLoopState.None
-                                        accentColor: MprisState.cardPlayer?.loopState === MprisLoopState.Track ? "#f1fa8c" : MprisState.cardPlayer?.loopState === MprisLoopState.Playlist ? "#bd93f9" : Qt.rgba(1, 1, 1, 0.6)
+                                        accentColor: MprisState.cardPlayer?.loopState === MprisLoopState.Track ? "#50fa7b" : MprisState.cardPlayer?.loopState === MprisLoopState.Playlist ? "#bd93f9" : Qt.rgba(1, 1, 1, 0.45)
                                         onClicked: {
                                             var p = MprisState.cardPlayer;
                                             if (!p?.canControl || !p?.loopSupported)
@@ -881,7 +881,7 @@ leftMargin: 6
                         PlayerStrip {
                             id: expandedSwitcher
 
-                            visible: MprisState.controlPlayers.length > 1
+                            visible: MiscState.showPlayerChooser && MprisState.controlPlayers.length > 0
                             z: 10
                             anchors {
 left: parent.left

@@ -93,9 +93,6 @@ ShellRoot {
                         host: barr
                         clockInside: true
                     }
-                    Battery {
-                        host: barr
-                    }
                 }
             }
 

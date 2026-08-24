@@ -87,9 +87,9 @@ RowLayout {
         Rectangle {
             id: batteryBody
 
-            width: 27
-            height: 15
-            radius: 3
+            width: 23
+            height: 13
+            radius: 2.5
             color: "#343746"
             border.width: 1
             border.color: Qt.rgba(batteryBlock.accentColor.r, batteryBlock.accentColor.g, batteryBlock.accentColor.b, 0.55)
@@ -147,7 +147,7 @@ RowLayout {
                 anchors.centerIn: parent
                 visible: batteryBlock.isCharging || batteryBlock.isPendingCharge
                 text: batteryBlock.isPendingCharge ? "\uf1e6" : "\uf0e7"
-                font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
                 color: "#f8f8f2"
                 style: Text.Outline
                 styleColor: Qt.rgba(0, 0, 0, 0.65)
@@ -161,7 +161,7 @@ RowLayout {
                 color: "#f8f8f2"
                 style: Text.Outline
                 styleColor: Qt.rgba(0, 0, 0, 0.75)
-                font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                font { pixelSize: 11; bold: true; family: "ZedMono Nerd Font" }
             }
         }
 
@@ -175,8 +175,8 @@ RowLayout {
                 leftMargin: 1.5
             }
 
-            implicitWidth: 2.5
-            implicitHeight: 8
+            implicitWidth: 2
+            implicitHeight: 7
             radius: 1
             color: batteryBlock.accentColor
 

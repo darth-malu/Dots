@@ -23,6 +23,75 @@ Singleton {
     // watcher discard stale echoes that would snap sliders back mid-drag
     property real lastLocalSet: 0
 
+    // probe once at startup: prefer sysfs backlight, else ddcutil.
+    // laptops often expose several backlight devices (gpu + acpi + vendor)
+    // where only one actually drives the panel — rank gpu-backed ones first,
+    // or honor a QS_BACKLIGHT_DEVICE override
+    Process {
+        id: probe
+
+        command: ["sh", "-c",
+            'ov="$QS_BACKLIGHT_DEVICE"; '
+            + 'if [ -n "$ov" ] && [ -e "/sys/class/backlight/$ov/brightness" ]; then '
+            + 'echo "sys /sys/class/backlight/$ov"; exit 0; fi; '
+            + 'for d in /sys/class/backlight/*; do '
+            + '[ -e "$d/brightness" ] || continue; n=$(basename "$d"); '
+            + 'case "$n" in *amdgpu*|*intel*|*nvidia*|*radeon*|*nouveau*) p=0 ;; *acpi*|*video*|*wmi*) p=8 ;; *) p=4 ;; esac; '
+            + 'echo "dev $p $n $d"; '
+            + 'done | sort -n | head -1; '
+            + 'command -v ddcutil >/dev/null 2>&1 && { echo ddc; ddcutil -q getvcp 10 --brief | awk \'{print $4, $5}\'; }']
+        running: true
+
+        stdout: SplitParser {
+            onRead: data => {
+                const parts = data.trim().split(/\s+/);
+                if (parts[0] === "dev") {
+                    root.backend = "sysfs";
+                    root.devicePath = parts[3];
+                    root.deviceName = parts[2];
+                } else if (parts[0] === "sys") {
+                    root.backend = "sysfs";
+                    root.devicePath = parts[1];
+                    root.deviceName = parts[1].split("/").pop();
+                } else if (parts[0] === "ddc") {
+                    root.backend = "ddc";
+                    root.maxBrightness = 100;
+                    if (parts.length >= 2)
+                        root.rawBrightness = parseInt(parts[parts.length - 1]) || 0;
+                }
+            }
+        }
+    }
+
+    property string deviceName: ""
+
+    // when direct sysfs writes are rejected (missing setuid/udev perms) we
+    // verify each commit landed and permanently switch to brightnessctl
+    property bool preferCtl: false
+    property int pendingTarget: -1
+
+    function _ctlCmd(v) {
+        const d = deviceName.replace(/'/g, "'\\''");
+        return `command -v brightnessctl >/dev/null && brightnessctl -d '${d}' set ${v}%`;
+    }
+
+    Timer {
+        id: verifyTimer
+
+        interval: 800
+        onTriggered: {
+            if (root.pendingTarget < 0 || root.backend !== "sysfs")
+                return;
+            const want = Math.round(root.pendingTarget / 100 * root.maxBrightness);
+            const tol = Math.max(1, Math.round(root.maxBrightness * 0.02));
+            if (Math.abs(root.rawBrightness - want) > tol) {
+                root.preferCtl = true;
+                Quickshell.execDetached(["sh", "-c", root._ctlCmd(root.pendingTarget)]);
+            }
+            root.pendingTarget = -1;
+        }
+    }
+
     function setLevel(pct, commit = true) {
         if (!root.available)
             return; // no backend — refuse rather than fake values
@@ -34,36 +103,15 @@ Singleton {
         if (!commit)
             return; // preview during drags — no process spawned per pixel
         if (root.backend === "sysfs") {
-            // write sysfs directly; fall back to brightnessctl when not permitted
-            Quickshell.execDetached(["sh", "-c",
-                `if ! echo ${raw} > '${root.devicePath}/brightness' 2>/dev/null; then command -v brightnessctl >/dev/null && brightnessctl set ${v}%; fi`
-            ]);
+            const p = root.devicePath.replace(/'/g, "'\\''");
+            const chain = root.preferCtl ? root._ctlCmd(v)
+                : `if ! echo ${raw} > '${p}/brightness' 2>/dev/null; then ${root._ctlCmd(v)} 2>/dev/null; fi`;
+            Quickshell.execDetached(["sh", "-c", chain]);
+            root.pendingTarget = v;
+            verifyTimer.restart();
         } else {
             // DDC/CI — VCP feature 0x10 is luminance (0-100 scale)
             Quickshell.execDetached(["ddcutil", "-q", "setvcp", "10", String(v)]);
-        }
-    }
-
-    // probe once at startup: prefer sysfs backlight, else ddcutil
-    Process {
-        id: probe
-
-        command: ["sh", "-c", `for d in /sys/class/backlight/*; do [ -e "$d/brightness" ] && echo "sys $d" && exit; done; command -v ddcutil >/dev/null 2>&1 && { echo ddc; ddcutil -q getvcp 10 --brief | awk '{print $4, $5}'; }`]
-        running: true
-
-        stdout: SplitParser {
-            onRead: data => {
-                const parts = data.trim().split(/\s+/);
-                if (parts[0] === "sys") {
-                    root.backend = "sysfs";
-                    root.devicePath = parts[1];
-                } else if (parts[0] === "ddc") {
-                    root.backend = "ddc";
-                    root.maxBrightness = 100;
-                    if (parts.length >= 2)
-                        root.rawBrightness = parseInt(parts[parts.length - 1]) || 0;
-                }
-            }
         }
     }
 

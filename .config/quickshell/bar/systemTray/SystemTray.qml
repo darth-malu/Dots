@@ -178,6 +178,11 @@ RowLayout {
         visible: MiscState.showVolumeOut || MiscState.showVolumeIn
     }
 
+    // battery sits just left of the clock
+    Battery {
+        host: root.host
+    }
+
     // clock lives in this row, right where quicksettings used to sit
     ClockWidget {
         host: root.host
