@@ -465,12 +465,11 @@ Item {
                         Layout.fillHeight: true
                         color: "transparent"
 
-                        // top inset keeps the first card clear of the ✕
                         Item {
                             anchors {
                                 fill: parent
                                 margins: 24
-                                topMargin: 54
+                                topMargin: 28
                             }
 
                             Flickable {
@@ -600,53 +599,6 @@ Item {
                                                 onClicked: BarState.barMode = segOpt.modelData.key
                             }
                         }
-                    }
-                }
-
-                // ── ✕ — floats over the content pane, top right ──
-                Rectangle {
-                    id: closeBtn
-
-                    z: 5
-                    anchors {
-                        top: parent.top
-                        right: parent.right
-                        margins: 12
-                    }
-                    implicitWidth: 30
-                    implicitHeight: 30
-                    radius: 9
-                    color: closeMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.14) : "#343746"
-                    border.width: 1
-                    border.color: closeMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.55) : "transparent"
-
-                    Behavior on color {
-                        ColorAnimation { duration: 100 }
-                    }
-                    Behavior on border.color {
-                        ColorAnimation { duration: 100 }
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "\uf00d"
-                        color: closeMa.containsMouse ? "#ff5555" : "#b8bfcb"
-                        font {
-                            pixelSize: 12
-                            family: "Symbols Nerd Font Mono"
-                        }
-
-                        Behavior on color {
-                            ColorAnimation { duration: 100 }
-                        }
-                    }
-
-                    MouseArea {
-                        id: closeMa
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: MiscState.toggleSettings = false
                     }
                 }
             }
@@ -800,15 +752,6 @@ Item {
                             label: "Loop button"
                             checked: MiscState.showLoop
                             onFlipped: MiscState.showLoop = !MiscState.showLoop
-                        }
-
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
-
-                        SettingRow {
-                            icon: ""
-                            label: "Player chooser"
-                            checked: MiscState.showPlayerChooser
-                            onFlipped: MiscState.showPlayerChooser = !MiscState.showPlayerChooser
                         }
                     }
                 }

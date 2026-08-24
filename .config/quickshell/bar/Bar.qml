@@ -83,16 +83,15 @@ ShellRoot {
                 RowLayout {
                     id: rightBlock
                     Layout.alignment: Qt.AlignRight
-                    spacing: 7
+                    // macOS menu-bar rhythm — one identical gap between modules
+                    spacing: 14
 
                     Resources {
                         host: barr
                     }
                     SystemTray {
                         host: barr
-                    }
-                    ClockWidget {
-                        host: barr
+                        clockInside: true
                     }
                     Battery {
                         host: barr

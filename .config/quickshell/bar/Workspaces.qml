@@ -4,20 +4,51 @@ import qs.themes
 import qs.customItems
 import Quickshell.Hyprland
 import QtQuick.Layouts
-import Quickshell
 
 RowLayout {
     id: root
 
-    spacing: 4
-    Layout.rightMargin: 8
+    spacing: 5
+    // breathing room before the next module (active window)
+    Layout.rightMargin: 12
 
-    // workspaces of every monitor, special slots filtered, numeric order —
-    // sorted copy so ScriptModel gets a stable array
+    // belt and suspenders for list freshness: socket events bump the
+    // revision, a short signature-checked poll catches anything missed.
+    // the cache keeps array identity stable between real changes so the
+    // Repeater never churns its delegates.
+    property int wsRev: 0
+
+    Timer {
+        interval: 750
+        running: root.visible
+        repeat: true
+        onTriggered: root.wsRev++
+    }
+
+    Connections {
+        target: Hyprland
+
+        function onRawEvent(ev) {
+            const n = ev.name;
+            if (n === "workspace" || n === "destroyworkspace" || n === "moveworkspace"
+                || n === "openwindow" || n === "closewindow" || n === "urgent" || n === "changefloatingmode")
+                root.wsRev++;
+        }
+    }
+
+    property string _listSig: ""
+    property var _listCache: []
+
     readonly property var workspaceList: {
+        const rev = wsRev; // dependency
         const list = [...Hyprland.workspaces.values].filter(ws => ws && ws.id >= 1);
         list.sort((a, b) => a.id - b.id);
-        return list;
+        const sig = list.map(w => String(w.id)).join(",") 
+        if (sig !== _listSig) {
+            _listSig = sig;
+            _listCache = list;
+        }
+        return _listCache;
     }
 
     Repeater {
@@ -30,44 +61,32 @@ RowLayout {
 
             readonly property HyprlandWorkspace ws: modelData
 
-            // proper IPC bindables — `active` is per-monitor truth,
-            // `focused` marks the workspace with keyboard focus
             readonly property bool isActive: ws?.active ?? false
-            readonly property bool isFocused: ws?.focused ?? false
             readonly property bool isUrgent: ws?.urgent ?? false
-            // window count straight from hyprctl's last json payload
-            readonly property int clientCount: ws?.lastIpcObject?.windows ?? 0
-
             readonly property bool hovered: mouseArea.containsMouse
 
             dim: false
 
             radius: height / 2
 
-            border.width: isActive ? 1 : 0
+            border.width: isActive || isUrgent ? 1 : 0
             border.color: isUrgent ? "#ff5555" : Themes.activeHasClientsBorder
 
-            color: {
-                if (isActive)
-                    return Qt.rgba(0.741, 0.576, 0.976, 0.18);
-                if (hovered)
-                    return Qt.rgba(1, 1, 1, 0.07);
-                return "transparent";
-            }
-
-            implicitHeight: content.implicitHeight + 8
-            Layout.preferredWidth: content.implicitWidth + (isActive ? 16 : 10)
-            Layout.preferredHeight: content.implicitHeight + 8
+            color: isActive ? Qt.rgba(0.741, 0.576, 0.976, 0.18)
+                : hovered ? Qt.rgba(1, 1, 1, 0.07)
+                : "transparent"
 
             Behavior on color {
                 ColorAnimation { duration: 120 }
             }
-            Behavior on Layout.preferredWidth {
-                NumberAnimation {
-                    duration: 140
-                    easing.type: Easing.OutQuad
-                }
-            }
+
+            // exact square for the focused workspace → perfect circle,
+            // not an ellipse pill
+            readonly property real diameter: content.implicitHeight + 8
+
+            implicitHeight: diameter
+            Layout.preferredWidth: isActive ? diameter : content.implicitWidth + 14
+            Layout.preferredHeight: diameter
 
             onClicked: () => {
                 if (ws)
@@ -76,7 +95,7 @@ RowLayout {
 
             // urgent workspaces pulse until visited
             SequentialAnimation on opacity {
-                running: rootBlock.isUrgent
+                running: rootBlock.isUrgent && !rootBlock.isActive
                 loops: Animation.Infinite
                 alwaysRunToEnd: true
                 NumberAnimation { to: 0.45; duration: 420 }
@@ -85,14 +104,14 @@ RowLayout {
 
             content: BarText {
                 text: String(rootBlock.ws?.id ?? "")
-                color: {
-                    if (rootBlock.isActive)
-                        return Themes.activeTextColor;
-                    return Qt.rgba(Themes.inactiveTextColor.r, Themes.inactiveTextColor.g, Themes.inactiveTextColor.b, rootBlock.hovered ? 0.9 : 0.55);
-                }
+                color: rootBlock.isActive ? Themes.activeTextColor
+                    : rootBlock.isUrgent ? "#ff5555"
+                    : Qt.rgba(Themes.inactiveTextColor.r, Themes.inactiveTextColor.g, Themes.inactiveTextColor.b, rootBlock.hovered ? 0.95 : 0.55)
+                dim: false
                 font {
                     bold: rootBlock.isActive
                     pixelSize: rootBlock.isActive ? 11 : 10
+                    family: "ZedMono Nerd Font"
                 }
 
                 Behavior on color {

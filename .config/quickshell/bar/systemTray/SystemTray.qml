@@ -9,13 +9,19 @@ import qs.customItems
 import qs.services
 import qs.bar
 import qs.bar.quicksettings
+import qs.bar.time
 
 RowLayout {
     id: root
 
+    // even spacing between the right-cluster groups (macOS style)
+    spacing: 7
+
     Layout.alignment: Qt.AlignVCenter
 
     required property var host
+    // when true the clock is embedded in this row (bar default layout)
+    property bool clockInside: false
 
     Loader {
         visible: active
@@ -85,7 +91,7 @@ RowLayout {
             content: RowLayout {
                 id: trayRow
 
-                spacing: 3
+                spacing: 5
 
                 Repeater {
                     id: systemTrayRepeater
@@ -169,6 +175,13 @@ RowLayout {
 
     VolumePills {
         host: root.host
+        visible: MiscState.showVolumeOut || MiscState.showVolumeIn
+    }
+
+    // clock lives in this row, right where quicksettings used to sit
+    ClockWidget {
+        host: root.host
+        visible: root.clockInside
     }
 
     QuickSettings {

@@ -75,6 +75,87 @@ Singleton {
         return chunks;
     }
 
+    // ── dynamic per-workspace app icons ──
+    // hyprland-autoname isn't always running, so derive icons straight from
+    // the workspace's clients: class (from lastIpcObject) → theme icon
+    readonly property var classIconMap: {
+        "kitty": "kitty",
+        "foot": "foot",
+        "discord": "discord",
+        "webcord": "discord",
+        "vesktop": "discord",
+        "zen": "zen",
+        "firefox": "firefox",
+        "librewolf": "librewolf",
+        "chrom": "google-chrome",
+        "brave": "brave-browser",
+        "steam": "steam",
+        "spotify": "spotify-client",
+        "spotube": "spotube",
+        "easyeffects": "com.github.wwmm.easyeffects",
+        "pwvucontrol": "com.saivert.pwvucontrol",
+        "obs": "com.obsproject.Studio",
+        "mpv": "mpv",
+        "nautilus": "org.gnome.Nautilus",
+        "dolphin": "dolphin",
+        "thunar": "thunar",
+        "code": "visual-studio-code",
+        "emacs": "emacs",
+        "neovide": "neovide",
+        "telegram": "telegram",
+        "signal": "signal",
+        "thunderbird": "thunderbird",
+        "lutris": "net.lutris.Lutris",
+        "heroic": "com.heroicgameslauncher.hgl",
+        "bottles": "com.usebottles.bottles",
+        "inkscape": "org.inkscape.Inkscape",
+        "gimp": "gimp",
+        "blueman": "blueman-manager"
+    }
+
+    // longest substring match wins so "chrome-xyz-pwa" hits before bare rules
+    function iconForClass(cls) {
+        const c = (cls ?? "").toLowerCase();
+        let best = null;
+        let bestLen = -1;
+        for (const k in classIconMap) {
+            if (c.includes(k) && k.length > bestLen) {
+                best = classIconMap[k];
+                bestLen = k.length;
+            }
+        }
+        // standard fallback every freedesktop theme ships
+        return best ?? "application-x-executable";
+    }
+
+    // deduped [{source, count}] for every client living on this workspace;
+    // rev is threaded through purely as a binding dependency so callers'
+    // event-driven revision counters force re-evaluation
+    function clientIconsFor(ws, rev) {
+        const _ = rev;
+        const out = [];
+        const seen = ({});
+        const tls = ws?.toplevels?.values ?? [];
+        for (let i = 0; i < tls.length; i++) {
+            const t = tls[i];
+            if (!t || !t.wayland)
+                continue;
+            const icon = iconForClass(t.lastIpcObject?.class);
+            if (!icon)
+                continue;
+            if (seen[icon]) {
+                seen[icon].count++;
+                continue;
+            }
+            seen[icon] = {
+                source: `image://icon/${icon}`,
+                count: 1
+            };
+            out.push(seen[icon]);
+        }
+        return out;
+    }
+
     property var symbolImgMap: {
         "D": "extra-Dota",
         "Q": "extra-qutebrowser-svg",

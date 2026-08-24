@@ -122,7 +122,7 @@ Item {
             }
             text: tgraph.label
             visible: tgraph.label.length > 0
-            color: Qt.lighter(tgraph.accent, 1.25)
+            color: tgraph.accent
             font {
                 pixelSize: 9
                 bold: true
@@ -854,7 +854,7 @@ Item {
                                     peak: root.netRoot.peakRx
                                     tick: root.netRoot.graphTick
                                     maxLen: root.netRoot.historyMax
-                                    label: "\u2193 " + root.netRoot.fmtRate(root.netRoot.rxRate)
+                                    label: root.netRoot.fmtRate(root.netRoot.rxRate)
                                 }
 
                                 TrafficGraph {
@@ -863,7 +863,7 @@ Item {
                                     peak: root.netRoot.peakTx
                                     tick: root.netRoot.graphTick
                                     maxLen: root.netRoot.historyMax
-                                    label: "\u2191 " + root.netRoot.fmtRate(root.netRoot.txRate)
+                                    label: root.netRoot.fmtRate(root.netRoot.txRate)
                                 }
                             }
                         }

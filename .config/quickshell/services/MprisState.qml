@@ -80,6 +80,25 @@ Singleton {
         root.pinIdentity = next.identity === cur && root.pinIdentity.length > 0 ? "" : next.identity;
     }
 
+    // step the card's player forward/back through the chooser strip
+    // (wheel scrolling); landing on the shown player releases the pin
+    function moveCardPin(dir) {
+        const list = root.controlPlayers;
+        if (list.length === 0)
+            return;
+        const cur = root.cardPlayer?.identity ?? "";
+        let idx = -1;
+        for (let i = 0; i < list.length; i++)
+            if (list[i].identity === cur)
+                idx = i;
+        if (idx === -1)
+            idx = dir > 0 ? 0 : list.length - 1;
+        else
+            idx = (idx + dir + list.length) % list.length;
+        const next = list[idx];
+        root.pinIdentity = next.identity === cur && root.pinIdentity.length > 0 ? "" : next.identity;
+    }
+
     // right-click on the switcher — pin the first player that is actually playing
     function jumpToPlaying() {
         const playing = root.controlPlayers.filter(p => !root.isIgnored(p) && p.isPlaying);

@@ -15,7 +15,7 @@ RowLayout {
     required property var host
 
     Layout.alignment: Qt.AlignVCenter
-    spacing: 6
+    spacing: 8
 
     readonly property bool pipewireReady: PipewireState.pipewireReady
 
@@ -25,7 +25,9 @@ RowLayout {
         required property int chan // 0 output · 1 mic
         readonly property bool isOut: chan === 0
         readonly property var node: isOut ? PipewireState.outputSink : PipewireState.inputSink
-        readonly property color accent: isOut ? "#bd93f9" : "#8be9fd"
+        // pastel, low-key accents — the icons should whisper
+        readonly property color accent: isOut ? "#c9b2f5" : "#a8e6ee"
+        readonly property color mutedColor: "#ff5555"
 
         // true while the wheel is active — drives the inline readout
         property bool flashing: false
@@ -49,8 +51,8 @@ RowLayout {
                         return muted || v === 0 ? "\uf026" : v > 0.55 ? "\uf028" : "\uf027";
                     return muted ? "\uf131" : "\uf130";
                 }
-                color: ((vi.node?.audio?.muted) ?? true) ? "#ff5555" : "#f8f8f2"
-                opacity: viMa.containsMouse ? 1 : 0.85
+                color: ((vi.node?.audio?.muted) ?? true) ? vi.mutedColor : Qt.rgba(0.91, 0.91, 0.96, 0.62)
+                opacity: viMa.containsMouse ? 1 : 0.8
                 font {
                     pixelSize: 15
                     family: "Symbols Nerd Font Mono"
@@ -73,7 +75,7 @@ RowLayout {
                     }
                 }
                 text: ((vi.node?.audio?.muted) ?? false) ? "muted" : Math.round(((vi.node?.audio?.volume) ?? 0) * 100) + "%"
-                color: ((vi.node?.audio?.muted) ?? false) ? "#ff5555" : vi.accent
+                color: ((vi.node?.audio?.muted) ?? false) ? vi.mutedColor : vi.accent
                 font {
                     pixelSize: 10
                     bold: true

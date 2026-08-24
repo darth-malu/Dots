@@ -304,7 +304,7 @@ Loader {
                 }
 
                 RowLayout {
-                    spacing: 2
+                    spacing: 3
 
                     Text {
                         text: "\u2193"
@@ -315,11 +315,9 @@ Loader {
                         }
                     }
 
-                    BarText {
+                    Text {
                         text: root.fmtRate(root.rxRate)
                         color: "#bd93f9"
-                        horizontalAlignment: Text.AlignRight
-                        Layout.preferredWidth: 34
                         font {
                             pixelSize: 10
                             bold: true
@@ -329,7 +327,7 @@ Loader {
                 }
 
                 RowLayout {
-                    spacing: 2
+                    spacing: 3
 
                     Text {
                         text: "\u2191"
@@ -340,11 +338,9 @@ Loader {
                         }
                     }
 
-                    BarText {
+                    Text {
                         text: root.fmtRate(root.txRate)
                         color: "#ff79c6"
-                        horizontalAlignment: Text.AlignRight
-                        Layout.preferredWidth: 34
                         font {
                             pixelSize: 10
                             bold: true
@@ -537,7 +533,7 @@ Loader {
                                     peak: root.peakRx
                                     tick: root.graphTick
                                     maxLen: root.historyMax
-                                    label: "\u2193 " + root.fmtRate(root.rxRate)
+                                    label: root.fmtRate(root.rxRate)
                                 }
 
                                 TrafficGraph {
@@ -547,7 +543,7 @@ Loader {
                                     peak: root.peakTx
                                     tick: root.graphTick
                                     maxLen: root.historyMax
-                                    label: "\u2191 " + root.fmtRate(root.txRate)
+                                    label: root.fmtRate(root.txRate)
                                 }
                         }
 
@@ -603,7 +599,7 @@ Loader {
             }
             text: tgraph.label
             visible: tgraph.label.length > 0
-            color: Qt.lighter(tgraph.accent, 1.25)
+            color: tgraph.accent
             font {
                 pixelSize: 9
                 bold: true
