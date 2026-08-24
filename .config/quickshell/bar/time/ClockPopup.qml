@@ -8,6 +8,8 @@ import qs.customItems
 ColumnLayout {
     id: root
     spacing: 6
+    // explicit content width — child implicit widths are unreliable here
+    implicitWidth: yearView ? 564 : 264
 
     // IPC debug: live geometry of the year-view columns
     readonly property string gridDbg: {
@@ -127,6 +129,7 @@ ColumnLayout {
 
     RowLayout {
         Layout.fillWidth: true
+        Layout.preferredHeight: 32
         spacing: 4
 
         Text {
@@ -186,6 +189,7 @@ ColumnLayout {
     }
 
     DayOfWeekRow {
+        Layout.preferredHeight: 18
         visible: !root.yearView
         Layout.fillWidth: true
         font: Themes.quicksand
@@ -517,21 +521,25 @@ ColumnLayout {
 
     // ── reminders block: its own card below the calendar ──
     Rectangle {
+        id: remCard
+
         visible: !root.yearView && ReminderState.pending.length > 0
         Layout.fillWidth: true
-        implicitHeight: remCol.implicitHeight + 24
+        implicitHeight: remCol.implicitHeight + 22
         radius: 10
         color: Qt.rgba(0.741, 0.576, 0.976, 0.05)
         border.width: 1
         border.color: Qt.rgba(0.741, 0.576, 0.976, 0.14)
 
+        // anchored left/right/top only — a bottom anchor would feed this
+        // layout's implicit size back through the card's height binding
         ColumnLayout {
             id: remCol
 
-            anchors {
-                fill: parent
-                margins: 11
-            }
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: 11
             spacing: 4
 
             RowLayout {
@@ -566,100 +574,100 @@ ColumnLayout {
                         font { pixelSize: 8; bold: true; family: "ZedMono Nerd Font" }
                     }
                 }
+            }
 
-        // grouped by day — each group gets its own subheader row
-        Repeater {
-            model: dayGroups
+            // grouped by day — each group gets its own subheader row
+            Repeater {
+                id: remRep
 
-            delegate: ColumnLayout {
-                id: remGroup
+                model: dayGroups
 
-                required property var modelData
-                required property int index
+                delegate: ColumnLayout {
+                    id: remGroup
 
-                Layout.fillWidth: true
-                Layout.topMargin: index === 0 ? 0 : 9
-                spacing: 3
+                    required property var modelData
+                    required property int index
 
-                Text {
-                    Layout.leftMargin: 2
-                    text: remGroup.modelData.header
-                    color: remGroup.modelData.overdue ? "#ff8c8c" : "#b8bfcb"
-                    font { pixelSize: 10; bold: true; family: "Quicksand"; letterSpacing: 0.5 }
-                }
+                    Layout.fillWidth: true
+                    Layout.topMargin: index === 0 ? 0 : 9
+                    spacing: 3
 
-                Repeater {
-                    model: remGroup.modelData.items
+                    Text {
+                        Layout.leftMargin: 2
+                        text: remGroup.modelData.header
+                        color: remGroup.modelData.overdue ? "#ff8c8c" : "#b8bfcb"
+                        font { pixelSize: 10; bold: true; family: "Quicksand"; letterSpacing: 0.5 }
+                    }
 
-                    delegate: Rectangle {
-                        id: remRow
+                    Repeater {
+                        model: remGroup.modelData.items
 
-                        required property var modelData
+                        delegate: Rectangle {
+                            id: remRow
 
-                        Layout.fillWidth: true
-                        implicitHeight: 24
-                        radius: 6
-                        color: remHover.containsMouse ? "#343746" : Qt.rgba(1, 1, 1, 0.02)
+                            required property var modelData
 
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: 110
-                            }
-                        }
+                            Layout.fillWidth: true
+                            implicitHeight: 24
+                            radius: 6
+                            color: remHover.containsMouse ? "#343746" : Qt.rgba(1, 1, 1, 0.02)
 
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 9
-                            anchors.rightMargin: 7
-                            spacing: 7
-
-                            Text {
-                                text: "\uf067"   // + marker
-                                color: remRow.modelData.overdue ? "#ff8c8c" : "#50fa7b"
-                                font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+                            Behavior on color {
+                                ColorAnimation { duration: 110 }
                             }
 
-                            Text {
-                                text: remRow.modelData.time || "--:--"
-                                color: remRow.modelData.overdue ? "#ff8c8c" : "#bd93f9"
-                                font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
-                                Layout.preferredWidth: 36
-                            }
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 9
+                                anchors.rightMargin: 7
+                                spacing: 7
 
-                            Text {
-                                Layout.fillWidth: true
-                                text: remRow.modelData.text
-                                color: "#f8f8f2"
-                                font { pixelSize: 10; family: "Quicksand" }
-                                elide: Text.ElideRight
-                                maximumLineCount: 1
-                            }
+                                Text {
+                                    text: "\uf067"
+                                    color: remRow.modelData.overdue ? "#ff8c8c" : "#50fa7b"
+                                    font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+                                }
 
-                            // the only action: remove
-                            Text {
-                                text: "\uf00d"
-                                color: delMa.containsMouse ? "#ff5555" : "#4c5069"
-                                font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                Text {
+                                    text: remRow.modelData.time || "--:--"
+                                    color: remRow.modelData.overdue ? "#ff8c8c" : "#bd93f9"
+                                    font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                                    Layout.preferredWidth: 36
+                                }
 
-                                MouseArea {
-                                    id: delMa
-                                    anchors.fill: parent
-                                    anchors.margins: -4
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: ReminderState.remove(remRow.modelData.id)
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: remRow.modelData.text
+                                    color: "#f8f8f2"
+                                    font { pixelSize: 10; family: "Quicksand" }
+                                    elide: Text.ElideRight
+                                    maximumLineCount: 1
+                                }
+
+                                Text {
+                                    text: "\uf00d"
+                                    color: delMa.containsMouse ? "#ff5555" : "#4c5069"
+                                    font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+
+                                    MouseArea {
+                                        id: delMa
+
+                                        anchors.fill: parent
+                                        anchors.margins: -4
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: ReminderState.remove(remRow.modelData.id)
+                                    }
                                 }
                             }
-                        }
 
-                        HoverHandler {
-                            id: remHover
+                            HoverHandler {
+                                id: remHover
+                            }
                         }
                     }
                 }
             }
         }
     }
-    }
-}
 }

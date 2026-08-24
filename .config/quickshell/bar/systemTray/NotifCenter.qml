@@ -1,12 +1,32 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 import Quickshell.Widgets
 import qs.customItems
 import qs.services
 
 BarBlock {
     id: root
+
+    // clipboard writer runs inside quickshell so it inherits the live
+    // Wayland environment — execDetached from the unit drops it
+    function copyToClipboard(text) {
+        if (!text || text.length === 0)
+            return;
+        clipProc.command = ["sh", "-c", "printf %s \"$CLIPTEXT\" | wl-copy"];
+        clipProc.environment = ({ "CLIPTEXT": text });
+        clipProc.running = true;
+    }
+
+    Process {
+        id: clipProc
+
+        stdout: StdioCollector {
+        }
+        stderr: StdioCollector {
+        }
+    }
 
     required property var host
     visible: MiscState.showNotifTray
@@ -335,7 +355,7 @@ BarBlock {
                                                 : [n.summary, n.body].filter(s => s && s.length > 0).join("\n");
                                             if (text.length === 0)
                                                 return;
-                                            Quickshell.execDetached(["sh", "-c", `printf %s '${text.replace(/'/g, "'\\''")}' | wl-copy`]);
+                                            root.copyToClipboard(text);
                                             histRow.copied = true;
                                             copiedTimer.restart();
                                         }

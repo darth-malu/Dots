@@ -150,8 +150,12 @@ BarBlock {
 
                 ClockPopup {
                     id: clockPopup
-                    anchors.fill: parent
-                    anchors.margins: 8
+
+                    // sized by its own implicit dimensions — anchoring here
+                    // fed back into the wrapper's height and froze growth
+                    x: 8
+                    y: 8
+                    width: implicitWidth
                     onTaskSubmitted: (day, month, year, task) => {
                         // the reminder itself is already stored by
                         // ReminderState (ClockPopup.submitInput) — this hook

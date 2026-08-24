@@ -777,9 +777,9 @@ Item {
                 spacing: 12
 
                 Card {
-                    title: "Interfaces"
+                    title: "Connections"
                     icon: "\uf1eb"
-                    accent: "#8be9fd"
+                    accent: "#bd93f9"
 
                     RowLayout {
                         spacing: 12
@@ -1231,7 +1231,6 @@ Item {
                     glyph: "\uf0f3"
                     title: "Reminders"
                     summary: "calendar tasks · timed alerts · CLI"
-                    open: true
 
                     HelpLine { text: "Click the clock in the bar to open the calendar popup." }
                     HelpLine { text: "Pick a day, then type your task in the input at the bottom." }
