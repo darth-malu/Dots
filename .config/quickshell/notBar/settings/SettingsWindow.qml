@@ -275,6 +275,7 @@ Item {
         { icon: "\uf144", label: "Media" },
         { icon: "\uf1eb", label: "Connections" },
         { icon: "\uf2db", label: "Performance" },
+        { icon: "\uf059", label: "Help" },
     ]
 
     readonly property string hostName: QuickState.hostName
@@ -484,10 +485,11 @@ Item {
                                 Loader {
                                     id: pageLoader
                                     width: parent.width
-                                    sourceComponent: root.currentCategory === 0 ? barPage
-                                        : root.currentCategory === 1 ? mediaPage
-                                        : root.currentCategory === 2 ? connectionsPage
-                                        : performancePage
+                                sourceComponent: root.currentCategory === 0 ? barPage
+                                    : root.currentCategory === 1 ? mediaPage
+                                    : root.currentCategory === 2 ? connectionsPage
+                                    : root.currentCategory === 3 ? performancePage
+                                    : helpPage
                                 }
                             }
                         }
@@ -1027,6 +1029,236 @@ Item {
                             wrapMode: Text.WordWrap
                         }
                     }
+                }
+            }
+        }
+
+        // ═══ HELP ═══
+        Component {
+            id: helpPage
+
+            component HelpTopic: Rectangle {
+                id: topic
+
+                property string glyph
+                property string title
+                property string summary
+                default property alias body: bodyCol.children
+                property bool open: false
+
+                Layout.fillWidth: true
+                implicitHeight: headRow.implicitHeight + (topic.open ? bodyCol.implicitHeight + 34 : 0)
+                radius: 10
+                color: Qt.rgba(1, 1, 1, 0.02)
+                border.width: 1
+                border.color: topic.open ? Qt.rgba(0.741, 0.576, 0.976, 0.35) : "#343746"
+
+                Behavior on implicitHeight {
+                    NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                }
+                Behavior on border.color {
+                    ColorAnimation { duration: 150 }
+                }
+
+                ColumnLayout {
+                    anchors {
+                        fill: parent
+                        margins: 12
+                    }
+                    spacing: 8
+
+                    RowLayout {
+                        id: headRow
+
+                        Layout.fillWidth: true
+                        spacing: 10
+
+                        Rectangle {
+                            implicitWidth: 26
+                            implicitHeight: 26
+                            radius: 8
+                            color: Qt.rgba(0.741, 0.576, 0.976, 0.12)
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: topic.glyph
+                                color: "#bd93f9"
+                                font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
+                            }
+                        }
+
+                        ColumnLayout {
+                            spacing: 1
+
+                            Text {
+                                text: topic.title
+                                color: "#f8f8f2"
+                                font { pixelSize: 13; bold: true; family: "Quicksand" }
+                            }
+
+                            Text {
+                                visible: !topic.open && topic.summary.length > 0
+                                text: topic.summary
+                                color: "#6272a4"
+                                elide: Text.ElideRight
+                                font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                            }
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        Text {
+                            text: topic.open ? "\uf077" : "\uf078"
+                            color: "#6272a4"
+                            font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: headRow
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: topic.open = !topic.open
+                    }
+
+                    ColumnLayout {
+                        id: bodyCol
+
+                        visible: topic.open
+                        Layout.fillWidth: true
+                        spacing: 6
+                    }
+                }
+            }
+
+            component HelpLine: Text {
+                property string bullet: "·"
+                Layout.fillWidth: true
+                text: bullet.length > 0 ? bullet + "  " + parent.text : parent.text
+                color: "#b8bfcb"
+                wrapMode: Text.WordWrap
+                font { pixelSize: 11; family: "Quicksand" }
+            }
+
+            component HelpCode: Rectangle {
+                property string cmd
+
+                Layout.fillWidth: true
+                implicitHeight: codeTxt.implicitHeight + 14
+                radius: 7
+                color: "#181825"
+                border.width: 1
+                border.color: "#313244"
+
+                Text {
+                    id: codeTxt
+
+                    anchors {
+                        fill: parent
+                        margins: 7
+                    }
+                    text: "$ " + parent.cmd
+                    color: "#a6e3a1"
+                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                    wrapMode: Text.WrapAnywhere
+                }
+            }
+
+            ColumnLayout {
+                spacing: 10
+
+                Text {
+                    Layout.fillWidth: true
+                    Layout.bottomMargin: 4
+                    text: "Click a topic to expand it."
+                    color: "#6272a4"
+                    font { pixelSize: 11; italic: true; family: "Quicksand" }
+                }
+
+                HelpTopic {
+                    glyph: "\uf0f3"
+                    title: "Reminders"
+                    summary: "calendar tasks · timed alerts · CLI"
+                    open: true
+
+                    HelpLine { text: "Click the clock in the bar to open the calendar popup." }
+                    HelpLine { text: "Pick a day, then type your task in the input at the bottom." }
+                    HelpLine { text: "Include a time like \u201cPay rent 14:30\u201d for an alert at that time — leave it out for an all-day reminder." }
+                    HelpLine { text: "Dots on day cells show how many reminders are pending. The list below the calendar has check (done) and ✕ (remove) buttons." }
+                    HelpLine { text: "When one is due you get a critical notification plus a chime. Reminders persist in ~/.config/quickshell/reminders.json." }
+                    HelpLine { text: "You can also manage them from the terminal:" }
+                    HelpCode { cmd: "qs -p ~/.config/quickshell ipc call reminders add \"Stand up\" 2026-08-25 09:00" }
+                    HelpCode { cmd: "qs -p ~/.config/quickshell ipc call reminders list" }
+                    HelpLine { text: "Use `done <id>` to complete and `remove <id>` to delete — ids come from `list`." }
+                }
+
+                HelpTopic {
+                    glyph: "\uf240"
+                    title: "Battery alerts"
+                    summary: "low / critical warnings · history graph"
+
+                    HelpLine { text: "Low battery warns at 20%, critical at 10% — each fires once per discharge and re-arms when you plug in." }
+                    HelpLine { text: "While critical and still unplugged, a reminder repeats every 5 minutes until the charger is connected." }
+                    HelpLine { text: "Left-click the bar pill for details and power profiles; right-click toggles the percentage inside the pill. The pill itself blares when low or critical." }
+                    HelpLine { text: "The chart icon in the popup enables a one-hour charge-history graph." }
+                }
+
+                HelpTopic {
+                    glyph: "\uf0e4"
+                    title: "Speed test"
+                    summary: "ping · download · upload via Cloudflare"
+
+                    HelpLine { text: "Find it at the bottom of the Wi-Fi popup and in Settings → Connections." }
+                    HelpLine { text: "It measures latency (best of 3), a 50 MB download and an 8 MB upload against Cloudflare's speed endpoints using curl — no extra packages needed." }
+                    HelpLine { text: "The square button cancels a running test; the circular arrow reruns a finished one." }
+                }
+
+                HelpTopic {
+                    glyph: "\uf144"
+                    title: "Media & player chooser"
+                    summary: "pin players · wheel cycling · chip mute"
+
+                    HelpLine { text: "With more than one player running, hover the bottom-left of the Now Playing card in quicksettings — a faint ⋯ button appears. Click it to open the player strip." }
+                    HelpLine { text: "Scroll the strip to cycle players, click a chip to pin that player, right-click any chip to mute/unmute it." }
+                    HelpLine { text: "The strip auto-closes after ~1 s when the pointer leaves. It can be turned off in Settings → Media → Now Playing." }
+                }
+
+                HelpTopic {
+                    glyph: "\uf080"
+                    title: "Workspaces"
+                    summary: "app icons · focus glow · urgent pulse"
+
+                    HelpLine { text: "Settings → Bar → Icon workspaces switches between app icons and numbers. Clicking a pill jumps to that workspace." }
+                    HelpLine { text: "Icon pills show every open app; the focused window's icon glows purple while its siblings stay dim. Duplicate windows of one app show a count badge." }
+                    HelpLine { text: "A workspace with an urgent window (new message etc.) pulses red until visited." }
+                }
+
+                HelpTopic {
+                    glyph: "\uf2f2"
+                    title: "Power timers"
+                    summary: "armed reboot / shutdown countdowns"
+
+                    HelpLine { text: "In quicksettings' power menu, right-click Reboot or Shutdown to open the timer card, then set a delay with the slider (5–240 min)." }
+                    HelpLine { text: "A live countdown pill appears in the bar once armed — left-click it to cancel. Arming also works from the timer card's own toggle." }
+                }
+
+                HelpTopic {
+                    glyph: "\uf1eb"
+                    title: "Network"
+                    summary: "wifi / ethernet toggles · traffic graphs"
+
+                    HelpLine { text: "Corner buttons on the status tiles in Settings → Connections switch the Wi-Fi radio off/on and disconnect/reconnect Ethernet." }
+                    HelpLine { text: "Plugging in Ethernet automatically drops Wi-Fi once so traffic takes the faster link — reconnecting manually afterwards is respected." }
+                    HelpLine { text: "Both popups support live traffic graphs (chart-icon in the header) and session totals; right-click the bar module toggles the rate readout on the bar itself." }
+                }
+
+                HelpTopic {
+                    glyph: "\uf0eb"
+                    title: "Tips & storage"
+                    summary: "shortcuts · where settings live"
+
+                    HelpLine { text: "Escape closes any popup; most tray icons open menus on left-click." }
+                    HelpLine { text: "Everything you toggle here persists in ~/.config/quickshell/prefs.json and survives reloads." }
+                    HelpLine { text: "Reminders live next to it in reminders.json; both files are plain JSON you can edit." }
                 }
             }
         }

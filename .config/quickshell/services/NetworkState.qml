@@ -33,6 +33,31 @@ Singleton {
         Networking.wifiEnabled = on;
     }
 
+    // ethernet wins policy: when the cable link comes up, drop Wi-Fi once
+    // (rising edge only — manual reconnection afterwards is respected)
+    property bool ethLinkWasUp: false
+
+    onEthernetChanged: Qt.callLater(_syncEthLink)
+
+    function _syncEthLink() {
+        const t = root.ethernet;
+        if (!t)
+            return;
+        t.hasLinkChanged.connect(() => root._onEthLink(t));
+        root._onEthLink(t);
+    }
+
+    function _onEthLink(dev) {
+        const up = dev.hasLink;
+        if (up && !root.ethLinkWasUp && root.wifiConnected && Networking.wifiEnabled) {
+            Quickshell.execDetached(["notify-send", "-a", "Shell", "Ethernet connected", "Wi-Fi disconnected"]);
+            root.adapter?.disconnect();
+        }
+        root.ethLinkWasUp = up;
+    }
+
+    Component.onCompleted: Qt.callLater(_syncEthLink)
+
     function setEthernetEnabled(on) {
         if (!root.ethernet)
             return;

@@ -156,6 +156,72 @@ Singleton {
         return out;
     }
 
+    // ── focused-window tracking (address granularity, from IPC events) ──
+    property string _focusedAddress: ""
+
+    Connections {
+        target: Hyprland
+
+        function onRawEvent(ev) {
+            const n = ev.name;
+            if (n === "activewindow")
+                root._focusedAddress = (ev.data ?? "").split(",")[1] ?? "";
+            else if (n === "activewindowv2")
+                root._focusedAddress = ev.data ?? "";
+        }
+    }
+
+    // per-class groups with a `focused` flag when the workspace's active
+    // window belongs to that group — lets the bar dim inactive app icons
+    function clientGroupsFor(ws, rev) {
+        const _ = rev;
+        const groups = [];
+        const idx = ({});
+        const tls = ws?.toplevels?.values ?? [];
+        for (let i = 0; i < tls.length; i++) {
+            const t = tls[i];
+            if (!t || !t.wayland)
+                continue;
+            const icon = iconForClass(t.lastIpcObject?.class);
+            if (!icon)
+                continue;
+            let g = idx[icon];
+            if (!g) {
+                g = {
+                    source: `image://icon/${icon}`,
+                    count: 0,
+                    focused: false
+                };
+                idx[icon] = g;
+                groups.push(g);
+            }
+            g.count++;
+            const addr = String(t.lastIpcObject?.address ?? "");
+            if (addr.length > 0 && addr === root._focusedAddress)
+                g.focused = true;
+        }
+        return groups;
+    }
+
+    // identity-stable cache so unrelated revisions don't churn delegates;
+    // signature includes the focused flag so focus changes swap entries
+    property var _groupCache: ({})   // ws.id -> {sig, icons}
+
+    function cachedClientGroups(ws, rev) {
+        const groups = clientGroupsFor(ws, rev);
+        const id = ws?.id ?? -1;
+        const sig = groups.map(g => g.source + ":" + g.count + ":" + g.focused).join("|");
+        const entry = _groupCache[id];
+        if (!entry || entry.sig !== sig) {
+            _groupCache[id] = {
+                sig: sig,
+                icons: groups
+            };
+            return groups;
+        }
+        return entry.icons;
+    }
+
     property var symbolImgMap: {
         "D": "extra-Dota",
         "Q": "extra-qutebrowser-svg",

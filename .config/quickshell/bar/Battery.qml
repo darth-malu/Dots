@@ -63,29 +63,14 @@ RowLayout {
                 batteryBlock.showPopup = !batteryBlock.showPopup;
         }
 
-        // ── critical pulse — a breathing red ring so a dying battery is unmissable ──
-        Rectangle {
-            visible: batteryBlock.isCritical
-            anchors.fill: parent
-            anchors.margins: -3
-            radius: 7
-            color: "transparent"
-            border.color: "#ff5555"
-            border.width: 1
-            opacity: 0
-
-            SequentialAnimation on opacity {
-                running: batteryBlock.isCritical
-                loops: Animation.Infinite
-                alwaysRunToEnd: true
-                NumberAnimation { to: 0.85; duration: 650; easing.type: Easing.InOutSine }
-                NumberAnimation { to: 0.15; duration: 650; easing.type: Easing.InOutSine }
-            }
-        }
-
         // ── Battery body (fixed width — never resizes with the value) ──
         Rectangle {
             id: batteryBody
+
+            // low/critical: no ring — the fill itself blares between a hot
+            // base and a bright peak so it reads across the room
+            readonly property color blareLo: batteryBlock.isCritical ? "#ff5555" : "#ffb86c"
+            readonly property color blareHi: batteryBlock.isCritical ? "#ffe2e2" : "#fff3d6"
 
             width: 23
             height: 13
@@ -115,7 +100,15 @@ RowLayout {
 
                 width: Math.max(0, (parent.width - 4) * Math.min(Math.max(batteryBlock.percentage, 0), 1))
                 radius: 2.5
-                color: batteryBlock.accentColor
+                color: batteryBody.blareLo
+
+                SequentialAnimation on color {
+                    running: batteryBlock.isLow || batteryBlock.isCritical
+                    loops: Animation.Infinite
+                    alwaysRunToEnd: true
+                    ColorAnimation { to: batteryBody.blareHi; duration: 340 }
+                    ColorAnimation { to: batteryBody.blareLo; duration: 340 }
+                }
 
                 Behavior on color {
                     ColorAnimation {
@@ -151,6 +144,15 @@ RowLayout {
                 color: "#f8f8f2"
                 style: Text.Outline
                 styleColor: Qt.rgba(0, 0, 0, 0.65)
+            }
+
+            // ── Warning glyph — dark on the blaring fill when battery runs low ──
+            Text {
+                anchors.centerIn: parent
+                visible: batteryBlock.isLow || batteryBlock.isCritical
+                text: "!"
+                color: "#282a36"
+                font { pixelSize: 10; weight: Font.Black; family: "ZedMono Nerd Font" }
             }
 
             // ── Percentage — inside the body, outlined for legibility over the fill ──
@@ -262,10 +264,10 @@ RowLayout {
                             text: {
                                 if (batteryBlock.isCritical) {
                                     const t = BatteryState.fmtTime(batteryBlock.bat.timeToEmpty);
-                                    return `Battery critical — ${batteryBlock.pct}%${t ? ` (~${t} left)` : ""}. Plug in now to avoid data loss.`;
+                                    return `Battery critical — ${batteryBlock.pctDisplay}%${t ? ` (~${t} left)` : ""}. Plug in now to avoid data loss.`;
                                 }
                                 const t = BatteryState.fmtTime(batteryBlock.bat.timeToEmpty);
-                                return `Battery low — ${batteryBlock.pct}%${t ? ` (~${t} remaining)` : ""}. Find a charger soon.`;
+                                return `Battery low — ${batteryBlock.pctDisplay}%${t ? ` (~${t} remaining)` : ""}. Find a charger soon.`;
                             }
                             color: batteryBlock.isCritical ? "#ff5555" : "#ffb86c"
                             wrapMode: Text.WordWrap

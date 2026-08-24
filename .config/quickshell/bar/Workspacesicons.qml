@@ -110,8 +110,8 @@ RowLayout {
             property var clientIcons: []
 
             function applyIcons() {
-                const icons = WorkspaceService.clientIconsFor(ws, root.wsRev);
-                const sig = icons.map(i => i.source + ":" + i.count).join("|");
+                const icons = WorkspaceService.cachedClientGroups(ws, root.wsRev);
+                const sig = icons.map(i => i.source + ":" + i.count + ":" + i.focused).join("|");
                 if (sig !== _iconSig) {
                     _iconSig = sig;
                     clientIcons = icons;
@@ -181,6 +181,8 @@ RowLayout {
                         required property var modelData
 
                         readonly property int count: modelData.count
+                        // the workspace's focused window's app glows; siblings dim
+                        readonly property bool isFocusedApp: modelData.focused === true
 
                         Layout.alignment: Qt.AlignVCenter
                         implicitWidth: 16
@@ -191,7 +193,12 @@ RowLayout {
                             source: parent.modelData.source
                             implicitSize: 16
                             asynchronous: true
-                            opacity: rootBlock.isActive ? 1 : 0.65
+                            opacity: iconCell.isFocusedApp ? 1.0
+                                : rootBlock.isActive ? 0.7 : 0.4
+
+                            Behavior on opacity {
+                                NumberAnimation { duration: 160 }
+                            }
 
                             layer.enabled: true
                             layer.effect: MultiEffect {
@@ -199,8 +206,9 @@ RowLayout {
                                 shadowVerticalOffset: 1
                                 shadowHorizontalOffset: 1
                                 shadowBlur: 0.5
-                                shadowColor: Themes.dropShadow
-                                shadowOpacity: rootBlock.isActive ? 1 : 0.2
+                                shadowColor: iconCell.isFocusedApp ? "#bd93f9" : Themes.dropShadow
+                                shadowOpacity: iconCell.isFocusedApp ? 0.9
+                                    : rootBlock.isActive ? 0.2 : 0.05
                             }
                         }
 
