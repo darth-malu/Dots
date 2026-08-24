@@ -2,8 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 
 // HH:MM entry with individually scrollable hour / minute segments.
-// Defaults to 00:00 and only reports a time once the user actually
-// touches it (dirty), so an untouched spinner means "no time set".
+// Defaults to the current time (minutes snapped to 5) and reports it
+// through timeString; dirty flips once the user touches a segment.
 RowLayout {
     id: root
 
@@ -14,12 +14,18 @@ RowLayout {
 
     readonly property string timeString: hours + ":" + minutes
 
+    Component.onCompleted: root.reset()
+
     function reset() {
-        hours = "00";
-        minutes = "00";
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, "0");
+        // snap minutes to the 5-minute wheel grid
+        const mm = String(Math.round(now.getMinutes() / 5) * 5 % 60).padStart(2, "0");
+        hours = hh;
+        minutes = mm;
         dirty = false;
-        hhEdit.text = "00";
-        mmEdit.text = "00";
+        hhSeg.input.text = hh;
+        mmSeg.input.text = mm;
     }
 
     function _setHours(v) {

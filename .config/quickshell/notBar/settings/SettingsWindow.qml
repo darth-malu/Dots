@@ -7,7 +7,6 @@ import Quickshell.Io
 import Quickshell.Widgets
 import qs.customItems
 import qs.services
-import qs.bar.systemTray
 import qs.bar.quicksettings.nowplaying
 import Quickshell.Services.Mpris
 import Quickshell.Networking
@@ -874,7 +873,18 @@ Item {
                     }
                 }
 
-                SpeedtestPanel {
+                Card {
+                    title: "Internet"
+                    icon: "\uf0ac"
+                    accent: "#8be9fd"
+
+                    SettingRow {
+                        icon: "\uf1eb"
+                        label: "Internet access"
+                        caption: NetworkState.internetEnabled ? "on" : "off"
+                        checked: NetworkState.internetEnabled
+                        onFlipped: NetworkState.setInternetEnabled(!NetworkState.internetEnabled)
+                    }
                 }
 
                 Card {

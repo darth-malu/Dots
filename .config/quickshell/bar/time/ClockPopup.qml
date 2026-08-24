@@ -51,9 +51,8 @@ ColumnLayout {
         const t = taskField.text.trim();
         if (t.length === 0 || root.selectedYear < 0)
             return;
-        // untouched spinner (00:00, never scrolled/typed) = all-day task
-        const time = timeSpin.dirty ? timeSpin.timeString : "";
-        ReminderState.add(t, root.selectedKey, time);
+        // spinner defaults to the current time, so every reminder is timed
+        ReminderState.add(t, root.selectedKey, timeSpin.timeString);
         root.taskSubmitted(root.selectedDay, root.selectedMonth, root.selectedYear, t);
         root.clearSelection();
     }
@@ -472,18 +471,58 @@ ColumnLayout {
             }
     }
 
-    // ── upcoming reminders ──
-    ColumnLayout {
+    // ── reminders block: its own card below the calendar ──
+    Rectangle {
         visible: !root.yearView && ReminderState.upcoming.length > 0
         Layout.fillWidth: true
-        spacing: 3
+        implicitHeight: remCol.implicitHeight + 22
+        radius: 10
+        color: Qt.rgba(0.741, 0.576, 0.976, 0.05)
+        border.width: 1
+        border.color: Qt.rgba(0.741, 0.576, 0.976, 0.14)
 
-        Text {
-            Layout.leftMargin: 2
-            text: "Reminders"
-            color: "#6272a4"
-            font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
-        }
+        ColumnLayout {
+            id: remCol
+
+            anchors {
+                fill: parent
+                margins: 11
+            }
+            spacing: 4
+
+            RowLayout {
+                Layout.leftMargin: 2
+                Layout.bottomMargin: 2
+                spacing: 6
+
+                Text {
+                    text: "\uf0f3"
+                    color: "#bd93f9"
+                    font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                }
+
+                Text {
+                    text: "Reminders"
+                    color: "#bd93f9"
+                    font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                }
+
+                Rectangle {
+                    implicitWidth: remCount.implicitWidth + 10
+                    implicitHeight: 14
+                    radius: 7
+                    color: Qt.rgba(0.741, 0.576, 0.976, 0.16)
+
+                    Text {
+                        id: remCount
+
+                        anchors.centerIn: parent
+                        text: ReminderState.upcoming.length
+                        color: "#bd93f9"
+                        font { pixelSize: 8; bold: true; family: "ZedMono Nerd Font" }
+                    }
+                }
+            }
 
         Repeater {
             model: ReminderState.upcoming.slice(0, 4)
@@ -576,6 +615,7 @@ ColumnLayout {
                 }
             }
         }
+    }
     }
 }
 }

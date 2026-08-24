@@ -25,6 +25,20 @@ Singleton {
     readonly property WifiDevice adapter: Networking.devices.values.find(d => d.type === DeviceType.Wifi) ?? null
     readonly property WifiNetwork activeNetwork: root.adapter ? root.adapter.networks.values.find(network => network.connected) : null
     readonly property bool wifiEnabled: Networking.wifiEnabled
+
+    // master "internet" switch: any live radio/link counts as on
+    readonly property bool internetEnabled: Networking.wifiEnabled || (root.ethernet?.connected ?? false)
+
+    function setInternetEnabled(on) {
+        if (on) {
+            Networking.wifiEnabled = true;
+            return;
+        }
+        Networking.wifiEnabled = false;
+        if (root.ethernet?.connected)
+            root.ethernet.disconnect();
+    }
+
     readonly property WiredDevice ethernet: Networking.devices.values.find(d => d.type === DeviceType.Wired) ?? null
     readonly property bool wifiConnected: root.adapter?.connected ?? false
 
