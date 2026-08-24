@@ -7,6 +7,7 @@ import Quickshell.Io
 import Quickshell.Widgets
 import qs.customItems
 import qs.services
+import qs.bar.systemTray
 import qs.bar.quicksettings.nowplaying
 import Quickshell.Services.Mpris
 import Quickshell.Networking
@@ -869,6 +870,9 @@ Item {
                             }
                         }
                     }
+                }
+
+                SpeedtestPanel {
                 }
 
                 Card {

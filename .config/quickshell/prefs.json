@@ -11,7 +11,7 @@
     "showShuffle": true,
     "showSysTray": false,
     "showVolumeIn": false,
-    "showVolumeOut": true,
+    "showVolumeOut": false,
     "showWifi": true,
     "wifiGreenName": true
 }

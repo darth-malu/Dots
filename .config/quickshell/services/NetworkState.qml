@@ -28,6 +28,20 @@ Singleton {
     readonly property WiredDevice ethernet: Networking.devices.values.find(d => d.type === DeviceType.Wired) ?? null
     readonly property bool wifiConnected: root.adapter?.connected ?? false
 
+    // ── radio / link toggles (settings network page) ──
+    function setWifiEnabled(on) {
+        Networking.wifiEnabled = on;
+    }
+
+    function setEthernetEnabled(on) {
+        if (!root.ethernet)
+            return;
+        if (!on)
+            root.ethernet.disconnect();
+        else
+            Quickshell.execDetached(["sh", "-c", `nmcli device connect '${root.ethernet.name}' 2>/dev/null`]);
+    }
+
     readonly property string wifiIcon: {
         if (root.adapter) {
             if (!Networking.wifiEnabled)

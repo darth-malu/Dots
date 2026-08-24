@@ -23,11 +23,48 @@ RowLayout {
     // stable between real changes so delegates don't churn
     property int wsRev: 0
 
+    // imperative refresh — bindings must never write their own dependencies,
+    // or QML kills the loop and updates stall (the old binding-loop bug)
+    function refresh() {
+        var seenEmpty = false;
+        const list = [...Hyprland.workspaces.values].filter(ws => {
+            if (!ws || ws.monitor !== monitor || (ws.name ?? "").includes("special"))
+                return false;
+            const isNumeric = /^\d+$/.test(ws.name);
+            if (!isNumeric)
+                return true;
+            // Only the first EMPTY numeric workspace is shown, so switching
+            // between two empty workspaces never flashes two pills — but
+            // populated workspaces must always survive this filter.
+            const isEmpty = (ws.lastIpcObject?.windows ?? 0) === 0;
+            if (isEmpty && seenEmpty)
+                return false;
+            if (isEmpty)
+                seenEmpty = true;
+            return true;
+        });
+        list.sort((a, b) => a.id - b.id);
+        const sig = list.map(w => String(w.id)).join(",");
+        if (sig !== _listSig) {
+            _listSig = sig;
+            _listCache = list;
+            wsModel.values = list;
+        }
+        for (let i = 0; i < wsRepeater.count; i++) {
+            const blk = wsRepeater.itemAt(i);
+            if (blk?.applyIcons)
+                blk.applyIcons();
+        }
+    }
+
     Timer {
         interval: 750
         running: root.visible
         repeat: true
-        onTriggered: root.wsRev++
+        onTriggered: {
+            root.wsRev++;
+            root.refresh();
+        }
     }
 
     Connections {
@@ -36,41 +73,25 @@ RowLayout {
         function onRawEvent(ev) {
             const n = ev.name;
             if (n === "workspace" || n === "destroyworkspace" || n === "moveworkspace"
-                || n === "openwindow" || n === "closewindow" || n === "urgent")
+                || n === "movewindow" || n === "openwindow" || n === "closewindow" || n === "urgent") {
                 root.wsRev++;
+                root.refresh();
+            }
         }
     }
 
     property string _listSig: ""
     property var _listCache: []
 
+    Component.onCompleted: refresh()
+
     Repeater {
+        id: wsRepeater
+
         model: ScriptModel {
-            values: {
-                const rev = root.wsRev; // dependency — rebuild on ws changes
-                var seenEmpty = false;
-                const list = [...Hyprland.workspaces.values].filter(ws => {
-                    if (!ws || ws.monitor !== monitor || (ws.name ?? "").includes("special"))
-                        return false;
-                    // There is a flickering that can happen when switching from one empty workspace to another where both empty workspaces are shown
-                    // on the bar at the same time.  This ensures that only the first empty workspace is shown.
-                    const isNumeric = /^\d+$/.test(ws.name);
-                    if (!isNumeric)
-                        return true;
-                    if (!seenEmpty) {
-                        seenEmpty = true;
-                        return true;
-                    }
-                    return false;
-                });
-                list.sort((a, b) => a.id - b.id);
-                const sig = list.map(w => String(w.id)).join(",") 
-                if (sig !== root._listSig) {
-                    root._listSig = sig;
-                    root._listCache = list;
-                }
-                return root._listCache;
-            }
+            id: wsModel
+
+            values: []
         }
 
         BarBlock {
@@ -84,20 +105,22 @@ RowLayout {
             readonly property bool urgent: ws?.urgent ?? false
             readonly property bool hovered: mouseArea.containsMouse
 
-            // live app icons for this workspace — rebuilt whenever wsRev bumps
-            readonly property var clientIcons: {
-                const rev = root.wsRev; // dependency
-                const icons = WorkspaceService.clientIconsFor(ws, rev);
+            // live app icons for this workspace — updated imperatively by
+            // root.refresh(); identity stays stable so delegates never churn
+            property var clientIcons: []
+
+            function applyIcons() {
+                const icons = WorkspaceService.clientIconsFor(ws, root.wsRev);
                 const sig = icons.map(i => i.source + ":" + i.count).join("|");
-                if (sig !== rootBlock._iconSig) {
-                    rootBlock._iconSig = sig;
-                    rootBlock._iconCache = icons;
+                if (sig !== _iconSig) {
+                    _iconSig = sig;
+                    clientIcons = icons;
                 }
-                return rootBlock._iconCache;
             }
 
+            Component.onCompleted: applyIcons()
+
             property string _iconSig: ""
-            property var _iconCache: []
 
             dim: false
 
