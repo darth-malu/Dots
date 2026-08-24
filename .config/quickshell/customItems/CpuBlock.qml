@@ -7,6 +7,11 @@ import qs.customItems
 
 BarBlock {
     id: cpu
+
+    // if the module is hidden while the process list is open, close it so
+    // reopening never starts from a stale expanded state
+    onVisibleChanged: if (!visible)
+        MiscState.showCpuProcs = false
     border.width: 0
 
     required property var host
@@ -269,7 +274,11 @@ BarBlock {
                             required property string name
 
                             readonly property real cval: c
-                            readonly property color accent: cval > 80 ? "#ff5555" : cval > 40 ? "#f1fa8c" : "#bd93f9"
+                            // 4 visually distinct bands: cool cyan → green → orange → red
+                            readonly property color accent: cval > 80 ? "#ff5555"
+                                : cval > 60 ? "#ffb86c"
+                                : cval > 30 ? "#50fa7b"
+                                : "#8be9fd"
 
                             radius: 8
                             Layout.fillWidth: true
@@ -356,7 +365,17 @@ BarBlock {
                                         width: parent.width * Math.min(prow.cval / 100, 1)
                                         height: parent.height
                                         radius: 3
-                                        color: prow.accent
+                                        color: Qt.rgba(prow.accent.r, prow.accent.g, prow.accent.b, 0.55)
+
+                                        Rectangle {
+                                            anchors.right: parent.right
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: 2.5
+                                            radius: 1.25
+                                            height: parent.height + 2
+                                            visible: prow.cval > 4
+                                            color: prow.accent
+                                        }
 
                                         Behavior on width {
                                             NumberAnimation {

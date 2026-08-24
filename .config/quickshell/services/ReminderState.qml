@@ -34,7 +34,11 @@ Singleton {
     onRemindersChanged: prefs.reminders = reminders
 
     // ── queries ──
-    readonly property string todayKey: {
+    // plain property refreshed by the due-timer — a binding here would be
+    // computed once and go stale past midnight (no reactive deps)
+    property string todayKey: _fmtToday()
+
+    function _fmtToday() {
         const d = new Date();
         return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
     }
@@ -72,17 +76,24 @@ Singleton {
     // ── mutations ──
     function add(text, dateKey, timeStr) {
         const t = (text || "").trim();
-        if (t.length === 0 || !dateKey)
+        const dOk = /^\d{4}-\d{2}-\d{2}$/.test(dateKey || "");
+        const tClean = (timeStr || "").trim();
+        const tOk = tClean.length === 0 || /^\d{2}:\d{2}$/.test(tClean);
+        if (t.length === 0 || !dOk || !tOk)
             return -1;
+        // Date.now() alone can collide for rapid successive adds
+        let id = Date.now();
+        while (reminders.some(r => r.id === id))
+            id++;
         reminders = [...reminders, {
-            id: Date.now(),
+            id: id,
             text: t,
             date: dateKey,
-            time: timeStr || "",
+            time: tClean,
             done: false,
             notified: false
         }];
-        notify("Reminder set · " + dateKey + (timeStr ? " " + timeStr : ""), t);
+        notify("Reminder set · " + dateKey + (tClean ? " " + tClean : ""), t);
         return 0;
     }
 
@@ -102,7 +113,12 @@ Singleton {
         running: true
         repeat: true
         triggeredOnStart: true
-        onTriggered: root.checkDue()
+        onTriggered: {
+            const t = root._fmtToday();
+            if (t !== root.todayKey)
+                root.todayKey = t; // midnight rollover keeps every query honest
+            root.checkDue();
+        }
     }
 
     function checkDue() {
@@ -112,7 +128,9 @@ Singleton {
         const next = reminders.map(r => {
             if (r.notified || r.done)
                 return r;
-            if (r.date === nowKey && (!r.time || r.time <= nowTime)) {
+            // timed reminders fire once their minute arrives (incl. late
+            // boots); all-day tasks deliberately never alarm
+            if (r.time && r.date === nowKey && r.time <= nowTime) {
                 changed = true;
                 fire(r);
                 return Object.assign({}, r, {

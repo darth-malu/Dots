@@ -10,6 +10,10 @@ BarBlock {
     id: root
 
     visible: MiscState.showBluetooth
+
+    // module off → its popup window must not linger
+    onVisibleChanged: if (!visible)
+        NetworkState.btPopupVisible = false
     required property var host
 
     readonly property var adapter: Bt.adapter

@@ -17,6 +17,13 @@ Loader {
     sourceComponent: BarBlock {
         id: root
 
+        onVisibleChanged: {
+            if (!visible) {
+                NetworkState.wifiPopupVisible = false;
+                NetworkState.netPopupVisible = false;
+            }
+        }
+
         implicitWidth: content.implicitWidth
         implicitHeight: content.implicitHeight
 

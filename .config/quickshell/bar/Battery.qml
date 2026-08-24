@@ -49,6 +49,7 @@ RowLayout {
 
     MouseArea {
         id: root
+        onVisibleChanged: if (!visible) showPopup = false
 
         implicitWidth: batteryBody.width + 4 + cap.width
         implicitHeight: batteryBody.height

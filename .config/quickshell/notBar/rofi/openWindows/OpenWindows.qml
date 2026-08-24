@@ -8,6 +8,7 @@ Rofi {
     modelIngest: RofiState.filterWindows(searchField)
     delegateIngest: LauncherDelegate {
         required property var modelData
+        itemLauncher: itemLauncher
         iconUrl: Quickshell.iconPath(modelData?.wayland?.appId ?? "", "image-missing")
         app: DelegateText {}
     }

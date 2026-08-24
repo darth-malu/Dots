@@ -9,7 +9,7 @@
     "showNotifTray": false,
     "showPlayerChooser": true,
     "showShuffle": true,
-    "showSysTray": true,
+    "showSysTray": false,
     "showVolumeIn": false,
     "showVolumeOut": true,
     "showWifi": true,

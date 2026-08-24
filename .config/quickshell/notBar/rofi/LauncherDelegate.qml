@@ -25,6 +25,10 @@ Rectangle {
 
     property MouseArea mouseArea: mouseArea
 
+    // the launcher ListView lives in Rofi.qml — its id is out of scope in
+    // this file, so instances bind it explicitly (was a silent ReferenceError)
+    property var itemLauncher
+
     property string windowTitle
 
     MouseArea {

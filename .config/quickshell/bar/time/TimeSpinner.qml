@@ -2,8 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 
 // HH:MM entry with individually scrollable hour / minute segments.
-// Defaults to the current time (minutes snapped to 5) and reports it
-// through timeString; dirty flips once the user touches a segment.
+// Defaults to the current time (minutes snapped to 5); wheel, arrows,
+// chevrons or typing all adjust it. dirty flips on first interaction.
 RowLayout {
     id: root
 
@@ -55,13 +55,15 @@ RowLayout {
                 segInput.text = label;
         }
 
-        implicitWidth: 22
-        implicitHeight: 24
-        radius: 6
+        implicitWidth: 30
+        implicitHeight: 34
+        radius: 9
+
         readonly property bool focused: segInput.activeFocus
-        color: focused ? Qt.rgba(0.741, 0.576, 0.976, 0.16) : "#44475a"
-        border.width: 1
-        border.color: segHover.hovered || focused ? "#bd93f9" : "#6272a4"
+        color: focused ? Qt.rgba(0.741, 0.576, 0.976, 0.16)
+            : segHover.hovered ? "#4c5069" : "#3b3f54"
+        border.width: focused ? 1.5 : 1
+        border.color: focused ? "#bd93f9" : segHover.hovered ? Qt.rgba(0.741, 0.576, 0.976, 0.35) : "#565d78"
 
         Behavior on border.color {
             ColorAnimation { duration: 120 }
@@ -70,18 +72,37 @@ RowLayout {
             ColorAnimation { duration: 120 }
         }
 
+        // faint top highlight for a soft inset look
+        Rectangle {
+            anchors {
+                top: parent.top
+                left: parent.left
+                right: parent.right
+                margins: 1.5
+            }
+            height: parent.height / 2
+            radius: parent.radius - 1
+            color: Qt.rgba(1, 1, 1, seg.focused ? 0.05 : 0.025)
+
+            Behavior on opacity {}
+        }
+
         TextInput {
             id: segInput
 
             anchors.centerIn: parent
-            width: parent.width + 6
+            width: parent.width - 8
             horizontalAlignment: TextInput.AlignHCenter
             verticalAlignment: TextInput.AlignVCenter
             // plain initial value — the Connections blocks below keep it in
             // sync with root state without fighting manual edits
             text: parent.label
-            color: "#bd93f9"
-            font { pixelSize: 11; bold: true; family: "ZedMono Nerd Font" }
+            color: "#e2d6fb"
+            font {
+                pixelSize: 14
+                weight: Font.DemiBold
+                family: "ZedMono Nerd Font"
+            }
             maximumLength: 2
             validator: RegularExpressionValidator { regularExpression: /[0-9]{0,2}/ }
             selectByMouse: true
@@ -105,6 +126,54 @@ RowLayout {
             }
             Keys.onUpPressed: parent.stepped(parent.step)
             Keys.onDownPressed: parent.stepped(-parent.step)
+        }
+
+        // hover-revealed stepper chevrons along the right edge
+        ColumnLayout {
+            anchors {
+                right: parent.right
+                rightMargin: 2
+                verticalCenter: parent.verticalCenter
+            }
+            spacing: 0
+            visible: opacity > 0
+            opacity: segHover.hovered || upMa.containsMouse || downMa.containsMouse ? 1 : 0
+
+            Behavior on opacity {
+                NumberAnimation { duration: 110 }
+            }
+
+            Text {
+                text: "\uf077"
+                color: upMa.containsMouse ? "#bd93f9" : "#6272a4"
+                font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
+
+                MouseArea {
+                    id: upMa
+
+                    anchors.fill: parent
+                    anchors.margins: -3
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: seg.stepped(seg.step)
+                }
+            }
+
+            Text {
+                text: "\uf078"
+                color: downMa.containsMouse ? "#bd93f9" : "#6272a4"
+                font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
+
+                MouseArea {
+                    id: downMa
+
+                    anchors.fill: parent
+                    anchors.margins: -3
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: seg.stepped(-seg.step)
+                }
+            }
         }
 
         WheelHandler {
@@ -137,8 +206,12 @@ RowLayout {
 
     Text {
         text: ":"
-        color: "#6272a4"
-        font { pixelSize: 12; bold: true; family: "ZedMono Nerd Font" }
+        color: segHoverProxy.hovered ? "#bd93f9" : "#6272a4"
+        font { pixelSize: 15; bold: true; family: "ZedMono Nerd Font" }
+
+        HoverHandler {
+            id: segHoverProxy
+        }
     }
 
     Segment {

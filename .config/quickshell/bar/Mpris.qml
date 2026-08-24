@@ -20,6 +20,15 @@ Item {
 
     visible: MprisState.mprisVisible
 
+    // closing the module must never leave its popups orphaned
+    onVisibleChanged: {
+        if (!visible) {
+            showPopup = false;
+            showArtPopup = false;
+            showVolume = false;
+        }
+    }
+
     property bool showVolume: false
     property bool showPlaying: MprisState.player?.isPlaying ?? false
     property bool showPopup: false

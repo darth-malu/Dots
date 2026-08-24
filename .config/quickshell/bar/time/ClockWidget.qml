@@ -7,6 +7,7 @@ import Quickshell
 
 BarBlock {
     id: root
+        onVisibleChanged: if (!visible) MiscState.showPopup = false
     required property var host
     readonly property string date: TimeService.date
     readonly property string time: TimeService.time
