@@ -63,10 +63,15 @@ RowLayout {
 
             interactive: false
 
-            // size strictly from the content row (BarBlock's own implicit
-            // sizing) — no custom preferredWidth overrides, so the layout
-            // engine can never hand this less space than the icons need
-            // (that mismatch was the old overlap)
+            // REAL implicit size, not just Layout attached props — this
+            // block lives inside a Loader, where attached Layout.* on the
+            // delegate is inert; without these the pill collapses to 0×0
+            implicitWidth: trayRow.implicitWidth + 12
+            implicitHeight: Math.max(trayRow.implicitHeight, 22)
+
+            // hide completely until SNI items actually register
+            // (Repeater.count is reliably notified, unlike list .values)
+            visible: systemTrayRepeater.count > 0
 
             readonly property bool glassy: BarState.barMode === 0
 
@@ -215,11 +220,14 @@ RowLayout {
     }
 
     // ── standalone tray — its own group, directly left of quicksettings ──
-    // never mixed into the connections cluster, sized purely by its content
+    // never mixed into the connections cluster; emptiness is handled INSIDE
+    // the block (visible: repeater.count > 0), because gating activation on
+    // SystemTray.items.values races SNI's async registration and can latch
+    // inactive forever
     Loader {
         visible: active
         asynchronous: true
-        active: MiscState.toggleSysTray && SystemTray.items.values.length > 0
+        active: MiscState.toggleSysTray
         Layout.alignment: Qt.AlignVCenter
 
         sourceComponent: sysBlock
