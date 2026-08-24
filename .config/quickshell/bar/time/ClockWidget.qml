@@ -161,24 +161,8 @@ BarBlock {
                     }
                 }
 
-                // scroll anywhere on the popup to navigate months
-                MouseArea {
-                    anchors.fill: parent
-                    acceptedButtons: Qt.NoButton
-                    onWheel: w => {
-                        if (w.angleDelta.y > 0) {
-                            if (clockPopup.yearView)
-                                clockPopup.shiftYear(-1);
-                            else
-                                clockPopup.prevMonth();
-                        } else if (w.angleDelta.y < 0) {
-                            if (clockPopup.yearView)
-                                clockPopup.shiftYear(1);
-                            else
-                                clockPopup.nextMonth();
-                        }
-                    }
-                }
+                // (scroll-to-switch-month removed — the wheel now drives
+                // the reminder TimeSpinner segments instead)
             }
         }
     }

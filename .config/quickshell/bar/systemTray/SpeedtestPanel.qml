@@ -2,9 +2,9 @@ import QtQuick
 import QtQuick.Layouts
 import qs.services
 
-// Reusable speed-test card — used in the Wi-Fi popup and the settings
-// network page. Idle → big run pill · running → live phase readout with
-// cancel · done → three-column results with rerun.
+// Speed-test card v2 — three live result tiles (ping / down / up) that
+// start as dashes, light up one-by-one as the test progresses, plus a
+// slim three-segment phase track. One prominent button starts/cancels.
 Rectangle {
     id: root
 
@@ -15,204 +15,259 @@ Rectangle {
     border.width: 1
     border.color: "#343746"
 
+    readonly property bool running: SpeedtestState.running
+    // 0..3 — how many of ping/down/up have landed
+    readonly property int stage: {
+        let s = 0;
+        if (SpeedtestState.pingMs >= 0)
+            s++;
+        if (SpeedtestState.downMbps >= 0)
+            s++;
+        if (SpeedtestState.upMbps > 0)
+            s++;
+        return s;
+    }
+
+    function _val(i) {
+        if (!running && SpeedtestState.error.length > 0)
+            return "—";
+        if (i === 0)
+            return SpeedtestState.pingMs >= 0 ? SpeedtestState.pingMs.toFixed(0) : "";
+        if (i === 1)
+            return SpeedtestState.downMbps >= 0 ? SpeedtestState.downMbps.toFixed(1) : "";
+        return SpeedtestState.upMbps > 0 ? SpeedtestState.upMbps.toFixed(1) : "";
+    }
+
     ColumnLayout {
         id: contentCol
 
         anchors {
             fill: parent
-            margins: 10
+            margins: 12
         }
-        spacing: 8
+        spacing: 9
 
+        // ── header: identity + single primary action ──
         RowLayout {
             Layout.fillWidth: true
             spacing: 8
 
-            Text {
-                text: "\uf0e4"
-                color: "#bd93f9"
-                font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
-            }
-
-            Text {
-                Layout.fillWidth: true
-                text: "Speed test"
-                color: "#b8bfcb"
-                font { pixelSize: 10; bold: true; family: "Quicksand"; letterSpacing: 1 }
-            }
-
-            // cancel / rerun corner button while active or finished
             Rectangle {
-                visible: SpeedtestState.running || SpeedtestState.finished
-                implicitWidth: 22
-                implicitHeight: 18
-                radius: 6
-                color: stCorner.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.14) : "transparent"
+                implicitWidth: 26
+                implicitHeight: 26
+                radius: 8
+                color: Qt.rgba(0.741, 0.576, 0.976, 0.12)
 
                 Text {
                     anchors.centerIn: parent
-                    text: SpeedtestState.running ? "\uf04d" : "\uf021"
-                    color: stCorner.containsMouse ? "#ff5555" : "#6272a4"
-                    font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                    text: "\uf0e4"
+                    color: "#bd93f9"
+                    font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
+                }
+            }
+
+            ColumnLayout {
+                spacing: 0
+
+                Text {
+                    text: "Speed test"
+                    color: "#f8f8f2"
+                    font { pixelSize: 12; bold: true; family: "Quicksand" }
+                }
+
+                Text {
+                    text: {
+                        if (root.running) {
+                            const p = SpeedtestState.phase;
+                            return p === "ping" ? "measuring latency…"
+                                : p === "down" ? "downloading…"
+                                : p === "up" ? "uploading…" : "starting…";
+                        }
+                        if (SpeedtestState.error.length > 0)
+                            return SpeedtestState.error;
+                        if (SpeedtestState.pingMs >= 0)
+                            return "last run complete";
+                        return "via Cloudflare · ~30 s";
+                    }
+                    color: root.running ? "#bd93f9" : SpeedtestState.error.length > 0 ? "#ff5555" : "#6272a4"
+                    font { pixelSize: 9; family: "ZedMono Nerd Font" }
+
+                    Behavior on color {
+                        ColorAnimation { duration: 150 }
+                    }
+                }
+            }
+
+            Item { Layout.fillWidth: true }
+
+            Rectangle {
+                id: actionBtn
+
+                implicitWidth: 74
+                implicitHeight: 28
+                radius: 14
+                color: {
+                    if (actionMa.containsMouse)
+                        return root.running ? Qt.rgba(1, 0.33, 0.33, 0.2) : Qt.rgba(0.741, 0.576, 0.976, 0.26);
+                    return root.running ? Qt.rgba(1, 0.33, 0.33, 0.1) : Qt.rgba(0.741, 0.576, 0.976, 0.14);
+                }
+                border.width: 1
+                border.color: root.running ? Qt.rgba(1, 0.33, 0.33, 0.4) : Qt.rgba(0.741, 0.576, 0.976, 0.45)
+
+                Behavior on color {
+                    ColorAnimation { duration: 130 }
+                }
+
+                RowLayout {
+                    anchors.centerIn: parent
+                    spacing: 6
+
+                    Text {
+                        text: root.running ? "\uf04d" : "\uf052"
+                        color: root.running ? "#ff5555" : "#bd93f9"
+                        font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                    }
+
+                    Text {
+                        text: root.running ? "Stop" : "Start"
+                        color: "#f8f8f2"
+                        font { pixelSize: 11; bold: true; family: "Quicksand" }
+                    }
                 }
 
                 MouseArea {
-                    id: stCorner
+                    id: actionMa
 
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: SpeedtestState.running ? SpeedtestState.cancel() : SpeedtestState.start()
+                    onClicked: root.running ? SpeedtestState.cancel() : SpeedtestState.start()
                 }
             }
         }
 
-        // ── idle prompt ──
-        Rectangle {
-            visible: !SpeedtestState.running && !SpeedtestState.finished
-            Layout.alignment: Qt.AlignHCenter
-            implicitWidth: runRow.implicitWidth + 28
-            implicitHeight: runRow.implicitHeight + 14
-            radius: 14
-            color: runMa.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.2) : Qt.rgba(0.741, 0.576, 0.976, 0.1)
-            border.width: 1
-            border.color: Qt.rgba(0.741, 0.576, 0.976, 0.35)
-
-            RowLayout {
-                id: runRow
-
-                anchors.centerIn: parent
-                spacing: 7
-
-                Text {
-                    text: "\uf052"
-                    color: "#bd93f9"
-                    font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
-                }
-
-                Text {
-                    text: "Run test"
-                    color: "#f8f8f2"
-                    font { pixelSize: 11; bold: true; family: "Quicksand" }
-                }
-            }
-
-            MouseArea {
-                id: runMa
-
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: SpeedtestState.start()
-            }
-        }
-
-        // ── running phase readout ──
-        ColumnLayout {
-            visible: SpeedtestState.running
-            Layout.fillWidth: true
-            spacing: 6
-
-            Text {
-                Layout.alignment: Qt.AlignHCenter
-                text: {
-                    if (SpeedtestState.phase === "ping")
-                        return "measuring latency…";
-                    if (SpeedtestState.phase === "down")
-                        return "testing download…";
-                    if (SpeedtestState.phase === "up")
-                        return "testing upload…";
-                    return "starting…";
-                }
-                color: "#b8bfcb"
-                font { pixelSize: 11; bold: true; family: "Quicksand" }
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: 5
-                radius: 2.5
-                color: Qt.rgba(1, 1, 1, 0.06)
-
-                Rectangle {
-                    readonly property real frac: {
-                        const p = SpeedtestState.phase;
-                        if (p === "down" && SpeedtestState.pingMs >= 0)
-                            return 0.45;
-                        if (p === "up" && SpeedtestState.downMbps >= 0)
-                            return 0.78;
-                        if (!SpeedtestState.running)
-                            return 1;
-                        return p === "ping" ? 0.15 : p === "down" ? 0.45 : 0.78;
-                    }
-
-                    width: parent.width * frac + (parent.width * 0.07 * Math.sin(root.wobble))
-                    height: parent.height
-                    radius: 2.5
-                    color: "#bd93f9"
-
-                    Behavior on width {
-                        NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
-                    }
-                }
-            }
-
-            Timer {
-                interval: 90
-                repeat: true
-                running: true
-                onTriggered: root.wobble += 0.35
-            }
-        }
-
-        // ── results ──
+        // ── result tiles ──
         RowLayout {
-            visible: !SpeedtestState.running && SpeedtestState.pingMs >= 0
             Layout.fillWidth: true
-            spacing: 0
+            spacing: 8
 
             Repeater {
                 model: [
-                    { glyph: "\uf1ae", label: "ping", val: SpeedtestState.pingMs >= 0 ? SpeedtestState.pingMs.toFixed(0) + " ms" : "—", tint: "#f1fa8c" },
-                    { glyph: "\uf019", label: "down", val: SpeedtestState.downMbps >= 0 ? SpeedtestState.downMbps.toFixed(1) + " Mbps" : "—", tint: "#50fa7b" },
-                    { glyph: "\uf093", label: "up", val: SpeedtestState.upMbps > 0 ? SpeedtestState.upMbps.toFixed(1) + " Mbps" : "—", tint: "#ff79c6" }
+                    { glyph: "\uf1ae", label: "PING", unit: "ms", tint: Qt.color("#f1fa8c"), phase: "ping" },
+                    { glyph: "\uf019", label: "DOWN", unit: "Mbps", tint: Qt.color("#50fa7b"), phase: "down" },
+                    { glyph: "\uf093", label: "UP", unit: "Mbps", tint: Qt.color("#ff79c6"), phase: "up" }
                 ]
 
-                delegate: ColumnLayout {
-                    id: resCell
+                delegate: Rectangle {
+                    id: tile
 
                     required property var modelData
+                    readonly property int idx: index
+                    readonly property bool isNext: root.running && SpeedtestState.phase === tile.modelData.phase
+                    readonly property bool landed: root.stage > tile.idx
+                    readonly property string valStr: root._val(tile.idx)
 
                     Layout.fillWidth: true
-                    spacing: 2
+                    implicitHeight: 58
+                    radius: 9
+                    color: landed || isNext ? Qt.rgba(tile.modelData.tint.r, tile.modelData.tint.g, tile.modelData.tint.b, isNext ? 0.1 : 0.06) : Qt.rgba(1, 1, 1, 0.02)
+                    border.width: 1
+                    border.color: isNext ? Qt.rgba(tile.modelData.tint.r, tile.modelData.tint.g, tile.modelData.tint.b, 0.55) : "#313244"
 
-                    Text {
-                        Layout.alignment: Qt.AlignHCenter
-                        text: resCell.modelData.glyph + " " + resCell.modelData.val
-                        color: resCell.modelData.tint
-                        font { pixelSize: 13; bold: true; family: "ZedMono Nerd Font" }
+                    Behavior on border.color {
+                        ColorAnimation { duration: 180 }
+                    }
+                    Behavior on color {
+                        ColorAnimation { duration: 180 }
                     }
 
-                    Text {
-                        Layout.alignment: Qt.AlignHCenter
-                        text: resCell.modelData.label
-                        color: "#6272a4"
-                        font { pixelSize: 8; bold: true; family: "Quicksand"; letterSpacing: 2 }
+                    SequentialAnimation on opacity {
+                        running: tile.isNext
+                        loops: Animation.Infinite
+                        alwaysRunToEnd: true
+                        NumberAnimation { to: 0.72; duration: 420 }
+                        NumberAnimation { to: 1; duration: 420 }
+                    }
+
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        spacing: 2
+
+                        RowLayout {
+                            Layout.alignment: Qt.AlignHCenter
+                            spacing: 4
+
+                            Text {
+                                text: tile.modelData.glyph
+                                color: tile.landed || tile.isNext ? tile.modelData.tint : "#6272a4"
+                                font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+
+                                Behavior on color {
+                                    ColorAnimation { duration: 200 }
+                                }
+                            }
+
+                            Text {
+                                text: tile.modelData.label
+                                color: "#6272a4"
+                                font { pixelSize: 8; bold: true; letterSpacing: 2; family: "Quicksand" }
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.alignment: Qt.AlignHCenter
+                            spacing: 3
+
+                            Text {
+                                text: tile.valStr.length > 0 ? tile.valStr : "—"
+                                color: tile.valStr.length > 0 ? "#f8f8f2" : "#44475a"
+                                font { pixelSize: 17; weight: Font.DemiBold; family: "ZedMono Nerd Font" }
+
+                                Behavior on color {
+                                    ColorAnimation { duration: 250 }
+                                }
+                            }
+
+                            Text {
+                                visible: tile.valStr.length > 0
+                                text: tile.modelData.unit
+                                color: "#6272a4"
+                                font { pixelSize: 8; family: "ZedMono Nerd Font" }
+                            }
+                        }
                     }
                 }
             }
         }
 
-        // ── error line ──
-        Text {
-            visible: SpeedtestState.error.length > 0
+        // ── three-segment phase track ──
+        RowLayout {
             Layout.fillWidth: true
-            text: "" + SpeedtestState.error
-            color: "#ff5555"
-            elide: Text.ElideRight
-            font { pixelSize: 9; family: "ZedMono Nerd Font" }
+            spacing: 4
+
+            Repeater {
+                model: ["ping", "down", "up"]
+
+                delegate: Rectangle {
+                    required property int index
+                    required property var modelData
+
+                    Layout.fillWidth: true
+                    implicitHeight: 4
+                    radius: 2
+                    color: root.stage > index || (root.running && SpeedtestState.phase === modelData)
+                        ? ["#f1fa8c", "#50fa7b", "#ff79c6"][index] : Qt.rgba(1, 1, 1, 0.06)
+
+                    SequentialAnimation on opacity {
+                        running: root.running && SpeedtestState.phase === modelData
+                        loops: Animation.Infinite
+                        alwaysRunToEnd: true
+                        NumberAnimation { to: 0.45; duration: 380 }
+                        NumberAnimation { to: 1; duration: 380 }
+                    }
+                }
+            }
         }
     }
 
-    property real wobble: 0
 }

@@ -41,6 +41,14 @@ RowLayout {
         signal stepped(int delta)
         signal edited(string text)
 
+        function commitEdit() {
+            const v = parseInt(segInput.text);
+            if (!isNaN(v))
+                edited(v);
+            else
+                segInput.text = label;
+        }
+
         implicitWidth: 22
         implicitHeight: 24
         radius: 6
@@ -60,27 +68,38 @@ RowLayout {
             id: segInput
 
             anchors.centerIn: parent
-            width: parent.width - 8
+            width: parent.width + 6
             horizontalAlignment: TextInput.AlignHCenter
             verticalAlignment: TextInput.AlignVCenter
+            // plain initial value — the Connections blocks below keep it in
+            // sync with root state without fighting manual edits
             text: parent.label
             color: "#bd93f9"
             font { pixelSize: 11; bold: true; family: "ZedMono Nerd Font" }
             maximumLength: 2
-            validator: RegularExpressionValidator { regularExpression: /\d{0,2}/ }
+            validator: RegularExpressionValidator { regularExpression: /[0-9]{0,2}/ }
             selectByMouse: true
+            activeFocusOnTab: true
+            cursorVisible: activeFocus
 
-            onEditingFinished: {
-                const v = parseInt(text);
-                if (!isNaN(v))
-                    parent.edited(text);
-                else
-                    text = parent.label;
+            // click anywhere on the chip focuses and selects for typing
+            TapHandler {
+                gesturePolicy: TapHandler.PressWithinBounds
+                onTapped: {
+                    segInput.forceActiveFocus();
+                    segInput.selectAll();
+                }
             }
 
+            onAccepted: parent.commitEdit()
+            Keys.onReturnPressed: segInput.focus = false
+            Keys.onEnterPressed: segInput.focus = false
+            Keys.onEscapePressed: {
+                segInput.text = parent.label;
+                segInput.focus = false;
+            }
             Keys.onUpPressed: parent.stepped(parent.step)
             Keys.onDownPressed: parent.stepped(-parent.step)
-            Keys.onReturnPressed: root.forceActiveFocus()
         }
 
         WheelHandler {
