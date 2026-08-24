@@ -151,11 +151,16 @@ BarBlock {
                 ClockPopup {
                     id: clockPopup
 
-                    // sized by its own implicit dimensions — anchoring here
-                    // fed back into the wrapper's height and froze growth
-                    x: 8
-                    y: 8
-                    width: implicitWidth
+                    // stretch to the window bounds — ColumnLayout manages its
+                    // own implicitWidth, so pinning via width: implicitWidth
+                    // collapsed to the children's minimum and left dead space
+                    // on the right; height stays implicit so the card grows
+                    anchors {
+                        left: parent.left
+                        right: parent.right
+                        top: parent.top
+                        margins: 8
+                    }
                     onTaskSubmitted: (day, month, year, task) => {
                         // the reminder itself is already stored by
                         // ReminderState (ClockPopup.submitInput) — this hook

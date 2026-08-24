@@ -147,31 +147,24 @@ Item {
         }
     }
 
-    // TEMP: debug probe for tray icon screen positions (remove after testing)
-    function walkTray(item, out) {
-        if (!item || typeof item !== "object" || !item.children)
-            return;
-        if ((item.objectName ?? "").indexOf("trayIconDelegate") >= 0) {
-            const p = item.mapToGlobal(0, 0);
-            out.push(`${item.tipText} x=${Math.round(p.x)} y=${Math.round(p.y)} w=${item.width} h=${item.height}`);
+    IpcHandler {
+        target: 'emoji'
+        function toggle(): void {
+            PickerState.emojiOpen = !PickerState.emojiOpen;
         }
-        for (let i = 0; i < item.children.length; i++)
-            walkTray(item.children[i], out);
     }
 
     IpcHandler {
-        id: trayDebugHandler
-        target: 'trayDebug'
-        function positions(): string {
-            const out = [];
-            const wins = Quickshell.windows;
-            for (const w of wins) {
-                if (w?.contentItem)
-                    walkTray(w.contentItem, out);
-            }
-            if (out.length === 0)
-                out.push(`no delegates; windows=${wins.length} toggleSysTray=${MiscState.toggleSysTray}`);
-            return out.join("\n");
+        target: 'color'
+        function toggle(): void {
+            PickerState.colorOpen = !PickerState.colorOpen;
+        }
+
+        // straight-to-eyedropper shortcut
+        function screenPick(): string {
+            PickerState.colorOpen = false;
+            Quickshell.execDetached(["sh", "-c", "hyprpicker | tr -d '\\n' | wl-copy && notify-send -a Color -t 1500 'color copied to clipboard'"]);
+            return "picking…";
         }
     }
 

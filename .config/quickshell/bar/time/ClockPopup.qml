@@ -61,6 +61,9 @@ ColumnLayout {
 
     // reminders grouped per day for the popup list ("Today", "Tomorrow", …)
     readonly property var dayGroups: {
+        // currentDate ticks every minute — keeps "Overdue"/time-window
+        // rendering honest while the popup sits open past a due time
+        const _tick = TimeService.currentDate;
         const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         const now = new Date();
@@ -262,18 +265,8 @@ ColumnLayout {
                 }
             }
 
-            Rectangle {
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 2
-                width: 4
-                height: 4
-                radius: width / 2
-                color: Themes.calendarActiveMonth
-                visible: ReminderState.countForDate(model.year, model.month, model.day) > 0
-            }
-
             // reminder badge — count of pending reminders on this day
+            // (sole indicator in month view; mini months use dots)
             Rectangle {
                 anchors.top: parent.top
                 anchors.right: parent.right

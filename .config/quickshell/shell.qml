@@ -9,6 +9,7 @@ import qs.notBar.rofi.appLauncher
 import qs.notBar.rofi.openWindows
 import qs.notBar.rofi.clipHist
 import qs.notBar.settings
+import qs.notBar.pickers
 import qs.logout
 
 ShellRoot {
@@ -22,6 +23,8 @@ ShellRoot {
     ClipHist {}
     SettingsWindow {}
     WLogoutOverlay {}
+    EmojiPicker {}
+    ColorPicker {}
 }
 
 // reload-nudge

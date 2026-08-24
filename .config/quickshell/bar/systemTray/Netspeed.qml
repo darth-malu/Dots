@@ -165,41 +165,54 @@ Loader {
             }
         }
 
-        Process {
-            id: getRxTxBytes
-            command: ["cat", "/proc/net/dev"]
-            running: false
+        // native /proc read — no process spawn per tick
+        FileView {
+            id: netDevFile
+            path: "file:///proc/net/dev"
+        }
 
-            stdout: SplitParser {
-                onRead: data => {
-                    data = data.trim();
+        function pollNetDev() {
+            netDevFile.reload();
+            const raw = netDevFile.text();
+            if (!raw)
+                return;
+            // iterate LINES of /proc/net/dev, not characters — a per-char
+            // loop never matches "<iface>:" and rates stay pinned at 0
+            const lines = raw.split("\n");
+            for (let i = 0; i < lines.length; i++) {
+                const t = lines[i].trim();
 
-                    if (data.startsWith(root.iface + ":")) {
-                        const parts = data.split(/\s+/);
+                if (t.startsWith(root.iface + ":")) {
+                    const parts = t.split(/\s+/);
 
-                        let rx = parseInt(parts[1]);
-                        let tx = parseInt(parts[9]);
+                    let rx = parseInt(parts[1]);
+                    let tx = parseInt(parts[9]);
+                    if (isNaN(rx) || isNaN(tx))
+                        continue;
 
-                        if (root.rxPrev > 0) {
-                            root.rxRate = ((rx - root.rxPrev) * 8) / 1000000;
-                            root.txRate = ((tx - root.txPrev) * 8) / 1000000;
-                            root.peakRx = Math.max(root.peakRx * 0.995, root.rxRate, 1);
-                            root.peakTx = Math.max(root.peakTx * 0.995, root.txRate, 1);
-                            root.pushSample(root.rxRate, root.txRate);
-                        }
-
-                        root.rxPrev = rx;
-                        root.txPrev = tx;
-
-                        root.ifaceRxTotal = rx;
-                        root.ifaceTxTotal = tx;
+                    if (root.rxPrev > 0) {
+                        root.rxRate = ((rx - root.rxPrev) * 8) / 1000000;
+                        root.txRate = ((tx - root.txPrev) * 8) / 1000000;
+                        root.peakRx = Math.max(root.peakRx * 0.995, root.rxRate, 1);
+                        root.peakTx = Math.max(root.peakTx * 0.995, root.txRate, 1);
+                        root.pushSample(root.rxRate, root.txRate);
                     }
 
-                    if (root.ethIfName.length > 0 && data.startsWith(root.ethIfName + ":")) {
-                        const parts = data.split(/\s+/);
-                        root.ethRxTotal = parseInt(parts[1]);
-                        root.ethTxTotal = parseInt(parts[9]);
-                    }
+                    root.rxPrev = rx;
+                    root.txPrev = tx;
+
+                    root.ifaceRxTotal = rx;
+                    root.ifaceTxTotal = tx;
+                }
+
+                if (root.ethIfName.length > 0 && t.startsWith(root.ethIfName + ":")) {
+                    const parts = t.split(/\s+/);
+                    const erx = parseInt(parts[1]);
+                    const etx = parseInt(parts[9]);
+                    if (isNaN(erx) || isNaN(etx))
+                        continue;
+                    root.ethRxTotal = erx;
+                    root.ethTxTotal = etx;
                 }
             }
         }
@@ -232,9 +245,10 @@ Loader {
             running: NetworkState.netspeedVisible || NetworkState.netPopupVisible || root.wifiGraphs
             repeat: true
             triggeredOnStart: true
-            onTriggered: () => {
-                defaultInterface.running = true;
-                getRxTxBytes.running = true;
+            onTriggered: {
+                // interface/gateway drift is rare — resolve on the slow
+                // cadence only, bytes come from the native FileView
+                root.pollNetDev();
             }
         }
 
@@ -243,7 +257,10 @@ Loader {
             running: NetworkState.netspeedVisible || NetworkState.netPopupVisible
             repeat: true
             triggeredOnStart: true
-            onTriggered: addrProc.running = true
+            onTriggered: {
+                defaultInterface.running = true;
+                addrProc.running = true;
+            }
         }
 
         onRightClicked: NetworkState.netspeedVisible = !NetworkState.netspeedVisible
@@ -251,6 +268,9 @@ Loader {
         content: RowLayout {
             id: netRow
             spacing: 6
+
+            // breathing room so text/icons never hug the pill edge
+            Item { Layout.preferredWidth: 4 }
 
             // ── Wifi icon — shown whenever the cable is NOT linked (exactly one net icon at all times) ──
             Item {
@@ -301,13 +321,13 @@ Loader {
             }
 
             // ── rates — sleek micro readout: pastel direction glyphs,
-            // fixed-width values (no jitter), one shared dim unit ──
+            // fixed-width values (no jitter), tight vertical rhythm ──
             RowLayout {
                 visible: NetworkState.netspeedVisible && root.online
-                spacing: 8
+                spacing: 5
 
                 RowLayout {
-                    spacing: 4
+                    spacing: 3
 
                     Text {
                         text: "\u2b07"
@@ -316,7 +336,7 @@ Loader {
                     }
 
                     Text {
-                        Layout.preferredWidth: 34
+                        Layout.preferredWidth: 26
                         text: root.fmtRate(root.rxRate)
                         color: "#e2d6fb"
                         font { pixelSize: 10; weight: Font.DemiBold; family: "ZedMono Nerd Font" }
@@ -324,13 +344,15 @@ Loader {
                 }
 
                 Rectangle {
+                    Layout.leftMargin: 1
+                    Layout.rightMargin: 1
                     implicitWidth: 1
                     implicitHeight: 10
                     color: Qt.rgba(1, 1, 1, 0.10)
                 }
 
                 RowLayout {
-                    spacing: 4
+                    spacing: 3
 
                     Text {
                         text: "\u2b06"
@@ -339,17 +361,11 @@ Loader {
                     }
 
                     Text {
-                        Layout.preferredWidth: 34
+                        Layout.preferredWidth: 26
                         text: root.fmtRate(root.txRate)
                         color: "#ffd3ea"
                         font { pixelSize: 10; weight: Font.DemiBold; family: "ZedMono Nerd Font" }
                     }
-                }
-
-                Text {
-                    text: root.rxRate >= 1000 || root.txRate >= 1000 ? "Gb/s" : "Mb/s"
-                    color: Qt.rgba(1, 1, 1, 0.28)
-                    font { pixelSize: 8; letterSpacing: 1; family: "ZedMono Nerd Font" }
                 }
             }
 
@@ -363,6 +379,8 @@ Loader {
                     family: "ZedMono Nerd Font"
                 }
             }
+
+            Item { Layout.preferredWidth: 4 }
         }
 
         LazyLoader {

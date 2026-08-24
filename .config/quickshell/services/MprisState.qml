@@ -209,7 +209,7 @@ Singleton {
     function isIgnored(p) {
         if (!p)
             return true;
-        return root.ignored.some(app => p.identity.includes(app) || p.desktopEntry.includes(app));
+        return root.ignored.some(app => p.identity.includes(app) || (p.desktopEntry ?? "").includes(app));
     }
 
     function refresh() {
@@ -286,9 +286,11 @@ Singleton {
         function onPostTrackChanged() {
             if (!root.player)
                 return;
-            const isIgnored = root.ignored.some(app => root.player.identity.includes(app) || root.player.desktopEntry.includes(app));
-
-            if (!isIgnored)
+            const p = root.player;
+            const isIgnored = root.ignored.some(app => p.identity.includes(app) || (p.desktopEntry ?? "").includes(app));
+            // browsers spam a toast per video/short — only real players
+            // announce tracks automatically (manual songArt still works)
+            if (!isIgnored && !root.isBrowserPlayer(p))
                 root.sendNotify();
         }
     }

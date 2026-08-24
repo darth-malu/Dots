@@ -89,6 +89,30 @@ Singleton {
         path: "file:///proc/meminfo"
     }
 
+    // CPU temp — resolve the hwmon sensor once at startup, then poll the
+    // sysfs file natively; no shell spawn every sample
+    property string cpuTempPath: ""
+
+    Process {
+        id: tempProbe
+
+        running: true
+        command: ["sh", "-c",
+            "for f in /sys/class/hwmon/hwmon*/name; do "
+            + "read -r n < \"$f\" 2>/dev/null || continue; "
+            + "case \"$n\" in coretemp|k10temp|k8temp|zenpower|cpu_thermal) "
+            + "echo \"${f%name}temp1_input\"; break;; esac; done"]
+        stdout: SplitParser {
+            onRead: root.cpuTempPath = data.trim()
+        }
+    }
+
+    FileView {
+        id: cpuTempFile
+
+        path: root.cpuTempPath.length > 0 ? "file://" + root.cpuTempPath : ""
+    }
+
     Timer {
         id: cpuUsage
         interval: root.cpuMemInterval
@@ -102,7 +126,12 @@ Singleton {
             root.processMemoryData(memoryFile.text());
             gpuBusyPercent.reload();
             root.gpuPercent = parseInt(gpuBusyPercent.text()) || 0;
-            process_cpu_temp.running = true;
+            if (root.cpuTempPath.length > 0) {
+                cpuTempFile.reload();
+                const t = parseInt(cpuTempFile.text());
+                if (!isNaN(t))
+                    root.cpuTemp = Math.round(t / 1000);
+            }
         }
     }
 
@@ -189,15 +218,6 @@ Singleton {
             "total": currentTotalSum,
             "idle": currentIdleAll
         };
-    }
-
-    Process {
-        id: process_cpu_temp
-        running: false
-        command: ["sh", "-c", "$HOME/.config/quickshell/scripts/cpuTemp.sh"]
-        stdout: SplitParser {
-            onRead: data => cpuTemp = Math.round(data / 1000)
-        }
     }
 
     Process {

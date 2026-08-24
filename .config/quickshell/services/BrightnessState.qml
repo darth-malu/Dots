@@ -56,8 +56,12 @@ Singleton {
                 } else if (parts[0] === "ddc") {
                     root.backend = "ddc";
                     root.maxBrightness = 100;
-                    if (parts.length >= 2)
-                        root.rawBrightness = parseInt(parts[parts.length - 1]) || 0;
+                } else if (!isNaN(parseInt(data.trim()))) {
+                    // ddc probe value line ("<current> <max>") — the marker
+                    // line above only flips the backend
+                    const cur = parseInt(parts[0]);
+                    if (Date.now() - root.lastLocalSet >= 400)
+                        root.rawBrightness = cur;
                 }
             }
         }

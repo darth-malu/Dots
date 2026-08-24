@@ -15,8 +15,9 @@ import qs.bar.time
 RowLayout {
     id: root
 
-    // even spacing between the right-cluster groups (macOS style)
-    spacing: 7
+    // even spacing between the right-cluster groups (macOS style) —
+    // matches rightBlock's module gap in Bar.qml
+    spacing: 14
 
     Layout.alignment: Qt.AlignVCenter
 
@@ -32,23 +33,10 @@ RowLayout {
         Layout.alignment: Qt.AlignVCenter
     }
 
-    Loader {
-        visible: active
-        asynchronous: true
-        active: MiscState.toggleSysTray
-
-        // breathing room between the tray slab and the bar edges
-        Layout.topMargin: 4
-        Layout.bottomMargin: 4
-        Layout.alignment: Qt.AlignVCenter
-
-        sourceComponent: sysBlock
-    }
-
     Component {
         id: connections
         RowLayout {
-            spacing: 7
+            spacing: 14
 
             Netspeed {
                 host: root.host
@@ -65,24 +53,27 @@ RowLayout {
     }
     Component {
         id: sysBlock
-        // classic tray row inside one themed pill — each item keeps its own
-        // hover tint; the pill adapts to the bar style setting:
-        //   transparent bar → frosted glass tint
-        //   solid / full bar → dark slab, distinct from the bar itself
+        // standalone tray pill with a DISTINCT glass finish so it reads as
+        // its own surface, separate from the bar slab and neighbouring
+        // modules:
+        //   transparent bar → brighter frosted glass + visible hairline
+        //   solid / full bar → lifted slate pill, clearly not bar background
         BarBlock {
             id: traySlab
 
             interactive: false
 
-            Layout.preferredWidth: trayRow.implicitWidth + 14
-            Layout.preferredHeight: trayRow.implicitHeight + 8
+            // size strictly from the content row (BarBlock's own implicit
+            // sizing) — no custom preferredWidth overrides, so the layout
+            // engine can never hand this less space than the icons need
+            // (that mismatch was the old overlap)
 
             readonly property bool glassy: BarState.barMode === 0
 
             radius: height / 2
-            color: glassy ? Qt.rgba(1, 1, 1, 0.14) : "#313244"
+            color: glassy ? Qt.rgba(1, 1, 1, 0.16) : "#3b3f54"
             border.width: 1
-            border.color: glassy ? Qt.rgba(1, 1, 1, 0.20) : Qt.rgba(1, 1, 1, 0.07)
+            border.color: glassy ? Qt.rgba(0.74, 0.58, 0.98, 0.28) : Qt.rgba(0.74, 0.58, 0.98, 0.18)
 
             Behavior on color {
                 ColorAnimation { duration: 160 }
@@ -95,6 +86,10 @@ RowLayout {
                 id: trayRow
 
                 spacing: 5
+
+                // horizontal pill padding lives inside the content row so
+                // the slab's implicit width always covers it
+                Item { Layout.preferredWidth: 4 }
 
                 Repeater {
                     id: systemTrayRepeater
@@ -192,6 +187,10 @@ RowLayout {
                         }
                     }
                 }
+
+                // horizontal pill padding lives inside the content row so
+                // the slab's implicit width always covers it
+                Item { Layout.preferredWidth: 4 }
             }
         }
     }
@@ -213,6 +212,17 @@ RowLayout {
         host: root.host
         visible: root.clockInside
         Layout.alignment: Qt.AlignVCenter
+    }
+
+    // ── standalone tray — its own group, directly left of quicksettings ──
+    // never mixed into the connections cluster, sized purely by its content
+    Loader {
+        visible: active
+        asynchronous: true
+        active: MiscState.toggleSysTray && SystemTray.items.values.length > 0
+        Layout.alignment: Qt.AlignVCenter
+
+        sourceComponent: sysBlock
     }
 
     QuickSettings {

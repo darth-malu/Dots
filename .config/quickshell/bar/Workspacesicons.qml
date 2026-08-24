@@ -14,7 +14,7 @@ RowLayout {
 
     spacing: 5
     // breathing room before the next module (active window)
-    Layout.rightMargin: 12
+    Layout.rightMargin: 14
 
     property HyprlandMonitor monitor: Hyprland.monitorFor(screen)
 
@@ -25,7 +25,27 @@ RowLayout {
 
     // imperative refresh — bindings must never write their own dependencies,
     // or QML kills the loop and updates stall (the old binding-loop bug)
+    //
+    // CRITICAL: model writes are queued via Qt.callLater instead of running
+    // inline. A synchronous `wsModel.values = …` inside onRawEvent/timer used
+    // to incubate delegates while applyIcons() (fired from
+    // Component.onCompleted mid-incubation) performed a NESTED setModel on
+    // the inner icons Repeater — that re-entrancy segfaults Qt's delegate
+    // model (VDMListDelegateDataType::createMissingProperties), killing
+    // quickshell while it holds the popup input grab → frozen desktop.
+    property bool _refreshQueued: false
+
     function refresh() {
+        if (_refreshQueued)
+            return; // coalesce bursts — one pass per event-loop cycle is enough
+        _refreshQueued = true;
+        Qt.callLater(() => {
+            _refreshQueued = false;
+            doRefresh();
+        });
+    }
+
+    function doRefresh() {
         var seenEmpty = false;
         const list = [...Hyprland.workspaces.values].filter(ws => {
             if (!ws || ws.monitor !== monitor || (ws.name ?? "").includes("special"))
@@ -50,11 +70,15 @@ RowLayout {
             _listCache = list;
             wsModel.values = list;
         }
-        for (let i = 0; i < wsRepeater.count; i++) {
-            const blk = wsRepeater.itemAt(i);
-            if (blk?.applyIcons)
-                blk.applyIcons();
-        }
+        // icon pass runs AFTER incubation settles — never nested inside the
+        // model-change notification above
+        Qt.callLater(() => {
+            for (let i = 0; i < wsRepeater.count; i++) {
+                const blk = wsRepeater.itemAt(i);
+                if (blk?.applyIcons)
+                    blk.applyIcons();
+            }
+        });
     }
 
     Timer {
@@ -113,16 +137,25 @@ RowLayout {
             // root.refresh(); identity stays stable so delegates never churn
             property var clientIcons: []
 
+            property bool _alive: true
+            Component.onDestruction: _alive = false
+
             function applyIcons() {
                 const icons = WorkspaceService.clientIconsFor(ws, root.wsRev);
                 const sig = icons.map(i => i.source + ":" + i.count).join("|");
                 if (sig !== _iconSig) {
                     _iconSig = sig;
-                    clientIcons = icons;
+                    // queued, never inline: assigning clientIcons swaps the
+                    // inner Repeater's model, which must not happen while
+                    // this delegate itself is mid-incubation
+                    Qt.callLater(() => {
+                        if (rootBlock._alive)
+                            rootBlock.clientIcons = icons;
+                    });
                 }
             }
 
-            Component.onCompleted: applyIcons()
+            Component.onCompleted: Qt.callLater(applyIcons)
 
             property string _iconSig: ""
 

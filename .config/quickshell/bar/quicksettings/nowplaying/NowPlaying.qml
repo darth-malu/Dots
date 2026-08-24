@@ -212,16 +212,8 @@ ClippingRectangle {
                             }
                         }
 
-                        // player chooser toggle — rides at the track-button
-                        // level on the right edge; only with >1 player live
-                        ChooserChevron {
-                            visible: card.chooserAvailable
-                            anchors {
-                                right: parent.right
-                                verticalCenter: compactPlay.verticalCenter
-                                rightMargin: 2
-                            }
-                        }
+                        // (chooser chevron lives in the controls row below,
+                        // bottom-right on the same line as the track buttons)
                         RowLayout {
                             anchors.fill: parent
                             // spacing: 10
@@ -472,6 +464,12 @@ ClippingRectangle {
                                     }
                                     Item {
                                         Layout.fillWidth: true
+                                    }
+                                    // player chooser — bottom-right, same row
+                                    // as the transport; only with >1 player
+                                    ChooserChevron {
+                                        visible: card.chooserAvailable
+                                        Layout.alignment: Qt.AlignVCenter
                                     }
                                 }
                             }

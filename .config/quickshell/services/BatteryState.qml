@@ -85,7 +85,8 @@ Singleton {
     property string lastChargeNotify: ""
 
     function fmtTime(secs) {
-        if (secs == null || isNaN(secs) || secs < 0)
+        // 0 means "still estimating" in UPower — report unknown, never "0m"
+        if (secs == null || isNaN(secs) || secs <= 0)
             return null;
         const h = Math.floor(secs / 3600);
         const m = Math.floor((secs % 3600) / 60);
