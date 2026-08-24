@@ -95,17 +95,19 @@ RowLayout {
                 color: root.muted ? Qt.rgba(0.38, 0.45, 0.64, 0.35) : Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.4)
 
                 Rectangle {
-                    visible: !root.muted
+                    // leading tip — tucks inside the groove and steps aside
+                    // once the knob reaches the end (no blob at 100%)
+                    visible: !root.muted && root.level < 0.995
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     width: 2.5
                     radius: 1.25
-                    height: parent.height + 2
+                    height: parent.height
                     color: root.accent
                 }
 
                 Behavior on width {
-                    enabled: !drag.dragging
+                    enabled: !drag.pressed
                     NumberAnimation {
                         duration: 60
                     }
@@ -122,7 +124,7 @@ RowLayout {
                 color: root.muted ? "#6272a4" : root.accent
                 border.width: 1
                 border.color: Qt.rgba(0, 0, 0, 0.35)
-                scale: drag.dragging || drag.containsMouse ? 1.15 : 1.0
+                scale: drag.pressed || drag.containsMouse ? 1.15 : 1.0
 
                 Behavior on scale {
                     NumberAnimation {
@@ -138,7 +140,7 @@ RowLayout {
                 }
 
                 Behavior on x {
-                    enabled: !drag.dragging
+                    enabled: !drag.pressed
                     NumberAnimation {
                         duration: 60
                     }

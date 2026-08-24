@@ -226,7 +226,7 @@ ColumnLayout {
                                             anchors.verticalCenter: parent.verticalCenter
                                             width: 2.5
                                             radius: 1.25
-                                            height: parent.height + 2
+                                            height: parent.height
                                             color: parent.tint
                                         }
                                     }

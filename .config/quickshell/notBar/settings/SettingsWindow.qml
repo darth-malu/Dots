@@ -776,13 +776,17 @@ Item {
             ColumnLayout {
                 spacing: 12
 
-                // ── live status tiles ──
-                RowLayout {
-                    spacing: 12
-                    Layout.fillWidth: true
+                Card {
+                    title: "Interfaces"
+                    icon: "\uf1eb"
+                    accent: "#8be9fd"
 
-                    Rectangle {
-                        id: wifiTile
+                    RowLayout {
+                        spacing: 12
+                        Layout.fillWidth: true
+
+                        Rectangle {
+                            id: wifiTile
 
                         // state machine: 2 = connected · 1 = radio on, idle · 0 = radio off
                         readonly property int state: NetworkState.wifiConnected ? 2 : NetworkState.wifiEnabled ? 1 : 0
@@ -794,7 +798,8 @@ Item {
                         radius: 10
                         color: wifiMa.containsMouse ? "#262838" : "#21222c"
                         border.width: 1
-                        border.color: [Qt.rgba(1, 0.33, 0.33, 0.35), Qt.rgba(0.741, 0.576, 0.976, 0.35), Qt.rgba(0.545, 0.914, 0.992, 0.55)][state]
+                        // bright border reserved for the connected interface
+                        border.color: wifiTile.state === 2 ? Qt.rgba(0.545, 0.914, 0.992, 0.55) : "#343746"
 
                         Behavior on border.color { ColorAnimation { duration: 180 } }
                         Behavior on color { ColorAnimation { duration: 120 } }
@@ -840,29 +845,6 @@ Item {
                             }
                         }
 
-                        // hover tab naming the click action
-                        Rectangle {
-                            visible: wifiMa.containsMouse
-                            anchors.right: parent.right
-                            anchors.bottom: parent.bottom
-                            anchors.margins: 6
-                            implicitWidth: wifiTabLbl.implicitWidth + 14
-                            implicitHeight: 18
-                            radius: 9
-                            color: Qt.rgba(0.741, 0.576, 0.976, 0.16)
-                            border.width: 1
-                            border.color: Qt.rgba(0.741, 0.576, 0.976, 0.45)
-
-                            Text {
-                                id: wifiTabLbl
-
-                                anchors.centerIn: parent
-                                text: wifiTile.on ? "click to turn off" : "click to turn on"
-                                color: "#e2d6fb"
-                                font { pixelSize: 8; bold: true; family: "ZedMono Nerd Font" }
-                            }
-                        }
-
                         MouseArea {
                             id: wifiMa
 
@@ -884,7 +866,8 @@ Item {
                         radius: 10
                         color: ethMa.containsMouse ? "#262838" : "#21222c"
                         border.width: 1
-                        border.color: [Qt.rgba(1, 0.33, 0.33, 0.35), Qt.rgba(0.941, 0.98, 0.549, 0.4), Qt.rgba(0.314, 0.98, 0.482, 0.55)][state]
+                        // bright border reserved for the linked-up interface
+                        border.color: ethTile.state === 2 ? Qt.rgba(0.314, 0.98, 0.482, 0.55) : "#343746"
 
                         Behavior on border.color { ColorAnimation { duration: 180 } }
                         Behavior on color { ColorAnimation { duration: 120 } }
@@ -927,35 +910,14 @@ Item {
                             }
                         }
 
-                        Rectangle {
-                            visible: ethMa.containsMouse
-                            anchors.right: parent.right
-                            anchors.bottom: parent.bottom
-                            anchors.margins: 6
-                            implicitWidth: ethTabLbl.implicitWidth + 14
-                            implicitHeight: 18
-                            radius: 9
-                            color: Qt.rgba(0.314, 0.98, 0.482, 0.12)
-                            border.width: 1
-                            border.color: Qt.rgba(0.314, 0.98, 0.482, 0.45)
+                            MouseArea {
+                                id: ethMa
 
-                            Text {
-                                id: ethTabLbl
-
-                                anchors.centerIn: parent
-                                text: ethTile.state > 0 ? "click to disconnect" : "click to connect"
-                                color: "#d6ffe6"
-                                font { pixelSize: 8; bold: true; family: "ZedMono Nerd Font" }
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: NetworkState.setEthernetEnabled(!(ethTile.state > 0))
                             }
-                        }
-
-                        MouseArea {
-                            id: ethMa
-
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: NetworkState.setEthernetEnabled(!(ethTile.state > 0))
                         }
                     }
                 }
@@ -1130,9 +1092,10 @@ Item {
                 property bool open: false
 
                 Layout.fillWidth: true
-                // instant height toggle: animating a size bound to child
-                // implicit sizes jitters and clips content mid-flight
-                implicitHeight: headRow.implicitHeight + (topic.open ? bodyCol.implicitHeight + 32 : 0)
+                // fixed-height header + snap height + fade: animating a size
+                // bound to child implicit sizes jitters and clips mid-flight
+                readonly property int headH: 34
+                implicitHeight: 24 + headH + (topic.open ? 8 + bodyCol.implicitHeight : 0)
                 radius: 10
                 clip: true
                 color: Qt.rgba(1, 1, 1, 0.02)
@@ -1154,6 +1117,7 @@ Item {
                         id: headRow
 
                         Layout.fillWidth: true
+                        Layout.preferredHeight: topic.headH
                         spacing: 10
 
                         Rectangle {
@@ -1207,9 +1171,14 @@ Item {
                     ColumnLayout {
                         id: bodyCol
 
-                        visible: topic.open
+                        visible: opacity > 0
+                        opacity: topic.open ? 1 : 0
                         Layout.fillWidth: true
                         spacing: 6
+
+                        Behavior on opacity {
+                            NumberAnimation { duration: 140 }
+                        }
                     }
                 }
             }
@@ -1267,7 +1236,7 @@ Item {
                     HelpLine { text: "Click the clock in the bar to open the calendar popup." }
                     HelpLine { text: "Pick a day, then type your task in the input at the bottom." }
                     HelpLine { text: "The time field starts at the current hour — scroll or type on the HH/MM chips to adjust; every reminder is timed." }
-                    HelpLine { text: "Dots on day cells show how many reminders are pending. The list below the calendar has check (done) and ✕ (remove) buttons." }
+                    HelpLine { text: "Dots on day cells show how many reminders are pending. The list under the calendar groups them by day — ✕ removes an entry." }
                     HelpLine { text: "When one is due you get a critical notification plus a chime. Reminders persist in ~/.config/quickshell/reminders.json." }
                     HelpLine { text: "You can also manage them from the terminal:" }
                     HelpCode { cmd: "qs -p ~/.config/quickshell ipc call reminders add \"Stand up\" 2026-08-25 09:00" }
@@ -1330,7 +1299,7 @@ Item {
                     title: "Network"
                     summary: "wifi / ethernet toggles · traffic graphs"
 
-                    HelpLine { text: "In Settings → Connections, click the Wi-Fi tile to toggle the radio and the Ethernet tile to connect/disconnect — hover shows the action, colors track state." }
+                    HelpLine { text: "In Settings → Connections, click the Wi-Fi tile to toggle the radio and the Ethernet tile to connect/disconnect — border colors track connection state." }
                     HelpLine { text: "Plugging in Ethernet automatically drops Wi-Fi once so traffic takes the faster link — reconnecting manually afterwards is respected." }
                     HelpLine { text: "Both popups support live traffic graphs (chart-icon in the header) and session totals; right-click the bar module toggles the rate readout on the bar itself." }
                 }

@@ -243,16 +243,11 @@ BarBlock {
                                     font { pixelSize: 10; bold: true; family: "Quicksand" }
                                 }
 
-                                Text {
-                                    text: nasRow.modelData.target
-                                    color: "#6272a4"
-                                    font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                                }
-
-                                // mount / unmount action chip
+                                // mount / unmount action chip — fixed width so
+                                // mount and unmount occupy identical footprints
                                 Rectangle {
-                                    implicitWidth: nasActionTxt.implicitWidth + 14
-                                    implicitHeight: 18
+                                    implicitWidth: 78
+                                    implicitHeight: 20
                                     radius: 9
                                     color: {
                                         if (!nasBtnMouse.containsMouse)

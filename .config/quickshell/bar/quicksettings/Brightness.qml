@@ -77,16 +77,19 @@ RowLayout {
                 color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.4)
 
                 Rectangle {
+                    // leading tip — tucks inside the groove and steps aside
+                    // once the knob reaches the end
+                    visible: (BrightnessState.level ?? 0) < 0.995
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     width: 2.5
                     radius: 1.25
-                    height: parent.height + 2
+                    height: parent.height
                     color: root.accent
                 }
 
                 Behavior on width {
-                    enabled: !drag.dragging
+                    enabled: !drag.pressed
                     NumberAnimation {
                         duration: 60
                     }

@@ -6,7 +6,7 @@
     "showEthernet": true,
     "showLoop": true,
     "showNetTotals": true,
-    "showNotifTray": false,
+    "showNotifTray": true,
     "showPlayerChooser": true,
     "showShuffle": true,
     "showSysTray": false,

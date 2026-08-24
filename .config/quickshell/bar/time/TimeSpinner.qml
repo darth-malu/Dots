@@ -55,36 +55,22 @@ RowLayout {
                 segInput.text = label;
         }
 
-        implicitWidth: 30
-        implicitHeight: 34
-        radius: 9
+        implicitWidth: 28
+        implicitHeight: 30
+        radius: 8
 
         readonly property bool focused: segInput.activeFocus
-        color: focused ? Qt.rgba(0.741, 0.576, 0.976, 0.16)
-            : segHover.hovered ? "#4c5069" : "#3b3f54"
+        // quiet idle → soft hover lift → lavender focus ring
+        color: focused ? Qt.rgba(0.741, 0.576, 0.976, 0.14)
+            : segHover.hovered ? Qt.rgba(1, 1, 1, 0.07) : Qt.rgba(1, 1, 1, 0.04)
         border.width: focused ? 1.5 : 1
-        border.color: focused ? "#bd93f9" : segHover.hovered ? Qt.rgba(0.741, 0.576, 0.976, 0.35) : "#565d78"
+        border.color: focused ? "#bd93f9" : segHover.hovered ? "#565d78" : "#3b3f54"
 
         Behavior on border.color {
             ColorAnimation { duration: 120 }
         }
         Behavior on color {
             ColorAnimation { duration: 120 }
-        }
-
-        // faint top highlight for a soft inset look
-        Rectangle {
-            anchors {
-                top: parent.top
-                left: parent.left
-                right: parent.right
-                margins: 1.5
-            }
-            height: parent.height / 2
-            radius: parent.radius - 1
-            color: Qt.rgba(1, 1, 1, seg.focused ? 0.05 : 0.025)
-
-            Behavior on opacity {}
         }
 
         TextInput {
@@ -99,7 +85,7 @@ RowLayout {
             text: parent.label
             color: "#e2d6fb"
             font {
-                pixelSize: 14
+                pixelSize: 13
                 weight: Font.DemiBold
                 family: "ZedMono Nerd Font"
             }
@@ -132,7 +118,7 @@ RowLayout {
         ColumnLayout {
             anchors {
                 right: parent.right
-                rightMargin: 2
+                rightMargin: 1.5
                 verticalCenter: parent.verticalCenter
             }
             spacing: 0
@@ -206,12 +192,8 @@ RowLayout {
 
     Text {
         text: ":"
-        color: segHoverProxy.hovered ? "#bd93f9" : "#6272a4"
-        font { pixelSize: 15; bold: true; family: "ZedMono Nerd Font" }
-
-        HoverHandler {
-            id: segHoverProxy
-        }
+        color: hhSeg.focused || mmSeg.focused ? "#bd93f9" : "#4c5069"
+        font { pixelSize: 14; bold: true; family: "ZedMono Nerd Font" }
     }
 
     Segment {

@@ -400,19 +400,6 @@ BarBlock {
                             }
                             Layout.alignment: Qt.AlignHCenter
                         }
-
-                    // poll-rate ghost footer
-                    Text {
-                        text: "polls 2s"
-                        color: "#6272a4"
-                        opacity: 0.45
-                        font {
-                            pixelSize: 8
-                            letterSpacing: 2
-                            family: "ZedMono Nerd Font"
-                        }
-                        Layout.alignment: Qt.AlignHCenter
-                    }
                 }
             }
         }

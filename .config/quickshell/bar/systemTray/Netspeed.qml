@@ -549,18 +549,6 @@ Loader {
                                     label: root.fmtRate(root.txRate)
                                 }
                         }
-
-                        // ── ghost footer — link speed rides along with the poll rate ──
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            visible: root.ethIfName.length > 0
-                            text: root.ethUp
-                                ? `${NetworkState.ethernet?.linkSpeed ?? ""} Mb/s \u00b7 polls 1s`
-                                : root.ethConnected ? "connecting\u2026" : "no link"
-                            color: "#6272a4"
-                            opacity: 0.55
-                            font { pixelSize: 8; letterSpacing: 2; family: "ZedMono Nerd Font" }
-                        }
                     }
                 }
             }

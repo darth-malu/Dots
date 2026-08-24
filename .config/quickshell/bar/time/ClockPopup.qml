@@ -65,7 +65,7 @@ ColumnLayout {
         const nowTime = Qt.formatDateTime(now, "HH:mm");
         const groups = [];
         let cur = null;
-        for (const r of ReminderState.pending.slice(0, 12)) {
+        for (const r of ReminderState.pending.slice(0, 24)) {
             const overdue = r.date + (r.time || "99:99") < ReminderState.todayKey + nowTime;
             let rel;
             const p = r.date.split("-");
@@ -575,8 +575,10 @@ ColumnLayout {
                 id: remGroup
 
                 required property var modelData
+                required property int index
 
                 Layout.fillWidth: true
+                Layout.topMargin: index === 0 ? 0 : 9
                 spacing: 3
 
                 Text {
