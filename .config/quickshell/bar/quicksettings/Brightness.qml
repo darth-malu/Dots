@@ -73,7 +73,17 @@ RowLayout {
                 width: parent.width * Math.min((BrightnessState.level ?? 0), 1)
                 height: parent.height
                 radius: 3
-                color: root.accent
+                // pastel wash + bright leading edge (popup bar motif)
+                color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.4)
+
+                Rectangle {
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 2.5
+                    radius: 1.25
+                    height: parent.height + 2
+                    color: root.accent
+                }
 
                 Behavior on width {
                     enabled: !drag.dragging
@@ -93,7 +103,7 @@ RowLayout {
                 x: Math.max(0, Math.min(parent.width * Math.min((BrightnessState.level ?? 0), 1) - width / 2, parent.width - width))
                 color: root.accent
                 border.width: 1
-                border.color: Qt.rgba(0, 0, 0, 0.4)
+                border.color: Qt.rgba(0, 0, 0, 0.35)
                 scale: drag.pressed || drag.containsMouse ? 1.15 : 1.0
 
                 Behavior on scale {

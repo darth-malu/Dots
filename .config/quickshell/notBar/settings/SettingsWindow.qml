@@ -1130,15 +1130,15 @@ Item {
                 property bool open: false
 
                 Layout.fillWidth: true
+                // instant height toggle: animating a size bound to child
+                // implicit sizes jitters and clips content mid-flight
                 implicitHeight: headRow.implicitHeight + (topic.open ? bodyCol.implicitHeight + 32 : 0)
                 radius: 10
+                clip: true
                 color: Qt.rgba(1, 1, 1, 0.02)
                 border.width: 1
                 border.color: topic.open ? Qt.rgba(0.741, 0.576, 0.976, 0.35) : "#343746"
 
-                Behavior on implicitHeight {
-                    NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
-                }
                 Behavior on border.color {
                     ColorAnimation { duration: 150 }
                 }

@@ -224,7 +224,11 @@ BarBlock {
 
                             // share of total RAM drives the accent colour
                             readonly property real frac: ResourcesState.memTotal > 0 ? kib / (ResourcesState.memTotal * 1048576) : 0
-                            readonly property color accent: frac > 0.2 ? "#ff5555" : frac > 0.08 ? "#f1fa8c" : "#bd93f9"
+                            // same 4-band palette as the cpu popup: cyan → green → orange → red
+                            readonly property color accent: frac > 0.15 ? "#ff5555"
+                                : frac > 0.06 ? "#ffb86c"
+                                : frac > 0.02 ? "#50fa7b"
+                                : "#8be9fd"
                             readonly property real relMax: procModel.count > 0 ? Math.max(procModel.get(0).kib, 1) : 1
 
                             radius: 8
@@ -301,7 +305,17 @@ BarBlock {
                                         width: parent.width * Math.min(mrow.kib / mrow.relMax, 1)
                                         height: parent.height
                                         radius: 3
-                                        color: mrow.accent
+                                        color: Qt.rgba(mrow.accent.r, mrow.accent.g, mrow.accent.b, 0.55)
+
+                                        Rectangle {
+                                            anchors.right: parent.right
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: 2.5
+                                            radius: 1.25
+                                            height: parent.height + 2
+                                            visible: mrow.kib > 0
+                                            color: mrow.accent
+                                        }
 
                                         Behavior on width {
                                             NumberAnimation {

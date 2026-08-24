@@ -218,7 +218,17 @@ ColumnLayout {
                                         width: timerSlider.visualPosition * parent.width
                                         height: 5
                                         radius: 2.5
-                                        color: timerCard.isReboot ? "#50fa7b" : "#ff5555"
+                                        readonly property color tint: timerCard.isReboot ? "#50fa7b" : "#ff79c6"
+                                        color: Qt.rgba(tint.r, tint.g, tint.b, 0.4)
+
+                                        Rectangle {
+                                            anchors.right: parent.right
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: 2.5
+                                            radius: 1.25
+                                            height: parent.height + 2
+                                            color: parent.tint
+                                        }
                                     }
                                 }
 
@@ -228,9 +238,10 @@ ColumnLayout {
                                     width: 14
                                     height: 14
                                     radius: 7
-                                    color: timerSlider.pressed ? "#f8f8f2" : "#282a36"
-                                    border.color: timerCard.isReboot ? "#50fa7b" : "#ff5555"
-                                    border.width: 2
+                                    readonly property color knobTint: timerCard.isReboot ? "#50fa7b" : "#ff79c6"
+                                    color: knobTint
+                                    border.color: Qt.rgba(knobTint.r, knobTint.g, knobTint.b, 0.4)
+                                    border.width: 1
 
                                     Behavior on color {
                                         ColorAnimation {

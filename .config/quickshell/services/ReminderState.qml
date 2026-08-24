@@ -43,6 +43,14 @@ Singleton {
         return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
     }
 
+    function _fmtOffset(days) {
+        const d = new Date();
+        d.setDate(d.getDate() + days);
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    }
+
+    readonly property string tomorrowKey: _fmtOffset(1)
+
     // upcoming = not done/not fired-yet-visible, today-or-later, soonest first
     readonly property var upcoming: {
         const nowTime = Qt.formatDateTime(new Date(), "HH:mm");

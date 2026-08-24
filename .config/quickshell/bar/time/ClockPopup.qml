@@ -57,6 +57,49 @@ ColumnLayout {
         root.clearSelection();
     }
 
+    // reminders grouped per day for the popup list ("Today", "Tomorrow", …)
+    readonly property var dayGroups: {
+        const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const now = new Date();
+        const nowTime = Qt.formatDateTime(now, "HH:mm");
+        const groups = [];
+        let cur = null;
+        for (const r of ReminderState.pending.slice(0, 12)) {
+            const overdue = r.date + (r.time || "99:99") < ReminderState.todayKey + nowTime;
+            let rel;
+            const p = r.date.split("-");
+            const d = new Date(parseInt(p[0]), parseInt(p[1]) - 1, parseInt(p[2]));
+            const wd = days[d.getDay()];
+            if (r.date === ReminderState.todayKey)
+                rel = "Today";
+            else if (r.date === ReminderState.tomorrowKey)
+                rel = "Tomorrow";
+            else
+                rel = months[d.getMonth()] + " " + d.getDate();
+            let header = wd + ", " + rel;
+            if (overdue && r.date <= ReminderState.todayKey)
+                header = "Overdue · " + header;
+            if (!cur || cur.header !== header) {
+                cur = {
+                    header: header,
+                    overdue: overdue,
+                    items: []
+                };
+                groups.push(cur);
+            }
+            cur.items.push(r);
+        }
+        for (const g of groups) {
+            const ts = g.items.map(x => x.time).filter(Boolean).sort();
+            if (ts.length === 1)
+                g.header += "  ·  " + ts[0];
+            else if (ts.length > 1)
+                g.header += "  ·  " + ts[0] + "–" + ts[ts.length - 1];
+        }
+        return groups;
+    }
+
     function prevMonth() {
         clearSelection();
         if (displayMonth === 0) {
@@ -426,15 +469,15 @@ ColumnLayout {
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 4
+                Layout.leftMargin: 2
+                Layout.rightMargin: 2
+                spacing: 8
 
                 TextField {
                     id: taskField
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 26
-                    placeholderText: "Task — or add HH:MM for a reminder"
+                    Layout.preferredHeight: 30
                     color: "#f8f8f2"
-                    placeholderTextColor: "#6272a4"
                     font { pixelSize: 11; family: "Quicksand" }
                     background: Rectangle {
                         radius: 6
@@ -476,7 +519,7 @@ ColumnLayout {
     Rectangle {
         visible: !root.yearView && ReminderState.pending.length > 0
         Layout.fillWidth: true
-        implicitHeight: remCol.implicitHeight + 22
+        implicitHeight: remCol.implicitHeight + 24
         radius: 10
         color: Qt.rgba(0.741, 0.576, 0.976, 0.05)
         border.width: 1
@@ -523,100 +566,98 @@ ColumnLayout {
                         font { pixelSize: 8; bold: true; family: "ZedMono Nerd Font" }
                     }
                 }
-            }
 
+        // grouped by day — each group gets its own subheader row
         Repeater {
-            model: ReminderState.pending.slice(0, 6)
+            model: dayGroups
 
-            delegate: Rectangle {
-                id: remRow
+            delegate: ColumnLayout {
+                id: remGroup
 
                 required property var modelData
 
                 Layout.fillWidth: true
-                implicitHeight: 30
-                radius: 7
-                color: remHover.containsMouse ? "#343746" : "#21222c"
+                spacing: 3
 
-                Behavior on color {
-                    ColorAnimation { duration: 110 }
+                Text {
+                    Layout.leftMargin: 2
+                    text: remGroup.modelData.header
+                    color: remGroup.modelData.overdue ? "#ff8c8c" : "#b8bfcb"
+                    font { pixelSize: 10; bold: true; family: "Quicksand"; letterSpacing: 0.5 }
                 }
 
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 8
-                    anchors.rightMargin: 6
-                    spacing: 8
+                Repeater {
+                    model: remGroup.modelData.items
 
-                    Text {
-                        text: "\uf0f3"
-                        color: "#bd93f9"
-                        font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
-                    }
+                    delegate: Rectangle {
+                        id: remRow
 
-                    Text {
+                        required property var modelData
+
                         Layout.fillWidth: true
-                        text: remRow.modelData.text
-                        color: "#f8f8f2"
-                        font { pixelSize: 10; bold: true; family: "Quicksand" }
-                        elide: Text.ElideRight
-                        maximumLineCount: 1
-                    }
+                        implicitHeight: 24
+                        radius: 6
+                        color: remHover.containsMouse ? "#343746" : Qt.rgba(1, 1, 1, 0.02)
 
-                    Text {
-                        readonly property bool overdue: remRow.modelData.date + (remRow.modelData.time || "99:99") < ReminderState.todayKey + Qt.formatDateTime(new Date(), "HH:mm")
-                        text: {
-                            const p = remRow.modelData.date.split("-");
-                            const d = new Date(parseInt(p[0]), parseInt(p[1]) - 1, parseInt(p[2]));
-                            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                            const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-                            let s = (overdue ? "⚠ " : "") + days[d.getDay()] + " " + months[d.getMonth()] + " " + d.getDate();
-                            if (remRow.modelData.time)
-                                s += " · " + remRow.modelData.time;
-                            return s;
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 110
+                            }
                         }
-                        color: overdue ? "#ff8c8c" : "#b8bfcb"
-                        font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                    }
 
-                    // done toggle
-                    Text {
-                        text: "\ueae2"
-                        color: doneMa.containsMouse ? "#50fa7b" : "#6272a4"
-                        font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
-
-                        MouseArea {
-                            id: doneMa
+                        RowLayout {
                             anchors.fill: parent
-                            anchors.margins: -4
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: ReminderState.toggleDone(remRow.modelData.id)
+                            anchors.leftMargin: 9
+                            anchors.rightMargin: 7
+                            spacing: 7
+
+                            Text {
+                                text: "\uf067"   // + marker
+                                color: remRow.modelData.overdue ? "#ff8c8c" : "#50fa7b"
+                                font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+                            }
+
+                            Text {
+                                text: remRow.modelData.time || "--:--"
+                                color: remRow.modelData.overdue ? "#ff8c8c" : "#bd93f9"
+                                font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                                Layout.preferredWidth: 36
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: remRow.modelData.text
+                                color: "#f8f8f2"
+                                font { pixelSize: 10; family: "Quicksand" }
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                            }
+
+                            // the only action: remove
+                            Text {
+                                text: "\uf00d"
+                                color: delMa.containsMouse ? "#ff5555" : "#4c5069"
+                                font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+
+                                MouseArea {
+                                    id: delMa
+                                    anchors.fill: parent
+                                    anchors.margins: -4
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: ReminderState.remove(remRow.modelData.id)
+                                }
+                            }
+                        }
+
+                        HoverHandler {
+                            id: remHover
                         }
                     }
-
-                    // delete
-                    Text {
-                        text: "\uf00d"
-                        color: delMa.containsMouse ? "#ff5555" : "#6272a4"
-                        font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
-
-                        MouseArea {
-                            id: delMa
-                            anchors.fill: parent
-                            anchors.margins: -4
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: ReminderState.remove(remRow.modelData.id)
-                        }
-                    }
-                }
-
-                HoverHandler {
-                    id: remHover
                 }
             }
         }
     }
     }
+}
 }

@@ -300,60 +300,56 @@ Loader {
                 }
             }
 
-            // ── rates — arrows carry the direction, values sit on a fixed
-            // grid so the block never jitters as digits change ──
+            // ── rates — sleek micro readout: pastel direction glyphs,
+            // fixed-width values (no jitter), one shared dim unit ──
             RowLayout {
                 visible: NetworkState.netspeedVisible && root.online
-                spacing: 7
-
-                Item {
-                    Layout.preferredWidth: 2
-                }
+                spacing: 8
 
                 RowLayout {
-                    spacing: 3
+                    spacing: 4
 
                     Text {
-                        text: "\u2193"
-                        color: Qt.rgba(0.741, 0.576, 0.976, 0.55)
-                        font {
-                            pixelSize: 10
-                            family: "ZedMono Nerd Font"
-                        }
-                    }
-
-                    Text {
-                        text: root.fmtRate(root.rxRate)
+                        text: "\u2b07"
                         color: "#bd93f9"
-                        font {
-                            pixelSize: 10
-                            bold: true
-                            family: "ZedMono Nerd Font"
-                        }
+                        font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+                    }
+
+                    Text {
+                        Layout.preferredWidth: 34
+                        text: root.fmtRate(root.rxRate)
+                        color: "#e2d6fb"
+                        font { pixelSize: 10; weight: Font.DemiBold; family: "ZedMono Nerd Font" }
                     }
                 }
 
+                Rectangle {
+                    implicitWidth: 1
+                    implicitHeight: 10
+                    color: Qt.rgba(1, 1, 1, 0.10)
+                }
+
                 RowLayout {
-                    spacing: 3
+                    spacing: 4
 
                     Text {
-                        text: "\u2191"
-                        color: Qt.rgba(1, 0.474, 0.776, 0.55)
-                        font {
-                            pixelSize: 10
-                            family: "ZedMono Nerd Font"
-                        }
-                    }
-
-                    Text {
-                        text: root.fmtRate(root.txRate)
+                        text: "\u2b06"
                         color: "#ff79c6"
-                        font {
-                            pixelSize: 10
-                            bold: true
-                            family: "ZedMono Nerd Font"
-                        }
+                        font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
                     }
+
+                    Text {
+                        Layout.preferredWidth: 34
+                        text: root.fmtRate(root.txRate)
+                        color: "#ffd3ea"
+                        font { pixelSize: 10; weight: Font.DemiBold; family: "ZedMono Nerd Font" }
+                    }
+                }
+
+                Text {
+                    text: root.rxRate >= 1000 || root.txRate >= 1000 ? "Gb/s" : "Mb/s"
+                    color: Qt.rgba(1, 1, 1, 0.28)
+                    font { pixelSize: 8; letterSpacing: 1; family: "ZedMono Nerd Font" }
                 }
             }
 

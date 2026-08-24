@@ -381,7 +381,11 @@ BarBlock {
 
                                 readonly property var parts: modelData.trim().split(/\s+/)
                                 readonly property int pct: parts.length >= 5 ? parseInt(parts[4]) || 0 : 0
-                                readonly property color tier: pct > 90 ? "#ff5555" : pct > 75 ? "#ffb86c" : pct > 60 ? "#f1fa8c" : "#50fa7b"
+                                // cpu-popup band palette for consistency
+                                readonly property color tier: pct > 90 ? "#ff5555"
+                                    : pct > 75 ? "#ffb86c"
+                                    : pct > 60 ? "#50fa7b"
+                                    : "#8be9fd"
 
                                 Layout.fillWidth: true
                                 implicitHeight: 22
@@ -441,7 +445,17 @@ BarBlock {
                                             width: parent.width * Math.min(drow.pct / 100, 1)
                                             height: parent.height
                                             radius: 2.5
-                                            color: drow.tier
+                                            color: Qt.rgba(drow.tier.r, drow.tier.g, drow.tier.b, 0.55)
+
+                                            Rectangle {
+                                                anchors.right: parent.right
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                width: 2
+                                                radius: 1
+                                                height: parent.height + 2
+                                                visible: drow.pct > 3
+                                                color: drow.tier
+                                            }
 
                                             Behavior on width {
                                                 NumberAnimation {
@@ -456,10 +470,10 @@ BarBlock {
                                         Layout.preferredWidth: 32
                                         horizontalAlignment: Text.AlignRight
                                         text: `${drow.pct}%`
-                                        color: drow.pct > 90 ? "#ff5555" : "#b8bfcb"
+                                        color: drow.tier
                                         font {
                                             pixelSize: 9
-                                            bold: drow.pct > 90
+                                            bold: true
                                             family: "ZedMono Nerd Font"
                                         }
                                     }

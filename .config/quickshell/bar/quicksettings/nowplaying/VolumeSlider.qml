@@ -91,7 +91,18 @@ RowLayout {
                 width: parent.width * Math.min(root.level, 1)
                 height: parent.height
                 radius: 3
-                color: root.muted ? "#6272a4" : root.accent
+                // pastel wash + bright leading edge; grey when muted
+                color: root.muted ? Qt.rgba(0.38, 0.45, 0.64, 0.35) : Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.4)
+
+                Rectangle {
+                    visible: !root.muted
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 2.5
+                    radius: 1.25
+                    height: parent.height + 2
+                    color: root.accent
+                }
 
                 Behavior on width {
                     enabled: !drag.dragging
@@ -110,7 +121,7 @@ RowLayout {
                 x: Math.max(0, Math.min(parent.width * Math.min(root.level, 1) - width / 2, parent.width - width))
                 color: root.muted ? "#6272a4" : root.accent
                 border.width: 1
-                border.color: Qt.rgba(0, 0, 0, 0.4)
+                border.color: Qt.rgba(0, 0, 0, 0.35)
                 scale: drag.dragging || drag.containsMouse ? 1.15 : 1.0
 
                 Behavior on scale {
