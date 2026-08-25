@@ -1,5 +1,6 @@
 require("keybinds/quickshell")
 require("keybinds/emacs")
+require("keybinds/submaps")
 
 local emacs = "app2unit -s a -- emacsclient -c || uwsm-app -s a -- emacsclient -c"
 local emacs_restart_ico = "/home/malu/Shibuya/assets/icons/icons8-emacs-color/icons8-emacs-48.png";

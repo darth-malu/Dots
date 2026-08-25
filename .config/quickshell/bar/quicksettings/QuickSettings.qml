@@ -81,8 +81,8 @@ BarBlock {
 
         // rigid footprint — height always hugs the full content, never scrolls
         implicitWidth: 300
-        // top inset 4 (content margins) + 5 below the last row
-        implicitHeight: qsContent.implicitHeight + 9
+        // top inset 4 (content margins) + 3 below the last row
+        implicitHeight: qsContent.implicitHeight + 7
 
         // same treatment as every other popup: one full-bleed rounded card
         // with a hairline ring — no shadow effect, whose blur used to clip
@@ -125,7 +125,7 @@ BarBlock {
                         cardPadding: 8
                         // cardPadding: 0
                         // x: 0
-                        Layout.bottomMargin: 8
+                        Layout.bottomMargin: 12
 
                         // ── header — three equal thirds, each centred:
                         // avatar · identity + uptime · controls ──
@@ -443,7 +443,6 @@ BarBlock {
                         // ── footer · session uptime ──
                         Text {
                             Layout.alignment: Qt.AlignHCenter
-                            Layout.topMargin: -4
                             text: ResourcesState.uptimeText.length > 0 ? ResourcesState.uptimeText : "…"
                             color: "#6272a4"
                             font {

@@ -258,26 +258,18 @@ RowLayout {
                         }
 
                         // multiplicity badge — N clients sharing this app class
-                        Rectangle {
+                        Text {
                             visible: parent.count > 1
-                            width: 14
-                            height: width
-                            radius: width / 2
-                            x: parent.width - width / 2 + 1
-                            y: parent.height - height / 2 + 1
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            anchors.rightMargin: -2
+                            anchors.bottomMargin: -3
+                            text: parent.count
                             color: Themes.activeTextColor
-                            border.width: 1
-                            border.color: "#181825"
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: parent.parent.count
-                                color: "#181825"
-                                font {
-                                    pixelSize: 9
-                                    bold: true
-                                    family: "ZedMono Nerd Font"
-                                }
+                            font {
+                                pixelSize: 9
+                                bold: true
+                                family: "ZedMono Nerd Font"
                             }
                         }
                     }
