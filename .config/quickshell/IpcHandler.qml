@@ -8,6 +8,9 @@ import qs.notBar.rofi.openWindows
 Item {
     id: root
 
+    // force-load SpeedtestState so its speedtest IPC target exists at startup
+    property bool _preloadSpeedtest: SpeedtestState.running
+
     IpcHandler {
         target: 'mpris'
 

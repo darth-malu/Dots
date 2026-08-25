@@ -28,15 +28,22 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
-    // focus a Hyprland client reliably — wayland.activate() sends an
-    // xdg-activation token which Hyprland frequently ignores, so go straight
-    // through the dispatcher using the toplevel address
+    // focus a Hyprland client reliably:
+    // · close THIS panel first — while a layer surface holds exclusive
+    //   keyboard focus, Hyprland refuses to apply client focus changes,
+    //   so dispatching before closing silently did nothing
+    // · quickshell exposes Toplevel.address as BARE hex (no 0x) but the
+    //   focuswindow dispatcher expects the 0x-prefixed form
+    // · wayland.activate() as last resort — its xdg-activation token is
+    //   frequently ignored by Hyprland, hence the dispatcher preference
     function focusToplevel(tl) {
         if (!tl)
             return;
-        if (tl.address)
-            Hyprland.dispatch("focuswindow address:" + tl.address);
-        else if (tl.wayland)
+        toggler();
+        if (tl.address) {
+            const addr = String(tl.address).startsWith("0x") ? String(tl.address) : "0x" + tl.address;
+            Hyprland.dispatch("focuswindow address:" + addr);
+        } else if (tl.wayland)
             tl.wayland.activate();
     }
 
@@ -126,7 +133,8 @@ PanelWindow {
                             let current = itemLauncher.currentItem;
                             if (current) {
                                 if (RofiState.toggleOpenWindows)
-                                    // Current Item is a Window(toplevel)
+                                    // Current Item is a Window(toplevel) —
+                                    // focusToplevel closes the panel itself
                                     focusToplevel(current.modelData);
                                 else if (RofiState.toggleAppLauncher)
                                     // Current Items is a DesktopEntry.
@@ -135,8 +143,11 @@ PanelWindow {
                                     // Current Item is a raw cliphist list line ("id\tpreview")
                                     launcher.clipChosen(current.modelData);
                                 }
+                            // openWindows path closes the panel inside
+                            // focusToplevel — everything else toggles here
+                            if (!RofiState.toggleOpenWindows)
                                 RofiState.toggler();
-                                search.text = "";
+                            search.text = "";
                                 event.accepted = true;
                             }
                             event.accepted = true;
@@ -200,16 +211,19 @@ PanelWindow {
 
                 function activateCurrent() {
                     let current = currentItem;
-                    if (current) {
-                        if (RofiState.toggleOpenWindows)
-                            focusToplevel(current.modelData);
-                        else if (RofiState.toggleAppLauncher)
+                    if (!current)
+                        return;
+                    const wasWindows = RofiState.toggleOpenWindows;
+                    if (wasWindows)
+                        focusToplevel(current.modelData); // closes the panel itself
+                    else {
+                        if (RofiState.toggleAppLauncher)
                             current.modelData.execute();
                         else if (RofiState.toggleClipHist)
                             launcher.clipChosen(current.modelData);
                         RofiState.toggler();
-                        search.text = "";
                     }
+                    search.text = "";
                 }
 
                 ScrollBar.vertical: ScrollBar {

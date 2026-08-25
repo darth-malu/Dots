@@ -32,6 +32,8 @@ Singleton {
     function start() {
         if (root.running)
             return;
+        _phaseDone = false;
+        running = true;
         pingMs = -1;
         downMbps = -1;
         upMbps = -1;
@@ -58,9 +60,15 @@ Singleton {
         running = false;
         phase = "";
         progress = 0;
+        _phaseDone = false;
         if (msg)
             error = msg;
     }
+
+    // set when the current phase's trailing "done" marker is parsed; the
+    // actual phase hand-off waits for onExited so the old process is fully
+    // dead before the next one takes over the shared Process
+    property bool _phaseDone: false
 
     function _startPhase(name) {
         phase = name;
@@ -120,6 +128,7 @@ Singleton {
 
     function _finish() {
         watchdog.stop();
+        // final validation only — phase chaining lives in onExited
         if (pingMs < 0 || downMbps < 0) {
             _reset(pingMs < 0 ? "no response from server" : "test incomplete");
             return;
@@ -181,7 +190,7 @@ Singleton {
                 if (t.length === 0)
                     return;
                 if (t === "done") {
-                    root._finish();
+                    root._phaseDone = true;
                     return;
                 }
                 const parts = t.split(" ");
@@ -216,10 +225,47 @@ Singleton {
         }
 
         onExited: {
-            // _finish() on "done" already handled completion; anything that
-            // exits without it was killed or died early
-            if (root.running)
+            // cancelled / killed by the watchdog already tore the run down
+            if (!root.running)
+                return;
+            if (!root._phaseDone) {
+                // exited without completing its loop — killed or died early
                 root._reset("no response from server");
+                return;
+            }
+            root._phaseDone = false;
+            // chain ping → down → up → commit
+            if (root.phase === "ping")
+                root._startPhase("down");
+            else if (root.phase === "down")
+                root._startPhase("up");
+            else
+                root._finish();
+        }
+    }
+    // headless control / inspection of the test flow
+    IpcHandler {
+        target: "speedtest"
+
+        function start(): string {
+            root.start();
+            return "started";
+        }
+
+        function cancel(): void {
+            root.cancel();
+        }
+
+        function status(): string {
+            return JSON.stringify({
+                    "running": root.running,
+                    "phase": root.phase,
+                    "progress": Math.round(root.progress * 100),
+                    "ping": root.pingMs,
+                    "down": root.downMbps,
+                    "up": root.upMbps,
+                    "error": root.error
+                });
         }
     }
 }
