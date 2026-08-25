@@ -24,7 +24,12 @@ Singleton {
     property real upMbps: -1
     property string error: ""
 
-    // last 10 runs, newest first: {ts, ping, down, up, net}
+    // test metadata — populated during the run
+    property string server: ""
+    property real totalMB: 0
+    property real testDuration: 0
+
+    // last 10 runs, newest first: {ts, ping, down, up, net, server, mb, secs}
     property var history: []
 
     readonly property bool finished: !running && pingMs >= 0 && downMbps >= 0 && error === ""
@@ -38,6 +43,10 @@ Singleton {
         downMbps = -1;
         upMbps = -1;
         error = "";
+        server = "";
+        totalMB = 0;
+        testDuration = 0;
+        _startMs = Date.now();
         root._pingProbes = [];
         root._downChunks = [];
         root._upChunks = [];
@@ -69,6 +78,7 @@ Singleton {
     // actual phase hand-off waits for onExited so the old process is fully
     // dead before the next one takes over the shared Process
     property bool _phaseDone: false
+    property real _startMs: 0
 
     function _startPhase(name) {
         phase = name;
@@ -88,7 +98,7 @@ Singleton {
     function _script_ping() {
         return 'for i in 1 2 3; do '
             + 'curl -4 -o /dev/null -s --max-time 6 '
-            + '-w "probe %{time_connect}\\n" "https://speed.cloudflare.com/__down?bytes=0"; '
+            + '-w "probe %{time_connect} %{remote_ip}\\n" "https://speed.cloudflare.com/__down?bytes=0"; '
             + 'done; echo done';
     }
 
@@ -138,13 +148,17 @@ Singleton {
         running = false;
         phase = "";
         progress = 1;
+        testDuration = (Date.now() - _startMs) / 1000;
 
         const entry = {
             ts: Math.floor(Date.now() / 1000),
             ping: pingMs,
             down: downMbps,
             up: upMbps,
-            net: _netName()
+            net: _netName(),
+            server: server,
+            mb: Math.round(totalMB * 10) / 10,
+            secs: Math.round(testDuration)
         };
         history = [entry].concat(history).slice(0, 10);
     }
@@ -198,6 +212,9 @@ Singleton {
                     const ms = parseFloat(parts[1]) * 1000;
                     if (ms > 0 && (root.pingMs < 0 || ms < root.pingMs))
                         root.pingMs = ms;
+                    // second field is the remote IP — capture from the first successful probe
+                    if (parts.length > 2 && parts[2].length > 0 && root.server.length === 0)
+                        root.server = parts[2];
                     root._pingProbes.push(1);
                     root.progress = root._pingProbes.length / 3;
                 } else if (parts[0] === "chunk") {
@@ -207,6 +224,7 @@ Singleton {
                         root.error = "transfer failed";
                         return;
                     }
+                    root.totalMB += bytes / 1000000;
                     if (root.phase === "down") {
                         root._downChunks.push([bytes, secs]);
                         root.downMbps = root._mbps(root._downChunks.reduce((a, c) => a + c[0], 0), root._downChunks.reduce((a, c) => a + c[1], 0));
@@ -264,7 +282,10 @@ Singleton {
                     "ping": root.pingMs,
                     "down": root.downMbps,
                     "up": root.upMbps,
-                    "error": root.error
+                    "error": root.error,
+                    "server": root.server,
+                    "mb": Math.round(root.totalMB * 10) / 10,
+                    "secs": Math.round(root.testDuration)
                 });
         }
     }

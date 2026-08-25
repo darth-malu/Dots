@@ -976,9 +976,6 @@ Item {
                     ColumnLayout {
                         spacing: 12
 
-                    ColumnLayout {
-                        spacing: 12
-
                         SpeedtestPanel {}
 
                         Card {
@@ -987,65 +984,27 @@ Item {
                             accent: "#8be9fd"
 
                             ColumnLayout {
-                                spacing: 0
+                                spacing: 6
                                 Layout.fillWidth: true
 
-                                // table head
+                                // header row — label + clear-all
                                 RowLayout {
                                     Layout.fillWidth: true
-                                    spacing: 8
 
-                                    Text {
-                                        Layout.preferredWidth: 118
-                                        text: "WHEN"
-                                        color: "#6272a4"
-                                        font { pixelSize: 9; bold: true; letterSpacing: 1.5; family: "Quicksand" }
-                                    }
+                                    Item { Layout.fillWidth: true }
 
-                                    Text {
-                                        Layout.preferredWidth: 150
-                                        text: "NETWORK"
-                                        color: "#6272a4"
-                                        font { pixelSize: 9; bold: true; letterSpacing: 1.5; family: "Quicksand" }
-                                    }
-
-                                    Text {
-                                        Layout.preferredWidth: 70
-                                        horizontalAlignment: Text.AlignRight
-                                        text: "PING"
-                                        color: "#6272a4"
-                                        font { pixelSize: 9; bold: true; letterSpacing: 1.5; family: "Quicksand" }
-                                    }
-
-                                    Text {
-                                        Layout.preferredWidth: 90
-                                        horizontalAlignment: Text.AlignRight
-                                        text: "DOWN"
-                                        color: "#6272a4"
-                                        font { pixelSize: 9; bold: true; letterSpacing: 1.5; family: "Quicksand" }
-                                    }
-
-                                    Text {
-                                        Layout.fillWidth: true
-                                        horizontalAlignment: Text.AlignRight
-                                        text: "UP"
-                                        color: "#6272a4"
-                                        font { pixelSize: 9; bold: true; letterSpacing: 1.5; family: "Quicksand" }
-                                    }
-
-                                    // clear-all
                                     Rectangle {
                                         visible: SpeedtestState.history.length > 0
-                                        implicitWidth: 24
-                                        implicitHeight: 24
-                                        radius: 7
+                                        implicitWidth: 20
+                                        implicitHeight: 20
+                                        radius: 6
                                         color: histClearMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.16) : "transparent"
 
                                         Text {
                                             anchors.centerIn: parent
                                             text: "\uf1f8"
                                             color: histClearMa.containsMouse ? "#ff5555" : "#6272a4"
-                                            font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+                                            font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
                                         }
 
                                         MouseArea {
@@ -1059,27 +1018,33 @@ Item {
                                     }
                                 }
 
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    height: 1
-                                    color: "#343746"
-                                    Layout.topMargin: 6
-                                    Layout.bottomMargin: 6
-                                }
-
                                 Repeater {
                                     model: SpeedtestState.history
 
-                                    delegate: RowLayout {
-                                        id: histRow
+                                    delegate: Rectangle {
+                                        id: hrow
 
                                         required property int index
                                         required property var modelData
 
                                         Layout.fillWidth: true
-                                        spacing: 8
+                                        implicitHeight: hrowCol.implicitHeight + 12
+                                        radius: 8
+                                        color: hrowHover.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.12) : "transparent"
 
-                                        readonly property var d: new Date(histRow.modelData.ts * 1000)
+                                        Behavior on color {
+                                            ColorAnimation { duration: 120 }
+                                        }
+
+                                        MouseArea {
+                                            id: hrowHover
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            acceptedButtons: Qt.NoButton
+                                            z: -1
+                                        }
+
+                                        readonly property var d: new Date(hrow.modelData.ts * 1000)
 
                                         function _fmt(when) {
                                             const mo = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][when.getMonth()];
@@ -1088,56 +1053,87 @@ Item {
                                             return mo + " " + when.getDate() + " · " + hh + ":" + mm;
                                         }
 
-                                        Text {
-                                            Layout.preferredWidth: 118
-                                            text: histRow._fmt(histRow.d)
-                                            color: "#b8bfcb"
-                                            font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                                            elide: Text.ElideRight
-                                        }
+                                        ColumnLayout {
+                                            id: hrowCol
 
-                                        RowLayout {
-                                            Layout.preferredWidth: 150
-                                            spacing: 5
-
-                                            Text {
-                                                text: histRow.modelData.net === "Ethernet" ? "\uef44" : "\uf1eb"
-                                                color: histRow.modelData.net === "Ethernet" ? "#8be9fd" : "#bd93f9"
-                                                visible: histRow.modelData.net.length > 0
-                                                font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                            anchors {
+                                                left: parent.left
+                                                right: parent.right
+                                                verticalCenter: parent.verticalCenter
+                                                margins: 6
                                             }
+                                            spacing: 4
 
-                                            Text {
+                                            RowLayout {
                                                 Layout.fillWidth: true
-                                                text: histRow.modelData.net.length > 0 ? histRow.modelData.net : "—"
-                                                color: histRow.index === 0 ? "#f8f8f2" : "#b8bfcb"
-                                                elide: Text.ElideRight
-                                                font { pixelSize: 10; family: "Quicksand" }
+                                                spacing: 8
+
+                                                Text {
+                                                    text: hrow._fmt(hrow.d)
+                                                    color: "#b8bfcb"
+                                                    font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                                    Layout.preferredWidth: 96
+                                                }
+
+                                                Text {
+                                                    text: hrow.modelData.net === "Ethernet" ? "\uef44" : "\uf1eb"
+                                                    color: hrow.modelData.net === "Ethernet" ? "#8be9fd" : "#bd93f9"
+                                                    visible: hrow.modelData.net.length > 0
+                                                    font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+                                                }
+
+                                                Text {
+                                                    text: hrow.modelData.net.length > 0 ? hrow.modelData.net : "—"
+                                                    color: hrow.index === 0 ? "#f8f8f2" : "#b8bfcb"
+                                                    elide: Text.ElideRight
+                                                    font { pixelSize: 9; family: "Quicksand" }
+                                                    Layout.fillWidth: true
+                                                }
+
+                                                Text {
+                                                    text: hrow.modelData.ping.toFixed(0) + " ms"
+                                                    color: "#f1fa8c"
+                                                    font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                                                    Layout.preferredWidth: 52
+                                                    horizontalAlignment: Text.AlignRight
+                                                }
+
+                                                Text {
+                                                    text: hrow.modelData.down.toFixed(1)
+                                                    color: "#50fa7b"
+                                                    font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                                                    Layout.preferredWidth: 44
+                                                    horizontalAlignment: Text.AlignRight
+                                                }
+
+                                                Text {
+                                                    text: hrow.modelData.up > 0 ? hrow.modelData.up.toFixed(1) : "—"
+                                                    color: "#ff79c6"
+                                                    font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                                                    Layout.preferredWidth: 44
+                                                    horizontalAlignment: Text.AlignRight
+                                                }
                                             }
-                                        }
 
-                                        Text {
-                                            Layout.preferredWidth: 70
-                                            horizontalAlignment: Text.AlignRight
-                                            text: histRow.modelData.ping.toFixed(0) + " ms"
-                                            color: "#f1fa8c"
-                                            font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                                        }
+                                            Rectangle {
+                                                Layout.fillWidth: true
+                                                implicitHeight: 5
+                                                radius: 2.5
+                                                color: Qt.rgba(1, 1, 1, 0.06)
 
-                                        Text {
-                                            Layout.preferredWidth: 90
-                                            horizontalAlignment: Text.AlignRight
-                                            text: histRow.modelData.down.toFixed(1) + " Mb"
-                                            color: "#50fa7b"
-                                            font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                                        }
+                                                Rectangle {
+                                                    anchors.left: parent.left
+                                                    anchors.top: parent.top
+                                                    anchors.bottom: parent.bottom
+                                                    width: parent.width * Math.min(Math.max(hrow.modelData.down, 0) / 150, 1)
+                                                    radius: 2.5
+                                                    color: hrow.modelData.down > 80 ? "#50fa7b" : hrow.modelData.down > 30 ? "#f1fa8c" : "#ffb86c"
 
-                                        Text {
-                                            Layout.fillWidth: true
-                                            horizontalAlignment: Text.AlignRight
-                                            text: histRow.modelData.up > 0 ? histRow.modelData.up.toFixed(1) + " Mb" : "—"
-                                            color: "#ff79c6"
-                                            font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                                    Behavior on width {
+                                                        NumberAnimation { duration: 200; easing.type: Easing.OutQuad }
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -1146,13 +1142,12 @@ Item {
                                     visible: SpeedtestState.history.length === 0
                                     Layout.alignment: Qt.AlignHCenter
                                     Layout.topMargin: 8
-                                    text: "no runs yet — start a test above"
+                                    text: "no runs yet"
                                     color: "#6272a4"
                                     font { pixelSize: 10; italic: true; family: "Quicksand" }
                                 }
                             }
                         }
-                    }
                     }
             }
             }
