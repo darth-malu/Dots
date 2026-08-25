@@ -61,11 +61,15 @@ Singleton {
         root._onEthLink(t);
     }
 
+    property bool _suppressWifiNotif: false
+
     function _onEthLink(dev) {
         const up = dev.hasLink;
         if (up && !root.ethLinkWasUp && root.wifiConnected && Networking.wifiEnabled) {
-            Quickshell.execDetached(["notify-send", "-a", "Shell", "Ethernet connected", "Wi-Fi disconnected"]);
+            const ssid = String(root.activeNetwork?.name ?? "Wi-Fi").replace(/'/g, "'\\''");
+            root._suppressWifiNotif = true;
             root.adapter?.disconnect();
+            Quickshell.execDetached(["notify-send", "-a", "Shell", "-i", `${root.iconsDir}/ethernet.svg`, "Ethernet connected", `${ssid} disconnected`]);
         }
         root.ethLinkWasUp = up;
     }
@@ -135,6 +139,11 @@ Singleton {
     }
 
     onWifiConnectedChanged: {
+        if (root._suppressWifiNotif) {
+            root._suppressWifiNotif = false;
+            root.wasWifiConnected = root.wifiConnected;
+            return;
+        }
         // suppressed while the wifi popup is open — the connection is visible there
         if (root.wifiConnected && !root.wasWifiConnected && !root.wifiPopupVisible) {
             const ssid = String(root.activeNetwork?.name ?? "").replace(/'/g, "'\\''");

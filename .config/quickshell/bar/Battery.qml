@@ -17,8 +17,8 @@ RowLayout {
 
     property bool showPopup: false
 
-    // percentage readout is cut into the battery by default; right click toggles it
-    property bool showPct: true
+    // percentage readout inside the battery — off by default, left click toggles
+    property bool showPct: false
 
     readonly property UPowerDevice bat: UPower.displayDevice
 
@@ -51,7 +51,7 @@ RowLayout {
         id: root
         onVisibleChanged: if (!visible) showPopup = false
 
-        implicitWidth: batteryBody.width
+        implicitWidth: batteryBody.width + 4 + cap.width
         implicitHeight: batteryBody.height
         cursorShape: Qt.PointingHandCursor
 
@@ -64,139 +64,136 @@ RowLayout {
                 batteryBlock.showPopup = !batteryBlock.showPopup;
         }
 
-        // ── Battery glyph — macOS-style: the readout is CUT OUT of the fill,
-        // so it stays readable over any charge level, any wallpaper ──
-        Item {
+        // ── Battery body (fixed width — never resizes with the value) ──
+        Rectangle {
             id: batteryBody
 
-            width: 27
-            height: 13
-
-            // low/critical: the fill itself blares between a hot base and a bright peak
+            // low/critical: no ring — the fill itself blares between a hot
+            // base and a bright peak so it reads across the room
             readonly property color blareLo: batteryBlock.isCritical ? "#ff5555" : "#ffb86c"
             readonly property color blareHi: batteryBlock.isCritical ? "#ffe2e2" : "#fff3d6"
 
-            // 0..1 blend driving the low-battery pulse (static at 0 otherwise)
-            property real blareT: 0
+            width: 23
+            height: 13
+            radius: 2.5
+            color: "#343746"
+            border.width: 1
+            border.color: Qt.rgba(batteryBlock.accentColor.r, batteryBlock.accentColor.g, batteryBlock.accentColor.b, 0.55)
 
-            onBlareTChanged: batCanvas.requestPaint()
-
-            function mix(a, b) {
-                return Qt.rgba(a.r + (b.r - a.r) * blareT, a.g + (b.g - a.g) * blareT, a.b + (b.b - a.b) * blareT, 1);
+            Behavior on border.color {
+                ColorAnimation {
+                    duration: 200
+                }
             }
 
-            readonly property color fillColor: batteryBlock.isLow || batteryBlock.isCritical ? mix(blareLo, blareHi) : batteryBlock.accentColor
-            readonly property color shellColor: batteryBlock.accentColor
+            clip: true
 
-            onFillColorChanged: batCanvas.requestPaint()
-            onShellColorChanged: batCanvas.requestPaint()
+            // ── Fill level ──
+            Rectangle {
+                id: batteryFill
 
-            SequentialAnimation {
+                anchors {
+                    top: parent.top
+                    left: parent.left
+                    bottom: parent.bottom
+                    margins: 2
+                }
+
+                width: Math.max(0, (parent.width - 4) * Math.min(Math.max(batteryBlock.percentage, 0), 1))
+                radius: 2.5
+                color: batteryBlock.isLow || batteryBlock.isCritical ? batteryBody.blareLo : batteryBlock.accentColor
+
+                SequentialAnimation on color {
+                    running: batteryBlock.isLow || batteryBlock.isCritical
+                    loops: Animation.Infinite
+                    alwaysRunToEnd: true
+                    ColorAnimation { to: batteryBody.blareHi; duration: 340 }
+                    ColorAnimation { to: batteryBody.blareLo; duration: 340 }
+                }
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 200
+                    }
+                }
+
+                Behavior on width {
+                    NumberAnimation {
+                        duration: 300
+                        easing.type: Easing.OutCubic
+                    }
+                }
+
+                // full-charge bolt badge — centered over the body, overlapping its border
+                Text {
+                    visible: batteryBlock.isFullyCharged
+                    anchors.centerIn: parent
+                    text: "\uf0e7"
+                    font { pixelSize: 12; family: "Symbols Nerd Font Mono"; weight: Font.Bold }
+                    color: "#f8f8f2"
+                    style: Text.Outline
+                    styleColor: Qt.rgba(0, 0, 0, 0.7)
+                }
+            }
+
+            // ── Charge status icon — centered in the body while plugged in ──
+            Text {
+                anchors.centerIn: parent
+                visible: batteryBlock.isCharging || batteryBlock.isPendingCharge
+                text: batteryBlock.isPendingCharge ? "\uf1e6" : "\uf0e7"
+                font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+                color: "#f8f8f2"
+                style: Text.Outline
+                styleColor: Qt.rgba(0, 0, 0, 0.65)
+            }
+
+            // ── Warning glyph — dark on the blaring fill when battery runs low ──
+            Text {
+                anchors.centerIn: parent
+                visible: batteryBlock.isLow || batteryBlock.isCritical
+                text: "!"
+                color: "#282a36"
+                font { pixelSize: 10; weight: Font.Black; family: "ZedMono Nerd Font" }
+            }
+
+            // ── Percentage — inside the body, outlined for legibility over the fill ──
+            Text {
+                anchors.centerIn: parent
+                visible: batteryBlock.showPct && !batteryBlock.isCharging && !batteryBlock.isPendingCharge && !batteryBlock.isFullyCharged
+                text: `${batteryBlock.pctDisplay}`
+                color: "#f8f8f2"
+                style: Text.Outline
+                styleColor: Qt.rgba(0, 0, 0, 0.75)
+                font { pixelSize: 11; bold: true; family: "ZedMono Nerd Font" }
+            }
+        }
+
+        // ── Cap nub — separated from the body by a small gap (macOS style) ──
+        Rectangle {
+            id: cap
+
+            anchors {
+                verticalCenter: parent.verticalCenter
+                left: batteryBody.right
+                leftMargin: 1.5
+            }
+
+            implicitWidth: 2
+            implicitHeight: 7
+            radius: 1
+            color: batteryBlock.isLow || batteryBlock.isCritical ? batteryBody.blareLo : batteryBlock.accentColor
+
+            SequentialAnimation on color {
                 running: batteryBlock.isLow || batteryBlock.isCritical
                 loops: Animation.Infinite
                 alwaysRunToEnd: true
-
-                NumberAnimation {
-                    target: batteryBody
-                    property: "blareT"
-                    to: 1
-                    duration: 340
-                }
-                NumberAnimation {
-                    target: batteryBody
-                    property: "blareT"
-                    to: 0
-                    duration: 340
-                }
+                ColorAnimation { to: batteryBody.blareHi; duration: 340 }
+                ColorAnimation { to: batteryBody.blareLo; duration: 340 }
             }
 
-            function roundPath(ctx, x, y, w, h, r) {
-                ctx.beginPath();
-                ctx.moveTo(x + r, y);
-                ctx.lineTo(x + w - r, y);
-                ctx.arcTo(x + w, y, x + w, y + r, r);
-                ctx.lineTo(x + w, y + h - r);
-                ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-                ctx.lineTo(x + r, y + h);
-                ctx.arcTo(x, y + h, x, y + h - r, r);
-                ctx.lineTo(x, y + r);
-                ctx.arcTo(x, y, x + r, y, r);
-                ctx.closePath();
-            }
-
-            Canvas {
-                id: batCanvas
-
-                anchors.fill: parent
-                antialiasing: true
-
-                Component.onCompleted: requestPaint()
-                onVisibleChanged: if (visible)
-                    requestPaint()
-
-                // repaint on every state the drawing depends on
-                Connections {
-                    target: batteryBlock
-
-                    function onPercentageChanged() {
-                        batCanvas.requestPaint();
-                    }
-                    function onPctDisplayChanged() {
-                        batCanvas.requestPaint();
-                    }
-                    function onIsChargingChanged() {
-                        batCanvas.requestPaint();
-                    }
-                    function onIsPendingChargeChanged() {
-                        batCanvas.requestPaint();
-                    }
-                    function onIsFullyChargedChanged() {
-                        batCanvas.requestPaint();
-                    }
-                }
-
-                onPaint: {
-                    const ctx = getContext("2d");
-                    ctx.reset();
-
-                    const w = width;
-                    const h = height;
-                    const bw = 22; // body outer width; the rest is gap + cap nub
-
-                    // ── shell outline ──
-                    ctx.lineWidth = 1.5;
-                    ctx.strokeStyle = Qt.rgba(batteryBody.shellColor.r, batteryBody.shellColor.g, batteryBody.shellColor.b, 0.75);
-                    batteryBody.roundPath(ctx, 0.75, 0.75, bw - 1.5, h - 1.5, 3);
-                    ctx.stroke();
-
-                    // ── charge fill (clipped to the inner well) ──
-                    const pct = Math.min(Math.max(batteryBlock.percentage, 0), 1);
-                    ctx.save();
-                    batteryBody.roundPath(ctx, 2, 2, bw - 4, h - 4, 1.8);
-                    ctx.clip();
-                    ctx.fillStyle = batteryBody.fillColor;
-                    ctx.fillRect(2, 2, Math.max(0, (bw - 4) * pct), h - 4);
-                    ctx.restore();
-
-                    // ── cap nub ──
-                    ctx.fillStyle = batteryBody.fillColor;
-                    batteryBody.roundPath(ctx, bw + 1.25, h * 0.28, 2, h * 0.44, 1);
-                    ctx.fill();
-
-                    // ── THE CUTOUT — punch the label through shell+fill so the
-                    // bar background shows through; visible at every level ──
-                    const label = !batteryBlock.showPct ? ""
-                        : (batteryBlock.isCharging || batteryBlock.isPendingCharge || batteryBlock.isFullyCharged) ? "\uf0e7"
-                        : String(batteryBlock.pctDisplay);
-
-                    if (label.length > 0) {
-                        ctx.globalCompositeOperation = "destination-out";
-                        ctx.font = "bold 10px 'ZedMono Nerd Font'";
-                        ctx.textAlign = "center";
-                        ctx.textBaseline = "middle";
-                        ctx.fillText(label, bw / 2, h / 2 + 0.5);
-                        ctx.globalCompositeOperation = "source-over";
-                    }
+            Behavior on color {
+                ColorAnimation {
+                    duration: 200
                 }
             }
         }
@@ -231,6 +228,12 @@ RowLayout {
             Shortcut {
                 sequence: "Escape"
                 onActivated: batteryBlock.showPopup = false
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                z: -1
+                onClicked: batteryBlock.showPopup = false
             }
 
             ColumnLayout {

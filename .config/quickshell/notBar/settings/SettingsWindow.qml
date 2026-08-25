@@ -984,12 +984,18 @@ Item {
                             accent: "#8be9fd"
 
                             ColumnLayout {
-                                spacing: 6
+                                spacing: 7
                                 Layout.fillWidth: true
 
-                                // header row — label + clear-all
                                 RowLayout {
                                     Layout.fillWidth: true
+                                    spacing: 6
+
+                                    Text {
+                                        text: "last " + SpeedtestState.history.length + " runs"
+                                        color: "#6272a4"
+                                        font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                    }
 
                                     Item { Layout.fillWidth: true }
 
@@ -998,18 +1004,17 @@ Item {
                                         implicitWidth: 20
                                         implicitHeight: 20
                                         radius: 6
-                                        color: histClearMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.16) : "transparent"
+                                        color: hClearMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.16) : "transparent"
 
                                         Text {
                                             anchors.centerIn: parent
                                             text: "\uf1f8"
-                                            color: histClearMa.containsMouse ? "#ff5555" : "#6272a4"
+                                            color: hClearMa.containsMouse ? "#ff5555" : "#6272a4"
                                             font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
                                         }
 
                                         MouseArea {
-                                            id: histClearMa
-
+                                            id: hClearMa
                                             anchors.fill: parent
                                             hoverEnabled: true
                                             cursorShape: Qt.PointingHandCursor
@@ -1028,13 +1033,11 @@ Item {
                                         required property var modelData
 
                                         Layout.fillWidth: true
-                                        implicitHeight: hrowCol.implicitHeight + 12
+                                        implicitHeight: hrowCol.implicitHeight + 14
                                         radius: 8
                                         color: hrowHover.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.12) : "transparent"
 
-                                        Behavior on color {
-                                            ColorAnimation { duration: 120 }
-                                        }
+                                        Behavior on color { ColorAnimation { duration: 120 } }
 
                                         MouseArea {
                                             id: hrowHover
@@ -1045,9 +1048,13 @@ Item {
                                         }
 
                                         readonly property var d: new Date(hrow.modelData.ts * 1000)
+                                        readonly property real dv: hrow.modelData.down ?? 0
+                                        readonly property real uv: hrow.modelData.up ?? 0
+                                        readonly property real pv: hrow.modelData.ping ?? 0
+                                        readonly property string srv: hrow.modelData.server ?? ""
 
                                         function _fmt(when) {
-                                            const mo = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][when.getMonth()];
+                                            const mo = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][when.getMonth()];
                                             const hh = String(when.getHours()).padStart(2, "0");
                                             const mm = String(when.getMinutes()).padStart(2, "0");
                                             return mo + " " + when.getDate() + " · " + hh + ":" + mm;
@@ -1055,84 +1062,99 @@ Item {
 
                                         ColumnLayout {
                                             id: hrowCol
+                                            anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter; margins: 7 }
+                                            spacing: 5
 
-                                            anchors {
-                                                left: parent.left
-                                                right: parent.right
-                                                verticalCenter: parent.verticalCenter
-                                                margins: 6
-                                            }
-                                            spacing: 4
-
+                                            // ── line 1: time + network + metrics ──
                                             RowLayout {
                                                 Layout.fillWidth: true
-                                                spacing: 8
+                                                spacing: 6
 
                                                 Text {
                                                     text: hrow._fmt(hrow.d)
                                                     color: "#b8bfcb"
                                                     font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                                                    Layout.preferredWidth: 96
+                                                    Layout.preferredWidth: 88
                                                 }
 
-                                                Text {
-                                                    text: hrow.modelData.net === "Ethernet" ? "\uef44" : "\uf1eb"
-                                                    color: hrow.modelData.net === "Ethernet" ? "#8be9fd" : "#bd93f9"
+                                                Row {
+                                                    spacing: 4
                                                     visible: hrow.modelData.net.length > 0
-                                                    font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+
+                                                    Text {
+                                                        text: hrow.modelData.net === "Ethernet" ? "\uef44" : "\uf1eb"
+                                                        color: hrow.modelData.net === "Ethernet" ? "#8be9fd" : "#bd93f9"
+                                                        font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                                    }
+
+                                                    Text {
+                                                        text: hrow.modelData.net
+                                                        color: hrow.index === 0 ? "#f8f8f2" : "#b8bfcb"
+                                                        elide: Text.ElideRight
+                                                        font { pixelSize: 9; family: "Quicksand" }
+                                                    }
                                                 }
 
-                                                Text {
-                                                    text: hrow.modelData.net.length > 0 ? hrow.modelData.net : "—"
-                                                    color: hrow.index === 0 ? "#f8f8f2" : "#b8bfcb"
-                                                    elide: Text.ElideRight
-                                                    font { pixelSize: 9; family: "Quicksand" }
-                                                    Layout.fillWidth: true
-                                                }
+                                                Item { Layout.fillWidth: true }
 
                                                 Text {
-                                                    text: hrow.modelData.ping.toFixed(0) + " ms"
+                                                    text: hrow.pv.toFixed(0) + " ms"
                                                     color: "#f1fa8c"
-                                                    font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                                                    font { pixelSize: 10; bold: true; family: "ZedMono Nerd Font" }
                                                     Layout.preferredWidth: 52
                                                     horizontalAlignment: Text.AlignRight
                                                 }
 
                                                 Text {
-                                                    text: hrow.modelData.down.toFixed(1)
+                                                    text: hrow.dv.toFixed(1)
                                                     color: "#50fa7b"
-                                                    font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
-                                                    Layout.preferredWidth: 44
+                                                    font { pixelSize: 10; bold: true; family: "ZedMono Nerd Font" }
+                                                    Layout.preferredWidth: 40
                                                     horizontalAlignment: Text.AlignRight
                                                 }
 
                                                 Text {
-                                                    text: hrow.modelData.up > 0 ? hrow.modelData.up.toFixed(1) : "—"
+                                                    text: hrow.uv > 0 ? hrow.uv.toFixed(1) : "—"
                                                     color: "#ff79c6"
-                                                    font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
-                                                    Layout.preferredWidth: 44
+                                                    font { pixelSize: 10; bold: true; family: "ZedMono Nerd Font" }
+                                                    Layout.preferredWidth: 40
                                                     horizontalAlignment: Text.AlignRight
                                                 }
                                             }
 
+                                            // ── line 2: speed bar ──
                                             Rectangle {
                                                 Layout.fillWidth: true
-                                                implicitHeight: 5
-                                                radius: 2.5
+                                                implicitHeight: 6
+                                                radius: 3
                                                 color: Qt.rgba(1, 1, 1, 0.06)
 
                                                 Rectangle {
                                                     anchors.left: parent.left
                                                     anchors.top: parent.top
                                                     anchors.bottom: parent.bottom
-                                                    width: parent.width * Math.min(Math.max(hrow.modelData.down, 0) / 150, 1)
-                                                    radius: 2.5
-                                                    color: hrow.modelData.down > 80 ? "#50fa7b" : hrow.modelData.down > 30 ? "#f1fa8c" : "#ffb86c"
+                                                    width: parent.width * Math.min(Math.max(hrow.dv, 0) / 150, 1)
+                                                    radius: 3
+                                                    color: hrow.dv > 80 ? "#50fa7b" : hrow.dv > 30 ? "#f1fa8c" : "#ffb86c"
 
-                                                    Behavior on width {
-                                                        NumberAnimation { duration: 200; easing.type: Easing.OutQuad }
+                                                    Rectangle {
+                                                        anchors.right: parent.right
+                                                        anchors.verticalCenter: parent.verticalCenter
+                                                        width: 2.5; height: parent.height + 2; radius: 1.25
+                                                        visible: hrow.dv > 4
+                                                        color: hrow.dv > 80 ? "#50fa7b" : hrow.dv > 30 ? "#f1fa8c" : "#ffb86c"
                                                     }
+
+                                                    Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutQuad } }
                                                 }
+                                            }
+
+                                            // ── line 3: server + duration (shown on hover) ──
+                                            Text {
+                                                visible: hrow.srv.length > 0 && hrowHover.containsMouse
+                                                text: hrow.srv + " · " + Math.round(hrow.modelData.mb ?? 0) + " MB · " + (hrow.modelData.secs ?? 0) + "s"
+                                                color: "#44475a"
+                                                font { pixelSize: 8; family: "ZedMono Nerd Font" }
                                             }
                                         }
                                     }

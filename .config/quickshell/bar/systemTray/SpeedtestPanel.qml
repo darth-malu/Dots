@@ -338,7 +338,7 @@ Rectangle {
                         Layout.preferredWidth: 42
                     }
                     Text {
-                        text: "3 × best-of"
+                        text: "5 × best-of"
                         color: "#f8f8f2"
                         font { pixelSize: 9; family: "ZedMono Nerd Font" }
                     }

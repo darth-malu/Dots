@@ -96,8 +96,9 @@ Singleton {
 
     // ── phase scripts — one status line per probe/chunk keeps progress live ──
     function _script_ping() {
-        return 'for i in 1 2 3; do '
-            + 'curl -4 -o /dev/null -s --max-time 6 '
+        return 'for i in 1 2 3 4 5; do '
+            + 'curl -4 -o /dev/null -s --connect-timeout 3 --max-time 5 '
+            + '--dns-servers 1.0.0.1,1.1.1.1 '
             + '-w "probe %{time_connect} %{remote_ip}\\n" "https://speed.cloudflare.com/__down?bytes=0"; '
             + 'done; echo done';
     }
@@ -216,7 +217,7 @@ Singleton {
                     if (parts.length > 2 && parts[2].length > 0 && root.server.length === 0)
                         root.server = parts[2];
                     root._pingProbes.push(1);
-                    root.progress = root._pingProbes.length / 3;
+                    root.progress = root._pingProbes.length / 5;
                 } else if (parts[0] === "chunk") {
                     const bytes = parseFloat(parts[1]);
                     const secs = parseFloat(parts[2]);

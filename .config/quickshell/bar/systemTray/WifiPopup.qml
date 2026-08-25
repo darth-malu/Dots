@@ -611,10 +611,6 @@ Item {
         }
         }
 
-        // ── speed test utility ──
-        SpeedtestPanel {
-        }
-
         // fetches the stored psk for this connection (nmcli -s shows secrets)
         Process {
             id: pwFetchProc
