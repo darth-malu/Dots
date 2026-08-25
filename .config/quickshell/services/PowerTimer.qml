@@ -50,10 +50,7 @@ Singleton {
             return;
         }
 
-        if (remaining <= 60 && !warned) {
-            warned = true;
-            notify((persist.mode === "reboot" ? "Rebooting" : "Shutting down") + " in 1 minute", true);
-        }
+        // no notify here — the bar HUD pill breathes for the last minute
     }
 
     function scheduleReboot(seconds) {
@@ -69,7 +66,6 @@ Singleton {
         persist.deadline = new Date(Date.now() + seconds * 1000);
         warned = false;
         tick();
-        notify((mode === "reboot" ? "Reboot" : "Shutdown") + " scheduled · " + formatTime(seconds));
     }
 
     function cancel() {

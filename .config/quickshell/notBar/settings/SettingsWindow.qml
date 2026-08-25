@@ -8,6 +8,7 @@ import Quickshell.Widgets
 import qs.customItems
 import qs.services
 import qs.bar.quicksettings.nowplaying
+import qs.bar.systemTray
 import Quickshell.Services.Mpris
 import Quickshell.Networking
 
@@ -705,7 +706,7 @@ Item {
                         Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
 
                         SettingRow {
-                            icon: "\ue01c"
+                            icon: "\uf1ce"
                             label: "Progress ring"
                             checked: MprisState.showMprisProgress
                             onFlipped: MprisState.showMprisProgress = !MprisState.showMprisProgress
@@ -714,7 +715,7 @@ Item {
                         Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
 
                         SettingRow {
-                            icon: "\ue03c"
+                            icon: "\uf070"
                             label: "Hide when idle"
                             checked: MprisState.hideWhenIdle
                             onFlipped: MprisState.hideWhenIdle = !MprisState.hideWhenIdle
@@ -774,218 +775,386 @@ Item {
             id: connectionsPage
 
             ColumnLayout {
+                id: connPage
+
                 spacing: 12
 
-                Card {
-                    title: "Connections"
-                    icon: "\uf1eb"
-                    accent: "#bd93f9"
+                // which half of the connections page is showing
+                property int connTab: 0
 
-                    RowLayout {
-                        spacing: 12
-                        Layout.fillWidth: true
+                // ── tab strip · network | speedtest ──
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
 
-                        Rectangle {
-                            id: wifiTile
+                    component ConnTab: Rectangle {
+                        id: ctab
 
-                        // state machine: 2 = connected · 1 = radio on, idle · 0 = radio off
-                        readonly property int state: NetworkState.wifiConnected ? 2 : NetworkState.wifiEnabled ? 1 : 0
-                        readonly property bool on: NetworkState.wifiEnabled
-                        readonly property string ssid: NetworkState.activeNetwork?.name ?? ""
+                        property string label
+                        property string glyph
+                        property int idx
 
-                        Layout.fillWidth: true
-                        implicitHeight: 78
-                        radius: 10
-                        color: wifiMa.containsMouse ? "#262838" : "#21222c"
+                        readonly property bool active: connPage.connTab === ctab.idx
+                        readonly property bool hovered: tabMa.containsMouse
+
+                        Layout.preferredHeight: 26
+                        implicitWidth: tabRow.implicitWidth + 18
+                        radius: 8
+                        color: active ? Qt.rgba(0.74, 0.58, 0.98, 0.16) : hovered ? Qt.rgba(1, 1, 1, 0.05) : Qt.rgba(1, 1, 1, 0.03)
                         border.width: 1
-                        // bright border reserved for the connected interface
-                        border.color: wifiTile.state === 2 ? Qt.rgba(0.545, 0.914, 0.992, 0.55) : "#343746"
+                        border.color: active ? Qt.rgba(0.74, 0.58, 0.98, 0.5) : Qt.rgba(1, 1, 1, 0.07)
 
-                        Behavior on border.color { ColorAnimation { duration: 180 } }
-                        Behavior on color { ColorAnimation { duration: 120 } }
-
-                        // left accent rail matching the state color
-                        Rectangle {
-                            x: 1
-                            y: 1
-                            width: 3
-                            height: parent.height - 2
-                            radius: 2
-                            color: ["#ff5555", "#bd93f9", "#8be9fd"][wifiTile.state]
-                            opacity: 0.85
+                        Behavior on color {
+                            ColorAnimation { duration: 110 }
                         }
 
-                        ColumnLayout {
+                        Row {
+                            id: tabRow
+
                             anchors.centerIn: parent
-                            spacing: 4
+                            spacing: 6
 
-                            IconImage {
-                                Layout.alignment: Qt.AlignHCenter
-                                source: NetworkState.wifiIcon
-                                implicitSize: 22
-                                asynchronous: true
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: ctab.glyph
+                                color: ctab.active ? "#e2d6fb" : "#8b93b8"
+                                font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
                             }
 
                             Text {
-                                Layout.alignment: Qt.AlignHCenter
-                                text: wifiTile.state === 2 && wifiTile.ssid ? wifiTile.ssid : wifiTile.on ? "Not connected" : "Wi-Fi radio off"
-                                color: wifiTile.state === 2 ? "#f8f8f2" : "#b8bfcb"
-                                elide: Text.ElideRight
-                                maximumLineCount: 1
-                                font { pixelSize: 11; bold: true; family: "Quicksand" }
-                            }
-
-                            Text {
-                                Layout.alignment: Qt.AlignHCenter
-                                text: wifiTile.state === 2
-                                    ? "connected · " + Math.round(NetworkState.activeNetwork?.strength ?? 0) + "% signal"
-                                    : wifiTile.on ? "radio on · scanning" : "radio off"
-                                color: ["#ff8c8c", "#bd93f9", "#8be9fd"][wifiTile.state]
-                                font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: ctab.label
+                                color: ctab.active ? "#f8f8f2" : "#8b93b8"
+                                font { pixelSize: 10; bold: true; family: "Quicksand"; letterSpacing: 1 }
                             }
                         }
 
                         MouseArea {
-                            id: wifiMa
+                            id: tabMa
 
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: NetworkState.setWifiEnabled(!NetworkState.wifiEnabled)
+                            onClicked: connPage.connTab = ctab.idx
                         }
                     }
 
-                    Rectangle {
-                        id: ethTile
+                    ConnTab { label: "Network"; glyph: "\uf1eb"; idx: 0 }
+                    ConnTab { label: "Speedtest"; glyph: "\uf1fe"; idx: 1 }
 
-                        // state machine: 2 = link up · 1 = cable plugged, no carrier · 0 = disconnected/off
-                        readonly property int state: NetworkState.ethernet?.hasLink ? 2 : NetworkState.ethernet?.connected ? 1 : 0
+                    Item { Layout.fillWidth: true }
+                }
 
-                        Layout.fillWidth: true
-                        implicitHeight: 78
-                        radius: 10
-                        color: ethMa.containsMouse ? "#262838" : "#21222c"
-                        border.width: 1
-                        // bright border reserved for the linked-up interface
-                        border.color: ethTile.state === 2 ? Qt.rgba(0.314, 0.98, 0.482, 0.55) : "#343746"
+                StackLayout {
+                    Layout.fillWidth: true
+                    currentIndex: connPage.connTab
 
-                        Behavior on border.color { ColorAnimation { duration: 180 } }
-                        Behavior on color { ColorAnimation { duration: 120 } }
+                    // ── tab · network ──
+                    ColumnLayout {
+                        spacing: 12
 
-                        Rectangle {
-                            x: 1
-                            y: 1
-                            width: 3
-                            height: parent.height - 2
-                            radius: 2
-                            color: ["#ff5555", "#f1fa8c", "#50fa7b"][ethTile.state]
-                            opacity: 0.85
-                        }
+                    Card {
+                        title: "Connections"
+                        icon: "\uf1eb"
+                        accent: "#bd93f9"
 
                         ColumnLayout {
-                            anchors.centerIn: parent
-                            spacing: 4
+                            spacing: 0
+                            Layout.fillWidth: true
 
-                            IconImage {
-                                Layout.alignment: Qt.AlignHCenter
-                                source: NetworkState.ethIcon
-                                implicitSize: 22
-                                asynchronous: true
+                            // omarchy-quattro style: one quiet row per interface —
+                            // glyph · name/state · live caption · switch
+                            SettingRow {
+                                icon: "\uf1eb"
+                                label: {
+                                    const ssid = NetworkState.activeNetwork?.name ?? "";
+                                    if (!NetworkState.wifiEnabled)
+                                        return "Wi-Fi";
+                                    return NetworkState.wifiConnected && ssid.length > 0 ? ssid : "Wi-Fi";
+                                }
+                                caption: !NetworkState.wifiEnabled ? "radio off"
+                                    : NetworkState.wifiConnected ? Math.round(NetworkState.activeNetwork?.strength ?? 0) + "% signal"
+                                    : "scanning…"
+                                checked: NetworkState.wifiEnabled
+                                onFlipped: NetworkState.setWifiEnabled(!NetworkState.wifiEnabled)
                             }
 
-                            Text {
-                                Layout.alignment: Qt.AlignHCenter
-                                text: ["Ethernet off", "No carrier", "Ethernet"][ethTile.state]
-                                color: ethTile.state === 2 ? "#f8f8f2" : "#b8bfcb"
-                                elide: Text.ElideRight
-                                maximumLineCount: 1
-                                font { pixelSize: 11; bold: true; family: "Quicksand" }
+                            Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                            SettingRow {
+                                icon: "\uef44"
+                                label: ["Ethernet off", "No carrier", "Ethernet"][NetworkState.ethernet?.hasLink ? 2 : NetworkState.ethernet?.connected ? 1 : 0]
+                                caption: NetworkState.ethernet?.hasLink ? "link up" : NetworkState.ethernet?.connected ? "cable detected" : "disconnected"
+                                checked: NetworkState.ethernet?.hasLink || false
+                                onFlipped: NetworkState.setEthernetEnabled(!(NetworkState.ethernet?.hasLink || false))
                             }
 
-                            Text {
-                                Layout.alignment: Qt.AlignHCenter
-                                text: ["disconnected", "cable detected", "gigabit link up"][ethTile.state]
-                                color: ["#ff8c8c", "#f1fa8c", "#50fa7b"][ethTile.state]
-                                font { pixelSize: 9; family: "ZedMono Nerd Font" }
-                            }
-                        }
+                            Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
 
-                            MouseArea {
-                                id: ethMa
-
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: NetworkState.setEthernetEnabled(!(ethTile.state > 0))
+                            SettingRow {
+                                icon: "\uf294"
+                                label: Bt.enabled ? (Bt.connected && Bt.btDev.length > 0 ? Bt.btDev : "Bluetooth") : "Bluetooth"
+                                caption: !Bt.enabled ? "radio off" : Bt.connected ? "connected" + (Bt.btBat > 0 ? " · " + Math.round(Bt.btBat * 100) + "%" : "") : "no devices"
+                                checked: Bt.enabled
+                                onFlipped: {
+                                    if (Bt.adapter)
+                                        Bt.adapter.enabled = !Bt.adapter.enabled;
+                                }
                             }
                         }
                     }
-                }
 
-                Card {
-                    title: "Preferences"
-                    icon: "\uf013"
-                    accent: "#bd93f9"
+
+                    Card {
+                        title: "Preferences"
+                        icon: "\uf013"
+                        accent: "#bd93f9"
+
+                        ColumnLayout {
+                            spacing: 0
+                            Layout.fillWidth: true
+
+                            SettingRow {
+                                icon: "\uf1eb"
+                                label: "Connected highlight"
+                                caption: MiscState.wifiGreenName ? "green name" : "classic"
+                                checked: MiscState.wifiGreenName
+                                onFlipped: MiscState.wifiGreenName = !MiscState.wifiGreenName
+                            }
+
+                            Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                            SettingRow {
+                                icon: "\uf1fe"
+                                label: "Session totals"
+                                caption: MiscState.showNetTotals ? "always visible" : "with graphs"
+                                checked: MiscState.showNetTotals
+                                onFlipped: MiscState.showNetTotals = !MiscState.showNetTotals
+                            }
+                        }
+                    }
+
+
+                    Card {
+                        title: "Bar modules"
+                        icon: "\ueac1"
+                        accent: "#8be9fd"
+
+                        ColumnLayout {
+                            spacing: 0
+                            Layout.fillWidth: true
+
+                            SettingRow {
+                                icon: "\uf1eb"
+                                label: "Wi-Fi module"
+                                checked: MiscState.showWifi
+                                onFlipped: MiscState.showWifi = !MiscState.showWifi
+                            }
+
+                            Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                            SettingRow {
+                                icon: "\uef44"
+                                label: "Ethernet module"
+                                checked: MiscState.showEthernet
+                                onFlipped: MiscState.showEthernet = !MiscState.showEthernet
+                            }
+
+                            Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                            SettingRow {
+                                icon: "\uf294"
+                                label: "Bluetooth module"
+                                checked: MiscState.showBluetooth
+                                onFlipped: MiscState.showBluetooth = !MiscState.showBluetooth
+                            }
+                        }
+                    }
+                    }
+
+                    // ── tab · speedtest ──
+                    ColumnLayout {
+                        spacing: 12
 
                     ColumnLayout {
-                        spacing: 0
-                        Layout.fillWidth: true
+                        spacing: 12
 
-                        SettingRow {
-                            icon: "\uf1eb"
-                            label: "Connected highlight"
-                            caption: MiscState.wifiGreenName ? "green name" : "classic"
-                            checked: MiscState.wifiGreenName
-                            onFlipped: MiscState.wifiGreenName = !MiscState.wifiGreenName
-                        }
+                        SpeedtestPanel {}
 
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+                        Card {
+                            title: "History"
+                            icon: "\uf1fe"
+                            accent: "#8be9fd"
 
-                        SettingRow {
-                            icon: "\uf796"
-                            label: "Session totals"
-                            caption: MiscState.showNetTotals ? "always visible" : "with graphs"
-                            checked: MiscState.showNetTotals
-                            onFlipped: MiscState.showNetTotals = !MiscState.showNetTotals
+                            ColumnLayout {
+                                spacing: 0
+                                Layout.fillWidth: true
+
+                                // table head
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 8
+
+                                    Text {
+                                        Layout.preferredWidth: 118
+                                        text: "WHEN"
+                                        color: "#6272a4"
+                                        font { pixelSize: 9; bold: true; letterSpacing: 1.5; family: "Quicksand" }
+                                    }
+
+                                    Text {
+                                        Layout.preferredWidth: 150
+                                        text: "NETWORK"
+                                        color: "#6272a4"
+                                        font { pixelSize: 9; bold: true; letterSpacing: 1.5; family: "Quicksand" }
+                                    }
+
+                                    Text {
+                                        Layout.preferredWidth: 70
+                                        horizontalAlignment: Text.AlignRight
+                                        text: "PING"
+                                        color: "#6272a4"
+                                        font { pixelSize: 9; bold: true; letterSpacing: 1.5; family: "Quicksand" }
+                                    }
+
+                                    Text {
+                                        Layout.preferredWidth: 90
+                                        horizontalAlignment: Text.AlignRight
+                                        text: "DOWN"
+                                        color: "#6272a4"
+                                        font { pixelSize: 9; bold: true; letterSpacing: 1.5; family: "Quicksand" }
+                                    }
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        horizontalAlignment: Text.AlignRight
+                                        text: "UP"
+                                        color: "#6272a4"
+                                        font { pixelSize: 9; bold: true; letterSpacing: 1.5; family: "Quicksand" }
+                                    }
+
+                                    // clear-all
+                                    Rectangle {
+                                        visible: SpeedtestState.history.length > 0
+                                        implicitWidth: 24
+                                        implicitHeight: 24
+                                        radius: 7
+                                        color: histClearMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.16) : "transparent"
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "\uf1f8"
+                                            color: histClearMa.containsMouse ? "#ff5555" : "#6272a4"
+                                            font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+                                        }
+
+                                        MouseArea {
+                                            id: histClearMa
+
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: SpeedtestState.clearHistory()
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    height: 1
+                                    color: "#343746"
+                                    Layout.topMargin: 6
+                                    Layout.bottomMargin: 6
+                                }
+
+                                Repeater {
+                                    model: SpeedtestState.history
+
+                                    delegate: RowLayout {
+                                        id: histRow
+
+                                        required property int index
+                                        required property var modelData
+
+                                        Layout.fillWidth: true
+                                        spacing: 8
+
+                                        readonly property var d: new Date(histRow.modelData.ts * 1000)
+
+                                        function _fmt(when) {
+                                            const mo = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][when.getMonth()];
+                                            const hh = String(when.getHours()).padStart(2, "0");
+                                            const mm = String(when.getMinutes()).padStart(2, "0");
+                                            return mo + " " + when.getDate() + " · " + hh + ":" + mm;
+                                        }
+
+                                        Text {
+                                            Layout.preferredWidth: 118
+                                            text: histRow._fmt(histRow.d)
+                                            color: "#b8bfcb"
+                                            font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                            elide: Text.ElideRight
+                                        }
+
+                                        RowLayout {
+                                            Layout.preferredWidth: 150
+                                            spacing: 5
+
+                                            Text {
+                                                text: histRow.modelData.net === "Ethernet" ? "\uef44" : "\uf1eb"
+                                                color: histRow.modelData.net === "Ethernet" ? "#8be9fd" : "#bd93f9"
+                                                visible: histRow.modelData.net.length > 0
+                                                font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                            }
+
+                                            Text {
+                                                Layout.fillWidth: true
+                                                text: histRow.modelData.net.length > 0 ? histRow.modelData.net : "—"
+                                                color: histRow.index === 0 ? "#f8f8f2" : "#b8bfcb"
+                                                elide: Text.ElideRight
+                                                font { pixelSize: 10; family: "Quicksand" }
+                                            }
+                                        }
+
+                                        Text {
+                                            Layout.preferredWidth: 70
+                                            horizontalAlignment: Text.AlignRight
+                                            text: histRow.modelData.ping.toFixed(0) + " ms"
+                                            color: "#f1fa8c"
+                                            font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                        }
+
+                                        Text {
+                                            Layout.preferredWidth: 90
+                                            horizontalAlignment: Text.AlignRight
+                                            text: histRow.modelData.down.toFixed(1) + " Mb"
+                                            color: "#50fa7b"
+                                            font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                        }
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            horizontalAlignment: Text.AlignRight
+                                            text: histRow.modelData.up > 0 ? histRow.modelData.up.toFixed(1) + " Mb" : "—"
+                                            color: "#ff79c6"
+                                            font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    visible: SpeedtestState.history.length === 0
+                                    Layout.alignment: Qt.AlignHCenter
+                                    Layout.topMargin: 8
+                                    text: "no runs yet — start a test above"
+                                    color: "#6272a4"
+                                    font { pixelSize: 10; italic: true; family: "Quicksand" }
+                                }
+                            }
                         }
                     }
-                }
-
-                Card {
-                    title: "Bar modules"
-                    icon: "\ueac1"
-                    accent: "#8be9fd"
-
-                    ColumnLayout {
-                        spacing: 0
-                        Layout.fillWidth: true
-
-                        SettingRow {
-                            icon: "\uf1eb"
-                            label: "Wi-Fi module"
-                            checked: MiscState.showWifi
-                            onFlipped: MiscState.showWifi = !MiscState.showWifi
-                        }
-
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
-
-                        SettingRow {
-                            icon: "\uf796"
-                            label: "Ethernet module"
-                            checked: MiscState.showEthernet
-                            onFlipped: MiscState.showEthernet = !MiscState.showEthernet
-                        }
-
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
-
-                        SettingRow {
-                            icon: "\uf294"
-                            label: "Bluetooth module"
-                            checked: MiscState.showBluetooth
-                            onFlipped: MiscState.showBluetooth = !MiscState.showBluetooth
-                        }
                     }
-                }
+            }
             }
         }
 
@@ -1219,14 +1388,6 @@ Item {
             ColumnLayout {
                 spacing: 10
 
-                Text {
-                    Layout.fillWidth: true
-                    Layout.bottomMargin: 4
-                    text: "Click a topic to expand it."
-                    color: "#6272a4"
-                    font { pixelSize: 11; italic: true; family: "Quicksand" }
-                }
-
                 HelpTopic {
                     glyph: "\uf0f3"
                     title: "Reminders"
@@ -1257,11 +1418,24 @@ Item {
                 HelpTopic {
                     glyph: "\uf0e4"
                     title: "Speed test"
-                    summary: "ping · download · upload via Cloudflare"
+                    summary: "own tab · live progress · last-10 history"
 
-                    HelpLine { text: "Find it at the bottom of the Wi-Fi popup from the bar tray icon." }
-                    HelpLine { text: "It measures latency (best of 3), a 50 MB download and an 8 MB upload against Cloudflare's speed endpoints using curl — no extra packages needed." }
-                    HelpLine { text: "The Start/Stop pill cancels a running test; result tiles stay populated until you run again." }
+                    HelpLine { text: "It lives in its own Settings → Speedtest tab: latency (best of 3 probes), a 50 MB download and a 9 MB upload against Cloudflare, using curl — no extra packages." }
+                    HelpLine { text: "The three bars under the tiles fill with real progress as each probe/chunk lands; the caption shows phase and percentage. A watchdog kills stalled runs, so a test can never hang forever." }
+                    HelpLine { text: "Every completed run is saved with the network it ran on (Wi-Fi SSID or Ethernet). The History card keeps the last 10 — the trash icon clears them. Results persist across reloads in speedtest-history.json." }
+                }
+
+                HelpTopic {
+                    glyph: "\uf133"
+                    title: "Calendar & timer"
+                    summary: "full-year grid · deep links · countdown presets"
+
+                    HelpLine { text: "Right-click the calendar title flips between month and full-year grids; left-click reveals view tabs (calendar / reminders / timer)." }
+                    HelpLine { text: "Deep links jump straight into a view:" }
+                    HelpCode { cmd: "qs -p ~/.config/quickshell ipc call calendar year" }
+                    HelpCode { cmd: "qs -p ~/.config/quickshell ipc call timer start 300" }
+                    HelpLine { text: "The timer offers preset chips (5m–1h) and starts from zero — scroll the spinner to arm a duration, Reset zeroes everything." }
+                    HelpLine { text: "Reminder dots on day cells show pending counts; the compose time always opens at the bar clock's current time." }
                 }
 
                 HelpTopic {

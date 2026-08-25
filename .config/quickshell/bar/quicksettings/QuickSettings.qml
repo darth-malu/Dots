@@ -80,45 +80,24 @@ BarBlock {
         anchor.rect.y: 33
 
         // rigid footprint — height always hugs the full content, never scrolls
-        implicitWidth: 310
-        implicitHeight: qsContent.implicitHeight + 16
+        implicitWidth: 300
+        // top inset 4 (content margins) + 5 below the last row
+        implicitHeight: qsContent.implicitHeight + 9
 
-        // drop shadow drawn from a proxy silhouette so the real card never
-        // passes through the effect (stays pixel-crisp and fully interactive)
-        MultiEffect {
-            anchors.fill: parent
-            source: shadowProxy
-            shadowEnabled: true
-            shadowBlur: 0.85
-            shadowColor: Qt.rgba(0, 0, 0, 0.6)
-            shadowVerticalOffset: 5
-        }
-
-        Rectangle {
-            id: shadowProxy
-            anchors.fill: parent
-            anchors.margins: 8
-            radius: 12
-            visible: false
-            color: MiscState.popupCardBg
-        }
-
+        // same treatment as every other popup: one full-bleed rounded card
+        // with a hairline ring — no shadow effect, whose blur used to clip
+        // square-ish at the window edges
         Rectangle {
             id: qsCard
             anchors.fill: parent
-            anchors.margins: 8
             radius: 12
             color: MiscState.popupCardBg
+            border.width: 1
+            border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
 
             Shortcut {
                 sequence: "Escape"
                 onActivated: root.showQsPopup = false
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: root.showQsPopup = false
-                z: -1
             }
 
             // rigid column — no scroll container, the popup grows with it
@@ -148,19 +127,24 @@ BarBlock {
                         // x: 0
                         Layout.bottomMargin: 8
 
+                        // ── header — three equal thirds, each centred:
+                        // avatar · identity + uptime · controls ──
                         content: RowLayout {
-                            id: headerBeforeCards
+                            id: headerRow
+
                             Layout.fillWidth: true
                             spacing: 10
 
-                            // avatar — click to choose a new one
+                            // circular avatar — click to pick another picture
                             ClippingRectangle {
                                 id: avatarBox
+
+                                // hidden for now — assets and pickAvatar stay
+                                visible: false
                                 Layout.preferredWidth: 40
                                 Layout.preferredHeight: 40
                                 radius: height / 2
                                 color: avatarMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "#343746"
-                                // hairline ring keeps the circle crisp against the card
                                 border.width: 1
                                 border.color: avatarMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.55) : Qt.rgba(1, 1, 1, 0.14)
 
@@ -176,8 +160,6 @@ BarBlock {
                                     shadowEnabled: true
                                     shadowColor: Qt.rgba(0.741, 0.576, 0.976, 1)
                                     shadowBlur: 0.85
-                                    shadowHorizontalOffset: 0
-                                    shadowVerticalOffset: 0
                                     autoPaddingEnabled: true
                                     shadowOpacity: avatarMa.containsMouse ? 0.95 : 0
 
@@ -191,6 +173,7 @@ BarBlock {
 
                                 Image {
                                     id: avatarImg
+
                                     anchors.fill: parent
                                     anchors.margins: 1
                                     source: MiscState.avatarUrl
@@ -212,6 +195,7 @@ BarBlock {
 
                                 MouseArea {
                                     id: avatarMa
+
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
@@ -219,341 +203,252 @@ BarBlock {
                                 }
                             }
 
-                            // identity block — optically centred against the
-                            // 40px avatar, hostname over dimmed uptime
-                            ColumnLayout {
-                                spacing: 1
-                                Layout.alignment: Qt.AlignVCenter
-                                Layout.fillWidth: true
-
-                                StyledText {
-                                    text: root.hostName
-                                    horizontalAlignment: Text.AlignLeft
-                                    font {
-                                        pixelSize: 13
-                                        family: "Quicksand"
-                                        bold: true
-                                        letterSpacing: 0.3
-                                    }
-                                    color: "#f8f8f2"
-                                    elide: Text.ElideRight
-                                    Layout.maximumWidth: 180
-                                }
-
-                                RowLayout {
-                                    spacing: 4
-
-                                    Text {
-                                        text: "\uf017"
-                                        color: "#6272a4"
-                                        font {
-                                            pixelSize: 9
-                                            family: "Symbols Nerd Font Mono"
-                                        }
-                                    }
-
-                                    StyledText {
-                                        text: ResourcesState.uptimeText
-                                        visible: text.length > 0
-                                        horizontalAlignment: Text.AlignLeft
-                                        font {
-                                            pixelSize: 10
-                                            family: "ZedMono Nerd Font"
-                                        }
-                                        color: "#b8bfcb"
-                                        elide: Text.ElideRight
-                                    }
-                                }
-                            }
-
-                            // gap between the identity block and the control icons
                             Item {
                                 Layout.fillWidth: true
                             }
 
-                            // utility cluster — power stays put; hovering it
-                            // slides the rest of the row out to its left
-                            Item {
-                                id: ctrlCluster
+                            // square icon buttons — one component, one look
+                            component HeaderButton: Rectangle {
+                                id: hbtn
 
-                                Layout.preferredHeight: 32
-                                Layout.alignment: Qt.AlignRight
-                                implicitWidth: revealGroup.width + 10 + 32
-                                width: ctrlCluster.revealed ? implicitWidth : 32
-                                clip: true
+                                property string glyph
+                                property color tint: "#bd93f9"
+                                readonly property alias hovered: hbtnMa.containsMouse
 
-                                // stays open while a popup card is up so the row doesn't slam shut
-                                readonly property bool revealed: clusterHover.hovered || root.showPowerPopup
+                                signal activated()
 
-                                Behavior on width {
+                                width: 30
+                                height: 30
+                                radius: 9
+                                color: hbtnMa.containsMouse ? Qt.rgba(hbtn.tint.r, hbtn.tint.g, hbtn.tint.b, 0.18) : Qt.rgba(1, 1, 1, 0.05)
+                                border.width: 1
+                                border.color: hbtnMa.containsMouse ? Qt.rgba(hbtn.tint.r, hbtn.tint.g, hbtn.tint.b, 0.45) : Qt.rgba(1, 1, 1, 0.08)
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: 120
+                                    }
+                                }
+
+                                Behavior on border.color {
+                                    ColorAnimation {
+                                        duration: 120
+                                    }
+                                }
+
+                                scale: hbtnMa.pressed ? 0.92 : 1
+
+                                Behavior on scale {
                                     NumberAnimation {
-                                        duration: 200
-                                        easing.type: Easing.OutCubic
+                                        duration: 80
                                     }
                                 }
 
-                                HoverHandler {
-                                    id: clusterHover
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: hbtn.glyph
+                                    color: hbtnMa.containsMouse ? Qt.lighter(hbtn.tint, 1.25) : "#b8bfcb"
+                                    font {
+                                        pixelSize: 14
+                                        family: "Symbols Nerd Font Mono"
+                                    }
+
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: 120
+                                        }
+                                    }
                                 }
 
-                                // the hover-revealed buttons — fade + slide as one unit
-                                Item {
-                                    id: revealGroup
+                                MouseArea {
+                                    id: hbtnMa
 
-                                    anchors.left: parent.left
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: ctrlCluster.revealed ? hiddenRow.implicitWidth : 0
-                                    height: 32
-                                    clip: true
-                                    opacity: ctrlCluster.revealed ? 1 : 0
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: hbtn.activated()
+                                }
+                            }
 
-                                    Behavior on width {
-                                        NumberAnimation {
-                                            duration: 200
-                                            easing.type: Easing.OutCubic
-                                        }
-                                    }
+                            HeaderButton {
+                                glyph: "\uf0f4"
+                                tint: CaffeineService.enabled ? "#ffb86c" : "#6272a4"
 
-                                    Behavior on opacity {
-                                        NumberAnimation {
-                                            duration: 150
-                                        }
-                                    }
+                                onActivated: CaffeineService.toggle()
+                            }
+
+                            HeaderButton {
+                                glyph: "\uf013"
+                                tint: "#bd93f9"
+
+                                onActivated: {
+                                    root.showQsPopup = false;
+                                    MiscState.toggleSettings = true;
+                                }
+                            }
+
+                            HeaderButton {
+                                id: powerBtn
+
+                                glyph: "\uf011"
+                                // armed menu or hover lights it red
+                                property bool hot: root.showPowerPopup
+
+                                tint: hot || hovered ? "#ff5555" : "#6272a4"
+                                border.color: hot ? Qt.rgba(0.95, 0.55, 0.66, 0.45) : hovered ? Qt.rgba(1, 0.33, 0.33, 0.45) : Qt.rgba(1, 1, 1, 0.08)
+
+                                onActivated: root.showPowerPopup = !root.showPowerPopup
+                            }
+                        }
+
+
+                        // ═══ POWER ═══
+                        PowerControls {
+                            id: powerControls
+
+                            Layout.fillWidth: true
+                            Layout.bottomMargin: 8
+
+                            showPowerPopup: root.showPowerPopup
+                            timerPicker: root.timerPicker
+
+                            onCloseRequested: root.showQsPopup = false
+                            onTimerPicked: mode => root.timerPicker = mode
+                        }
+
+                        // ═══ NOW PLAYING ═══
+                        NowPlaying {
+                            id: nowPlayingCard
+
+                            compactNowPlaying: root.compactNowPlaying
+                            Layout.fillWidth: true
+                            Layout.bottomMargin: 8
+                        }
+
+                        // ═══ VOLUME ═══
+                        ClippingRectangle {
+                            id: volumeCard
+
+                            Layout.fillWidth: true
+                            Layout.bottomMargin: 4
+                            radius: 10
+                            color: "#21222c"
+                            border.width: 1
+                            border.color: Qt.rgba(0.74, 0.58, 0.98, 0.25)
+                            implicitHeight: volumeCol.implicitHeight + 16
+
+                            ColumnLayout {
+                                id: volumeCol
+                                anchors.fill: parent
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
+                                anchors.topMargin: 8
+                                anchors.bottomMargin: 8
+                                spacing: 5
+
+                                Brightness {
+                                    Layout.fillWidth: true
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    implicitHeight: 1
+                                    visible: BrightnessState.available
+                                    color: "#343746"
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 3
 
                                     RowLayout {
-                                        id: hiddenRow
+                                        Layout.fillWidth: true
+                                        spacing: 6
 
-                                        anchors.left: parent.left
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        spacing: 10
-
-                                        Rectangle {
-                                            id: controls
-
-                                            Layout.preferredWidth: 32
-                                            Layout.preferredHeight: 32
-                                            radius: 6
-                                            color: caffeineMouse.containsMouse ? Qt.rgba(0.98, 0.70, 0.53, 0.15) : "transparent"
-
-                                            Text {
-                                                anchors.centerIn: parent
-                                                text: CaffeineService.enabled ? "\uf0f4" : "󰾪"
-                                                color: CaffeineService.enabled ? "#ffb86c" : "#6272a4"
-                                                font {
-                                                    pixelSize: 16
-                                                    family: "Symbols Nerd Font Mono"
-                                                }
-                                            }
-
-                                            MouseArea {
-                                                id: caffeineMouse
-
-                                                anchors.fill: parent
-                                                hoverEnabled: true
-                                                cursorShape: Qt.PointingHandCursor
-                                                onClicked: CaffeineService.toggle()
-                                            }
+                                        SinkName {
+                                            node: PipewireState.outputSink
+                                            fallback: "output"
+                                            accent: "#bd93f9"
+                                            displayName: PipewireState.outputDisplayName
                                         }
 
                                         Rectangle {
+                                            id: pwBtn
 
-                                            Layout.preferredWidth: 32
-                                            Layout.preferredHeight: 32
-                                            radius: 6
-                                            color: settingsBtnMouse.containsMouse ? Qt.rgba(0.54, 0.57, 0.96, 0.15) : "transparent"
+                                            // pw management shortcut (hyprpwcenter)
+                                            implicitWidth: 18
+                                            implicitHeight: 18
+                                            radius: 5
+                                            color: pwMouse.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "transparent"
+
+                                            Behavior on color {
+                                                ColorAnimation {
+                                                    duration: 120
+                                                }
+                                            }
 
                                             Text {
                                                 anchors.centerIn: parent
-                                                text: ""
-                                                color: "#bd93f9"
+                                                text: "\uf013"
+                                                color: pwMouse.containsMouse ? "#bd93f9" : "#6272a4"
                                                 font {
-                                                    pixelSize: 16
+                                                    pixelSize: 10
                                                     family: "Symbols Nerd Font Mono"
                                                 }
                                             }
 
                                             MouseArea {
-                                                id: settingsBtnMouse
-
+                                                id: pwMouse
                                                 anchors.fill: parent
                                                 hoverEnabled: true
                                                 cursorShape: Qt.PointingHandCursor
                                                 onClicked: {
                                                     root.showQsPopup = false;
-                                                    MiscState.toggleSettings = true;
+                                                    Quickshell.execDetached(["sh", "-c", "exec hyprpwcenter 2>/dev/null || exec pwvucontrol"]);
                                                 }
                                             }
                                         }
                                     }
+
+                                    VolumeSlider {
+                                        id: outVol
+                                        node: PipewireState.outputSink
+                                        glyph: "\uf028"
+                                        glyphMuted: "\uf026"
+                                        accent: "#bd93f9"
+                                    }
                                 }
 
-                                // power — always visible on the right edge
-                                Rectangle {
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 3
 
-                                    anchors.right: parent.right
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: 32
-                                    height: 32
-                                    radius: 6
-                                    color: powerBtnMouse.containsMouse ? Qt.rgba(0.95, 0.55, 0.66, 0.15) : "transparent"
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: ""
-                                        color: root.showPowerPopup ? "#ff5555" : "#6272a4"
-                                        font {
-                                            pixelSize: 16
-                                            family: "Symbols Nerd Font Mono"
-                                        }
+                                    SinkName {
+                                        node: PipewireState.inputSink
+                                        fallback: "input"
+                                        accent: "#8be9fd"
                                     }
 
-                                    MouseArea {
-                                        id: powerBtnMouse
-
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: root.showPowerPopup = !root.showPowerPopup
+                                    VolumeSlider {
+                                        id: inVol
+                                        node: PipewireState.inputSink
+                                        glyph: "\uf130"
+                                        glyphMuted: "\uf131"
+                                        accent: "#8be9fd"
                                     }
                                 }
                             }
                         }
-                    }
 
-                    // ═══ POWER ═══
-                    PowerControls {
-                        id: powerControls
-
-                        Layout.fillWidth: true
-                        Layout.bottomMargin: 8
-
-                        showPowerPopup: root.showPowerPopup
-                        timerPicker: root.timerPicker
-
-                        onCloseRequested: root.showQsPopup = false
-                        onTimerPicked: mode => root.timerPicker = mode
-                    }
-
-                    // ═══ NOW PLAYING ═══
-                    NowPlaying {
-                        id: nowPlayingCard
-
-                        compactNowPlaying: root.compactNowPlaying
-                        Layout.fillWidth: true
-                        Layout.bottomMargin: 8
-                    }
-
-                    // ═══ VOLUME ═══
-                    ClippingRectangle {
-                        id: volumeCard
-
-                        Layout.fillWidth: true
-                        Layout.bottomMargin: 8
-                        radius: 10
-                        color: "#21222c"
-                        border.width: 1
-                        border.color: Qt.rgba(0.74, 0.58, 0.98, 0.25)
-                        implicitHeight: volumeCol.implicitHeight + 16
-
-                        ColumnLayout {
-                            id: volumeCol
-                            anchors.fill: parent
-                            anchors.leftMargin: 12
-                            anchors.rightMargin: 12
-                            anchors.topMargin: 8
-                            anchors.bottomMargin: 8
-                            spacing: 5
-
-                            Brightness {
-                                Layout.fillWidth: true
-                            }
-
-                            Rectangle {
-                                Layout.fillWidth: true
-                                implicitHeight: 1
-                                visible: BrightnessState.available
-                                color: "#343746"
-                            }
-
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 3
-
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 6
-
-                                    SinkName {
-                                        node: PipewireState.outputSink
-                                        fallback: "output"
-                                        accent: "#bd93f9"
-                                        displayName: PipewireState.outputDisplayName
-                                    }
-
-                                    Rectangle {
-                                        id: pwBtn
-
-                                        // pw management shortcut (hyprpwcenter)
-                                        implicitWidth: 18
-                                        implicitHeight: 18
-                                        radius: 5
-                                        color: pwMouse.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "transparent"
-
-                                        Behavior on color {
-                                            ColorAnimation {
-                                                duration: 120
-                                            }
-                                        }
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: "\uf013"
-                                            color: pwMouse.containsMouse ? "#bd93f9" : "#6272a4"
-                                            font {
-                                                pixelSize: 10
-                                                family: "Symbols Nerd Font Mono"
-                                            }
-                                        }
-
-                                        MouseArea {
-                                            id: pwMouse
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: {
-                                                root.showQsPopup = false;
-                                                Quickshell.execDetached(["sh", "-c", "exec hyprpwcenter 2>/dev/null || exec pwvucontrol"]);
-                                            }
-                                        }
-                                    }
-                                }
-
-                                VolumeSlider {
-                                    id: outVol
-                                    node: PipewireState.outputSink
-                                    glyph: "\uf028"
-                                    glyphMuted: "\uf026"
-                                    accent: "#bd93f9"
-                                }
-                            }
-
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 3
-
-                                SinkName {
-                                    node: PipewireState.inputSink
-                                    fallback: "input"
-                                    accent: "#8be9fd"
-                                }
-
-                                VolumeSlider {
-                                    id: inVol
-                                    node: PipewireState.inputSink
-                                    glyph: "\uf130"
-                                    glyphMuted: "\uf131"
-                                    accent: "#8be9fd"
-                                }
+                        // ── footer · session uptime ──
+                        Text {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: ResourcesState.uptimeText.length > 0 ? ResourcesState.uptimeText : "…"
+                            color: "#6272a4"
+                            font {
+                                pixelSize: 9
+                                bold: true
+                                family: "ZedMono Nerd Font"
                             }
                         }
                     }

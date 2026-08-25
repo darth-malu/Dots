@@ -434,12 +434,6 @@ Loader {
                         onActivated: NetworkState.netPopupVisible = false
                     }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        z: -1
-                        onClicked: NetworkState.netPopupVisible = false
-                    }
-
                     ColumnLayout {
                         id: card
                         anchors.fill: parent

@@ -105,8 +105,6 @@ PanelWindow {
                     enabled: true
                     hoverEnabled: true
                     maximumLength: 30
-                    placeholderText: RofiState.toggleOpenWindows ? "search windows" : RofiState.toggleAppLauncher ? "launch app" : "search clipboard"
-                    placeholderTextColor: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.35)
                     color: search.enabled ? Themes.windowTextColor : 'transparent'
                     selectByMouse: true
                     background: Rectangle {
@@ -168,13 +166,6 @@ PanelWindow {
                         family: "ZedMono Nerd Font"
                     }
                 }
-            }
-
-            // hairline separating the query from the results
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: 1
-                color: Qt.rgba(Themes.rofiBorder.r, Themes.rofiBorder.g, Themes.rofiBorder.b, 0.35)
             }
 
             function copier() {
@@ -239,17 +230,6 @@ PanelWindow {
                 }
             }
 
-            // ── footer: contextual key hints ──
-            Text {
-                Layout.alignment: Qt.AlignHCenter
-                text: RofiState.toggleOpenWindows ? "\u21b5 focus \u00b7 \u2191\u2193 select \u00b7 esc close" : RofiState.toggleAppLauncher ? "\u21b5 launch \u00b7 \u2191\u2193 select \u00b7 esc close" : "\u21b5 paste \u00b7 del forget \u00b7 esc close"
-                color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.3)
-                font {
-                    pixelSize: 9
-                    letterSpacing: 2
-                    family: "ZedMono Nerd Font"
-                }
-            }
         }
     }
 }

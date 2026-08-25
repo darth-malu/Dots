@@ -254,7 +254,7 @@ Singleton {
         let p = root.player && !root.isIgnored(root.player) ? root.player : null;
         if (!p)
             p = root.lastPlayer && !root.isIgnored(root.lastPlayer) ? root.lastPlayer : null;
-        console.log("[songart] called · player=" + (root.player?.identity ?? "null") + " lastPlayer=" + (root.lastPlayer?.identity ?? "null") + " chosen=" + (p?.identity ?? "null"));
+        // console.log("[songart] called · player=" + (root.player?.identity ?? "null") + " lastPlayer=" + (root.lastPlayer?.identity ?? "null") + " chosen=" + (p?.identity ?? "null"));
         if (!p)
             return;
 

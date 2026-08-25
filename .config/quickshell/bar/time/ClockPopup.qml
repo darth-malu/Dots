@@ -8,16 +8,23 @@ import qs.customItems
 ColumnLayout {
     id: root
     spacing: 8
-    // explicit content width — child implicit widths are unreliable here
-    implicitWidth: yearView ? 564 : 264
+
+    // compact for calendar/reminders/timer, wide only for the full-year grid.
+    // explicit width, never implicitWidth — a layout overwrites its own
+    // implicit size at polish time, which is exactly what left the popup
+    // half-laid-out on the frame it mapped; a pinned width lays out every
+    // fillWidth child correctly on the first rendered frame
+    readonly property int baseWidth: view === "cal" && yearView ? 564 : 300
+    width: baseWidth
 
     // IPC debug: live geometry of the year-view columns
     readonly property string gridDbg: {
-        if (!yearGrid.visible)
+        const g = yearLoader.item;
+        if (!g)
             return "yearGrid hidden";
-        let s = `gw=${Math.round(yearGrid.width)} | `;
-        for (let i = 0; i < yearGrid.children.length; i++) {
-            const c = yearGrid.children[i];
+        let s = `gw=${Math.round(g.width)} | `;
+        for (let i = 0; i < g.children.length; i++) {
+            const c = g.children[i];
             if (c.index !== undefined)
                 s += `[${c.index}]x=${Math.round(c.x)}w=${Math.round(c.width)}pw=${Math.round(c.Layout.preferredWidth)} `;
         }
@@ -26,48 +33,186 @@ ColumnLayout {
 
     signal taskSubmitted(int day, int month, int year, string task)
 
+    // ── view switcher ──
+    property string view: "cal" // "cal" | "rem" | "timer"
+
+    // id of the reminder currently being edited in the compose card
+    // (real, not int — ids are epoch-millis and overflow 32-bit)
+    property real editingId: -1
+
+    // the tab header stays out of the way until the month-name area is
+    // clicked; any jump into another view re-reveals it so you can't get stuck
+    property bool tabsRevealed: false
+
+    // compose-card pieces live inside the deferred reminders component —
+    // resolve them through the loader, tolerating a not-yet-built view
+    function _spin() {
+        return remLoader.item ? remLoader.item.spinner : null;
+    }
+
+    function _field() {
+        return remLoader.item ? remLoader.item.field : null;
+    }
+
+    function switchView(v) {
+        if (v !== "cal")
+            tabsRevealed = true;
+        const wasRem = view === "rem";
+        if (v !== "rem") {
+            datePickerOpen = false;
+            editingId = -1;
+        }
+        // flip first — entering "rem" must activate the deferred component
+        // before its spinner can be touched
+        view = v;
+        // entering compose fresh → prefill the spinner with the time right
+        // now, not whenever quickshell (or the open popup) started
+        if (v === "rem" && !wasRem) {
+            ensureReminderSel();
+            const sp = _spin();
+            if (sp)
+                sp.reset();
+        }
+    }
+
     property int displayMonth: TimeService.currentDate.getMonth()
     property int displayYear: TimeService.currentDate.getFullYear()
+
+    property bool yearView: false
 
     property int selectedDay: -1
     property int selectedMonth: -1
     property int selectedYear: -1
-    property bool inputVisible: false
-    property bool yearView: false
 
-    // YYYY-MM-DD key for the selected day
-    readonly property string selectedKey: selectedYear < 0 ? "" : selectedYear + "-" + String(selectedMonth + 1).padStart(2, "0") + "-" + String(selectedDay).padStart(2, "0")
+    // inline mini-month popover opened from the calendar-icon chip
+    property bool datePickerOpen: false
+    property int pickerMonth: TimeService.currentDate.getMonth()
+    property int pickerYear: TimeService.currentDate.getFullYear()
+
+    // YYYY-MM-DD key for the selected day (falls back to today)
+    readonly property string selectedKey: effectiveYear < 0 ? "" : effectiveYear + "-" + String(effectiveMonth + 1).padStart(2, "0") + "-" + String(effectiveDay).padStart(2, "0")
+
+    readonly property int effectiveDay: selectedDay >= 0 ? selectedDay : TimeService.currentDate.getDate()
+    readonly property int effectiveMonth: selectedMonth >= 0 ? selectedMonth : TimeService.currentDate.getMonth()
+    readonly property int effectiveYear: selectedYear >= 0 ? selectedYear : TimeService.currentDate.getFullYear()
 
     function clearSelection() {
         selectedDay = -1;
         selectedMonth = -1;
         selectedYear = -1;
-        inputVisible = false;
-        taskField.text = "";
-        timeSpin.reset();
+        datePickerOpen = false;
+        editingId = -1;
+        const f = _field();
+        if (f)
+            f.text = "";
+        const sp = _spin();
+        if (sp)
+            sp.reset();
     }
 
-    // submit the input: a valid time creates an in-shell reminder,
-    // no time keeps the legacy emacs org-capture flow
-    function submitInput() {
-        const t = taskField.text.trim();
-        if (t.length === 0 || root.selectedYear < 0)
+    // load an existing reminder into the compose card — pencil icon on a
+    // list row; submit then updates instead of creating
+    function startEdit(rem) {
+        const p = rem.date.split("-");
+        selectedYear = parseInt(p[0]);
+        selectedMonth = parseInt(p[1]) - 1;
+        selectedDay = parseInt(p[2]);
+        editingId = rem.id;
+        datePickerOpen = false;
+        tabsRevealed = true;
+        view = "rem";
+        _field().text = rem.text;
+        const sp = _spin();
+        if (rem.time && rem.time.length === 5)
+            sp.setTime(rem.time.substring(0, 2), rem.time.substring(3, 5));
+        else
+            sp.reset();
+        _field().forceActiveFocus();
+    }
+
+    // entering the reminders view with no picked day defaults to today
+    function ensureReminderSel() {
+        if (selectedYear >= 0)
             return;
+        const now = TimeService.currentDate;
+        selectedDay = now.getDate();
+        selectedMonth = now.getMonth();
+        selectedYear = now.getFullYear();
+    }
+
+    // click a calendar day → compose a reminder for it in the reminders view
+    function openReminderFor(day, month, year, fromMini) {
+        selectedDay = day;
+        selectedMonth = month;
+        selectedYear = year;
+        if (fromMini) {
+            displayMonth = month;
+            yearView = false;
+        }
+        // direct jump from a day cell — keep the tabs reachable
+        tabsRevealed = true;
+        view = "rem";
+        datePickerOpen = false;
+        _spin().reset();
+        _field().forceActiveFocus();
+    }
+
+    // submit the input: updates the reminder being edited, or creates a new
+    // one for the chosen day/time
+    function submitInput() {
+        const f = _field();
+        const sp = _spin();
+        if (!f || !sp)
+            return;
+        const t = f.text.trim();
+        if (t.length === 0)
+            return;
+        ensureReminderSel();
+        if (editingId >= 0) {
+            if (ReminderState.update(editingId, t, root.selectedKey, sp.timeString))
+                clearSelection();
+            return;
+        }
         // spinner defaults to the current time, so every reminder is timed
-        ReminderState.add(t, root.selectedKey, timeSpin.timeString);
-        root.taskSubmitted(root.selectedDay, root.selectedMonth, root.selectedYear, t);
+        ReminderState.add(t, root.selectedKey, sp.timeString);
+        root.taskSubmitted(root.effectiveDay, root.effectiveMonth, root.effectiveYear, t);
         root.clearSelection();
+    }
+
+    function openPicker() {
+        ensureReminderSel();
+        pickerMonth = selectedMonth;
+        pickerYear = selectedYear;
+        datePickerOpen = true;
+    }
+
+    function pickerPrev() {
+        if (pickerMonth === 0) {
+            pickerMonth = 11;
+            pickerYear -= 1;
+        } else {
+            pickerMonth -= 1;
+        }
+    }
+
+    function pickerNext() {
+        if (pickerMonth === 11) {
+            pickerMonth = 0;
+            pickerYear += 1;
+        } else {
+            pickerMonth += 1;
+        }
     }
 
     // reminders grouped per day for the popup list ("Today", "Tomorrow", …)
     readonly property var dayGroups: {
-        // currentDate ticks every minute — keeps "Overdue"/time-window
-        // rendering honest while the popup sits open past a due time
-        const _tick = TimeService.currentDate;
+        // TimeService ticks every minute and is what the bar clock shows —
+        // reading it here keeps "Overdue"/time-window rendering honest AND
+        // in sync while the popup sits open past a due time
+        const now = TimeService.currentDate;
+        const nowTime = Qt.formatDateTime(now, "HH:mm");
         const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const now = new Date();
-        const nowTime = Qt.formatDateTime(now, "HH:mm");
         const groups = [];
         let cur = null;
         for (const r of ReminderState.pending.slice(0, 24)) {
@@ -130,7 +275,118 @@ ColumnLayout {
         displayYear += dir;
     }
 
+    // ── view tabs (hidden until the month title is clicked) ──
+    Rectangle {
+        id: tabPill
+
+        visible: root.tabsRevealed
+        Layout.alignment: Qt.AlignHCenter
+        implicitWidth: tabsRow.implicitWidth + 6
+        implicitHeight: 26
+        radius: 13
+        color: Qt.rgba(1, 1, 1, 0.04)
+        border.width: 1
+        border.color: Qt.rgba(1, 1, 1, 0.06)
+
+        Row {
+            id: tabsRow
+
+            anchors.centerIn: parent
+            spacing: 2
+
+            component ViewTab: Rectangle {
+                id: tab
+
+                property string icon
+                property string label
+                property bool active: false
+                property int badge: 0
+                signal activated()
+
+                width: 76
+                height: 20
+                radius: 10
+                color: active ? Qt.rgba(0.741, 0.576, 0.976, 0.22) : tabMa.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
+
+                Behavior on color {
+                    ColorAnimation { duration: 120 }
+                }
+
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 5
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: tab.icon
+                        color: tab.active ? "#bd93f9" : "#8b93b8"
+                        font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                    }
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: tab.label
+                        color: tab.active ? "#e2d6fb" : "#8b93b8"
+                        font { pixelSize: 9; bold: tab.active; family: "Quicksand"; letterSpacing: 0.5 }
+                    }
+
+                    // pending-reminder count chip (bell tab only)
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: tab.badge > 0
+                        implicitWidth: Math.max(badgeTxt.implicitWidth + 6, 12)
+                        implicitHeight: 11
+                        radius: 5.5
+                        color: "#bd93f9"
+
+                        Text {
+                            id: badgeTxt
+
+                            anchors.centerIn: parent
+                            text: tab.badge
+                            color: "#282a36"
+                            font { pixelSize: 7; bold: true; family: "ZedMono Nerd Font" }
+                        }
+                    }
+                }
+
+                MouseArea {
+                    id: tabMa
+
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: tab.activated()
+                }
+            }
+
+            ViewTab {
+                icon: "\uf073"
+                label: "Calendar"
+                active: root.view === "cal"
+                onActivated: root.switchView("cal")
+            }
+
+            ViewTab {
+                icon: "\uf0f3"
+                label: "Remind"
+                active: root.view === "rem"
+                badge: ReminderState.pending.length
+                onActivated: root.switchView("rem")
+            }
+
+            ViewTab {
+                icon: "\uf017"
+                label: "Timer"
+                active: root.view === "timer"
+                onActivated: root.switchView("timer")
+            }
+        }
+    }
+
+    // ════════════════ CALENDAR VIEW ════════════════
     RowLayout {
+        visible: root.view === "cal"
         Layout.fillWidth: true
         Layout.preferredHeight: 32
         spacing: 4
@@ -165,14 +421,20 @@ ColumnLayout {
                 pointSize: 13
             }
 
-            // click the title to switch between month and full-year view
+            // click the title to show/hide the view tabs; right-click still
+            // flips between the month grid and the full-year grid
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    root.clearSelection();
-                    root.yearView = !root.yearView;
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onClicked: mouse => {
+                    if (mouse.button === Qt.RightButton) {
+                        root.clearSelection();
+                        root.yearView = !root.yearView;
+                        return;
+                    }
+                    root.tabsRevealed = !root.tabsRevealed;
                 }
             }
         }
@@ -193,7 +455,7 @@ ColumnLayout {
 
     DayOfWeekRow {
         Layout.preferredHeight: 18
-        visible: !root.yearView
+        visible: root.view === "cal" && !root.yearView
         Layout.fillWidth: true
         font: Themes.quicksand
         delegate: Text {
@@ -208,32 +470,35 @@ ColumnLayout {
 
     MonthGrid {
         id: grid
-        visible: !root.yearView
+        visible: root.view === "cal" && !root.yearView
         Layout.fillWidth: true
-        // MonthGrid has no useful implicit size — pin it to 6 week rows of ~32px
-        Layout.preferredHeight: 196
+        // MonthGrid has no useful implicit size — pin it to 6 week rows of ~34px
+        Layout.preferredHeight: 204
         month: root.displayMonth
         year: root.displayYear
 
         delegate: Item {
             id: dayCell
-            implicitWidth: 30
-            implicitHeight: 30
+
+            // cells fill the whole popup width (grid divides evenly) — scale
+            // the day circle with the cell so the month spans edge to edge
+            readonly property real cellW: width > 0 ? width : 40
+            readonly property real cellH: height > 0 ? height : 32
+            readonly property real circleSz: Math.min(36, Math.min(cellW, cellH) - 4)
 
             property bool hovered: false
-
-            readonly property bool isTracked: {
-                MiscState.trackedDatesRev;
-                return MiscState.isTrackedDate(model.year, model.month, model.day);
-            }
 
             readonly property bool isSelected: model.day === root.selectedDay
                 && model.month === root.selectedMonth
                 && model.year === root.selectedYear
 
+            readonly property bool isToday: model.today
+
+            readonly property int remCount: ReminderState.countForDate(model.year, model.month, model.day)
+
             Rectangle {
-                width: 28
-                height: 28
+                width: dayCell.circleSz
+                height: dayCell.circleSz
                 anchors.centerIn: parent
                 radius: width / 2
                 visible: model.today && !parent.isSelected
@@ -242,8 +507,8 @@ ColumnLayout {
             }
 
             Rectangle {
-                width: 28
-                height: 28
+                width: dayCell.circleSz
+                height: dayCell.circleSz
                 anchors.centerIn: parent
                 radius: width / 2
                 visible: parent.isSelected
@@ -265,25 +530,25 @@ ColumnLayout {
                 }
             }
 
-            // reminder badge — count of pending reminders on this day
-            // (sole indicator in month view; mini months use dots)
-            Rectangle {
-                anchors.top: parent.top
-                anchors.right: parent.right
-                anchors.topMargin: 1
-                anchors.rightMargin: 1
-                visible: ReminderState.countForDate(model.year, model.month, model.day) > 0
-                implicitWidth: remBadgeTxt.implicitWidth + 5
-                implicitHeight: remBadgeTxt.implicitHeight + 1
-                radius: height / 2
-                color: "#bd93f9"
+            // reminder dots — up to three under the number (sole indicator
+            // in month view; counts live in the reminders view)
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 1
+                spacing: 2
+                visible: dayCell.remCount > 0
 
-                Text {
-                    id: remBadgeTxt
-                    anchors.centerIn: parent
-                    text: ReminderState.countForDate(model.year, model.month, model.day)
-                    color: "#282a36"
-                    font { pixelSize: 7; bold: true; family: "ZedMono Nerd Font" }
+                Repeater {
+                    model: Math.min(3, dayCell.remCount)
+
+                    Rectangle {
+                        width: 3.5
+                        height: 3.5
+                        radius: 2
+                        anchors.verticalCenter: parent.verticalCenter
+                        color: dayCell.isToday || dayCell.isSelected ? "#282a36" : "#bd93f9"
+                    }
                 }
             }
 
@@ -293,25 +558,122 @@ ColumnLayout {
                 cursorShape: Qt.PointingHandCursor
                 onEntered: dayCell.hovered = true
                 onExited: dayCell.hovered = false
+                onClicked: root.openReminderFor(model.day, model.month, model.year, false)
+            }
+        }
+    }
+
+    // ── calendar footer — legend left · jump-to-today right (fills the
+    // full window width instead of leaving the lower corners empty) ──
+    RowLayout {
+        visible: root.view === "cal" && !root.yearView
+        Layout.fillWidth: true
+        Layout.leftMargin: 4
+        Layout.rightMargin: 4
+        spacing: 8
+
+        Row {
+            spacing: 5
+
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 5
+                height: 5
+                radius: 2.5
+                color: "#bd93f9"
+            }
+
+            Text {
+                text: "has reminders"
+                color: "#6272a4"
+                font { pixelSize: 9; family: "Quicksand" }
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: "·  right-click title for year"
+                color: Qt.rgba(1, 1, 1, 0.18)
+                font { pixelSize: 9; family: "Quicksand" }
+            }
+        }
+
+        Item { Layout.fillWidth: true }
+
+        Rectangle {
+            readonly property bool isCurrentMonth: root.displayMonth === TimeService.currentDate.getMonth()
+                && root.displayYear === TimeService.currentDate.getFullYear()
+
+            implicitWidth: todayRow.implicitWidth + 16
+            implicitHeight: 22
+            radius: 11
+            visible: !isCurrentMonth
+            color: todayMa.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.2) : Qt.rgba(1, 1, 1, 0.05)
+            border.width: 1
+            border.color: Qt.rgba(1, 1, 1, 0.07)
+
+            Behavior on color {
+                ColorAnimation { duration: 110 }
+            }
+
+            Row {
+                id: todayRow
+
+                anchors.centerIn: parent
+                spacing: 5
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "\uf073"
+                    color: "#bd93f9"
+                    font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+                }
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "today"
+                    color: todayMa.containsMouse ? "#e2d6fb" : "#8b93b8"
+                    font { pixelSize: 9; bold: true; family: "Quicksand" }
+                }
+            }
+
+            MouseArea {
+                id: todayMa
+
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
                 onClicked: {
-                    root.selectedDay = model.day;
-                    root.selectedMonth = model.month;
-                    root.selectedYear = model.year;
-                    root.inputVisible = true;
-                    taskField.forceActiveFocus();
+                    root.clearSelection();
+                    root.displayMonth = TimeService.currentDate.getMonth();
+                    root.displayYear = TimeService.currentDate.getFullYear();
                 }
             }
         }
     }
 
     // ── Full-year view (toggle via the title) ──
-    GridLayout {
-        id: yearGrid
-        visible: root.yearView
+    // built on demand — 12 MonthGrids ≈ 500 delegate objects would dominate
+    // popup-open time for a view most opens never enter
+    Loader {
+        id: yearLoader
+
+        active: root.view === "cal" && root.yearView
+        // invisible items are skipped by layout sizing — an unloaded Loader
+        // keeps its last geometry otherwise and pins the popup tall
+        visible: active
         Layout.fillWidth: true
-        columns: 3
-        columnSpacing: 14
-        rowSpacing: 16
+        // an unloaded Loader keeps its last item's size alive inside the
+        // layout no matter what the attached hints say — pin the real
+        // height instead so toggling back to compact fully retracts
+        height: active ? implicitHeight : 0
+        Layout.preferredHeight: height
+
+        sourceComponent: GridLayout {
+            id: yearGrid
+
+            columns: 3
+            columnSpacing: 14
+            rowSpacing: 16
 
         Repeater {
             model: 12
@@ -353,10 +715,7 @@ ColumnLayout {
                         implicitWidth: 18
                         implicitHeight: 19
 
-                        readonly property bool hasRemindersMini: {
-                            MiscState.trackedDatesRev;
-                            return ReminderState.countForDate(model.year, model.month, model.day) > 0;
-                        }
+                        readonly property bool hasRemindersMini: ReminderState.countForDate(model.year, model.month, model.day) > 0
 
                         // hover / today circle — mirrors the month view aesthetic
                         Rectangle {
@@ -392,275 +751,623 @@ ColumnLayout {
                             visible: parent.hasRemindersMini
                         }
 
-                        // click a day to select it and open its month with the task input
+                        // click a day to compose a reminder for it
                         MouseArea {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onEntered: miniDay.hovered = true
                             onExited: miniDay.hovered = false
-                            onClicked: {
-                                root.clearSelection();
-                                root.selectedDay = model.day;
-                                root.selectedMonth = model.month;
-                                root.selectedYear = model.year;
-                                root.displayMonth = miniMonth.index;
-                                root.yearView = false;
-                                root.inputVisible = true;
-                                taskField.forceActiveFocus();
-                            }
+                            onClicked: root.openReminderFor(model.day, model.month, model.year, true)
                         }
                     }
                 }
             }
         }
-    }
-
-    Rectangle {
-        Layout.fillWidth: true
-        Layout.preferredHeight: root.inputVisible ? 48 : 0
-        color: "transparent"
-        clip: true
-        visible: root.inputVisible
-
-        ColumnLayout {
-            anchors.fill: parent
-            spacing: 4
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 6
-
-                Rectangle {
-                    Layout.preferredWidth: 4
-                    Layout.preferredHeight: 14
-                    radius: 2
-                    color: Themes.calendarToday
-                }
-
-                Text {
-                    text: {
-                        var days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-                        var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                                      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                        var dt = new Date(root.selectedYear, root.selectedMonth, root.selectedDay);
-                        return days[dt.getDay()] + ", " + months[root.selectedMonth] + " " + root.selectedDay;
-                    }
-                    color: "#f8f8f2"
-                    font { pixelSize: 10; family: "Quicksand"; bold: true }
-                }
-
-                Item { Layout.fillWidth: true }
-
-                Text {
-                    text: "\uf00d"
-                    color: "#6272a4"
-                    font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.clearSelection()
-                    }
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.leftMargin: 2
-                Layout.rightMargin: 2
-                spacing: 8
-
-                TextField {
-                    id: taskField
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 30
-                    color: "#f8f8f2"
-                    font { pixelSize: 11; family: "Quicksand" }
-                    background: Rectangle {
-                        radius: 6
-                        color: "#44475a"
-                        border.color: taskField.activeFocus ? Themes.calendarToday : "#6272a4"
-                        border.width: 1
-                    }
-                    leftPadding: 8
-                    rightPadding: 8
-                    topPadding: 0
-                    bottomPadding: 0
-                    verticalAlignment: Text.AlignVCenter
-                    selectByMouse: true
-
-                    Keys.onReturnPressed: root.submitInput()
-                    Keys.onEnterPressed: root.submitInput()
-                    Keys.onEscapePressed: root.clearSelection()
-                }
-
-                TimeSpinner {
-                    id: timeSpin
-
-                    Layout.alignment: Qt.AlignVCenter
-
-                    onDirtyChanged: {
-                        if (dirty)
-                            taskField.forceActiveFocus();
-                    }
-
-                    Keys.onReturnPressed: root.submitInput()
-                    Keys.onEnterPressed: root.submitInput()
-                    Keys.onEscapePressed: root.clearSelection()
-                }
-            }
         }
     }
 
-    // ── reminders block: its own card below the calendar ──
-    Rectangle {
-        id: remCard
+    // ════════════════ REMINDERS VIEW ════════════════
+    // ════════════════ REMINDERS VIEW ════════════════
+    // deferred like the year grid — compose card + list aren't needed
+    // until the reminders tab is actually opened
+    Loader {
+        id: remLoader
 
-        visible: !root.yearView && ReminderState.pending.length > 0
+        active: root.view === "rem"
+        visible: active
         Layout.fillWidth: true
-        implicitHeight: remCol.implicitHeight + 22
-        radius: 10
-        color: Qt.rgba(0.741, 0.576, 0.976, 0.05)
-        border.width: 1
-        border.color: Qt.rgba(0.741, 0.576, 0.976, 0.14)
+        Layout.preferredWidth: root.baseWidth
+        Layout.maximumWidth: root.baseWidth
+        height: active ? implicitHeight : 0
+        Layout.preferredHeight: height
 
-        // anchored left/right/top only — a bottom anchor would feed this
-        // layout's implicit size back through the card's height binding
-        ColumnLayout {
-            id: remCol
+        sourceComponent: remViewComp
+    }
 
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.margins: 11
-            spacing: 4
+    Component {
+        id: remViewComp
 
-            RowLayout {
-                Layout.leftMargin: 2
-                Layout.bottomMargin: 2
-                spacing: 6
+    ColumnLayout {
+        // reachable from root scope only through these aliases — ids inside
+        // a deferred component aren't resolvable from outside
+        property alias spinner: timeSpin
+        property alias field: taskField
+        // nested layouts refuse to grow past their implicit width even with
+        // fillWidth alone — pin the span to the popup content width
+        Layout.fillWidth: true
+        Layout.preferredWidth: root.baseWidth
+        Layout.maximumWidth: root.baseWidth
+        spacing: 8
 
-                Text {
-                    text: "\uf0f3"
-                    color: "#bd93f9"
-                    font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
-                }
+        // ── compose card ──
+        Rectangle {
+            id: addCard
 
-                Text {
-                    text: "Reminders"
-                    color: "#bd93f9"
-                    font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
-                }
+            Layout.fillWidth: true
+            implicitHeight: addCol.implicitHeight + 20
+            radius: 10
+            color: Qt.rgba(0.741, 0.576, 0.976, 0.06)
+            border.width: 1
+            border.color: Qt.rgba(0.741, 0.576, 0.976, 0.16)
 
-                Rectangle {
-                    implicitWidth: remCount.implicitWidth + 10
-                    implicitHeight: 14
-                    radius: 7
-                    color: Qt.rgba(0.741, 0.576, 0.976, 0.16)
+            ColumnLayout {
+                id: addCol
 
-                    Text {
-                        id: remCount
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: 10
+                spacing: 7
 
-                        anchors.centerIn: parent
-                        text: ReminderState.pending.length
-                        color: "#bd93f9"
-                        font { pixelSize: 8; bold: true; family: "ZedMono Nerd Font" }
-                    }
-                }
-            }
-
-            // grouped by day — each group gets its own subheader row
-            Repeater {
-                id: remRep
-
-                model: dayGroups
-
-                delegate: ColumnLayout {
-                    id: remGroup
-
-                    required property var modelData
-                    required property int index
-
+                // row 1: date chip (calendar icon → picker) + time spinner
+                RowLayout {
                     Layout.fillWidth: true
-                    Layout.topMargin: index === 0 ? 0 : 9
-                    spacing: 3
+                    spacing: 6
 
-                    Text {
-                        Layout.leftMargin: 2
-                        text: remGroup.modelData.header
-                        color: remGroup.modelData.overdue ? "#ff8c8c" : "#b8bfcb"
-                        font { pixelSize: 10; bold: true; family: "Quicksand"; letterSpacing: 0.5 }
-                    }
+                    // date chip — calendar icon pops up the mini-month picker
+                    Rectangle {
+                        id: dateChip
 
-                    Repeater {
-                        model: remGroup.modelData.items
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 38
+                        radius: 10
+                        color: chipMa.containsMouse || root.datePickerOpen ? Qt.rgba(0.741, 0.576, 0.976, 0.14) : Qt.rgba(1, 1, 1, 0.04)
+                        border.width: root.datePickerOpen ? 1.5 : 1
+                        border.color: root.datePickerOpen ? "#bd93f9" : chipMa.containsMouse ? "#565d78" : "#3b3f54"
 
-                        delegate: Rectangle {
-                            id: remRow
+                        Behavior on border.color {
+                            ColorAnimation { duration: 120 }
+                        }
 
-                            required property var modelData
+                        Behavior on color {
+                            ColorAnimation { duration: 120 }
+                        }
 
-                            Layout.fillWidth: true
-                            implicitHeight: 24
-                            radius: 6
-                            color: remHover.containsMouse ? "#343746" : Qt.rgba(1, 1, 1, 0.02)
+                        Row {
+                            anchors.left: parent.left
+                            anchors.leftMargin: 9
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 7
 
-                            Behavior on color {
-                                ColorAnimation { duration: 110 }
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "\uf073"
+                                color: "#bd93f9"
+                                font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
                             }
 
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: 9
-                                anchors.rightMargin: 7
-                                spacing: 7
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: {
+                                    var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                                  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                                    var days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+                                    var dt = new Date(root.effectiveYear, root.effectiveMonth, root.effectiveDay);
+                                    return days[dt.getDay()] + ", " + months[root.effectiveMonth] + " " + root.effectiveDay;
+                                }
+                                color: "#e2d6fb"
+                                font { pixelSize: 10; bold: true; family: "Quicksand" }
+                            }
 
-                                Text {
-                                    text: "\uf067"
-                                    color: remRow.modelData.overdue ? "#ff8c8c" : "#50fa7b"
-                                    font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: root.datePickerOpen ? "\uf077" : "\uf078"
+                                color: "#8b93b8"
+                                font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
+                            }
+                        }
+
+                        MouseArea {
+                            id: chipMa
+
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.datePickerOpen ? root.datePickerOpen = false : root.openPicker()
+                        }
+                    }
+
+                    TimeSpinner {
+                        id: timeSpin
+
+                        Layout.alignment: Qt.AlignVCenter
+
+                        onDirtyChanged: {
+                            if (dirty)
+                                taskField.forceActiveFocus();
+                        }
+
+                        Keys.onReturnPressed: root.submitInput()
+                        Keys.onEnterPressed: root.submitInput()
+                        Keys.onEscapePressed: root.clearSelection()
+                    }
+                }
+
+                // row 2: reminder text + add button
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    TextField {
+                        id: taskField
+
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 34
+                        placeholderText: root.editingId >= 0 ? "editing — enter keeps changes" : "remember to…"
+                        placeholderTextColor: Qt.rgba(1, 1, 1, 0.25)
+                        color: "#f8f8f2"
+                        font { pixelSize: 11; family: "Quicksand" }
+                        background: Rectangle {
+                            radius: 8
+                            color: Qt.rgba(1, 1, 1, 0.04)
+                            border.color: taskField.activeFocus ? Themes.calendarToday : "#3b3f54"
+                            border.width: taskField.activeFocus ? 1.5 : 1
+                        }
+                        leftPadding: 9
+                        rightPadding: 9
+                        topPadding: 0
+                        bottomPadding: 0
+                        verticalAlignment: Text.AlignVCenter
+                        selectByMouse: true
+
+                        Keys.onReturnPressed: root.submitInput()
+                        Keys.onEnterPressed: root.submitInput()
+                        Keys.onEscapePressed: root.clearSelection()
+                    }
+
+                    Rectangle {
+                        id: addBtn
+
+                        // turns into a green check while a reminder is being edited
+                        Layout.preferredWidth: 34
+                        Layout.preferredHeight: 34
+                        radius: 8
+                        color: addMa.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.28) : Qt.rgba(0.741, 0.576, 0.976, 0.16)
+                        border.width: 1
+                        border.color: root.editingId >= 0 ? Qt.rgba(0.31, 0.98, 0.48, 0.45) : Qt.rgba(0.741, 0.576, 0.976, 0.35)
+
+                        Behavior on border.color {
+                            ColorAnimation { duration: 120 }
+                        }
+
+                        scale: addMa.pressed ? 0.92 : 1
+
+                        Behavior on scale {
+                            NumberAnimation { duration: 80 }
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: root.editingId >= 0 ? "\uf00c" : "\uf067"
+                            color: root.editingId >= 0 ? "#50fa7b" : "#bd93f9"
+                            font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
+                        }
+
+                        MouseArea {
+                            id: addMa
+
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.submitInput()
+                        }
+                    }
+                }
+
+                // ── inline mini-month date picker (calendar-icon popover) ──
+                // also deferred — a third 42-cell MonthGrid the compose card
+                // doesn't need until the chip is clicked
+                Loader {
+                    active: root.datePickerOpen
+                    visible: active
+                    Layout.fillWidth: true
+                    height: active ? implicitHeight : 0
+                    Layout.preferredHeight: height
+
+                    sourceComponent: Rectangle {
+                        id: pickerPanel
+
+                        Layout.fillWidth: true
+                        implicitHeight: pickerCol.implicitHeight + 12
+                    radius: 8
+                    color: Qt.rgba(1, 1, 1, 0.03)
+                    border.width: 1
+                    border.color: Qt.rgba(1, 1, 1, 0.06)
+
+                    ColumnLayout {
+                        id: pickerCol
+
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.margins: 6
+                        spacing: 2
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 4
+
+                            Text {
+                                text: "\uf104"
+                                color: Themes.calendarHeader
+                                font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.pickerPrev()
+                                }
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Text {
+                                text: Qt.formatDateTime(new Date(root.pickerYear, root.pickerMonth, 1), "MMMM yyyy")
+                                color: Themes.calendarHeader
+                                font { pixelSize: 10; bold: true; family: "Quicksand"; letterSpacing: 0.5 }
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Text {
+                                text: "\uf105"
+                                color: Themes.calendarHeader
+                                font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.pickerNext()
+                                }
+                            }
+                        }
+
+                        DayOfWeekRow {
+                            Layout.fillWidth: true
+                            delegate: Text {
+                                horizontalAlignment: Text.AlignHCenter
+                                color: Themes.calendarInactiveMonth
+                                text: model.shortName
+                                textFormat: Text.RichText
+                                renderType: Text.NativeRendering
+                                font { pixelSize: 7; family: "Quicksand" }
+                            }
+                        }
+
+                        MonthGrid {
+                            id: pickGrid
+
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 150
+                            month: root.pickerMonth
+                            year: root.pickerYear
+
+                            delegate: Item {
+                                id: pickCell
+
+                                property bool hovered: false
+
+                                implicitWidth: 24
+                                implicitHeight: 25
+
+                                readonly property bool isSelected: model.day === root.selectedDay
+                                    && model.month === root.selectedMonth
+                                    && model.year === root.selectedYear
+
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: 21
+                                    height: 21
+                                    radius: width / 2
+                                    visible: model.today && !parent.isSelected
+                                    color: Themes.calendarToday
+                                    opacity: 0.85
+                                }
+
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: 21
+                                    height: 21
+                                    radius: width / 2
+                                    visible: parent.isSelected || pickCell.hovered
+                                    color: parent.isSelected ? "transparent" : Themes.calendarToday
+                                    opacity: parent.isSelected ? 1 : 0.16
+                                    border.width: parent.isSelected ? 1.5 : 0
+                                    border.color: Themes.calendarToday
                                 }
 
                                 Text {
-                                    text: remRow.modelData.time || "--:--"
-                                    color: remRow.modelData.overdue ? "#ff8c8c" : "#bd93f9"
-                                    font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
-                                    Layout.preferredWidth: 36
+                                    anchors.centerIn: parent
+                                    text: model.day
+                                    font { pixelSize: 9; family: "Quicksand" }
+                                    color: {
+                                        if (pickCell.isSelected)
+                                            return Themes.calendarToday;
+                                        if (model.today)
+                                            return "#282a36";
+                                        if (pickCell.hovered)
+                                            return Themes.calendarToday;
+                                        return model.month === pickGrid.month ? Themes.calendarActiveMonth : Themes.calendarInactiveMonth;
+                                    }
                                 }
 
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: remRow.modelData.text
-                                    color: "#f8f8f2"
-                                    font { pixelSize: 10; family: "Quicksand" }
-                                    elide: Text.ElideRight
-                                    maximumLineCount: 1
-                                }
-
-                                Text {
-                                    text: "\uf00d"
-                                    color: delMa.containsMouse ? "#ff5555" : "#4c5069"
-                                    font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
-
-                                    MouseArea {
-                                        id: delMa
-
-                                        anchors.fill: parent
-                                        anchors.margins: -4
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: ReminderState.remove(remRow.modelData.id)
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onEntered: pickCell.hovered = true
+                                    onExited: pickCell.hovered = false
+                                    onClicked: {
+                                        root.selectedDay = model.day;
+                                        root.selectedMonth = model.month;
+                                        root.selectedYear = model.year;
+                                        root.displayMonth = model.month;
+                                        root.displayYear = model.year;
+                                        root.datePickerOpen = false;
+                                        taskField.forceActiveFocus();
                                     }
                                 }
                             }
+                        }
+                    }
+                }
+                }
+            }
+        }
 
-                            HoverHandler {
-                                id: remHover
+        // ── list card: grouped by day ──
+        Rectangle {
+            id: remCard
+
+            Layout.fillWidth: true
+            // cap the list so the popup stays sane with many entries
+            implicitHeight: listFlick.visible ? Math.min(listCol.implicitHeight + 58, 420) : emptyTxt.implicitHeight + 44
+            radius: 10
+            color: Qt.rgba(1, 1, 1, 0.03)
+            border.width: 1
+            border.color: Qt.rgba(1, 1, 1, 0.06)
+
+            ColumnLayout {
+                id: remHeadCol
+
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: 11
+                spacing: 6
+
+                RowLayout {
+                    Layout.leftMargin: 2
+                    Layout.bottomMargin: 2
+                    spacing: 6
+
+                    Text {
+                        text: "\uf0f3"
+                        color: "#bd93f9"
+                        font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                    }
+
+                    Text {
+                        text: "Upcoming"
+                        color: "#bd93f9"
+                        font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                    }
+
+                    Rectangle {
+                        implicitWidth: remCount.implicitWidth + 10
+                        implicitHeight: 14
+                        radius: 7
+                        color: Qt.rgba(0.741, 0.576, 0.976, 0.16)
+
+                        Text {
+                            id: remCount
+
+                            anchors.centerIn: parent
+                            text: ReminderState.pending.length
+                            color: "#bd93f9"
+                            font { pixelSize: 8; bold: true; family: "ZedMono Nerd Font" }
+                        }
+                    }
+
+                    Item { Layout.fillWidth: true }
+
+                    Text {
+                        text: "\uf00d"
+                        color: clrMa.containsMouse ? "#ff5555" : "#4c5069"
+                        font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                        visible: ReminderState.pending.length > 0
+
+                        MouseArea {
+                            id: clrMa
+
+                            anchors.fill: parent
+                            anchors.margins: -4
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                for (const r of ReminderState.pending)
+                                    ReminderState.remove(r.id);
+                            }
+                        }
+                    }
+                }
+
+                Text {
+                    id: emptyTxt
+
+                    visible: ReminderState.pending.length === 0
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.topMargin: 4
+                    Layout.bottomMargin: 4
+                    text: "nothing pending — enjoy the quiet"
+                    color: "#6272a4"
+                    font { pixelSize: 10; family: "Quicksand"; letterSpacing: 0.5 }
+                }
+
+                Flickable {
+                    id: listFlick
+
+                    visible: ReminderState.pending.length > 0
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.min(listCol.implicitHeight, 330)
+                    contentHeight: listCol.implicitHeight
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    ScrollBar.vertical: ScrollBar {
+                        policy: listFlick.contentHeight > listFlick.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                    }
+
+                    ColumnLayout {
+                        id: listCol
+
+                        width: listFlick.width
+                        spacing: 0
+
+                        Repeater {
+                            id: remRep
+
+                            model: root.dayGroups
+
+                            delegate: ColumnLayout {
+                                id: remGroup
+
+                                required property var modelData
+                                required property int index
+
+                                Layout.fillWidth: true
+                                Layout.topMargin: index === 0 ? 0 : 9
+                                spacing: 3
+
+                                Text {
+                                    Layout.leftMargin: 2
+                                    text: remGroup.modelData.header
+                                    color: remGroup.modelData.overdue ? "#ff8c8c" : "#b8bfcb"
+                                    font { pixelSize: 10; bold: true; family: "Quicksand"; letterSpacing: 0.5 }
+                                }
+
+                                Repeater {
+                                    model: remGroup.modelData.items
+
+                                    delegate: Rectangle {
+                                        id: remRow
+
+                                        required property var modelData
+
+                                        readonly property bool isEdited: root.editingId === modelData.id
+
+                                        Layout.fillWidth: true
+                                        implicitHeight: 24
+                                        radius: 6
+                                        color: isEdited ? Qt.rgba(0.741, 0.576, 0.976, 0.12) : remHover.containsMouse ? "#343746" : Qt.rgba(1, 1, 1, 0.02)
+
+                                        Behavior on color {
+                                            ColorAnimation { duration: 110 }
+                                        }
+
+                                        RowLayout {
+                                            anchors.fill: parent
+                                            anchors.leftMargin: 9
+                                            anchors.rightMargin: 7
+                                            spacing: 7
+
+                                            Text {
+                                                text: remRow.modelData.time || "--:--"
+                                                color: remRow.modelData.overdue ? "#ff8c8c" : "#bd93f9"
+                                                font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                                                Layout.preferredWidth: 36
+                                            }
+
+                                            Text {
+                                                Layout.fillWidth: true
+                                                text: remRow.modelData.text
+                                                color: "#f8f8f2"
+                                                font { pixelSize: 10; family: "Quicksand" }
+                                                elide: Text.ElideRight
+                                                maximumLineCount: 1
+                                            }
+
+                                            // edit — loads the reminder back into the compose card
+                                            Text {
+                                                text: "\uf044"
+                                                color: remRow.isEdited ? "#bd93f9" : edtMa.containsMouse ? "#bd93f9" : "#4c5069"
+                                                font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+
+                                                MouseArea {
+                                                    id: edtMa
+
+                                                    anchors.fill: parent
+                                                    anchors.margins: -4
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: root.startEdit(remRow.modelData)
+                                                }
+                                            }
+
+                                            Text {
+                                                text: "\uf00d"
+                                                color: delMa.containsMouse ? "#ff5555" : "#4c5069"
+                                                font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+
+                                                MouseArea {
+                                                    id: delMa
+
+                                                    anchors.fill: parent
+                                                    anchors.margins: -4
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: ReminderState.remove(remRow.modelData.id)
+                                                }
+                                            }
+                                        }
+
+                                        HoverHandler {
+                                            id: remHover
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
         }
+    }
+    }
+
+    // ════════════════ TIMER VIEW ════════════════
+    // deferred like the year grid — ring canvas + spinners aren't needed
+    // until the timer tab is actually opened
+    Loader {
+        active: root.view === "timer"
+        // same nested-layout quirk: fillWidth alone left it at its implicit
+        // width, hugging the popup's left edge — pin to full content width
+        Layout.fillWidth: true
+        Layout.preferredWidth: root.baseWidth
+        Layout.maximumWidth: root.baseWidth
+        visible: active
+        height: active ? implicitHeight : 0
+        Layout.preferredHeight: height
+
+        sourceComponent: TimerView {}
     }
 }

@@ -79,9 +79,10 @@ Rectangle {
                     text: {
                         if (root.running) {
                             const p = SpeedtestState.phase;
-                            return p === "ping" ? "measuring latency…"
-                                : p === "down" ? "downloading…"
-                                : p === "up" ? "uploading…" : "starting…";
+                            const pct = Math.round(SpeedtestState.progress * 100);
+                            return (p === "ping" ? "measuring latency"
+                                : p === "down" ? "downloading"
+                                : p === "up" ? "uploading" : "starting") + " · " + pct + "%";
                         }
                         if (SpeedtestState.error.length > 0)
                             return SpeedtestState.error;
@@ -240,7 +241,7 @@ Rectangle {
             }
         }
 
-        // ── three-segment phase track ──
+        // ── three-segment phase track — each bar FILLS with real progress ──
         RowLayout {
             Layout.fillWidth: true
             spacing: 4
@@ -249,21 +250,44 @@ Rectangle {
                 model: ["ping", "down", "up"]
 
                 delegate: Rectangle {
+                    id: seg
+
                     required property int index
                     required property var modelData
+
+                    readonly property bool active: root.running && SpeedtestState.phase === seg.modelData
+                    // finished stages are full; the running one fills live
+                    readonly property real fill: root.stage > index || (!root.running && SpeedtestState.progress === 1) ? 1
+                        : active ? SpeedtestState.progress : 0
 
                     Layout.fillWidth: true
                     implicitHeight: 4
                     radius: 2
-                    color: root.stage > index || (root.running && SpeedtestState.phase === modelData)
-                        ? ["#f1fa8c", "#50fa7b", "#ff79c6"][index] : Qt.rgba(1, 1, 1, 0.06)
+                    color: Qt.rgba(1, 1, 1, 0.06)
+                    clip: true
 
-                    SequentialAnimation on opacity {
-                        running: root.running && SpeedtestState.phase === modelData
-                        loops: Animation.Infinite
-                        alwaysRunToEnd: true
-                        NumberAnimation { to: 0.45; duration: 380 }
-                        NumberAnimation { to: 1; duration: 380 }
+                    Rectangle {
+                        anchors {
+                            left: parent.left
+                            top: parent.top
+                            bottom: parent.bottom
+                        }
+                        width: parent.width * seg.fill
+                        radius: 2
+                        color: ["#f1fa8c", "#50fa7b", "#ff79c6"][seg.index]
+
+                        Behavior on width {
+                            NumberAnimation { duration: 220; easing.type: Easing.OutQuad }
+                        }
+
+                        // shimmer while the active stage is mid-flight
+                        SequentialAnimation on opacity {
+                            running: seg.active
+                            loops: Animation.Infinite
+                            alwaysRunToEnd: true
+                            NumberAnimation { to: 0.75; duration: 380 }
+                            NumberAnimation { to: 1; duration: 380 }
+                        }
                     }
                 }
             }

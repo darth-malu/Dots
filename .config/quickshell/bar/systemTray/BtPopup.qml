@@ -258,12 +258,6 @@ BarBlock {
                     onActivated: NetworkState.btPopupVisible = false
                 }
 
-                MouseArea {
-                    anchors.fill: parent
-                    z: -1
-                    onClicked: NetworkState.btPopupVisible = false
-                }
-
                 ColumnLayout {
                     id: card
                     anchors.fill: parent

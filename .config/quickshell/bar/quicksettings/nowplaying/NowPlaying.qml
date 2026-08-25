@@ -821,35 +821,37 @@ ClippingRectangle {
         id: chooserPanel
 
         visible: card.chooserAvailable && opacity > 0
-        opacity: card.chooserOpen ? 1 : 0
-        Behavior on opacity {
-            NumberAnimation {
-                duration: 140
-                easing.type: Easing.OutQuad
-            }
-        }
+        // fades a beat faster than the slide so rows resolve while
+        // still emerging from under the base view instead of popping
 
         // pinned below the base view — NOT bottom-anchored, or the
         // drawer would ride over the track art while the card's
-        // height animates; the card clip wipes it into view instead
+        // height animates; the card clip wipes it into view instead.
+        // slides its FULL height so open/close reads as one continuous
+        // drawer motion (timed to match the card's own height animation)
         anchors {
             left: parent.left
             right: parent.right
             top: card.compactNowPlaying ? compactView.bottom : expandedView.bottom
         }
         implicitHeight: chooserCol.implicitHeight + 14
-        // gentle rise-in as the reveal plays — content never
-        // overlaps the base view at any point
+        // 0→1 master progress for the whole drawer motion; rows derive a
+        // staggered ramp from it (Animation.delay is off-limits here —
+        // quickshell's AOT compiler rejects it inside Behaviors)
+        property real revealT: card.chooserOpen ? 1 : 0
+
+        Behavior on revealT {
+            NumberAnimation {
+                duration: 300
+                easing.type: Easing.OutCubic
+            }
+        }
+
+        opacity: Math.min(1, revealT * 3)
         transform: Translate {
             id: chooserSlide
 
-            y: card.chooserOpen ? 0 : -12
-            Behavior on y {
-                NumberAnimation {
-                    duration: 220
-                    easing.type: Easing.OutCubic
-                }
-            }
+            y: -((1 - chooserPanel.revealT) * chooserPanel.height)
         }
         // slightly darker floor so the drawer reads as its own zone
         color: Qt.rgba(0, 0, 0, 0.25)
@@ -891,6 +893,7 @@ ClippingRectangle {
                     id: streamRow
 
                     required property var modelData
+                    required property int index
 
                     readonly property bool isCurrent: modelData.identity === (MprisState.cardPlayer?.identity ?? "")
                     readonly property bool isPinned: MprisState.pinIdentity === modelData.identity
@@ -903,10 +906,24 @@ ClippingRectangle {
                     }
                     readonly property bool isMuted: MprisState.isMuted(modelData)
 
+                    // staggered entrance — each row fades/rises in sequence
+                    // as the master revealT progress sweeps 0→1 (last row
+                    // starts ~45% in, everything settled at 1)
+                    readonly property int stagger: Math.min(index * 18, 90)
+                    readonly property real rowT: {
+                        const start = chooserPanel.revealT <= 0 ? 1 : (streamRow.stagger / 90) * 0.45;
+                        return Math.max(0, Math.min(1, (chooserPanel.revealT - start) / (1 - start)));
+                    }
+
                     Layout.fillWidth: true
                     implicitHeight: 24
                     radius: 6
                     color: rowMa.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : isCurrent ? Qt.rgba(1, 1, 1, 0.05) : "transparent"
+
+                    opacity: streamRow.rowT
+                    transform: Translate {
+                        y: (1 - streamRow.rowT) * 8
+                    }
 
                     Behavior on color {
                         ColorAnimation {
@@ -1025,3 +1042,5 @@ ClippingRectangle {
         }
     }
 }
+
+

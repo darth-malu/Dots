@@ -68,7 +68,7 @@ ShellRoot {
                 acceptedButtons: Qt.NoButton
                 anchors.fill: parent
                 onWheel: wheel => {
-                    console.log(`[scrolldbg] bar wheel y=${wheel.angleDelta.y}`);
+                    // console.log(`[scrolldbg] bar wheel y=${wheel.angleDelta.y}`);
                     HyprlandService.stepWorkspace(wheel.angleDelta.y > 0);
                 }
             }

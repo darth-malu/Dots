@@ -72,13 +72,19 @@ Singleton {
         .sort((a, b) => (a.date + (a.time || "99:99")).localeCompare(b.date + (b.time || "99:99")));
 
     // reminder dot count for a calendar day cell
+    // pending-count map keyed by "YYYY-MM-DD" — rebuilt only when the
+    // list changes instead of scanning per calendar cell (42 cells × N)
+    readonly property var _countsByDate: {
+        const m = ({});
+        for (const r of reminders)
+            if (!r.done)
+                m[r.date] = (m[r.date] ?? 0) + 1;
+        return m;
+    }
+
     function countForDate(year, month, day) {
         const key = year + "-" + String(month + 1).padStart(2, "0") + "-" + String(day).padStart(2, "0");
-        let n = 0;
-        for (const r of reminders)
-            if (!r.done && r.date === key)
-                n++;
-        return n;
+        return _countsByDate[key] ?? 0;
     }
 
     // ── mutations ──
@@ -107,6 +113,26 @@ Singleton {
 
     function remove(id) {
         reminders = reminders.filter(r => r.id !== id);
+    }
+
+    // edit an existing reminder in place — text/date/time replaced, and a
+    // fired flag is cleared so an edited time can ring again
+    function update(id, text, dateKey, timeStr) {
+        const t = (text || "").trim();
+        const dOk = /^\d{4}-\d{2}-\d{2}$/.test(dateKey || "");
+        const tClean = (timeStr || "").trim();
+        const tOk = tClean.length === 0 || /^\d{2}:\d{2}$/.test(tClean);
+        if (t.length === 0 || !dOk || !tOk)
+            return false;
+        if (!reminders.some(r => r.id === id))
+            return false;
+        reminders = reminders.map(r => r.id === id ? Object.assign({}, r, {
+                    text: t,
+                    date: dateKey,
+                    time: tClean,
+                    notified: false
+                }) : r);
+        return true;
     }
 
     function toggleDone(id) {
@@ -178,6 +204,10 @@ Singleton {
         // ids are epoch-millis — passed as strings to dodge the 32-bit IPC int
         function remove(id: string): void {
             root.remove(Number(id));
+        }
+
+        function edit(id: string, text: string, date: string, time: string): string {
+            return root.update(Number(id), text, date, time) ? "ok" : "invalid";
         }
 
         function done(id: string): void {

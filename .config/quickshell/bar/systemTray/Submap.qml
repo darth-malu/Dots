@@ -22,7 +22,7 @@ Rectangle {
             id: submapIcon
             text: HyprlandService.submap === "drag" ? "\uf047" : "\uf065"
             color: HyprlandService.submap === "drag" ? "pink" : "orange"
-            font.pointSize: 29
+            pointSize: 29
         }
     }
 }

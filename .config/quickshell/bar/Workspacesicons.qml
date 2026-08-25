@@ -18,6 +18,10 @@ RowLayout {
 
     property HyprlandMonitor monitor: Hyprland.monitorFor(screen)
 
+    // this screen's active workspace id — using focusedMonitor here (old
+    // logic) left every non-focused monitor's bar without an active pill
+    readonly property int activeWsId: monitor?.activeWorkspace?.id ?? -1
+
     // socket events bump the shared WorkspaceService revision + a short
     // poll keeps both the workspace list and its app icons fresh; the cache
     // keeps list identity stable between real changes so delegates don't churn
@@ -51,31 +55,37 @@ RowLayout {
     }
 
     function doRefresh() {
-        var seenEmpty = false;
+        const activeId = root.activeWsId;
         const list = [...Hyprland.workspaces.values].filter(ws => {
             if (!ws || ws.monitor !== monitor || (ws.name ?? "").includes("special"))
                 return false;
-            const isNumeric = /^\d+$/.test(ws.name);
-            if (!isNumeric)
-                return true;
-            // Only the first EMPTY numeric workspace is shown, so switching
-            // between two empty workspaces never flashes two pills — but
-            // populated workspaces must always survive this filter.
-            const isEmpty = (ws.lastIpcObject?.windows ?? 0) === 0;
-            if (isEmpty && seenEmpty)
-                return false;
-            if (isEmpty)
-                seenEmpty = true;
+            if (!/^\d+$/.test(ws.name))
+                return true; // named workspaces always shown
+            // numeric empties pass through here and are collapsed to one
+            // pill after the sort below — the ACTIVE empty workspace wins
+            // that collapse (the old filter kept the first-seen empty, so
+            // the pill for the workspace you were actually on could vanish
+            // the moment a second empty existed)
             return true;
         });
         list.sort((a, b) => a.id - b.id);
-        const sig = list.map(w => String(w.id)).join(",");
+
+        // empty-numeric collapse: keep exactly one — the active one if it is
+        // empty, otherwise the lowest-numbered empty
+        let result = list;
+        const empties = list.filter(ws => /^\d+$/.test(ws.name) && (ws.lastIpcObject?.windows ?? 0) === 0 && ws.id !== activeId);
+        if (empties.length > 1) {
+            const drop = new Set(empties.slice(1).map(w => w.id));
+            result = list.filter(ws => !drop.has(ws.id));
+        }
+
+        const sig = result.map(w => String(w.id)).join(",");
         // TEMP icondbg: per-ws toplevel counts vs displayed list
-        console.log(`[icondbg] doRefresh sig=${sig} rev=${root.wsRev} tls=[${list.map(w => (w.toplevels?.values.length ?? -1)).join(",")}]`);
+        // console.log(`[icondbg] doRefresh sig=${sig} rev=${root.wsRev} tls=[${result.map(w => (w.toplevels?.values.length ?? -1)).join(",")}]`);
         if (sig !== _listSig) {
             _listSig = sig;
-            _listCache = list;
-            wsModel.values = list;
+            _listCache = result;
+            wsModel.values = result;
         }
         // icon pass runs AFTER incubation settles — never nested inside the
         // model-change notification above
@@ -93,7 +103,8 @@ RowLayout {
         running: root.visible
         repeat: true
         onTriggered: {
-            WorkspaceService.refresh();
+            // local re-read only — bumping the shared WorkspaceService
+            // revision every tick made all bars' bindings churn forever
             root.refresh();
         }
     }
@@ -118,7 +129,7 @@ RowLayout {
             required property var modelData
             property HyprlandWorkspace ws: modelData
 
-            property bool isActive: (Hyprland.focusedMonitor?.activeWorkspace?.id ?? -1) === (ws?.id ?? -2)
+            property bool isActive: root.activeWsId === (ws?.id ?? -2)
 
             // urgency lives in WorkspaceService (tracked from socket events)
             readonly property bool urgent: {

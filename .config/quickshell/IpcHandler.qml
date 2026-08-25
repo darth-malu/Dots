@@ -171,7 +171,7 @@ Item {
     IpcHandler {
         target: 'logout'
         function toggle(): void {
-            console.log("[logout] toggle -> " + !MiscState.logoutOpen);
+            // console.log("[logout] toggle -> " + !MiscState.logoutOpen);
             MiscState.logoutOpen = !MiscState.logoutOpen;
         }
 

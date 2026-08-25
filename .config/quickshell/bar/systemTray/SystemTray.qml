@@ -259,15 +259,28 @@ RowLayout {
     // live countdown pill while a reboot/shutdown timer is armed —
     // left-click cancels it
     BarBlock {
+        id: powerPill
+
         visible: PowerTimer.active
 
         interactive: false
+
+        // mode accent — green for reboot, red for shutdown
+        readonly property color accent: PowerTimer.mode === "reboot" ? "#50fa7b" : "#ff5555"
 
         implicitWidth: cdRow.implicitWidth + 12
         implicitHeight: cdRow.implicitHeight + 8
 
         radius: height / 2
-        color: cdMouse.containsMouse ? Qt.rgba(PowerTimer.mode === "reboot" ? 0.31 : 1, PowerTimer.mode === "reboot" ? 0.98 : 0.33, PowerTimer.mode === "reboot" ? 0.48 : 0.33, 0.16) : Qt.rgba(1, 1, 1, 0.14)
+        color: cdMouse.containsMouse ? Qt.rgba(powerPill.accent.r, powerPill.accent.g, powerPill.accent.b, 0.30) : Qt.rgba(powerPill.accent.r, powerPill.accent.g, powerPill.accent.b, 0.17)
+        border.width: 1
+        border.color: Qt.rgba(powerPill.accent.r, powerPill.accent.g, powerPill.accent.b, cdMouse.containsMouse ? 0.9 : 0.55)
+
+        Behavior on border.color {
+            ColorAnimation {
+                duration: 120
+            }
+        }
 
         Behavior on color {
             ColorAnimation {
@@ -306,7 +319,7 @@ RowLayout {
 
             Text {
                 text: PowerTimer.formatTime(PowerTimer.remaining)
-                color: "#f8f8f2"
+                color: powerPill.accent
                 font {
                     pixelSize: 10
                     bold: true

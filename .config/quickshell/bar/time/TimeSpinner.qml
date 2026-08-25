@@ -1,11 +1,21 @@
 import QtQuick
 import QtQuick.Layouts
+import qs.services
 
 // HH:MM entry with individually scrollable hour / minute segments.
-// Defaults to the current time (minutes snapped to 5); wheel, arrows,
-// chevrons or typing all adjust it. dirty flips on first interaction.
+// Defaults to the shared clock (TimeService) snapped to 5 minutes — or
+// plain 00:00 when zeroDefault is set (countdown durations). Scroll,
+// arrow keys or typing all adjust it. dirty flips on first interaction.
+//
+// Layout: ┌──────┐   ┌──────┐
+//         │  hh  │ : │  mm  │
 RowLayout {
     id: root
+
+    spacing: 3
+
+    // countdown-style entry: reset()/creation snap to 00:00 instead of the wall clock
+    property bool zeroDefault: false
 
     property string hours: "00"
     property string minutes: "00"
@@ -17,10 +27,15 @@ RowLayout {
     Component.onCompleted: root.reset()
 
     function reset() {
-        const now = new Date();
-        const hh = String(now.getHours()).padStart(2, "0");
-        // snap minutes to the 5-minute wheel grid
-        const mm = String(Math.round(now.getMinutes() / 5) * 5 % 60).padStart(2, "0");
+        let hh = "00";
+        let mm = "00";
+        if (!zeroDefault) {
+            // read through the singleton so the value always matches the bar clock
+            const now = TimeService.currentDate;
+            hh = String(now.getHours()).padStart(2, "0");
+            // snap minutes to the 5-minute wheel grid
+            mm = String(Math.round(now.getMinutes() / 5) * 5 % 60).padStart(2, "0");
+        }
         hours = hh;
         minutes = mm;
         dirty = false;
@@ -28,14 +43,23 @@ RowLayout {
         mmSeg.input.text = mm;
     }
 
+    // programmatic entry that stays "clean" — used to pre-load an existing
+    // reminder's time without tripping the dirty-focus side effects
+    function setTime(hh, mm) {
+        hours = String(Math.max(0, Math.min(23, parseInt(hh) || 0))).padStart(2, "0");
+        minutes = String(Math.max(0, Math.min(59, parseInt(mm) || 0))).padStart(2, "0");
+        hhSeg.input.text = hours;
+        mmSeg.input.text = minutes;
+    }
+
     function _setHours(v) {
-        hours = String(((Math.round(v) % 24) + 24) % 24).padStart(2, "0");
         dirty = true;
+        hours = String(((Math.round(v) % 24) + 24) % 24).padStart(2, "0");
     }
 
     function _setMinutes(v) {
-        minutes = String(((Math.round(v) % 60) + 60) % 60).padStart(2, "0");
         dirty = true;
+        minutes = String(((Math.round(v) % 60) + 60) % 60).padStart(2, "0");
     }
 
     component Segment: Rectangle {
@@ -55,9 +79,9 @@ RowLayout {
                 segInput.text = label;
         }
 
-        implicitWidth: 28
-        implicitHeight: 30
-        radius: 8
+        implicitWidth: 42
+        implicitHeight: 40
+        radius: 10
 
         readonly property bool focused: segInput.activeFocus
         // quiet idle → soft hover lift → lavender focus ring
@@ -69,6 +93,7 @@ RowLayout {
         Behavior on border.color {
             ColorAnimation { duration: 120 }
         }
+
         Behavior on color {
             ColorAnimation { duration: 120 }
         }
@@ -85,7 +110,7 @@ RowLayout {
             text: parent.label
             color: "#e2d6fb"
             font {
-                pixelSize: 13
+                pixelSize: 17
                 weight: Font.DemiBold
                 family: "ZedMono Nerd Font"
             }
@@ -112,54 +137,6 @@ RowLayout {
             }
             Keys.onUpPressed: parent.stepped(parent.step)
             Keys.onDownPressed: parent.stepped(-parent.step)
-        }
-
-        // hover-revealed stepper chevrons along the right edge
-        ColumnLayout {
-            anchors {
-                right: parent.right
-                rightMargin: 1.5
-                verticalCenter: parent.verticalCenter
-            }
-            spacing: 0
-            visible: opacity > 0
-            opacity: segHover.hovered || upMa.containsMouse || downMa.containsMouse ? 1 : 0
-
-            Behavior on opacity {
-                NumberAnimation { duration: 110 }
-            }
-
-            Text {
-                text: "\uf077"
-                color: upMa.containsMouse ? "#bd93f9" : "#6272a4"
-                font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
-
-                MouseArea {
-                    id: upMa
-
-                    anchors.fill: parent
-                    anchors.margins: -3
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: seg.stepped(seg.step)
-                }
-            }
-
-            Text {
-                text: "\uf078"
-                color: downMa.containsMouse ? "#bd93f9" : "#6272a4"
-                font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
-
-                MouseArea {
-                    id: downMa
-
-                    anchors.fill: parent
-                    anchors.margins: -3
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: seg.stepped(-seg.step)
-                }
-            }
         }
 
         WheelHandler {
@@ -193,7 +170,7 @@ RowLayout {
     Text {
         text: ":"
         color: hhSeg.focused || mmSeg.focused ? "#bd93f9" : "#4c5069"
-        font { pixelSize: 14; bold: true; family: "ZedMono Nerd Font" }
+        font { pixelSize: 18; bold: true; family: "ZedMono Nerd Font" }
     }
 
     Segment {
@@ -218,4 +195,5 @@ RowLayout {
             }
         }
     }
+
 }

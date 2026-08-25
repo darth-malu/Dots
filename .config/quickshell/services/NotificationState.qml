@@ -43,7 +43,7 @@ Singleton {
     }
 
     function onNewNotif(notif) {
-        console.log("[notif] app=" + notif.appName + " summary=" + notif.summary);
+        // console.log("[notif] app=" + notif.appName + " summary=" + notif.summary);
 
         let isMusic = (notif.appName == 'mzichi' || notif.appName == 'ncmpcpp' || notif.appName == 'spotifY');
 

@@ -59,30 +59,28 @@ PanelWindow {
             anchors.margins: 12
             spacing: 8
 
-            // ── header ──
+            // ── header — same design as the rofi/app-launcher header:
+            // mode glyph · borderless search · result count ──
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 10
 
                 Text {
-                    text: "\ud83d\ude00"
-                    font.pixelSize: 15
+                    text: "\uf118"
+                    color: Themes.rofiAccent
+                    font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
                 }
 
                 TextField {
                     id: search
 
                     Layout.fillWidth: true
-                    placeholderText: "search emoji…"
-                    placeholderTextColor: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.35)
                     color: Themes.windowTextColor
                     selectByMouse: true
                     background: Rectangle {
                         color: "transparent"
                         implicitHeight: 16
                         radius: 4
-                        border.width: 1
-                        border.color: Qt.rgba(Themes.rofiBorder.r, Themes.rofiBorder.g, Themes.rofiBorder.b, 0.3)
                     }
                     Keys.onEscapePressed: root.close()
                     // arrows steer the grid from the search field
@@ -125,19 +123,12 @@ PanelWindow {
                     }
                 }
 
-                Text {
-                    visible: root.results.length > 0
-                    text: root.results.length
-                    color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.4)
-                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                }
+            Text {
+                visible: root.results.length > 0
+                text: root.results.length
+                color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.4)
+                font { pixelSize: 10; family: "ZedMono Nerd Font" }
             }
-
-            // hairline under the query row
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: 1
-                color: Qt.rgba(Themes.rofiBorder.r, Themes.rofiBorder.g, Themes.rofiBorder.b, 0.35)
             }
 
             // ── recents strip — only when it has content and no active query ──
@@ -259,14 +250,6 @@ PanelWindow {
                     color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.35)
                     font { pixelSize: 11; letterSpacing: 1; family: "ZedMono Nerd Font" }
                 }
-            }
-
-            // footer hints
-            Text {
-                Layout.alignment: Qt.AlignHCenter
-                text: "\u21b5 copy \u00b7 click copy \u00b7 esc close"
-                color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.3)
-                font { pixelSize: 9; letterSpacing: 2; family: "ZedMono Nerd Font" }
             }
         }
     }

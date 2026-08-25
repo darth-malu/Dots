@@ -672,12 +672,6 @@ Item {
                     }
                 }
 
-                MouseArea {
-                    anchors.fill: parent
-                    z: -1
-                    onClicked: NetworkState.wifiPopupVisible = false
-                }
-
                 ColumnLayout {
                     id: card
                     anchors.fill: parent

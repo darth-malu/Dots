@@ -149,6 +149,12 @@ Singleton {
     // deduped [{source, count}] for every client living on this workspace;
     // rev is threaded through purely as a binding dependency so callers'
     // event-driven revision counters force re-evaluation
+    //
+    // class resolution prefers _clientsMap (fresh hyprctl -j clients data,
+    // refetched around every window event): quickshell's HyprlandToplevel
+    // .lastIpcObject is only populated on full workspace fetches, so brand-
+    // new windows kept a stale/empty class — and therefore a generic icon —
+    // until the whole config reloaded
     function clientIconsFor(ws, rev) {
         const _ = rev;
         const out = [];
@@ -158,7 +164,8 @@ Singleton {
             const t = tls[i];
             if (!t || !t.wayland)
                 continue;
-            const icon = iconForClass(t.lastIpcObject?.class);
+            const cls = root._clientsMap[root._normAddr(t.address)] ?? t.lastIpcObject?.class;
+            const icon = iconForClass(cls);
             if (!icon)
                 continue;
             if (seen[icon]) {
@@ -173,6 +180,61 @@ Singleton {
         }
         return out;
     }
+
+    // ── fresh class table (address → class) ──
+    // hyprctl -j clients is the only source that is correct immediately
+    // after a window spawns; debounced so event bursts cost one process
+    //
+    // CRITICAL: hyprctl addresses carry a "0x" prefix while quickshell's
+    // HyprlandToplevel.address does NOT — every lookup silently missed
+    // until _normAddr() was introduced
+    property var _clientsMap: ({})
+    property bool _clientsFetchQueued: false
+
+    function _normAddr(a) {
+        const s = String(a ?? "");
+        return s.startsWith("0x") ? s : "0x" + s;
+    }
+
+    function requestClientsFetch() {
+        if (_clientsFetchQueued)
+            return;
+        _clientsFetchQueued = true;
+        clientsDebounce.restart();
+    }
+
+    Timer {
+        id: clientsDebounce
+
+        interval: 120
+        running: false
+        onTriggered: hyprctlClients.running = true
+    }
+
+    Process {
+        id: hyprctlClients
+
+        command: ["hyprctl", "-j", "clients"]
+        running: false
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root._clientsFetchQueued = false;
+                try {
+                    const arr = JSON.parse(this.text);
+                    const m = ({});
+                    for (const c of arr)
+                        m[c.address] = c.class || c.initialClass || "";
+                    root._clientsMap = m;
+                    // new classes can change icons without changing the
+                    // workspace LIST — nudge the shared revision so bars redraw
+                    root.refresh();
+                } catch (e) {}
+            }
+        }
+    }
+
+    Component.onCompleted: requestClientsFetch()
 
     // ── focused-window tracking (address granularity, from IPC events) ──
     property string _focusedAddress: ""
@@ -234,12 +296,17 @@ Singleton {
             // shared list-refresh signal for the workspace widgets
             if (root._listEvents.has(n))
                 root.refresh();
+
+            // window metadata events → refetch classes so brand-new windows
+            // get their real app icon on the very first poll tick
+            if (n === "openwindow" || n === "closewindow" || n === "windowtitle" || n === "windowclass" || n === "movewindow")
+                root.requestClientsFetch();
         }
     }
 
     // TEMP stale-icons diagnosis — remove with [icondbg] logs
     IpcHandler {
-        target: "hdbg"
+        target: "wsdbg"
 
         function tls(): string {
             const out = [];
@@ -249,6 +316,38 @@ Singleton {
         }
         function bump(): void {
             root.refresh();
+        }
+
+        // TEMP: dump the exact [{source,count}] each bar delegate would show
+        function icons(): string {
+            const out = [];
+            for (const ws of Hyprland.workspaces.values)
+                out.push(`ws${ws.id}: ${JSON.stringify(root.clientIconsFor(ws, root.revision))}`);
+            return out.join(" | ");
+        }
+        function classes(): string {
+            const out = [];
+            for (const ws of Hyprland.workspaces.values) {
+                const cls = (ws.toplevels?.values ?? []).map(t => {
+                    const fresh = root._clientsMap[root._normAddr(t.address)];
+                    return `${t.lastIpcObject?.class ?? "?"}${fresh !== undefined ? `→${fresh || "(empty)"}` : ""}/wl=${!!t.wayland}`;
+                });
+                out.push(`ws${ws.id}: [${cls.join(", ")}]`);
+            }
+            return out.join(" | ");
+        }
+        function map(): string {
+            const out = [];
+            for (const k in root._clientsMap)
+                out.push(`${k}=${root._clientsMap[k]}`);
+            return `${out.length} entries: ` + (out.slice(0, 12).join(" | ") || "(empty)");
+        }
+        function addrs(): string {
+            const out = [];
+            for (const ws of Hyprland.workspaces.values)
+                for (const t of (ws.toplevels?.values ?? []))
+                    out.push(`addr=[${t.address}] lastcls=[${t.lastIpcObject?.class ?? "?"}]`);
+            return out.join(" | ") || "(none)";
         }
     }
 
@@ -263,7 +362,8 @@ Singleton {
             const t = tls[i];
             if (!t || !t.wayland)
                 continue;
-            const icon = iconForClass(t.lastIpcObject?.class);
+            const cls = root._clientsMap[root._normAddr(t.address)] ?? t.lastIpcObject?.class;
+            const icon = iconForClass(cls);
             if (!icon)
                 continue;
             let g = idx[icon];

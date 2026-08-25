@@ -6,14 +6,10 @@ import QtQuick
 Singleton {
     id: root
 
-    property date currentDate: new Date()
-
-    Timer {
-        interval: 60000 // Check every minute
-        running: true
-        repeat: true
-        onTriggered: root.currentDate = new Date()
-    }
+    // single source of truth for "now" — the same SystemClock the bar clock
+    // renders from, so the reminder spinner, calendar math and reminder
+    // grouping can never drift from what the user sees in the panel
+    readonly property date currentDate: clock.date
 
     readonly property string time: {
         Qt.formatDateTime(clock.date, "h:mm"); //ddd MMM d hh:mm:ss AP t yyyy

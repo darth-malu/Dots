@@ -117,7 +117,7 @@ Singleton {
             + "case \"$n\" in coretemp|k10temp|k8temp|zenpower|cpu_thermal) "
             + "echo \"${f%name}temp1_input\"; break;; esac; done"]
         stdout: SplitParser {
-            onRead: root.cpuTempPath = data.trim()
+            onRead: data => root.cpuTempPath = data.trim()
         }
     }
 
@@ -127,10 +127,14 @@ Singleton {
         path: root.cpuTempPath.length > 0 ? "file://" + root.cpuTempPath : ""
     }
 
+    // nothing renders these numbers while every consumer is closed —
+    // don't burn sysfs reloads / process spawns for an invisible audience
+    readonly property bool anyConsumerOpen: resourcesVisible || MiscState.qsOpen || MiscState.toggleSettings
+
     Timer {
         id: cpuUsage
         interval: root.cpuMemInterval
-        running: true
+        running: root.anyConsumerOpen
         repeat: true
         triggeredOnStart: true
         onTriggered: {
@@ -276,7 +280,7 @@ Singleton {
     Timer {
         id: diskTimer
         interval: root.diskInterval
-        running: true
+        running: root.anyConsumerOpen
         repeat: true
         triggeredOnStart: true
         onTriggered: () => {

@@ -467,12 +467,6 @@ Item {
                     onActivated: mprisRoot.showPopup = false
                 }
 
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: mprisRoot.showPopup = false
-                    z: -1
-                }
-
                 MprisPopup {
                     id: mprisPopupContent
                     anchors.fill: parent
@@ -512,12 +506,6 @@ Item {
                 Shortcut {
                     sequence: "Escape"
                     onActivated: mprisRoot.showArtPopup = false
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: mprisRoot.showArtPopup = false
-                    z: -1
                 }
 
                 // album art fills the popup (respects the settings toggle)

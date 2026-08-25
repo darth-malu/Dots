@@ -38,7 +38,7 @@ Singleton {
         // timeout) — a constant `connected: true` binding does NOT re-fire,
         // so without this every dispatch after the first close silently dies
         onConnectionStateChanged: {
-            console.log(`[scrolldbg] ipc conn=${connected}`);
+            // console.log(`[scrolldbg] ipc conn=${connected}`);
             if (connected) {
                 const q = root._pending.splice(0);
                 for (let i = 0; i < q.length; i++)
@@ -47,7 +47,7 @@ Singleton {
                     ipc.flush();
             }
         }
-        onError: err => console.log(`[scrolldbg] ipc error=${err}`)
+        // onError: err => console.log(`[scrolldbg] ipc error=${err}`)
     }
 
     function dispatch(expr) {

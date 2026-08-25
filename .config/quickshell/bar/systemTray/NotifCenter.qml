@@ -97,12 +97,6 @@ BarBlock {
                     onActivated: NetworkState.notifCenterVisible = false
                 }
 
-                MouseArea {
-                    anchors.fill: parent
-                    z: -1
-                    onClicked: NetworkState.notifCenterVisible = false
-                }
-
                 ColumnLayout {
                     id: centerCol
 
