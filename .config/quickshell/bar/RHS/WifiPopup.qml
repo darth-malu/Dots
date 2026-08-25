@@ -630,7 +630,7 @@ Item {
     }
 
     LazyLoader {
-        loading: true
+        loading: NetworkState.wifiPopupVisible
 
         PopupWindow {
             id: wifiPopup
@@ -651,21 +651,19 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
+                focus: true
                 radius: 12
                 color: MiscState.popupCardBg
                 border.width: 1
                 border.color: Qt.rgba(0.74, 0.58, 0.98, 0.35)
 
-                Shortcut {
-                    sequence: "Escape"
-                    onActivated: {
-                        if (root.passwordNetwork)
-                            root.passwordNetwork = null;
-                        else if (root.editSsid.length > 0)
-                            root.editSsid = "";
-                        else
-                            NetworkState.wifiPopupVisible = false;
-                    }
+                Keys.onEscapePressed: {
+                    if (root.passwordNetwork)
+                        root.passwordNetwork = null;
+                    else if (root.editSsid.length > 0)
+                        root.editSsid = "";
+                    else
+                        NetworkState.wifiPopupVisible = false;
                 }
 
                 ColumnLayout {

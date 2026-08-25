@@ -73,7 +73,7 @@ Singleton {
     Timer {
         id: uptimeTimer
         interval: 30000
-        running: true
+        running: root.anyConsumerOpen
         repeat: true
         triggeredOnStart: true
         onTriggered: () => {

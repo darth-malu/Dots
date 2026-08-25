@@ -98,7 +98,6 @@ Singleton {
     function _script_ping() {
         return 'for i in 1 2 3 4 5; do '
             + 'curl -4 -o /dev/null -s --connect-timeout 3 --max-time 5 '
-            + '--dns-servers 1.0.0.1,1.1.1.1 '
             + '-w "probe %{time_connect} %{remote_ip}\\n" "https://speed.cloudflare.com/__down?bytes=0"; '
             + 'done; echo done';
     }
@@ -149,6 +148,7 @@ Singleton {
         running = false;
         phase = "";
         progress = 1;
+        error = "";
         testDuration = (Date.now() - _startMs) / 1000;
 
         const entry = {

@@ -88,7 +88,7 @@ BarBlock {
     }
 
     LazyLoader {
-        loading: true
+        loading: MiscState.showMemProcs
 
         PopupWindow {
             id: memPopup

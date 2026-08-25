@@ -109,18 +109,27 @@ Singleton {
     }
 
     // gray = disabled/no adapter · purple = idle · peach→yellow→cyan by signal
+    // Dimmer on transparent bar, brighter on solid bg
     readonly property color wifiColor: {
         if (!root.adapter || !Networking.wifiEnabled)
             return "#6272a4";
         if (!root.activeNetwork)
-            return "#bd93f9";
+            return MiscState.barSolid ? "#bd93f9" : Qt.rgba(0.65, 0.52, 0.85, 0.6);
 
         const s = root.activeNetwork.signalStrength;
+        if (!MiscState.barSolid) {
+            return s < 0.34 ? Qt.rgba(0.85, 0.62, 0.42, 0.55)
+                : s < 0.67 ? Qt.rgba(0.85, 0.82, 0.42, 0.55)
+                : Qt.rgba(0.42, 0.72, 0.8, 0.55);
+        }
         return s < 0.34 ? "#ffb86c" : s < 0.67 ? "#f1fa8c" : "#8be9fd";
     }
 
-    // dracula: overlay0 / teal
-    readonly property color ethColor: !root.ethernet?.hasLink ? "#6272a4" : "#8be9fd"
+    // dracula: overlay0 / teal — dimmer on transparent bar, brighter on solid bg
+    readonly property color ethColor: {
+        if (!root.ethernet?.hasLink) return "#6272a4";
+        return MiscState.barSolid ? "#8be9fd" : Qt.rgba(0.55, 0.72, 0.85, 0.6);
+    }
 
     // popup traffic graphs — each toggle makes its graph section visible AND starts history sampling
     property bool wifiGraphEnabled: false

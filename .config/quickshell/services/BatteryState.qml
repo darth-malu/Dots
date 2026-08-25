@@ -46,8 +46,8 @@ Singleton {
     property bool isPendingDischarge: chargeState == UPowerDeviceState.PendingDischarge
     property bool isFullyCharged: chargeState == UPowerDeviceState.FullyCharged
 
-    readonly property int lowThreshold: 20
-    readonly property int criticalThreshold: 10
+    readonly property int lowThreshold: 18
+    readonly property int criticalThreshold: 5
     readonly property bool isLow: available && !isPluggedIn && pctDisplay <= lowThreshold
     readonly property bool isCritical: available && !isPluggedIn && pctDisplay <= criticalThreshold
 
@@ -150,9 +150,11 @@ Singleton {
             warnedLow = true;
             warnedCritical = true;
             Sfx.play("mixkit-vintage-telephone-ringtone-1356.wav");
+            notify("Battery Critical", `${pct}% — plug in charger now`, "warning-battery", "critical");
         } else if (pct <= lowThreshold && !warnedLow) {
             warnedLow = true;
             Sfx.play("mixkit-censorship-beep-1082.wav");
+            notify("Battery Low", `${pct}% — plug in charger`, "low-battery");
         }
     }
 

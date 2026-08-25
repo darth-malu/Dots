@@ -21,6 +21,7 @@ BarBlock {
     property bool playerListOpen: false // reserved for a future chooser popup
     property bool showQsPopup: false
     property bool showPowerPopup: false
+    property bool qsPopupArmed: false
     // 0 = hidden, 1 = reboot presets, 2 = shutdown presets
     property int timerPicker: 0
     property bool compactNowPlaying: true
@@ -38,6 +39,12 @@ BarBlock {
 
     onShowQsPopupChanged: {
         MiscState.qsOpen = showQsPopup;
+        if (showQsPopup) {
+            qsPopupArmed = false;
+            Qt.callLater(() => qsPopupArmed = true);
+        } else {
+            qsPopupArmed = false;
+        }
         if (!showQsPopup) {
             showPowerPopup = false;
             timerPicker = 0;
@@ -66,7 +73,7 @@ BarBlock {
     PopupWindow {
         id: quickSettingsPopup
         visible: root.showQsPopup
-        grabFocus: true
+        grabFocus: root.qsPopupArmed
         // always transparent — the card below paints its own opaque
         // background; an opaque window backdrop would square off the
         // corners around the rounded card and shadow (border artifacts)
@@ -81,8 +88,7 @@ BarBlock {
 
         // rigid footprint — height always hugs the full content, never scrolls
         implicitWidth: 300
-        // top inset 4 (content margins) + 3 below the last row
-        implicitHeight: qsContent.implicitHeight + 7
+        implicitHeight: qsContent.implicitHeight
 
         // same treatment as every other popup: one full-bleed rounded card
         // with a hairline ring — no shadow effect, whose blur used to clip
@@ -90,15 +96,13 @@ BarBlock {
         Rectangle {
             id: qsCard
             anchors.fill: parent
+            focus: true
             radius: 12
             color: MiscState.popupCardBg
             border.width: 1
             border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
 
-            Shortcut {
-                sequence: "Escape"
-                onActivated: root.showQsPopup = false
-            }
+            Keys.onEscapePressed: root.showQsPopup = false
 
             // rigid column — no scroll container, the popup grows with it
             ColumnLayout {
@@ -140,12 +144,12 @@ BarBlock {
                                 id: avatarBox
 
                                 // hidden for now — assets and pickAvatar stay
-                                visible: false
+                                visible: true
                                 Layout.preferredWidth: 40
                                 Layout.preferredHeight: 40
                                 radius: height / 2
                                 color: avatarMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "#343746"
-                                border.width: 1
+                                border.width: avatarMa.containsMouse ? 2 : 1
                                 border.color: avatarMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.55) : Qt.rgba(1, 1, 1, 0.14)
 
                                 Behavior on border.color {
@@ -203,71 +207,20 @@ BarBlock {
                                 }
                             }
 
-                            Item {
-                                Layout.fillWidth: true
+                            Text {
+                                id: uptime
+                                Layout.alignment: Qt.AlignLeft
+                                text: ResourcesState.uptimeText.length > 0 ? ResourcesState.uptimeText : "…"
+                                color: "#6272a4"
+                                font {
+                                    pixelSize: 9
+                                    bold: true
+                                    family: "ZedMono Nerd Font"
+                                }
                             }
 
-                            // square icon buttons — one component, one look
-                            component HeaderButton: Rectangle {
-                                id: hbtn
-
-                                property string glyph
-                                property color tint: "#bd93f9"
-                                readonly property alias hovered: hbtnMa.containsMouse
-
-                                signal activated()
-
-                                width: 30
-                                height: 30
-                                radius: 9
-                                color: hbtnMa.containsMouse ? Qt.rgba(hbtn.tint.r, hbtn.tint.g, hbtn.tint.b, 0.18) : Qt.rgba(1, 1, 1, 0.05)
-                                border.width: 1
-                                border.color: hbtnMa.containsMouse ? Qt.rgba(hbtn.tint.r, hbtn.tint.g, hbtn.tint.b, 0.45) : Qt.rgba(1, 1, 1, 0.08)
-
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: 120
-                                    }
-                                }
-
-                                Behavior on border.color {
-                                    ColorAnimation {
-                                        duration: 120
-                                    }
-                                }
-
-                                scale: hbtnMa.pressed ? 0.92 : 1
-
-                                Behavior on scale {
-                                    NumberAnimation {
-                                        duration: 80
-                                    }
-                                }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: hbtn.glyph
-                                    color: hbtnMa.containsMouse ? Qt.lighter(hbtn.tint, 1.25) : "#b8bfcb"
-                                    font {
-                                        pixelSize: 14
-                                        family: "Symbols Nerd Font Mono"
-                                    }
-
-                                    Behavior on color {
-                                        ColorAnimation {
-                                            duration: 120
-                                        }
-                                    }
-                                }
-
-                                MouseArea {
-                                    id: hbtnMa
-
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: hbtn.activated()
-                                }
+                            Item {
+                                Layout.fillWidth: true
                             }
 
                             HeaderButton {
@@ -301,7 +254,6 @@ BarBlock {
                             }
                         }
 
-
                         // ═══ POWER ═══
                         PowerControls {
                             id: powerControls
@@ -323,6 +275,14 @@ BarBlock {
                             compactNowPlaying: root.compactNowPlaying
                             Layout.fillWidth: true
                             Layout.bottomMargin: 8
+                            Layout.topMargin: 10
+                        }
+
+                        // ── breathing room when no media is playing ──
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 6
+                            visible: !nowPlayingCard.visible
                         }
 
                         // ═══ VOLUME ═══
@@ -437,18 +397,6 @@ BarBlock {
                                         accent: "#8be9fd"
                                     }
                                 }
-                            }
-                        }
-
-                        // ── footer · session uptime ──
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: ResourcesState.uptimeText.length > 0 ? ResourcesState.uptimeText : "…"
-                            color: "#6272a4"
-                            font {
-                                pixelSize: 9
-                                bold: true
-                                family: "ZedMono Nerd Font"
                             }
                         }
                     }

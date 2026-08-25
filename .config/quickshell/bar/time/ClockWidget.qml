@@ -288,28 +288,26 @@ BarBlock {
             Rectangle {
                 id: card
 
+                focus: true
                 radius: 12
                 anchors.fill: parent
                 border.width: 1
                 border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
                 color: MiscState.popupCardBg
 
-                Shortcut {
-                    sequence: "Escape"
-                    onActivated: {
-                        if (clockPopup.datePickerOpen)
-                            clockPopup.datePickerOpen = false;
-                        else if (clockPopup.view !== "cal")
-                            clockPopup.switchView("cal");
-                        else if (clockPopup.yearView)
-                            clockPopup.yearView = false;
-                        else if (clockPopup.selectedYear >= 0)
-                            clockPopup.clearSelection();
-                        else if (clockPopup.tabsRevealed)
-                            clockPopup.tabsRevealed = false;
-                        else
-                            MiscState.showPopup = false;
-                    }
+                Keys.onEscapePressed: {
+                    if (clockPopup.datePickerOpen)
+                        clockPopup.datePickerOpen = false;
+                    else if (clockPopup.view !== "cal")
+                        clockPopup.switchView("cal");
+                    else if (clockPopup.yearView)
+                        clockPopup.yearView = false;
+                    else if (clockPopup.selectedYear >= 0)
+                        clockPopup.clearSelection();
+                    else if (clockPopup.tabsRevealed)
+                        clockPopup.tabsRevealed = false;
+                    else
+                        MiscState.showPopup = false;
                 }
 
                 ClockPopup {

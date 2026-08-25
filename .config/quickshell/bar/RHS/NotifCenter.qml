@@ -65,7 +65,7 @@ BarBlock {
     }
 
     LazyLoader {
-        loading: true
+        loading: NetworkState.notifCenterVisible
 
         PopupWindow {
             id: notifPopup
@@ -85,17 +85,15 @@ BarBlock {
             implicitWidth: 344
             implicitHeight: centerCol.implicitHeight + 24
 
-            Rectangle {
-                anchors.fill: parent
-                radius: 12
-                color: MiscState.popupCardBg
-                border.width: 1
-                border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
+                Rectangle {
+                    anchors.fill: parent
+                    focus: true
+                    radius: 12
+                    color: MiscState.popupCardBg
+                    border.width: 1
+                    border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
 
-                Shortcut {
-                    sequence: "Escape"
-                    onActivated: NetworkState.notifCenterVisible = false
-                }
+                    Keys.onEscapePressed: NetworkState.notifCenterVisible = false
 
                 ColumnLayout {
                     id: centerCol

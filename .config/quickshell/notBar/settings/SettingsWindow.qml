@@ -8,7 +8,7 @@ import Quickshell.Widgets
 import qs.customItems
 import qs.services
 import qs.bar.quicksettings.nowplaying
-import qs.bar.systemTray
+import qs.bar.RHS
 import Quickshell.Services.Mpris
 import Quickshell.Networking
 
@@ -873,7 +873,7 @@ Item {
                                     return NetworkState.wifiConnected && ssid.length > 0 ? ssid : "Wi-Fi";
                                 }
                                 caption: !NetworkState.wifiEnabled ? "radio off"
-                                    : NetworkState.wifiConnected ? Math.round(NetworkState.activeNetwork?.strength ?? 0) + "% signal"
+                                    : NetworkState.wifiConnected ? Math.round((NetworkState.activeNetwork?.signalStrength ?? 0) * 100) + "% signal"
                                     : "scanning…"
                                 checked: NetworkState.wifiEnabled
                                 onFlipped: NetworkState.setWifiEnabled(!NetworkState.wifiEnabled)
@@ -930,43 +930,6 @@ Item {
                                 caption: MiscState.showNetTotals ? "always visible" : "with graphs"
                                 checked: MiscState.showNetTotals
                                 onFlipped: MiscState.showNetTotals = !MiscState.showNetTotals
-                            }
-                        }
-                    }
-
-
-                    Card {
-                        title: "Bar modules"
-                        icon: "\ueac1"
-                        accent: "#8be9fd"
-
-                        ColumnLayout {
-                            spacing: 0
-                            Layout.fillWidth: true
-
-                            SettingRow {
-                                icon: "\uf1eb"
-                                label: "Wi-Fi module"
-                                checked: MiscState.showWifi
-                                onFlipped: MiscState.showWifi = !MiscState.showWifi
-                            }
-
-                            Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
-
-                            SettingRow {
-                                icon: "\uef44"
-                                label: "Ethernet module"
-                                checked: MiscState.showEthernet
-                                onFlipped: MiscState.showEthernet = !MiscState.showEthernet
-                            }
-
-                            Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
-
-                            SettingRow {
-                                icon: "\uf294"
-                                label: "Bluetooth module"
-                                checked: MiscState.showBluetooth
-                                onFlipped: MiscState.showBluetooth = !MiscState.showBluetooth
                             }
                         }
                     }
@@ -1426,7 +1389,7 @@ Item {
                     title: "Battery alerts"
                     summary: "low / critical warnings · history graph"
 
-                    HelpLine { text: "Low battery warns at 20%, critical at 10% — each fires once per discharge and re-arms when you plug in." }
+                    HelpLine { text: "Low battery warns at 18%, critical at 5% — each fires once per discharge and re-arms when you plug in." }
                     HelpLine { text: "Crossing a threshold plays a chime once per discharge and the pill blares orange/red until plugged in — no popup spam." }
                     HelpLine { text: "Left-click the bar pill for details, history graph and power profiles; right-click toggles the percentage inside the pill." }
                     HelpLine { text: "The chart icon in the popup enables a one-hour charge-history graph." }

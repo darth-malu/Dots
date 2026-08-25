@@ -402,7 +402,7 @@ Loader {
         }
 
         LazyLoader {
-            loading: true
+            loading: NetworkState.netPopupVisible
 
             PopupWindow {
                 id: netPopup
@@ -424,15 +424,13 @@ Loader {
                 Rectangle {
                     id: cardBg
                     anchors.fill: parent
+                    focus: true
                     radius: 12
                     color: MiscState.popupCardBg
                     border.width: 1
                     border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
 
-                    Shortcut {
-                        sequence: "Escape"
-                        onActivated: NetworkState.netPopupVisible = false
-                    }
+                    Keys.onEscapePressed: NetworkState.netPopupVisible = false
 
                     ColumnLayout {
                         id: card

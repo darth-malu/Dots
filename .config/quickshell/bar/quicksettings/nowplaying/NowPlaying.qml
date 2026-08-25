@@ -848,11 +848,6 @@ ClippingRectangle {
         }
 
         opacity: Math.min(1, revealT * 3)
-        transform: Translate {
-            id: chooserSlide
-
-            y: -((1 - chooserPanel.revealT) * chooserPanel.height)
-        }
         // slightly darker floor so the drawer reads as its own zone
         color: Qt.rgba(0, 0, 0, 0.25)
 

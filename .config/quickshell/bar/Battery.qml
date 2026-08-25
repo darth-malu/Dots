@@ -218,6 +218,7 @@ RowLayout {
 
         Rectangle {
             anchors.fill: parent
+            focus: true
             radius: 12
             layer.enabled: true
             layer.samples: 8
@@ -225,10 +226,7 @@ RowLayout {
             border.width: 1
             border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
 
-            Shortcut {
-                sequence: "Escape"
-                onActivated: batteryBlock.showPopup = false
-            }
+            Keys.onEscapePressed: batteryBlock.showPopup = false
 
             MouseArea {
                 anchors.fill: parent

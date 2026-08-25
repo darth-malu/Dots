@@ -4,7 +4,7 @@ import Quickshell.Hyprland
 import QtQuick.Layouts
 import "./time"
 import Quickshell.Wayland
-import "./systemTray"
+import "./RHS"
 import qs.services
 import qs.customItems
 import Quickshell.Io
@@ -99,7 +99,7 @@ ShellRoot {
                   Pipewire {}
                   Resources {}
                   ClockWidget {}
-                  SystemTrayy {}
+                   SystemTray {}
               }
           }
         }

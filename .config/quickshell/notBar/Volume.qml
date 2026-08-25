@@ -7,7 +7,7 @@ import qs.services
 
 Scope {
     id: root
-    property bool shouldShowOsd: VolumeState.shouldShowOsd
+    property bool shouldShowOsd: false
     property var ifAudioNode: VolumeState.isAudioNode
 
     readonly property real nodeVolume: ifAudioNode?.volume ?? 0
@@ -28,18 +28,14 @@ Scope {
         objects: [VolumeState.defaultSink]
     }
 
-    Connections {
-        target: root.ifAudioNode ?? null
+    onNodeVolumeChanged: {
+        root.shouldShowOsd = true;
+        hideTimer.restart();
+    }
 
-        function onVolumeChanged() {
-            root.shouldShowOsd = true;
-            hideTimer.restart();
-        }
-
-        function onMutedChanged() {
-            root.shouldShowOsd = true;
-            hideTimer.restart();
-        }
+    onNodeMutedChanged: {
+        root.shouldShowOsd = true;
+        hideTimer.restart();
     }
 
     Timer {

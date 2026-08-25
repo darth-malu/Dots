@@ -25,7 +25,7 @@ RowLayout {
         readonly property bool isOut: chan === 0
         readonly property var node: isOut ? PipewireState.outputSink : PipewireState.inputSink
         // pastel, low-key accents — the icons should whisper
-        readonly property color accent: isOut ? "#c9b2f5" : "#a8e6ee"
+        readonly property color accent: isOut ? (MiscState.barSolid ? "#c9b2f5" : Qt.rgba(0.7, 0.62, 0.85, 0.6)) : (MiscState.barSolid ? "#a8e6ee" : Qt.rgba(0.55, 0.78, 0.85, 0.6))
         readonly property color mutedColor: "#ff5555"
 
         // true while the wheel is active — drives the inline readout
@@ -39,19 +39,33 @@ RowLayout {
 
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            // spacing: 6
 
             Text {
                 text: {
                     const a = vi.node?.audio;
                     const muted = (a?.muted) ?? true;
                     const v = a?.volume ?? 0;
-                    if (vi.isOut)
-                        return muted || v === 0 ? "\uf026" : v > 0.55 ? "\uf028" : "\uf027";
+                    if (vi.isOut) {
+                        if (muted || v === 0) return "\uf026";
+                        if (v <= 0.33) return "\uf027";
+                        if (v <= 0.66) return "\uf027";
+                        return "\uf028";
+                    }
                     return muted ? "\uf131" : "\uf130";
                 }
+                opacity: {
+                    if (vi.isOut) {
+                        const a = vi.node?.audio;
+                        const muted = (a?.muted) ?? true;
+                        const v = a?.volume ?? 0;
+                        if (muted || v === 0) return 1;
+                        if (v <= 0.33) return 0.55;
+                        if (v <= 0.66) return 0.75;
+                        return 1;
+                    }
+                    return viMa.containsMouse ? 1 : 0.8;
+                }
                 color: ((vi.node?.audio?.muted) ?? true) ? vi.mutedColor : Qt.rgba(0.91, 0.91, 0.96, 0.62)
-                opacity: viMa.containsMouse ? 1 : 0.8
                 font {
                     pixelSize: 15
                     family: "Symbols Nerd Font Mono"
@@ -68,7 +82,6 @@ RowLayout {
             Text {
                 Layout.leftMargin: 4
                 Layout.maximumWidth: 42
-                // visible: vi.flashing || opacity > 0
                 visible: false
                 opacity: vi.flashing ? 1 : 0
                 Behavior on opacity {

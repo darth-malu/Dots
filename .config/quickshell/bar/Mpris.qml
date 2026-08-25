@@ -437,7 +437,7 @@ Item {
 
     // ── popup (lives outside the mouse area, never destroyed by Loader) ──
     LazyLoader {
-        loading: true
+        loading: mprisRoot.showPopup
 
         PopupWindow {
             id: popup
@@ -457,15 +457,13 @@ Item {
             Rectangle {
                 id: mprisPopupRect
                 anchors.fill: parent
+                focus: true
                 radius: 10
                 color: MiscState.popupCardBg
                 border.width: 1
                 border.color: "#44475a"
 
-                Shortcut {
-                    sequence: "Escape"
-                    onActivated: mprisRoot.showPopup = false
-                }
+                Keys.onEscapePressed: mprisRoot.showPopup = false
 
                 MprisPopup {
                     id: mprisPopupContent
@@ -478,7 +476,7 @@ Item {
 
     // ── album art popup (opened by clicking the art in the pill) ──
     LazyLoader {
-        loading: true
+        loading: mprisRoot.showArtPopup
 
         PopupWindow {
             id: artPopup
@@ -498,15 +496,13 @@ Item {
             Rectangle {
                 id: artPopupRect
                 anchors.fill: parent
+                focus: true
                 radius: 12
                 color: MiscState.popupCardBg
                 border.width: 1
                 border.color: "#44475a"
 
-                Shortcut {
-                    sequence: "Escape"
-                    onActivated: mprisRoot.showArtPopup = false
-                }
+                Keys.onEscapePressed: mprisRoot.showArtPopup = false
 
                 // album art fills the popup (respects the settings toggle)
                 Image {

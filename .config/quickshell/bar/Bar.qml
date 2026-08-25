@@ -5,7 +5,7 @@ import Quickshell.Hyprland
 import QtQuick.Layouts
 import "./time"
 import Quickshell.Wayland
-import "./systemTray"
+import "./RHS"
 import qs.themes
 import qs.services
 import qs.customItems

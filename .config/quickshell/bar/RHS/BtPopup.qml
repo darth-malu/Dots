@@ -227,7 +227,7 @@ BarBlock {
     }
 
     LazyLoader {
-        loading: true
+        loading: NetworkState.btPopupVisible
 
         PopupWindow {
             id: btPopup
@@ -248,15 +248,13 @@ BarBlock {
 
             Rectangle {
                 anchors.fill: parent
+                focus: true
                 radius: 12
                 color: MiscState.popupCardBg
                 border.width: 1
                 border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
 
-                Shortcut {
-                    sequence: "Escape"
-                    onActivated: NetworkState.btPopupVisible = false
-                }
+                Keys.onEscapePressed: NetworkState.btPopupVisible = false
 
                 ColumnLayout {
                     id: card

@@ -116,7 +116,7 @@ BarBlock {
     }
 
     LazyLoader {
-        loading: true
+        loading: MiscState.showCpuProcs
 
         PopupWindow {
             id: procPopup

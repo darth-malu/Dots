@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Wayland
+import qs.services
 
 Singleton {
     id: root
@@ -109,6 +110,10 @@ Singleton {
 
     property bool showVolumeIn: prefs.showVolumeIn
     onShowVolumeInChanged: prefs.showVolumeIn = showVolumeIn
+
+    // bar mode — 0 transparent, 1 solid, 2 full-bleed.
+    // Icons use this to pick soft (transparent) or bright (solid bg) colours.
+    readonly property bool barSolid: BarState.barMode !== 0
 
     // ── persistent store for user preferences ──
     FileView {
