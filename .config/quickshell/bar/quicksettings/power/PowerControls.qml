@@ -11,6 +11,8 @@ import qs.services
 ColumnLayout {
     id: pc
 
+    visible: pc.showPowerPopup || pc.timerPicker !== 0
+
     // live state owned by QuickSettings root
     required property bool showPowerPopup
     required property int timerPicker

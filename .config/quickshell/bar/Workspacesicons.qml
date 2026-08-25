@@ -260,7 +260,7 @@ RowLayout {
                         // multiplicity badge — N clients sharing this app class
                         Rectangle {
                             visible: parent.count > 1
-                            width: 10
+                            width: 14
                             height: width
                             radius: width / 2
                             x: parent.width - width / 2 + 1
@@ -274,7 +274,7 @@ RowLayout {
                                 text: parent.parent.count
                                 color: "#181825"
                                 font {
-                                    pixelSize: 7
+                                    pixelSize: 9
                                     bold: true
                                     family: "ZedMono Nerd Font"
                                 }

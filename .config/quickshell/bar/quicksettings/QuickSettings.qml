@@ -443,6 +443,7 @@ BarBlock {
                         // ── footer · session uptime ──
                         Text {
                             Layout.alignment: Qt.AlignHCenter
+                            Layout.topMargin: -4
                             text: ResourcesState.uptimeText.length > 0 ? ResourcesState.uptimeText : "…"
                             color: "#6272a4"
                             font {
