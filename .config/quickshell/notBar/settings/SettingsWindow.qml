@@ -561,7 +561,8 @@ Item {
                                         model: [
                                             { key: 0, label: "Transparent" },
                                             { key: 1, label: "Solid" },
-                                            { key: 2, label: "Full" }
+                                            { key: 2, label: "Full" },
+                                            { key: 3, label: "Glass" }
                                         ]
 
                                         delegate: Rectangle {
@@ -610,11 +611,31 @@ Item {
                         Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
 
                         SettingRow {
+                            icon: "\uf544"
+                            label: "Show workspaces"
+                            caption: MiscState.showWorkspaces ? "on" : "off"
+                            checked: MiscState.showWorkspaces
+                            onFlipped: MiscState.showWorkspaces = !MiscState.showWorkspaces
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                        SettingRow {
                             icon: "\uf009"
-                            label: "Icon workspaces"
-                            caption: MiscState.iconWorkspaces ? "app icons" : "numbers"
+                            label: "Show icons"
+                            caption: MiscState.iconWorkspaces ? "on" : "off"
                             checked: MiscState.iconWorkspaces
                             onFlipped: MiscState.iconWorkspaces = !MiscState.iconWorkspaces
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                        SettingRow {
+                            icon: "\uf1dc"
+                            label: "Boxy design"
+                            caption: MiscState.boxyTheme ? "boxy" : "rounded"
+                            checked: MiscState.boxyTheme
+                            onFlipped: MiscState.boxyTheme = !MiscState.boxyTheme
                         }
 
                         Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
@@ -625,6 +646,16 @@ Item {
                             caption: MiscState.popupSolidBg ? "solid" : "transparent"
                             checked: MiscState.popupSolidBg
                             onFlipped: MiscState.popupSolidBg = !MiscState.popupSolidBg
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                        SettingRow {
+                            icon: "\uf290"
+                            label: "Boxy system tray"
+                            caption: MiscState.boxyTray ? "coloured pill" : "glass"
+                            checked: MiscState.boxyTray
+                            onFlipped: MiscState.boxyTray = !MiscState.boxyTray
                         }
                     }
                 }

@@ -103,6 +103,18 @@ Singleton {
     property bool iconWorkspaces: prefs.iconWorkspaces
     onIconWorkspacesChanged: prefs.iconWorkspaces = iconWorkspaces
 
+    // boxy theme — nearly square corners, stronger active bg
+    property bool boxyTheme: prefs.boxyTheme
+    onBoxyThemeChanged: prefs.boxyTheme = boxyTheme
+
+    // boxy system tray — coloured boxy pill for tray icons
+    property bool boxyTray: prefs.boxyTray
+    onBoxyTrayChanged: prefs.boxyTray = boxyTray
+
+    // show workspaces module — completely hides the workspace pills
+    property bool showWorkspaces: prefs.showWorkspaces
+    onShowWorkspacesChanged: prefs.showWorkspaces = showWorkspaces
+
     // bar audio modules — output (speaker) and input (mic) can be hidden
     // independently from settings
     property bool showVolumeOut: prefs.showVolumeOut
@@ -139,6 +151,9 @@ Singleton {
             property bool showBattery: true
             property bool showNotifTray: true
             property bool iconWorkspaces: true
+            property bool boxyTheme: true
+            property bool boxyTray: true
+            property bool showWorkspaces: true
             property bool showVolumeOut: true
             property bool showVolumeIn: true
         }

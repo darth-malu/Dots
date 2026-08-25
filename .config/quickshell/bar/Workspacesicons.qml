@@ -6,47 +6,26 @@ import Quickshell.Hyprland
 import QtQuick.Layouts
 import Quickshell.Widgets
 import Quickshell
-import QtQuick.Effects
 import qs.services
 
 RowLayout {
     id: root
 
     spacing: 8
-    // breathing room before the next module (active window)
     Layout.rightMargin: 14
 
     property HyprlandMonitor monitor: Hyprland.monitorFor(screen)
 
-    // this screen's active workspace id — using focusedMonitor here (old
-    // logic) left every non-focused monitor's bar without an active pill
     readonly property int activeWsId: monitor?.activeWorkspace?.id ?? -1
-
-    // socket events bump the shared WorkspaceService revision + a short
-    // poll keeps both the workspace list and its app icons fresh; the cache
-    // keeps list identity stable between real changes so delegates don't churn
     readonly property int wsRev: WorkspaceService.revision
 
-    // event-driven list refresh — the service's coalesced revision bump
-    // replays here so workspace open/close still reflects immediately,
-    // not just at poll ticks
     onWsRevChanged: root.refresh()
 
-    // imperative refresh — bindings must never write their own dependencies,
-    // or QML kills the loop and updates stall (the old binding-loop bug)
-    //
-    // CRITICAL: model writes are queued via Qt.callLater instead of running
-    // inline. A synchronous `wsModel.values = …` inside onRawEvent/timer used
-    // to incubate delegates while applyIcons() (fired from
-    // Component.onCompleted mid-incubation) performed a NESTED setModel on
-    // the inner icons Repeater — that re-entrancy segfaults Qt's delegate
-    // model (VDMListDelegateDataType::createMissingProperties), killing
-    // quickshell while it holds the popup input grab → frozen desktop.
     property bool _refreshQueued: false
 
     function refresh() {
         if (_refreshQueued)
-            return; // coalesce bursts — one pass per event-loop cycle is enough
+            return;
         _refreshQueued = true;
         Qt.callLater(() => {
             _refreshQueued = false;
@@ -55,40 +34,19 @@ RowLayout {
     }
 
     function doRefresh() {
-        const activeId = root.activeWsId;
-        const list = [...Hyprland.workspaces.values].filter(ws => {
+        let list = [...Hyprland.workspaces.values].filter(ws => {
             if (!ws || ws.monitor !== monitor || (ws.name ?? "").includes("special"))
                 return false;
-            if (!/^\d+$/.test(ws.name))
-                return true; // named workspaces always shown
-            // numeric empties pass through here and are collapsed to one
-            // pill after the sort below — the ACTIVE empty workspace wins
-            // that collapse (the old filter kept the first-seen empty, so
-            // the pill for the workspace you were actually on could vanish
-            // the moment a second empty existed)
             return true;
         });
         list.sort((a, b) => a.id - b.id);
 
-        // empty-numeric collapse: keep exactly one — the active one if it is
-        // empty, otherwise the lowest-numbered empty
-        let result = list;
-        const empties = list.filter(ws => /^\d+$/.test(ws.name) && (ws.lastIpcObject?.windows ?? 0) === 0 && ws.id !== activeId);
-        if (empties.length > 1) {
-            const drop = new Set(empties.slice(1).map(w => w.id));
-            result = list.filter(ws => !drop.has(ws.id));
-        }
-
-        const sig = result.map(w => String(w.id)).join(",");
-        // TEMP icondbg: per-ws toplevel counts vs displayed list
-        // console.log(`[icondbg] doRefresh sig=${sig} rev=${root.wsRev} tls=[${result.map(w => (w.toplevels?.values.length ?? -1)).join(",")}]`);
+        const sig = list.map(w => String(w.id)).join(",");
         if (sig !== _listSig) {
             _listSig = sig;
-            _listCache = result;
-            wsModel.values = result;
+            _listCache = list;
+            wsModel.values = list;
         }
-        // icon pass runs AFTER incubation settles — never nested inside the
-        // model-change notification above
         Qt.callLater(() => {
             for (let i = 0; i < wsRepeater.count; i++) {
                 const blk = wsRepeater.itemAt(i);
@@ -102,11 +60,7 @@ RowLayout {
         interval: 750
         running: root.visible
         repeat: true
-        onTriggered: {
-            // local re-read only — bumping the shared WorkspaceService
-            // revision every tick made all bars' bindings churn forever
-            root.refresh();
-        }
+        onTriggered: root.refresh()
     }
 
     property string _listSig: ""
@@ -119,7 +73,6 @@ RowLayout {
 
         model: ScriptModel {
             id: wsModel
-
             values: []
         }
 
@@ -131,15 +84,12 @@ RowLayout {
 
             property bool isActive: root.activeWsId === (ws?.id ?? -2)
 
-            // urgency lives in WorkspaceService (tracked from socket events)
             readonly property bool urgent: {
                 const _rev = root.wsRev;
                 return WorkspaceService.isUrgent(ws?.id ?? -1);
             }
             readonly property bool hovered: mouseArea.containsMouse
 
-            // live app icons for this workspace — updated imperatively by
-            // root.refresh(); identity stays stable so delegates never churn
             property var clientIcons: []
 
             property bool _alive: true
@@ -150,9 +100,6 @@ RowLayout {
                 const sig = icons.map(i => i.source + ":" + i.count).join("|");
                 if (sig !== _iconSig) {
                     _iconSig = sig;
-                    // queued, never inline: assigning clientIcons swaps the
-                    // inner Repeater's model, which must not happen while
-                    // this delegate itself is mid-incubation
                     Qt.callLater(() => {
                         if (rootBlock._alive)
                             rootBlock.clientIcons = icons;
@@ -166,44 +113,38 @@ RowLayout {
 
             dim: false
 
-            radius: height / 2
+            readonly property bool boxy: MiscState.boxyTheme
 
-            border.width: isActive ? 1 : 0
-            border.color: urgent ? "#ff5555" : Themes.activeHasClientsBorder
+            radius: boxy ? Themes.boxyRadius : height / 2
 
-            color: isActive ? Qt.rgba(0.741, 0.576, 0.976, 0.18) : hovered ? Qt.rgba(1, 1, 1, 0.07) : "transparent"
+            border.width: boxy ? (isActive ? Themes.boxyBorderWidth : 0) : (isActive ? 1 : 0)
+            border.color: urgent ? "#ff5555" : boxy ? Themes.boxyActiveBorder : Themes.activeHasClientsBorder
+
+            color: boxy
+                ? (isActive ? Themes.boxyActiveBg : hovered ? Themes.boxyHoverBg : "transparent")
+                : (isActive ? Qt.rgba(0.741, 0.576, 0.976, 0.18) : hovered ? Qt.rgba(1, 1, 1, 0.07) : "transparent")
 
             Behavior on color {
-                ColorAnimation {
-                    duration: 120
-                }
+                ColorAnimation { duration: 200; easing.type: Easing.OutQuad }
             }
             Behavior on border.color {
-                ColorAnimation {
-                    duration: 120
-                }
+                ColorAnimation { duration: 200; easing.type: Easing.OutQuad }
             }
 
-            // slim pills — tight vertical fit everywhere, and the active
-            // workspace gets the leanest horizontal padding so it reads as
-            // a sleek highlight instead of a chunky container
             implicitHeight: content.implicitHeight + 4
             Layout.preferredWidth: content.implicitWidth + (isActive ? 8 : 12)
             Layout.preferredHeight: content.implicitHeight + 4
 
-            // urgent workspaces pulse until visited
+            Behavior on Layout.preferredWidth {
+                NumberAnimation { duration: 200; easing.type: Easing.OutQuad }
+            }
+
             SequentialAnimation on opacity {
                 running: rootBlock.urgent && !rootBlock.isActive
                 loops: Animation.Infinite
                 alwaysRunToEnd: true
-                NumberAnimation {
-                    to: 0.45
-                    duration: 420
-                }
-                NumberAnimation {
-                    to: 1
-                    duration: 420
-                }
+                NumberAnimation { to: 0.45; duration: 420 }
+                NumberAnimation { to: 1; duration: 420 }
             }
 
             onClicked: function () {
@@ -214,14 +155,31 @@ RowLayout {
             content: RowLayout {
                 id: iconRow
 
-                spacing: 4
+                spacing: 0
 
-                BarText {
-                    text: String(rootBlock.ws?.id ?? "")
-                    pointSize: 10
-                    dim: !rootBlock.isActive
-                    color: rootBlock.isActive ? Themes.activeTextColor : Themes.inactiveTextColor
-                    leftPadding: 0
+                // workspace number badge — visible in both themes
+                Rectangle {
+                    Layout.fillHeight: true
+                    implicitWidth: boxy ? 20 : 18
+                    radius: boxy ? Themes.boxyRadius : height / 2
+                    color: rootBlock.isActive
+                        ? (boxy ? Qt.rgba(0.74, 0.58, 0.98, 0.35) : Qt.rgba(0.741, 0.576, 0.976, 0.25))
+                        : (boxy ? Qt.rgba(0.74, 0.58, 0.98, 0.12) : Qt.rgba(1, 1, 1, 0.06))
+
+                    Behavior on color {
+                        ColorAnimation { duration: 200; easing.type: Easing.OutQuad }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: String(rootBlock.ws?.id ?? "")
+                        color: rootBlock.isActive ? "#bd93f9" : (boxy ? Qt.rgba(0.74, 0.58, 0.98, 0.6) : Qt.rgba(1, 1, 1, 0.5))
+                        font {
+                            pixelSize: 9
+                            bold: rootBlock.isActive
+                            family: "ZedMono Nerd Font"
+                        }
+                    }
                 }
 
                 Repeater {
@@ -236,6 +194,7 @@ RowLayout {
                         readonly property int count: modelData.count
 
                         Layout.alignment: Qt.AlignVCenter
+                        Layout.leftMargin: 2
                         implicitWidth: 16
                         implicitHeight: 16
 
@@ -246,18 +205,11 @@ RowLayout {
                             asynchronous: true
                             opacity: rootBlock.isActive ? 1 : 0.65
 
-                            layer.enabled: true
-                            layer.effect: MultiEffect {
-                                shadowEnabled: true
-                                shadowVerticalOffset: 1
-                                shadowHorizontalOffset: 1
-                                shadowBlur: 0.5
-                                shadowColor: Themes.dropShadow
-                                shadowOpacity: rootBlock.isActive ? 1 : 0.2
+                            Behavior on opacity {
+                                NumberAnimation { duration: 200; easing.type: Easing.OutQuad }
                             }
                         }
 
-                        // multiplicity badge — N clients sharing this app class
                         Text {
                             visible: parent.count > 1
                             anchors.right: parent.right

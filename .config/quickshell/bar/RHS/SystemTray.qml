@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.customItems
 import qs.services
+import qs.themes
 import qs.bar
 import qs.bar.quicksettings
 import qs.bar.time
@@ -49,11 +50,7 @@ RowLayout {
     }
     Component {
         id: sysBlock
-        // standalone tray pill with a DISTINCT glass finish so it reads as
-        // its own surface, separate from the bar slab and neighbouring
-        // modules:
-        //   transparent bar → brighter frosted glass + visible hairline
-        //   solid / full bar → lifted slate pill, clearly not bar background
+        // standalone tray pill — boxy or glass depending on toggle
         BarBlock {
             id: traySlab
 
@@ -64,12 +61,13 @@ RowLayout {
 
             visible: traySlab.content ? traySlab.content.trayCount > 0 : false
 
-            readonly property bool glassy: BarState.barMode === 0
+            readonly property bool boxy: MiscState.boxyTray
+            readonly property bool solo: traySlab.content ? traySlab.content.singleItem : false
 
-            radius: height / 2
-            color: glassy ? Qt.rgba(1, 1, 1, 0.16) : "#3b3f54"
-            border.width: 1
-            border.color: glassy ? Qt.rgba(0.74, 0.58, 0.98, 0.28) : Qt.rgba(0.74, 0.58, 0.98, 0.18)
+            radius: boxy ? Themes.boxyRadius : height / 2
+            color: solo ? "transparent" : (boxy ? Themes.boxyActiveBg : (BarState.barMode === 0 ? Qt.rgba(1, 1, 1, 0.16) : "#3b3f54"))
+            border.width: solo ? 0 : 1
+            border.color: solo ? "transparent" : (boxy ? Themes.boxyActiveBorder : (BarState.barMode === 0 ? Qt.rgba(0.74, 0.58, 0.98, 0.28) : Qt.rgba(0.74, 0.58, 0.98, 0.18)))
 
             Behavior on color {
                 ColorAnimation {

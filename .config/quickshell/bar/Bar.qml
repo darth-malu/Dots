@@ -36,20 +36,23 @@ ShellRoot {
             implicitHeight: 26
 
             margins {
-                // Full mode is edge-to-edge — no side margins at all
-                right: BarState.barMode === 2 ? 0 : 10
-                left: BarState.barMode === 2 ? 0 : 6
+                // Full and glass modes are edge-to-edge — no side margins
+                right: BarState.barMode >= 2 ? 0 : 10
+                left: BarState.barMode >= 2 ? 0 : 6
                 top: 0
             }
 
             // Solid slab (mode 1): rounded, hairline border, side margins.
             // Full slab (mode 2): true full-bleed — square corners, no border.
+            // Glass (mode 3): edge-to-edge, semi-transparent colored bg.
             Rectangle {
                 visible: BarState.barMode !== 0
                 anchors.fill: parent
-                radius: BarState.barMode === 2 ? 0 : 4
-                color: "#181825"
-                border.width: BarState.barMode === 2 ? 0 : 1
+                radius: BarState.barMode === 2 || BarState.barMode === 3 ? 0 : 4
+                color: BarState.barMode === 3
+                    ? Qt.rgba(0.74, 0.58, 0.98, 0.18)
+                    : "#181825"
+                border.width: BarState.barMode >= 2 ? 0 : 1
                 border.color: "#313244"
                 z: -1
             }
@@ -79,13 +82,13 @@ ShellRoot {
 
                 RowLayout {
                     id: leftBlock
-                    // spacing: 0.4
-                    spacing: 10
+                    spacing: MiscState.showWorkspaces ? 10 : 0
                     Layout.alignment: Qt.AlignLeft
                     Layout.leftMargin: 6
 
                     // workspace module — icons (default) or numbers, swappable live
                     Loader {
+                        visible: MiscState.showWorkspaces
                         sourceComponent: MiscState.iconWorkspaces ? iconWorkspacesComp : numWorkspacesComp
                     }
 

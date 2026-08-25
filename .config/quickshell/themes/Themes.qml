@@ -162,4 +162,11 @@ Singleton {
             pixelSize: 12,
             bold: true
         })
+
+    // Boxy design theme — nearly square corners, stronger active bg
+    readonly property real boxyRadius: 2
+    readonly property color boxyActiveBg: Qt.rgba(0.74, 0.58, 0.98, 0.25)
+    readonly property color boxyHoverBg: Qt.rgba(1, 1, 1, 0.08)
+    readonly property color boxyActiveBorder: Qt.rgba(0.74, 0.58, 0.98, 0.45)
+    readonly property int boxyBorderWidth: 1
 }

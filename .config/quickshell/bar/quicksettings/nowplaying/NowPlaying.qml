@@ -187,8 +187,6 @@ ClippingRectangle {
     }
 
     // ── COMPACT VIEW ──
-    // pinned to the card top with its base height so the
-    // chooser drawer can claim the space below it
     Item {
         id: compactView
         visible: card.compactNowPlaying
@@ -199,27 +197,15 @@ ClippingRectangle {
         }
         height: baseCardHeight
 
-        // TODO: have trackbutton here
-        TrackButton {
-            text: "+"
-            ghost: true
-            // accentColor: "#6272a4"
-            accentColor: card.color
-            onClicked: card.compactNowPlaying = false
-            // Layout.rightMargin: 4
-            anchors {
-                right: parent.right
-                top: parent.top
-                rightMargin: 2
-                topMargin: 2
-            }
+        property bool controlsRevealed: false
+
+        onVisibleChanged: {
+            if (visible)
+                controlsRevealed = false;
         }
 
-        // (chooser chevron lives in the controls row below,
-        // bottom-right on the same line as the track buttons)
         RowLayout {
             anchors.fill: parent
-            // spacing: 10
 
             ClippingRectangle {
                 id: compactArt
@@ -228,7 +214,6 @@ ClippingRectangle {
 
                 Layout.fillHeight: true
                 Layout.minimumWidth: height
-                // radius: 2
                 color: compactArtImage.status === Image.Ready ? Qt.rgba(card.dominantColor.r, card.dominantColor.g, card.dominantColor.b, 0.15) : "#343746"
 
                 border {
@@ -248,7 +233,6 @@ ClippingRectangle {
 
                 Text {
                     anchors.centerIn: parent
-                    // browser glyph for browsers, music note for anyone else without art
                     text: !MprisState.cardPlayer ? "" : MprisState.isBrowserPlayer(MprisState.cardPlayer) ? MprisState.browserGlyph(MprisState.cardPlayer) : "\uf001"
                     color: "#6272a4"
                     font {
@@ -258,7 +242,6 @@ ClippingRectangle {
                     visible: compactArtImage.status !== Image.Ready
                 }
 
-                // ── volume HUD — scrimmed over the art ──
                 Rectangle {
                     anchors.fill: parent
                     radius: 6
@@ -266,10 +249,7 @@ ClippingRectangle {
                     visible: card.showVolumeBadge
                     opacity: visible ? 1 : 0
                     Behavior on opacity {
-                        NumberAnimation {
-                            duration: 140
-                            easing.type: Easing.OutQuad
-                        }
+                        NumberAnimation { duration: 140; easing.type: Easing.OutQuad }
                     }
 
                     Text {
@@ -285,197 +265,210 @@ ClippingRectangle {
                 }
             }
 
-            // ── Info panel ──
-            ColumnLayout {
+            // ── Right panel — title pinned bottom, controls slide up ──
+            Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                spacing: 2
 
-                // ── Title + row ──
-                // right margin keeps the marquee clear of the
-                // + / player-switch buttons in the top-right
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.rightMargin: 34
+                // title + artist pinned to bottom-left
+                ColumnLayout {
+                    id: compactInfoCol
+
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    anchors.leftMargin: 4
+                    anchors.rightMargin: 34
+                    anchors.bottomMargin: 6
+                    spacing: 1
+
+                    TapHandler {
+                        acceptedButtons: Qt.LeftButton
+                        gesturePolicy: TapHandler.ReleaseWithinBounds
+                        cursorShape: Qt.PointingHandCursor
+                        onTapped: compactView.controlsRevealed = !compactView.controlsRevealed
+                    }
+
+                    MarqueeText {
+                        Layout.fillWidth: true
+                        scrolling: MprisState.marqueeEnabled
+                        text: MprisState.cardPlayer?.trackTitle || "No track"
+                        textColor: "#f8f8f2"
+                        fontFamily: "Quicksand"
+                        fontBold: true
+                        pixelSize: 11
+                        maxWidth: 4096
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: MprisState.cardPlayer?.trackArtist || ""
+                        color: "#b8bfcb"
+                        font {
+                            pixelSize: 10
+                            family: "Quicksand"
+                            bold: true
+                        }
+                        elide: Text.ElideRight
+                        maximumLineCount: 1
+                        visible: text.length > 0
+                    }
+                }
+
+                // controls that slide up from above the title
+                ColumnLayout {
+                    id: compactRevealCol
+
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: compactInfoCol.top
+                    anchors.leftMargin: 4
+                    anchors.rightMargin: 6
+                    anchors.bottomMargin: 4
                     spacing: 4
 
-                    ColumnLayout {
+                    enabled: compactView.controlsRevealed
+                    opacity: compactView.controlsRevealed ? 1 : 0
+
+                    Behavior on opacity {
+                        NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                    }
+
+                    transform: Translate {
+                        y: compactView.controlsRevealed ? 0 : 12
+
+                        Behavior on y {
+                            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                        }
+                    }
+
+                    // progress bar
+                    Item {
                         Layout.fillWidth: true
-                        spacing: 1
+                        Layout.preferredHeight: 10
 
-                        MarqueeText {
-                            Layout.fillWidth: true
-                            scrolling: MprisState.marqueeEnabled
-                            text: MprisState.cardPlayer?.trackTitle || "No track"
-                            textColor: "#f8f8f2"
-                            fontFamily: "Quicksand"
-                            fontBold: true
-                            pixelSize: 11
-                            maxWidth: 4096
+                        readonly property real ratio: {
+                            card.progressTick;
+                            var p = MprisState.cardPlayer;
+                            if (!p) return 0;
+                            var pos = p.position;
+                            var len = p.length;
+                            if (pos == null || len == null || len <= 0 || isNaN(pos) || isNaN(len))
+                                return 0;
+                            return Math.min(pos / len, 1);
                         }
 
-                        Text {
-                            Layout.fillWidth: true
-                            text: MprisState.cardPlayer?.trackArtist || ""
-                            color: "#b8bfcb"
-                            font {
-                                pixelSize: 10
-                                // family: "ZedMono Nerd Font"
-                                family: "Quicksand"
-                                bold: true
-                            }
-                            elide: Text.ElideRight
-                            maximumLineCount: 1
-                            visible: text.length > 0
-                        }
-                    }
-                }
+                        HoverHandler { id: seekHover }
 
-                Item {
-                    Layout.fillWidth: true
-                }
-
-                // ── Progress bar ──
-                Item {
-                    id: seekBar
-
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 10
-                    Layout.rightMargin: 6
-
-                    readonly property real ratio: {
-                        card.progressTick;
-                        var p = MprisState.cardPlayer;
-                        if (!p)
-                            return 0;
-                        var pos = p.position;
-                        var len = p.length;
-                        if (pos == null || len == null || len <= 0 || isNaN(pos) || isNaN(len))
-                            return 0;
-                        return Math.min(pos / len, 1);
-                    }
-
-                    HoverHandler {
-                        id: seekHover
-                    }
-
-                    // track — thickens slightly under the cursor
-                    Rectangle {
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        height: seekHover.hovered ? 5 : 3
-                        radius: height / 2
-                        color: Qt.rgba(1, 1, 1, 0.09)
-
-                        Behavior on height {
-                            NumberAnimation {
-                                duration: 120
-                                easing.type: Easing.OutQuad
-                            }
-                        }
-
-                        // fill with a soft sheen toward the playhead
                         Rectangle {
-                            width: parent.width * seekBar.ratio
-                            height: parent.height
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            height: seekHover.hovered ? 5 : 3
                             radius: height / 2
-                            color: card.dominantColor
+                            color: Qt.rgba(1, 1, 1, 0.09)
 
-                            Behavior on width {
-                                NumberAnimation {
-                                    duration: 200
-                                    easing.type: Easing.Linear
-                                }
+                            Behavior on height {
+                                NumberAnimation { duration: 120; easing.type: Easing.OutQuad }
                             }
 
                             Rectangle {
-                                anchors.fill: parent
-                                radius: parent.radius
-                                visible: seekHover.hovered
-                                gradient: Gradient {
-                                    orientation: Gradient.Horizontal
-                                    GradientStop {
-                                        position: 0
-                                        color: Qt.rgba(1, 1, 1, 0)
-                                    }
-                                    GradientStop {
-                                        position: 1
-                                        color: Qt.rgba(1, 1, 1, 0.25)
+                                width: parent.width * parent.parent.ratio
+                                height: parent.height
+                                radius: height / 2
+                                color: card.dominantColor
+
+                                Behavior on width {
+                                    NumberAnimation { duration: 200; easing.type: Easing.Linear }
+                                }
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: parent.radius
+                                    visible: seekHover.hovered
+                                    gradient: Gradient {
+                                        orientation: Gradient.Horizontal
+                                        GradientStop { position: 0; color: Qt.rgba(1, 1, 1, 0) }
+                                        GradientStop { position: 1; color: Qt.rgba(1, 1, 1, 0.25) }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    // playhead knob — appears on hover
-                    Rectangle {
-                        anchors.verticalCenter: parent.verticalCenter
-                        x: (parent.width - width) * seekBar.ratio
-                        width: seekHover.hovered ? 9 : 0
-                        height: width
-                        radius: width / 2
-                        color: "#f8f8f2"
-                        border.width: 2
-                        border.color: card.dominantColor
+                        Rectangle {
+                            anchors.verticalCenter: parent.verticalCenter
+                            x: (parent.width - width) * parent.ratio
+                            width: seekHover.hovered ? 9 : 0
+                            height: width
+                            radius: width / 2
+                            color: "#f8f8f2"
+                            border.width: 2
+                            border.color: card.dominantColor
 
-                        Behavior on width {
-                            NumberAnimation {
-                                duration: 120
-                                easing.type: Easing.OutQuad
+                            Behavior on width {
+                                NumberAnimation { duration: 120; easing.type: Easing.OutQuad }
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: mouse => {
+                                var p = MprisState.cardPlayer;
+                                if (p && p.length > 0)
+                                    p.position = (mouse.x / width) * p.length;
                             }
                         }
                     }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: mouse => {
-                            var p = MprisState.cardPlayer;
-                            if (p && p.length > 0)
-                                p.position = (mouse.x / width) * p.length;
+                    // transport controls
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 2
+
+                        TrackButton {
+                            text: "\uf048"
+                            flat: true
+                            accentColor: "#8be9fd"
+                            onClicked: MprisState.cardPlayer?.previous()
+                        }
+                        TrackButton {
+                            text: MprisState.cardPlayer?.isPlaying ? "\uf04c" : "\uf04b"
+                            flat: true
+                            accentColor: "#bd93f9"
+                            onClicked: MprisState.cardPlayer?.togglePlaying()
+                        }
+                        TrackButton {
+                            text: "\uf050"
+                            flat: true
+                            accentColor: "#ff79c6"
+                            onClicked: MprisState.cardPlayer?.next()
                         }
                     }
                 }
+            }
+        }
 
-                // ── Controls ──
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 2
-                    Item {
-                        Layout.fillWidth: true
-                    }
-                    TrackButton {
-                        text: "\uf048"
-                        flat: true
-                        accentColor: "#8be9fd"
-                        onClicked: MprisState.cardPlayer?.previous()
-                    }
-                    TrackButton {
-                        id: compactPlay
+        TrackButton {
+            text: "+"
+            ghost: true
+            accentColor: card.color
+            onClicked: card.compactNowPlaying = false
+            anchors {
+                right: parent.right
+                top: parent.top
+                rightMargin: 2
+                topMargin: 2
+            }
+        }
 
-                        text: MprisState.cardPlayer?.isPlaying ? "\uf04c" : "\uf04b"
-                        flat: true
-                        accentColor: "#bd93f9"
-                        onClicked: MprisState.cardPlayer?.togglePlaying()
-                    }
-                    TrackButton {
-                        text: "\uf050"
-                        flat: true
-                        accentColor: "#ff79c6"
-                        onClicked: MprisState.cardPlayer?.next()
-                    }
-                    Item {
-                        Layout.fillWidth: true
-                    }
-                    // player chooser — bottom-right, same row
-                    // as the transport; only with >1 player
-                    ChooserChevron {
-                        visible: card.chooserAvailable
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-                }
+        ChooserChevron {
+            visible: card.chooserAvailable
+            anchors {
+                right: parent.right
+                bottom: parent.bottom
+                rightMargin: 6
+                bottomMargin: 6
             }
         }
     }
@@ -544,17 +537,63 @@ ClippingRectangle {
         Item {
             anchors.fill: parent
 
-            // ── seek bar + transport — slide up above
-            // the track text once revealed ──
+            // ── track text — top left ──
+            ColumnLayout {
+                id: expInfoCol
+
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.leftMargin: 8
+                anchors.rightMargin: 34
+                anchors.topMargin: 8
+                spacing: 1
+
+                MarqueeText {
+                    Layout.fillWidth: true
+                    text: MprisState.cardPlayer?.trackTitle || "No track"
+                    textColor: "#ffffff"
+                    fontFamily: "quicksand"
+                    fontBold: true
+                    pixelSize: 18
+                    maxWidth: 420
+                }
+
+                MarqueeText {
+                    Layout.fillWidth: true
+                    visible: text.length > 0
+                    text: MprisState.cardPlayer?.trackArtist || ""
+                    textColor: Qt.rgba(1, 1, 1, 0.7)
+                    fontFamily: "ZedMono Nerd Font"
+                    fontBold: false
+                    pixelSize: 12
+                    maxWidth: 420
+                }
+
+                HoverHandler {
+                    id: expInfoHover
+                }
+
+                // tap anywhere on the track text to raise/hide
+                // the seek bar + transport
+                TapHandler {
+                    acceptedButtons: Qt.LeftButton
+                    gesturePolicy: TapHandler.ReleaseWithinBounds
+                    cursorShape: Qt.PointingHandCursor
+                    onTapped: card.expControlsRevealed = !card.expControlsRevealed
+                }
+            }
+
+            // ── seek bar + transport — below the track text ──
             ColumnLayout {
                 id: expRevealCol
 
                 anchors.left: parent.left
                 anchors.right: parent.right
-                anchors.bottom: expInfoCol.top
+                anchors.top: expInfoCol.bottom
                 anchors.leftMargin: 12
                 anchors.rightMargin: 12
-                anchors.bottomMargin: 8
+                anchors.topMargin: 8
                 spacing: 6
 
                 enabled: card.expControlsRevealed
@@ -685,59 +724,6 @@ ClippingRectangle {
                     Item {
                         Layout.fillWidth: true
                     }
-                }
-            }
-
-            // ── track text — bottom left · clicking it
-            // raises / hides the seek bar + transport.
-            // right-anchored so long titles stay inside
-            // the card and marquee-scroll ──
-            ColumnLayout {
-                id: expInfoCol
-
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                // snug to the image edge — thin margins only
-                anchors.leftMargin: 8
-                anchors.rightMargin: 34
-                anchors.bottomMargin: 6
-                spacing: 1
-
-                MarqueeText {
-                    Layout.fillWidth: true
-                    text: MprisState.cardPlayer?.trackTitle || "No track"
-                    textColor: "#ffffff"
-                    // fontFamily: "FantasqueSansM Nerd Font"
-                    fontFamily: "quicksand"
-                    fontBold: true
-                    pixelSize: 18
-                    maxWidth: 420
-                }
-
-                MarqueeText {
-                    Layout.fillWidth: true
-                    visible: text.length > 0
-                    text: MprisState.cardPlayer?.trackArtist || ""
-                    textColor: Qt.rgba(1, 1, 1, 0.7)
-                    fontFamily: "ZedMono Nerd Font"
-                    fontBold: false
-                    pixelSize: 12
-                    maxWidth: 420
-                }
-
-                HoverHandler {
-                    id: expInfoHover
-                }
-
-                // tap anywhere on the track text to raise/hide
-                // the seek bar + transport (handler, not a layout
-                // child — keeps the column geometry untouched)
-                TapHandler {
-                    acceptedButtons: Qt.LeftButton
-                    gesturePolicy: TapHandler.ReleaseWithinBounds
-                    cursorShape: Qt.PointingHandCursor
-                    onTapped: card.expControlsRevealed = !card.expControlsRevealed
                 }
             }
         }

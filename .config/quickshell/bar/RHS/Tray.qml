@@ -10,10 +10,12 @@ RowLayout {
     spacing: 6
 
     readonly property int trayCount: _repeater.count
+    readonly property bool singleItem: _repeater.count <= 1
 
     // horizontal pill padding lives inside the content row so
     // the slab's implicit width always covers it
     Item {
+        visible: !_repeater.singleItem
         Layout.preferredWidth: 1
     }
 
@@ -126,6 +128,7 @@ RowLayout {
     // horizontal pill padding lives inside the content row so
     // the slab's implicit width always covers it
     Item {
+        visible: !_repeater.singleItem
         Layout.preferredWidth: 1
     }
 }

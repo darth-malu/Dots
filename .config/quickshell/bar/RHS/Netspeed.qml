@@ -1,6 +1,7 @@
 import QtQuick
 import qs.services
 import qs.customItems
+import qs.themes
 import Quickshell
 import Quickshell.Io
 import QtQuick.Layouts
@@ -27,7 +28,10 @@ Loader {
         implicitWidth: content.implicitWidth
         implicitHeight: content.implicitHeight
 
-        color: NetworkState.netspeedVisible ? Qt.rgba(0.74, 0.58, 0.98, 0.15) : "transparent"
+        radius: Themes.boxyRadius
+        color: NetworkState.netspeedVisible ? Themes.boxyActiveBg : "transparent"
+        border.width: NetworkState.netspeedVisible ? 1 : 0
+        border.color: Themes.boxyActiveBorder
 
         property int refreshInterval: NetworkState.netInterval
         property string iface
@@ -268,6 +272,7 @@ Loader {
         content: RowLayout {
             id: netRow
             spacing: 6
+            Layout.leftMargin: 2
 
             // breathing room so text/icons never hug the pill edge
             // Item {
@@ -322,7 +327,7 @@ Loader {
                 }
             }
 
-            // ── rates — sleek micro readout: pastel direction glyphs,
+            // ── rates — sleek micro readout: Dracula color-coded values,
             // fixed-width values (no jitter), tight vertical rhythm ──
             RowLayout {
                 visible: NetworkState.netspeedVisible && root.online
@@ -332,7 +337,7 @@ Loader {
                     spacing: 3
 
                     Text {
-                        text: "\u2b07"
+                        text: "\u2193"
                         color: "#bd93f9"
                         font {
                             pixelSize: 9
@@ -343,7 +348,7 @@ Loader {
                     Text {
                         Layout.preferredWidth: 26
                         text: root.fmtRate(root.rxRate)
-                        color: "#e2d6fb"
+                        color: "#bd93f9"
                         font {
                             pixelSize: 10
                             weight: Font.DemiBold
@@ -364,7 +369,7 @@ Loader {
                     spacing: 3
 
                     Text {
-                        text: "\u2b06"
+                        text: "\u2191"
                         color: "#ff79c6"
                         font {
                             pixelSize: 9
@@ -375,7 +380,7 @@ Loader {
                     Text {
                         Layout.preferredWidth: 26
                         text: root.fmtRate(root.txRate)
-                        color: "#ffd3ea"
+                        color: "#ff79c6"
                         font {
                             pixelSize: 10
                             weight: Font.DemiBold
