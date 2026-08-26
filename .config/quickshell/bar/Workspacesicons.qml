@@ -120,35 +120,49 @@ RowLayout {
 
             radius: isEmpty ? 0 : (boxy ? Themes.boxyRadius : height / 2)
 
-            border.width: isEmpty ? 0 : (boxy ? (isActive ? Themes.boxyBorderWidth : 0) : (isActive ? 1 : 0))
-            border.color: urgent ? "#ff5555" : boxy ? Themes.boxyActiveBorder : Themes.activeHasClientsBorder
+            // border.width: isEmpty ? 0 : (boxy ? (isActive ? Themes.boxyBorderWidth : 0) : (isActive ? 1 : 0))
+            // border.width: isEmpty ? 0 : (boxy ? (isActive ? Themes.boxyBorderWidth : 0) : (isActive ? 1 : 0))
+            // border.color: urgent ? "#ff5555" : boxy ? Themes.boxyActiveBorder : Themes.activeHasClientsBorder
 
-            color: isEmpty ? "transparent"
-                : boxy
-                ? (isActive ? Themes.boxyActiveBg : "transparent")
-                : (isActive ? Qt.rgba(0.741, 0.576, 0.976, 0.18) : "transparent")
+            color: isEmpty ? "transparent" : boxy ? (isActive ? Themes.boxyActiveBg : "transparent") : (isActive ? Qt.rgba(0.741, 0.576, 0.976, 0.18) : "transparent")
 
             Behavior on color {
-                ColorAnimation { duration: 200; easing.type: Easing.OutQuad }
+                ColorAnimation {
+                    duration: 200
+                    easing.type: Easing.OutQuad
+                }
             }
             Behavior on border.color {
-                ColorAnimation { duration: 200; easing.type: Easing.OutQuad }
+                ColorAnimation {
+                    duration: 200
+                    easing.type: Easing.OutQuad
+                }
             }
 
-            implicitHeight: content.implicitHeight + 4
-            Layout.preferredWidth: isEmpty ? content.implicitWidth : (content.implicitWidth + (isActive ? 8 : 12))
-            Layout.preferredHeight: content.implicitHeight + 4
+            // implicitHeight: content.implicitHeight// 4
+            // Layout.preferredWidth: isEmpty ? content.implicitWidth : (content.implicitWidth + (isActive ? 8 : 12))
+            Layout.preferredWidth: content.implicitWidth
+            Layout.preferredHeight: content.implicitHeight // 4
 
             Behavior on Layout.preferredWidth {
-                NumberAnimation { duration: 200; easing.type: Easing.OutQuad }
+                NumberAnimation {
+                    duration: 200
+                    easing.type: Easing.OutQuad
+                }
             }
 
             SequentialAnimation on opacity {
                 running: rootBlock.urgent && !rootBlock.isActive
                 loops: Animation.Infinite
                 alwaysRunToEnd: true
-                NumberAnimation { to: 0.45; duration: 420 }
-                NumberAnimation { to: 1; duration: 420 }
+                NumberAnimation {
+                    to: 0.45
+                    duration: 420
+                }
+                NumberAnimation {
+                    to: 1
+                    duration: 420
+                }
             }
 
             onClicked: function () {
@@ -163,28 +177,35 @@ RowLayout {
 
                 // workspace number badge — visible in both themes
                 Rectangle {
+                    id: numberContainer
                     visible: !rootBlock.isEmpty
+                    // Layout.fillHeight: true
                     Layout.fillHeight: true
-                    implicitWidth: boxy ? 20 : 18
-                    radius: boxy ? Themes.boxyRadius : height / 2
-                    color: rootBlock.isActive
-                        ? (boxy ? Qt.rgba(0.74, 0.58, 0.98, 0.35) : Qt.rgba(0.741, 0.576, 0.976, 0.25))
-                        : "transparent"
+                    Layout.rightMargin: 4 // TODO: only ifIcons
+                    // implicitWidth: boxy ? 20 : 18
+                    implicitWidth: 18
+                    implicitHeight: width
+                    // radius: boxy ? Themes.boxyRadius : height / 2
+                    radius: 1
+                    color: rootBlock.isActive ? (boxy ? Qt.rgba(0.74, 0.58, 0.98, 0.30) : Qt.rgba(0.741, 0.576, 0.976, 0.25)) : "transparent"
 
                     Behavior on color {
-                        ColorAnimation { duration: 200; easing.type: Easing.OutQuad }
+                        ColorAnimation {
+                            duration: 200
+                            easing.type: Easing.OutQuad
+                        }
                     }
 
                     Text {
                         anchors.centerIn: parent
+                        // anchors.horizontalCenter: parent.horizontalCenter
+                        // anchors.verticalCenter: parent.verticalCenter
                         text: String(rootBlock.ws?.id ?? "")
-                        color: rootBlock.isActive ? "#bd93f9"
-                            : rootBlock.isEmpty ? Qt.rgba(1, 1, 1, 0.35)
-                            : (boxy ? Qt.rgba(0.74, 0.58, 0.98, 0.6) : Qt.rgba(1, 1, 1, 0.5))
+                        color: rootBlock.isActive ? "#bd93f9" : rootBlock.isEmpty ? Qt.rgba(1, 1, 1, 0.35) : (boxy ? Qt.rgba(0.74, 0.58, 0.98, 0.6) : Qt.rgba(1, 1, 1, 0.5))
                         font {
-                            pixelSize: 9
+                            pixelSize: 12
                             bold: rootBlock.isActive
-                            family: "ZedMono Nerd Font"
+                            family: "Monofur Nerd Font"
                         }
                     }
                 }
@@ -213,7 +234,10 @@ RowLayout {
                             opacity: rootBlock.isActive ? 1 : 0.65
 
                             Behavior on opacity {
-                                NumberAnimation { duration: 200; easing.type: Easing.OutQuad }
+                                NumberAnimation {
+                                    duration: 200
+                                    easing.type: Easing.OutQuad
+                                }
                             }
                         }
 
@@ -221,8 +245,8 @@ RowLayout {
                             visible: parent.count > 1
                             anchors.right: parent.right
                             anchors.bottom: parent.bottom
-                            anchors.rightMargin: -2
-                            anchors.bottomMargin: -3
+                            // anchors.rightMargin: -2
+                            // anchors.bottomMargin: -3
                             text: parent.count
                             color: Themes.activeTextColor
                             font {

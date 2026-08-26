@@ -1450,7 +1450,7 @@ Item {
                                 {
                                     name: "Box",
                                     font: "Quicksand",
-                                    artSize: 0,
+                                    artSize: 90,
                                     radius: 0
                                 },
                                 {
