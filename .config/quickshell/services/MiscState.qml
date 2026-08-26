@@ -169,6 +169,8 @@ Singleton {
             property bool boxyTray: true
             property bool showWorkspaces: true
             property string notifFont: "ZedMono Nerd Font"
+            property int notifArtSize: 90
+            property int notifRadius: 10
             property bool showVolumeOut: true
             property bool showVolumeIn: true
         }

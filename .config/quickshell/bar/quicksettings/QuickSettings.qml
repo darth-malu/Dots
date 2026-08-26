@@ -91,7 +91,7 @@ BarBlock {
         PopupWindow {
             id: quickSettingsPopup
             visible: root.showQsPopup
-            grabFocus: true
+            grabFocus: false
             color: "transparent"
 
             anchor.window: root.host
@@ -116,12 +116,6 @@ BarBlock {
                 border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
 
                 Keys.onEscapePressed: root.showQsPopup = false
-
-                MouseArea {
-                    anchors.fill: parent
-                    z: -1
-                    onClicked: root.showQsPopup = false
-                }
 
             // rigid column — no scroll container, the popup grows with it
             ColumnLayout {
