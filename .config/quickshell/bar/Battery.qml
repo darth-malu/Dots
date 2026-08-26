@@ -500,7 +500,7 @@ RowLayout {
                         implicitHeight: 28
                         radius: 8
                         color: seg.active ? Qt.rgba(seg.tint.r, seg.tint.g, seg.tint.b, 0.13)
-                            : segHover.hovered ? Qt.rgba(1, 1, 1, 0.04) : "transparent"
+                            : segHover.hovered ? Qt.rgba(seg.tint.r, seg.tint.g, seg.tint.b, 0.08) : "transparent"
                         border.width: seg.active ? 1 : 0
                         border.color: Qt.rgba(seg.tint.r, seg.tint.g, seg.tint.b, 0.45)
 
@@ -524,7 +524,7 @@ RowLayout {
 
                             Text {
                                 text: seg.modelData.name
-                                color: seg.active ? "#f8f8f2" : "#b8bfcb"
+                                color: seg.active ? "#f8f8f2" : segHover.hovered ? "#f8f8f2" : "#b8bfcb"
                                 font { pixelSize: 10; bold: true; family: "Quicksand" }
                                 Layout.fillWidth: true
                             }

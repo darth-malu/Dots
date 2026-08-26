@@ -133,7 +133,7 @@ WrapperMouseArea {
                         font {
                             pixelSize: 12
                             // second family catches uap/nerd codepoints glyph-by-glyph
-                            family: "Symbols Nerd Font Mono, Quicksand"
+                            family: "Symbols Nerd Font Mono, " + MiscState.notifFont
                             weight: Font.Bold
                             bold: true
                         }
@@ -153,7 +153,7 @@ WrapperMouseArea {
                     font {
                         pixelSize: 12
                         // second family catches uap/nerd codepoints glyph-by-glyph
-                        family: "quicksand, Symbols Nerd Font Mono"
+                        family: MiscState.notifFont + ", Symbols Nerd Font Mono"
                         weight: Font.Medium
                     }
                 }

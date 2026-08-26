@@ -240,7 +240,7 @@ BarBlock {
                                         font {
                                             pixelSize: 12
                                             bold: true
-                                            family: "Quicksand"
+                                            family: MiscState.notifFont
                                         }
                                     }
 
@@ -252,7 +252,7 @@ BarBlock {
                                         elide: Text.ElideRight
                                         font {
                                             pixelSize: 11
-                                            family: "Quicksand"
+                                            family: MiscState.notifFont
                                         }
                                     }
                                 }

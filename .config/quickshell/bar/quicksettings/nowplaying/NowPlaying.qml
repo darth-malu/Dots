@@ -197,13 +197,6 @@ ClippingRectangle {
         }
         height: baseCardHeight
 
-        property bool controlsRevealed: false
-
-        onVisibleChanged: {
-            if (visible)
-                controlsRevealed = false;
-        }
-
         RowLayout {
             anchors.fill: parent
 
@@ -265,186 +258,113 @@ ClippingRectangle {
                 }
             }
 
-            // ── Right panel — title pinned bottom, controls slide up ──
-            Item {
+            // ── Right panel — title, progress, controls ──
+            ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                Layout.topMargin: 4
+                Layout.leftMargin: 4
+                Layout.rightMargin: 30
+                spacing: 2
 
-                // title + artist pinned to bottom-left
-                ColumnLayout {
-                    id: compactInfoCol
+                MarqueeText {
+                    Layout.fillWidth: true
+                    scrolling: MprisState.marqueeEnabled
+                    text: MprisState.cardPlayer?.trackTitle || "No track"
+                    textColor: "#f8f8f2"
+                    fontFamily: "Quicksand"
+                    fontBold: true
+                    pixelSize: 11
+                    maxWidth: 4096
+                }
 
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.bottom: parent.bottom
-                    anchors.leftMargin: 4
-                    anchors.rightMargin: 34
-                    anchors.bottomMargin: 6
-                    spacing: 1
+                Text {
+                    Layout.fillWidth: true
+                    text: MprisState.cardPlayer?.trackArtist || ""
+                    color: "#b8bfcb"
+                    font {
+                        pixelSize: 10
+                        family: "Quicksand"
+                        bold: true
+                    }
+                    elide: Text.ElideRight
+                    maximumLineCount: 1
+                    visible: text.length > 0
+                }
 
-                    TapHandler {
-                        acceptedButtons: Qt.LeftButton
-                        gesturePolicy: TapHandler.ReleaseWithinBounds
-                        cursorShape: Qt.PointingHandCursor
-                        onTapped: compactView.controlsRevealed = !compactView.controlsRevealed
+                // progress bar
+                Item {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 10
+                    Layout.topMargin: 2
+
+                    readonly property real ratio: {
+                        card.progressTick;
+                        var p = MprisState.cardPlayer;
+                        if (!p) return 0;
+                        var pos = p.position;
+                        var len = p.length;
+                        if (pos == null || len == null || len <= 0 || isNaN(pos) || isNaN(len))
+                            return 0;
+                        return Math.min(pos / len, 1);
                     }
 
-                    MarqueeText {
-                        Layout.fillWidth: true
-                        scrolling: MprisState.marqueeEnabled
-                        text: MprisState.cardPlayer?.trackTitle || "No track"
-                        textColor: "#f8f8f2"
-                        fontFamily: "Quicksand"
-                        fontBold: true
-                        pixelSize: 11
-                        maxWidth: 4096
-                    }
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        height: 3
+                        radius: height / 2
+                        color: Qt.rgba(1, 1, 1, 0.09)
 
-                    Text {
-                        Layout.fillWidth: true
-                        text: MprisState.cardPlayer?.trackArtist || ""
-                        color: "#b8bfcb"
-                        font {
-                            pixelSize: 10
-                            family: "Quicksand"
-                            bold: true
+                        Rectangle {
+                            width: parent.width * parent.parent.ratio
+                            height: parent.height
+                            radius: height / 2
+                            color: card.dominantColor
+
+                            Behavior on width {
+                                NumberAnimation { duration: 200; easing.type: Easing.Linear }
+                            }
                         }
-                        elide: Text.ElideRight
-                        maximumLineCount: 1
-                        visible: text.length > 0
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: mouse => {
+                            var p = MprisState.cardPlayer;
+                            if (p && p.length > 0)
+                                p.position = (mouse.x / width) * p.length;
+                        }
                     }
                 }
 
-                // controls that slide up from above the title
-                ColumnLayout {
-                    id: compactRevealCol
+                // transport controls
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
 
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.bottom: compactInfoCol.top
-                    anchors.leftMargin: 4
-                    anchors.rightMargin: 6
-                    anchors.bottomMargin: 4
-                    spacing: 4
-
-                    enabled: compactView.controlsRevealed
-                    opacity: compactView.controlsRevealed ? 1 : 0
-
-                    Behavior on opacity {
-                        NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                    TrackButton {
+                        text: "\uf048"
+                        flat: true
+                        accentColor: "#8be9fd"
+                        onClicked: MprisState.cardPlayer?.previous()
+                    }
+                    TrackButton {
+                        text: MprisState.cardPlayer?.isPlaying ? "\uf04c" : "\uf04b"
+                        flat: true
+                        accentColor: "#bd93f9"
+                        onClicked: MprisState.cardPlayer?.togglePlaying()
+                    }
+                    TrackButton {
+                        text: "\uf050"
+                        flat: true
+                        accentColor: "#ff79c6"
+                        onClicked: MprisState.cardPlayer?.next()
                     }
 
-                    transform: Translate {
-                        y: compactView.controlsRevealed ? 0 : 12
-
-                        Behavior on y {
-                            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
-                        }
-                    }
-
-                    // progress bar
-                    Item {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 10
-
-                        readonly property real ratio: {
-                            card.progressTick;
-                            var p = MprisState.cardPlayer;
-                            if (!p) return 0;
-                            var pos = p.position;
-                            var len = p.length;
-                            if (pos == null || len == null || len <= 0 || isNaN(pos) || isNaN(len))
-                                return 0;
-                            return Math.min(pos / len, 1);
-                        }
-
-                        HoverHandler { id: seekHover }
-
-                        Rectangle {
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            height: seekHover.hovered ? 5 : 3
-                            radius: height / 2
-                            color: Qt.rgba(1, 1, 1, 0.09)
-
-                            Behavior on height {
-                                NumberAnimation { duration: 120; easing.type: Easing.OutQuad }
-                            }
-
-                            Rectangle {
-                                width: parent.width * parent.parent.ratio
-                                height: parent.height
-                                radius: height / 2
-                                color: card.dominantColor
-
-                                Behavior on width {
-                                    NumberAnimation { duration: 200; easing.type: Easing.Linear }
-                                }
-
-                                Rectangle {
-                                    anchors.fill: parent
-                                    radius: parent.radius
-                                    visible: seekHover.hovered
-                                    gradient: Gradient {
-                                        orientation: Gradient.Horizontal
-                                        GradientStop { position: 0; color: Qt.rgba(1, 1, 1, 0) }
-                                        GradientStop { position: 1; color: Qt.rgba(1, 1, 1, 0.25) }
-                                    }
-                                }
-                            }
-                        }
-
-                        Rectangle {
-                            anchors.verticalCenter: parent.verticalCenter
-                            x: (parent.width - width) * parent.ratio
-                            width: seekHover.hovered ? 9 : 0
-                            height: width
-                            radius: width / 2
-                            color: "#f8f8f2"
-                            border.width: 2
-                            border.color: card.dominantColor
-
-                            Behavior on width {
-                                NumberAnimation { duration: 120; easing.type: Easing.OutQuad }
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: mouse => {
-                                var p = MprisState.cardPlayer;
-                                if (p && p.length > 0)
-                                    p.position = (mouse.x / width) * p.length;
-                            }
-                        }
-                    }
-
-                    // transport controls
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 2
-
-                        TrackButton {
-                            text: "\uf048"
-                            flat: true
-                            accentColor: "#8be9fd"
-                            onClicked: MprisState.cardPlayer?.previous()
-                        }
-                        TrackButton {
-                            text: MprisState.cardPlayer?.isPlaying ? "\uf04c" : "\uf04b"
-                            flat: true
-                            accentColor: "#bd93f9"
-                            onClicked: MprisState.cardPlayer?.togglePlaying()
-                        }
-                        TrackButton {
-                            text: "\uf050"
-                            flat: true
-                            accentColor: "#ff79c6"
-                            onClicked: MprisState.cardPlayer?.next()
-                        }
-                    }
+                    Item { Layout.fillWidth: true }
                 }
             }
         }
@@ -537,192 +457,188 @@ ClippingRectangle {
         Item {
             anchors.fill: parent
 
-            // ── track text — top left ──
+            // ── title + controls — anchored to bottom, revealing pushes title up ──
             ColumnLayout {
-                id: expInfoCol
-
                 anchors.left: parent.left
                 anchors.right: parent.right
-                anchors.top: parent.top
+                anchors.bottom: parent.bottom
                 anchors.leftMargin: 8
-                anchors.rightMargin: 34
-                anchors.topMargin: 8
-                spacing: 1
-
-                MarqueeText {
-                    Layout.fillWidth: true
-                    text: MprisState.cardPlayer?.trackTitle || "No track"
-                    textColor: "#ffffff"
-                    fontFamily: "quicksand"
-                    fontBold: true
-                    pixelSize: 18
-                    maxWidth: 420
-                }
-
-                MarqueeText {
-                    Layout.fillWidth: true
-                    visible: text.length > 0
-                    text: MprisState.cardPlayer?.trackArtist || ""
-                    textColor: Qt.rgba(1, 1, 1, 0.7)
-                    fontFamily: "ZedMono Nerd Font"
-                    fontBold: false
-                    pixelSize: 12
-                    maxWidth: 420
-                }
-
-                HoverHandler {
-                    id: expInfoHover
-                }
-
-                // tap anywhere on the track text to raise/hide
-                // the seek bar + transport
-                TapHandler {
-                    acceptedButtons: Qt.LeftButton
-                    gesturePolicy: TapHandler.ReleaseWithinBounds
-                    cursorShape: Qt.PointingHandCursor
-                    onTapped: card.expControlsRevealed = !card.expControlsRevealed
-                }
-            }
-
-            // ── seek bar + transport — below the track text ──
-            ColumnLayout {
-                id: expRevealCol
-
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: expInfoCol.bottom
-                anchors.leftMargin: 12
                 anchors.rightMargin: 12
-                anchors.topMargin: 8
+                anchors.bottomMargin: 8
                 spacing: 6
 
-                enabled: card.expControlsRevealed
-                opacity: card.expControlsRevealed ? 1 : 0
+                // ── seek bar + transport ──
+                ColumnLayout {
+                    id: expRevealCol
 
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: 180
-                        easing.type: Easing.OutCubic
-                    }
-                }
+                    Layout.fillWidth: true
+                    spacing: 6
 
-                transform: Translate {
-                    y: card.expControlsRevealed ? 0 : 14
+                    enabled: card.expControlsRevealed
+                    opacity: card.expControlsRevealed ? 1 : 0
 
-                    Behavior on y {
+                    Behavior on opacity {
                         NumberAnimation {
                             duration: 180
                             easing.type: Easing.OutCubic
                         }
                     }
-                }
 
-                // ── Progress bar ──
-                Item {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 16
+                    transform: Translate {
+                        y: card.expControlsRevealed ? 0 : 14
 
-                    readonly property real ratio: {
-                        card.progressTick;
-                        var p = MprisState.cardPlayer;
-                        if (!p)
-                            return 0;
-                        var pos = p.position;
-                        var len = p.length;
-                        if (pos == null || len == null || len <= 0 || isNaN(pos) || isNaN(len))
-                            return 0;
-                        return Math.min(pos / len, 1);
-                    }
-
-                    Rectangle {
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        height: 4
-                        radius: 2
-                        color: Qt.rgba(1, 1, 1, 0.12)
-
-                        Rectangle {
-                            width: parent.width * parent.parent.ratio
-                            height: parent.height
-                            radius: 2
-                            color: card.dominantColor
-
-                            Behavior on width {
-                                NumberAnimation {
-                                    duration: 200
-                                    easing.type: Easing.Linear
-                                }
+                        Behavior on y {
+                            NumberAnimation {
+                                duration: 180
+                                easing.type: Easing.OutCubic
                             }
                         }
                     }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: mouse => {
+                    // ── Progress bar ──
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 16
+
+                        readonly property real ratio: {
+                            card.progressTick;
                             var p = MprisState.cardPlayer;
-                            if (p && p.length > 0)
-                                p.position = (mouse.x / width) * p.length;
+                            if (!p)
+                                return 0;
+                            var pos = p.position;
+                            var len = p.length;
+                            if (pos == null || len == null || len <= 0 || isNaN(pos) || isNaN(len))
+                                return 0;
+                            return Math.min(pos / len, 1);
+                        }
+
+                        Rectangle {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            height: 4
+                            radius: 2
+                            color: Qt.rgba(1, 1, 1, 0.12)
+
+                            Rectangle {
+                                width: parent.width * parent.parent.ratio
+                                height: parent.height
+                                radius: 2
+                                color: card.dominantColor
+
+                                Behavior on width {
+                                    NumberAnimation {
+                                        duration: 200
+                                        easing.type: Easing.Linear
+                                    }
+                                }
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: mouse => {
+                                var p = MprisState.cardPlayer;
+                                if (p && p.length > 0)
+                                    p.position = (mouse.x / width) * p.length;
+                            }
+                        }
+                    }
+
+                    // ── Playback controls ──
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 32
+                        spacing: 8
+
+                        Item {
+                            Layout.fillWidth: true
+                        }
+                        TrackButton {
+                            text: "\uf074"
+                            visible: MiscState.showShuffle
+                            active: MprisState.cardPlayer?.shuffle ?? false
+                            accentColor: MprisState.cardPlayer?.shuffle ? "#ff79c6" : Qt.rgba(1, 1, 1, 0.45)
+                            onClicked: {
+                                var p = MprisState.cardPlayer;
+                                if (p?.canControl && p?.shuffleSupported)
+                                    p.shuffle = !p.shuffle;
+                            }
+                        }
+                        TrackButton {
+                            text: "\uf049"
+                            accentColor: "#8be9fd"
+                            onClicked: MprisState.cardPlayer?.previous()
+                        }
+                        TrackButton {
+                            text: MprisState.cardPlayer?.isPlaying ? "\uf04c" : "\uf04b"
+                            accentColor: "#bd93f9"
+                            onClicked: MprisState.cardPlayer?.togglePlaying()
+                        }
+                        TrackButton {
+                            text: "\uf050"
+                            accentColor: "#ff79c6"
+                            onClicked: MprisState.cardPlayer?.next()
+                        }
+                        TrackButton {
+                            text: "\uf079"
+                            visible: MiscState.showLoop
+                            active: MprisState.cardPlayer?.loopState !== MprisLoopState.None
+                            accentColor: MprisState.cardPlayer?.loopState === MprisLoopState.Track ? "#50fa7b" : MprisState.cardPlayer?.loopState === MprisLoopState.Playlist ? "#bd93f9" : Qt.rgba(1, 1, 1, 0.45)
+                            onClicked: {
+                                var p = MprisState.cardPlayer;
+                                if (!p?.canControl || !p?.loopSupported)
+                                    return;
+                                var ls = p.loopState;
+                                if (ls === MprisLoopState.None)
+                                    p.loopState = MprisLoopState.Track;
+                                else if (ls === MprisLoopState.Track)
+                                    p.loopState = MprisLoopState.Playlist;
+                                else
+                                    p.loopState = MprisLoopState.None;
+                            }
+                        }
+                        Item {
+                            Layout.fillWidth: true
                         }
                     }
                 }
 
-                // ── Playback controls ──
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 32
-                    spacing: 8
+                // ── track text — bottom ──
+                ColumnLayout {
+                    id: expInfoCol
 
-                    Item {
+                    Layout.fillWidth: true
+                    Layout.rightMargin: 22
+                    spacing: 1
+
+                    TapHandler {
+                        acceptedButtons: Qt.LeftButton
+                        gesturePolicy: TapHandler.ReleaseWithinBounds
+                        cursorShape: Qt.PointingHandCursor
+                        onTapped: card.expControlsRevealed = !card.expControlsRevealed
+                    }
+
+                    MarqueeText {
                         Layout.fillWidth: true
+                        text: MprisState.cardPlayer?.trackTitle || "No track"
+                        textColor: "#ffffff"
+                        fontFamily: "quicksand"
+                        fontBold: true
+                        pixelSize: 18
+                        maxWidth: 420
                     }
-                    TrackButton {
-                        text: "\uf074"
-                        visible: MiscState.showShuffle
-                        active: MprisState.cardPlayer?.shuffle ?? false
-                        accentColor: MprisState.cardPlayer?.shuffle ? "#ff79c6" : Qt.rgba(1, 1, 1, 0.45)
-                        onClicked: {
-                            var p = MprisState.cardPlayer;
-                            if (p?.canControl && p?.shuffleSupported)
-                                p.shuffle = !p.shuffle;
-                        }
-                    }
-                    TrackButton {
-                        text: "\uf049"
-                        accentColor: "#8be9fd"
-                        onClicked: MprisState.cardPlayer?.previous()
-                    }
-                    TrackButton {
-                        text: MprisState.cardPlayer?.isPlaying ? "\uf04c" : "\uf04b"
-                        accentColor: "#bd93f9"
-                        onClicked: MprisState.cardPlayer?.togglePlaying()
-                    }
-                    TrackButton {
-                        text: "\uf050"
-                        accentColor: "#ff79c6"
-                        onClicked: MprisState.cardPlayer?.next()
-                    }
-                    TrackButton {
-                        text: "\uf079"
-                        visible: MiscState.showLoop
-                        active: MprisState.cardPlayer?.loopState !== MprisLoopState.None
-                        accentColor: MprisState.cardPlayer?.loopState === MprisLoopState.Track ? "#50fa7b" : MprisState.cardPlayer?.loopState === MprisLoopState.Playlist ? "#bd93f9" : Qt.rgba(1, 1, 1, 0.45)
-                        onClicked: {
-                            var p = MprisState.cardPlayer;
-                            if (!p?.canControl || !p?.loopSupported)
-                                return;
-                            var ls = p.loopState;
-                            if (ls === MprisLoopState.None)
-                                p.loopState = MprisLoopState.Track;
-                            else if (ls === MprisLoopState.Track)
-                                p.loopState = MprisLoopState.Playlist;
-                            else
-                                p.loopState = MprisLoopState.None;
-                        }
-                    }
-                    Item {
+
+                    MarqueeText {
                         Layout.fillWidth: true
+                        visible: text.length > 0
+                        text: MprisState.cardPlayer?.trackArtist || ""
+                        textColor: Qt.rgba(1, 1, 1, 0.7)
+                        fontFamily: "ZedMono Nerd Font"
+                        fontBold: false
+                        pixelSize: 12
+                        maxWidth: 420
                     }
                 }
             }

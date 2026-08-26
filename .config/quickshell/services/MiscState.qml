@@ -115,6 +115,10 @@ Singleton {
     property bool showWorkspaces: prefs.showWorkspaces
     onShowWorkspacesChanged: prefs.showWorkspaces = showWorkspaces
 
+    // notification font family
+    property string notifFont: prefs.notifFont
+    onNotifFontChanged: prefs.notifFont = notifFont
+
     // bar audio modules — output (speaker) and input (mic) can be hidden
     // independently from settings
     property bool showVolumeOut: prefs.showVolumeOut
@@ -154,6 +158,7 @@ Singleton {
             property bool boxyTheme: true
             property bool boxyTray: true
             property bool showWorkspaces: true
+            property string notifFont: "ZedMono Nerd Font"
             property bool showVolumeOut: true
             property bool showVolumeIn: true
         }

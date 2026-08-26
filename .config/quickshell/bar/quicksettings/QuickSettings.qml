@@ -104,6 +104,12 @@ BarBlock {
 
             Keys.onEscapePressed: root.showQsPopup = false
 
+            MouseArea {
+                anchors.fill: parent
+                z: -1
+                onClicked: root.showQsPopup = false
+            }
+
             // rigid column — no scroll container, the popup grows with it
             ColumnLayout {
                 id: qsContent

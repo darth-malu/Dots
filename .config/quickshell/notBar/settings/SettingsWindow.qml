@@ -611,7 +611,7 @@ Item {
                         Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
 
                         SettingRow {
-                            icon: "\uf544"
+                            icon: "\uf1ce"
                             label: "Show workspaces"
                             caption: MiscState.showWorkspaces ? "on" : "off"
                             checked: MiscState.showWorkspaces
@@ -631,7 +631,7 @@ Item {
                         Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
 
                         SettingRow {
-                            icon: "\uf1dc"
+                            icon: "\uf2d1"
                             label: "Boxy design"
                             caption: MiscState.boxyTheme ? "boxy" : "rounded"
                             checked: MiscState.boxyTheme
@@ -641,7 +641,7 @@ Item {
                         Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
 
                         SettingRow {
-                            icon: "\ueb7c"
+                            icon: "\uf070"
                             label: "Popup background"
                             caption: MiscState.popupSolidBg ? "solid" : "transparent"
                             checked: MiscState.popupSolidBg
@@ -656,6 +656,74 @@ Item {
                             caption: MiscState.boxyTray ? "coloured pill" : "glass"
                             checked: MiscState.boxyTray
                             onFlipped: MiscState.boxyTray = !MiscState.boxyTray
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 38
+                            spacing: 12
+
+                            Text {
+                                text: "\uf031"
+                                color: "#6272a4"
+                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                Layout.preferredWidth: 20
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            Text {
+                                text: "Notification font"
+                                color: "#f8f8f2"
+                                font { pixelSize: 12; family: "Quicksand"; bold: true }
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Repeater {
+                                model: ["Quicksand", "ZedMono Nerd Font", "Nunito", "Lato"]
+
+                                Rectangle {
+                                    id: notifFontOpt
+
+                                    required property string modelData
+
+                                    readonly property bool sel: MiscState.notifFont === notifFontOpt.modelData
+
+                                    width: notifFontLbl.implicitWidth + 16
+                                    height: 22
+                                    radius: 6
+                                    color: notifFontOpt.sel ? "#bd93f9" : notifFontMa.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.14) : "transparent"
+
+                                    Behavior on color {
+                                        ColorAnimation { duration: 120 }
+                                    }
+
+                                    Text {
+                                        id: notifFontLbl
+
+                                        anchors.centerIn: parent
+                                        text: notifFontOpt.modelData
+                                        color: notifFontOpt.sel ? "#181825" : notifFontMa.containsMouse ? "#f8f8f2" : "#b8bfcb"
+                                        font { pixelSize: 10; bold: true; family: "Quicksand" }
+
+                                        Behavior on color {
+                                            ColorAnimation { duration: 120 }
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: notifFontMa
+
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: MiscState.notifFont = notifFontOpt.modelData
+                                    }
+                                }
+                            }
                         }
                     }
                 }
