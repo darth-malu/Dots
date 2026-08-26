@@ -273,6 +273,7 @@ Item {
     readonly property var categories: [
         { icon: "\uf080", label: "Bar" },
         { icon: "\uf144", label: "Media" },
+        { icon: "\uf0a2", label: "Notifications" },
         { icon: "\uf1eb", label: "Connections" },
         { icon: "\uf2db", label: "Performance" },
         { icon: "\uf059", label: "Help" },
@@ -487,8 +488,9 @@ Item {
                                     width: parent.width
                                 sourceComponent: root.currentCategory === 0 ? barPage
                                     : root.currentCategory === 1 ? mediaPage
-                                    : root.currentCategory === 2 ? connectionsPage
-                                    : root.currentCategory === 3 ? performancePage
+                                    : root.currentCategory === 2 ? notificationsPage
+                                    : root.currentCategory === 3 ? connectionsPage
+                                    : root.currentCategory === 4 ? performancePage
                                     : helpPage
                                 }
                             }
@@ -656,136 +658,6 @@ Item {
                             caption: MiscState.boxyTray ? "coloured pill" : "glass"
                             checked: MiscState.boxyTray
                             onFlipped: MiscState.boxyTray = !MiscState.boxyTray
-                        }
-
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 38
-                            spacing: 12
-
-                            Text {
-                                text: "\uf031"
-                                color: "#6272a4"
-                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                                Layout.preferredWidth: 20
-                                horizontalAlignment: Text.AlignHCenter
-                            }
-
-                            Text {
-                                text: "Notification font"
-                                color: "#f8f8f2"
-                                font { pixelSize: 12; family: "Quicksand"; bold: true }
-                                Layout.alignment: Qt.AlignVCenter
-                            }
-
-                            Item { Layout.fillWidth: true }
-
-                            Rectangle {
-                                id: notifFontDropdown
-
-                                Layout.alignment: Qt.AlignVCenter
-                                width: 140
-                                height: 24
-                                radius: 6
-                                color: notifFontDropMa.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.14) : "#21222c"
-                                border.width: 1
-                                border.color: notifFontDropOpen ? "#bd93f9" : "#313244"
-
-                                property bool notifFontDropOpen: false
-                                property var fontOptions: ["Quicksand", "ZedMono Nerd Font", "JetBrains Mono", "Nunito", "Lato"]
-
-                                Text {
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: 8
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: MiscState.notifFont
-                                    color: "#f8f8f2"
-                                    font { pixelSize: 10; bold: true; family: "Quicksand" }
-                                    elide: Text.ElideRight
-                                    width: parent.width - 24
-                                }
-
-                                Text {
-                                    anchors.right: parent.right
-                                    anchors.rightMargin: 6
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: "\uf078"
-                                    color: "#6272a4"
-                                    font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
-                                    rotation: notifFontDropdown.notifFontDropOpen ? 180 : 0
-
-                                    Behavior on rotation {
-                                        NumberAnimation { duration: 120; easing.type: Easing.OutQuad }
-                                    }
-                                }
-
-                                MouseArea {
-                                    id: notifFontDropMa
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: notifFontDropdown.notifFontDropOpen = !notifFontDropdown.notifFontDropOpen
-                                }
-
-                                // dropdown list
-                                Rectangle {
-                                    visible: notifFontDropdown.notifFontDropOpen
-                                    anchors.top: parent.bottom
-                                    anchors.topMargin: 4
-                                    anchors.left: parent.left
-                                    anchors.right: parent.right
-                                    height: notifFontList.implicitHeight + 8
-                                    radius: 6
-                                    color: "#21222c"
-                                    border.width: 1
-                                    border.color: "#313244"
-                                    z: 100
-
-                                    ColumnLayout {
-                                        id: notifFontList
-                                        anchors.fill: parent
-                                        anchors.margins: 4
-                                        spacing: 0
-
-                                        Repeater {
-                                            model: notifFontDropdown.fontOptions
-
-                                            Rectangle {
-                                                required property string modelData
-                                                property bool isHovered: notifFontItemMa.containsMouse
-                                                property bool isSelected: MiscState.notifFont === modelData
-
-                                                Layout.fillWidth: true
-                                                implicitHeight: 24
-                                                radius: 4
-                                                color: isSelected ? Qt.rgba(0.74, 0.58, 0.98, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
-
-                                                Text {
-                                                    anchors.left: parent.left
-                                                    anchors.leftMargin: 8
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                    text: modelData
-                                                    color: isSelected ? "#bd93f9" : "#b8bfcb"
-                                                    font { pixelSize: 10; family: "Quicksand" }
-                                                }
-
-                                                MouseArea {
-                                                    id: notifFontItemMa
-                                                    anchors.fill: parent
-                                                    hoverEnabled: true
-                                                    cursorShape: Qt.PointingHandCursor
-                                                    onClicked: {
-                                                        MiscState.notifFont = modelData
-                                                        notifFontDropdown.notifFontDropOpen = false
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
                         }
                     }
                 }
@@ -1094,7 +966,6 @@ Item {
                             }
                         }
                     }
-                    }
 
                     // ── tab · speedtest ──
                     ColumnLayout {
@@ -1189,7 +1060,6 @@ Item {
                                             anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter; margins: 7 }
                                             spacing: 5
 
-                                            // ── line 1: time + network + metrics ──
                                             RowLayout {
                                                 Layout.fillWidth: true
                                                 spacing: 6
@@ -1246,7 +1116,6 @@ Item {
                                                 }
                                             }
 
-                                            // ── line 2: speed bar ──
                                             Rectangle {
                                                 Layout.fillWidth: true
                                                 implicitHeight: 6
@@ -1273,7 +1142,6 @@ Item {
                                                 }
                                             }
 
-                                            // ── line 3: server + duration (shown on hover) ──
                                             Text {
                                                 visible: hrow.srv.length > 0 && hrowHover.containsMouse
                                                 text: hrow.srv + " · " + Math.round(hrow.modelData.mb ?? 0) + " MB · " + (hrow.modelData.secs ?? 0) + "s"
@@ -1295,7 +1163,392 @@ Item {
                             }
                         }
                     }
+                }
             }
+        }
+
+        // ═══ NOTIFICATIONS ═══
+        Component {
+            id: notificationsPage
+
+            ColumnLayout {
+                spacing: 12
+
+                Card {
+                    title: "Notifications"
+                    icon: "\uf0a2"
+                    accent: "#bd93f9"
+
+                    ColumnLayout {
+                        spacing: 0
+                        Layout.fillWidth: true
+
+                        // notification font dropdown
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 38
+                            spacing: 12
+
+                            Text {
+                                text: "\uf031"
+                                color: "#6272a4"
+                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                Layout.preferredWidth: 20
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            Text {
+                                text: "Notification font"
+                                color: "#f8f8f2"
+                                font { pixelSize: 12; family: "Quicksand"; bold: true }
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Rectangle {
+                                id: notifFontDropdown
+
+                                Layout.alignment: Qt.AlignVCenter
+                                width: 140
+                                height: 24
+                                radius: 6
+                                color: notifFontDropMa.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.14) : "#21222c"
+                                border.width: 1
+                                border.color: notifFontDropOpen ? "#bd93f9" : "#313244"
+
+                                property bool notifFontDropOpen: false
+                                property var fontOptions: ["Quicksand", "ZedMono Nerd Font", "JetBrains Mono", "Nunito", "Lato"]
+
+                                Text {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 8
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: MiscState.notifFont
+                                    color: "#f8f8f2"
+                                    font { pixelSize: 10; bold: true; family: "Quicksand" }
+                                    elide: Text.ElideRight
+                                    width: parent.width - 24
+                                }
+
+                                Text {
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 6
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "\uf078"
+                                    color: "#6272a4"
+                                    font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
+                                    rotation: notifFontDropdown.notifFontDropOpen ? 180 : 0
+
+                                    Behavior on rotation {
+                                        NumberAnimation { duration: 120; easing.type: Easing.OutQuad }
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: notifFontDropMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: notifFontDropdown.notifFontDropOpen = !notifFontDropdown.notifFontDropOpen
+                                }
+
+                                Popup {
+                                    id: notifFontPopup
+                                    y: notifFontDropdown.height + 4
+                                    width: notifFontDropdown.width
+                                    height: notifFontPopupCol.implicitHeight + 8
+                                    closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
+                                    onOpened: notifFontDropdown.notifFontDropOpen = true
+                                    onClosed: notifFontDropdown.notifFontDropOpen = false
+
+                                    background: Rectangle {
+                                        radius: 6
+                                        color: "#21222c"
+                                        border.width: 1
+                                        border.color: "#313244"
+                                    }
+
+                                    contentItem: ColumnLayout {
+                                        id: notifFontPopupCol
+                                        spacing: 0
+
+                                        Repeater {
+                                            model: notifFontDropdown.fontOptions
+
+                                            Rectangle {
+                                                required property string modelData
+                                                property bool isHovered: notifFontItemMa.containsMouse
+                                                property bool isSelected: MiscState.notifFont === modelData
+
+                                                Layout.fillWidth: true
+                                                implicitHeight: 24
+                                                radius: 4
+                                                color: isSelected ? Qt.rgba(0.74, 0.58, 0.98, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
+
+                                                Text {
+                                                    anchors.left: parent.left
+                                                    anchors.leftMargin: 8
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    text: modelData
+                                                    color: isSelected ? "#bd93f9" : "#b8bfcb"
+                                                    font { pixelSize: 10; family: "Quicksand" }
+                                                }
+
+                                                MouseArea {
+                                                    id: notifFontItemMa
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: {
+                                                        MiscState.notifFont = modelData
+                                                        notifFontPopup.close()
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    onVisibleChanged: notifFontDropdown.notifFontDropOpen = visible
+                                }
+
+                                Connections {
+                                    target: notifFontDropdown
+                                    function onNotifFontDropOpenChanged() {
+                                        if (notifFontDropdown.notifFontDropOpen && !notifFontPopup.visible)
+                                            notifFontPopup.open();
+                                        else if (!notifFontDropdown.notifFontDropOpen && notifFontPopup.visible)
+                                            notifFontPopup.close();
+                                    }
+                                }
+                            }
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                        // notification art size
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 38
+                            spacing: 12
+
+                            Text {
+                                text: "\uf03e"
+                                color: "#6272a4"
+                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                Layout.preferredWidth: 20
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            Text {
+                                text: "Notification art size"
+                                color: "#f8f8f2"
+                                font { pixelSize: 12; family: "Quicksand"; bold: true }
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Text {
+                                text: MiscState.notifArtSize + "px"
+                                color: "#bd93f9"
+                                font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+
+                            Row {
+                                spacing: 4
+                                Layout.alignment: Qt.AlignVCenter
+
+                                StepBtn {
+                                    glyph: "\uf068"
+                                    onStepped: MiscState.notifArtSize = Math.max(24, MiscState.notifArtSize - 4)
+                                }
+                                StepBtn {
+                                    glyph: "\uf067"
+                                    onStepped: MiscState.notifArtSize = Math.min(120, MiscState.notifArtSize + 4)
+                                }
+                            }
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                        // notification border radius
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 38
+                            spacing: 12
+
+                            Text {
+                                text: "\uf1dc"
+                                color: "#6272a4"
+                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                Layout.preferredWidth: 20
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            Text {
+                                text: "Notification radius"
+                                color: "#f8f8f2"
+                                font { pixelSize: 12; family: "Quicksand"; bold: true }
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Text {
+                                text: MiscState.notifRadius + "px"
+                                color: "#bd93f9"
+                                font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+
+                            Row {
+                                spacing: 4
+                                Layout.alignment: Qt.AlignVCenter
+
+                                StepBtn {
+                                    glyph: "\uf068"
+                                    onStepped: MiscState.notifRadius = Math.max(0, MiscState.notifRadius - 2)
+                                }
+                                StepBtn {
+                                    glyph: "\uf067"
+                                    onStepped: MiscState.notifRadius = Math.min(24, MiscState.notifRadius + 2)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Card {
+                    title: "Presets"
+                    icon: "\uf005"
+                    accent: "#bd93f9"
+
+                    ColumnLayout {
+                        spacing: 0
+                        Layout.fillWidth: true
+
+                        Repeater {
+                            model: [
+                                {
+                                    name: "Default",
+                                    font: "ZedMono Nerd Font",
+                                    artSize: 90,
+                                    radius: 10
+                                }
+                            ]
+
+                            delegate: Rectangle {
+                                id: presetCell
+
+                                required property var modelData
+                                required property int index
+
+                                readonly property bool isActive: MiscState.notifFont === modelData.font
+                                    && MiscState.notifArtSize === modelData.artSize
+                                    && MiscState.notifRadius === modelData.radius
+
+                                Layout.fillWidth: true
+                                implicitHeight: 36
+                                radius: 6
+                                color: presetMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.12)
+                                    : isActive ? Qt.rgba(0.74, 0.58, 0.98, 0.08) : "transparent"
+
+                                Behavior on color {
+                                    ColorAnimation { duration: 100 }
+                                }
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 12
+                                    anchors.rightMargin: 12
+                                    spacing: 8
+
+                                    Text {
+                                        text: "\uf005"
+                                        color: isActive ? "#bd93f9" : "#6272a4"
+                                        font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
+                                    }
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: presetCell.modelData.name
+                                        color: isActive ? "#f8f8f2" : "#b8bfcb"
+                                        font { pixelSize: 11; family: "Quicksand"; bold: isActive }
+                                    }
+
+                                    // active indicator
+                                    Rectangle {
+                                        visible: presetCell.isActive
+                                        implicitWidth: 6
+                                        implicitHeight: 6
+                                        radius: 3
+                                        color: "#bd93f9"
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: presetMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        MiscState.notifFont = presetCell.modelData.font
+                                        MiscState.notifArtSize = presetCell.modelData.artSize
+                                        MiscState.notifRadius = presetCell.modelData.radius
+                                    }
+                                }
+                            }
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                        // reset to defaults button
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 36
+                            radius: 6
+                            color: resetMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.12) : "transparent"
+
+                            Behavior on color {
+                                ColorAnimation { duration: 100 }
+                            }
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
+                                spacing: 8
+
+                                Text {
+                                    text: "\uf0e2"
+                                    color: resetMa.containsMouse ? "#ff5555" : "#6272a4"
+                                    font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
+                                }
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: "Reset to defaults"
+                                    color: resetMa.containsMouse ? "#ff5555" : "#b8bfcb"
+                                    font { pixelSize: 11; family: "Quicksand" }
+                                }
+                            }
+
+                            MouseArea {
+                                id: resetMa
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    MiscState.notifFont = "ZedMono Nerd Font"
+                                    MiscState.notifArtSize = 90
+                                    MiscState.notifRadius = 10
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 

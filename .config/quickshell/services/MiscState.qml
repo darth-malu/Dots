@@ -119,6 +119,13 @@ Singleton {
     property string notifFont: prefs.notifFont
     onNotifFontChanged: prefs.notifFont = notifFont
 
+    // notification popup art size and border radius
+    property int notifArtSize: prefs.notifArtSize
+    onNotifArtSizeChanged: prefs.notifArtSize = notifArtSize
+
+    property int notifRadius: prefs.notifRadius
+    onNotifRadiusChanged: prefs.notifRadius = notifRadius
+
     // bar audio modules — output (speaker) and input (mic) can be hidden
     // independently from settings
     property bool showVolumeOut: prefs.showVolumeOut

@@ -19,19 +19,6 @@ WrapperMouseArea {
     readonly property string notifFontFamily: "Symbols Nerd Font Mono, " + MiscState.notifFont
     readonly property string notifFontFamilyBody: MiscState.notifFont + ", Symbols Nerd Font Mono"
 
-    Component.onCompleted: {
-        summary.font.family = notifFontFamily
-        body.font.family = notifFontFamilyBody
-    }
-
-    Connections {
-        target: MiscState
-        function onNotifFontChanged() {
-            summary.font.family = rootMouseArea.notifFontFamily
-            body.font.family = rootMouseArea.notifFontFamilyBody
-        }
-    }
-
     readonly property bool ifMusic: (n.appName == 'mzichi' || n.appName == 'ncmpcpp' || n.appName == 'spotifY')
 
     readonly property bool isImageIcon: n.image == "" && n.appIcon != ""
@@ -44,7 +31,7 @@ WrapperMouseArea {
 
     property int indexAll: -1
 
-    property real iconSize: ifMusic ? 90 : 50
+    property real iconSize: ifMusic ? MiscState.notifArtSize : 50
 
     property real iconRadius: iconSize / 5
 
@@ -73,7 +60,7 @@ WrapperMouseArea {
 
         implicitWidth: Math.max(120, mainLayout.implicitWidth + 16)
         implicitHeight: mainLayout.implicitHeight
-        radius: rootMouseArea.ifMusic ? 12 : 8
+        radius: MiscState.notifRadius
         color: "#f0282a36"
         border.width: 1
         border.color: rootMouseArea.urgent ? Qt.rgba(1, 0.33, 0.33, 0.45) : Qt.rgba(0.74, 0.58, 0.98, 0.32)
@@ -146,12 +133,10 @@ WrapperMouseArea {
                         elide: Text.ElideRight
                         Layout.fillWidth: true
                         color: rootMouseArea.accent
-                        font {
-                            pixelSize: 12
-                            family: rootMouseArea.notifFontFamily
-                            weight: Font.Bold
-                            bold: true
-                        }
+                        font.family: rootMouseArea.notifFontFamily
+                        font.pixelSize: 12
+                        font.weight: Font.Bold
+                        font.bold: true
                     }
                 }
 
@@ -165,11 +150,9 @@ WrapperMouseArea {
                     maximumLineCount: rootMouseArea.expanded ? 20 : (rootMouseArea.n.actions.length > 1 ? 1 : 3)
                     text: rootMouseArea.n.body
                     color: "#b8bfcb"
-                    font {
-                        pixelSize: 12
-                        family: rootMouseArea.notifFontFamilyBody
-                        weight: Font.Medium
-                    }
+                    font.family: rootMouseArea.notifFontFamilyBody
+                    font.pixelSize: 12
+                    font.weight: Font.Medium
                 }
 
                 RowLayout {
