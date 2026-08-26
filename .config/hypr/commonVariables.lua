@@ -24,5 +24,28 @@ hl.config({
   },
 })
 
+hl.config({
+  group = {
+    groupbar = {
+      enabled = true,
+      font_size = 13,
+      font_family = "quicksand medium",
+      gradients = false,
+      -- height = 14,
+      -- indicator_gap = 2,
+      -- indicator_height = 4,
+      -- indicator_padding = 4,
+      -- rendering_affected_by_opacity = false,
+      text_color = "rgba(171, 141, 237, 0.90)",
+      text_color_inactive = "rgba(147, 249, 255, 0.65)",
+      col = {
+        active = "rgba(171, 141, 237, 0.69)",
+        inactive = "rgba(147, 249, 255, 189)",
+        -- urgent = "rgb(85, 85, 255)",
+      },
+    },
+  },
+})
+
 -- Example per-device config
 -- See https://wiki.hypr.land/Configuring/Advanced-and-Cool/Devices/ for more

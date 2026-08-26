@@ -1,0 +1,13 @@
+# -*- mode: snippet -*-
+# name: Quick Imports
+# key: -q
+# condition: t
+# --
+
+import Quickshell
+import QtQuick
+import QtQuick.Layouts
+import ${1: Quickshell.Io}
+${2: import}
+$0
+

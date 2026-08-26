@@ -1030,7 +1030,7 @@ always activating in org mode...keep it as hook in [[ORG]]
         ;; centaur-tabs-show-navigation-buttons t
         centaur-tabs-gray-out-icons 'buffer
         centaur-tabs-cycle-scope 'tabs ; default::, tabs , groups
-        centaur-tabs-height 15)
+        centaur-tabs-height 12)
   :hook (
          ;; (nix-mode  . centaur-tabs-mode)
          ;; (python-mode  . centaur-tabs-mode)
