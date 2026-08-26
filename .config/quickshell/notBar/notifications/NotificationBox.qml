@@ -16,6 +16,22 @@ WrapperMouseArea {
     property real timestamp
     property real elapsed: Date.now()
 
+    readonly property string notifFontFamily: "Symbols Nerd Font Mono, " + MiscState.notifFont
+    readonly property string notifFontFamilyBody: MiscState.notifFont + ", Symbols Nerd Font Mono"
+
+    Component.onCompleted: {
+        summary.font.family = notifFontFamily
+        body.font.family = notifFontFamilyBody
+    }
+
+    Connections {
+        target: MiscState
+        function onNotifFontChanged() {
+            summary.font.family = rootMouseArea.notifFontFamily
+            body.font.family = rootMouseArea.notifFontFamilyBody
+        }
+    }
+
     readonly property bool ifMusic: (n.appName == 'mzichi' || n.appName == 'ncmpcpp' || n.appName == 'spotifY')
 
     readonly property bool isImageIcon: n.image == "" && n.appIcon != ""
@@ -132,8 +148,7 @@ WrapperMouseArea {
                         color: rootMouseArea.accent
                         font {
                             pixelSize: 12
-                            // second family catches uap/nerd codepoints glyph-by-glyph
-                            family: "Symbols Nerd Font Mono, " + MiscState.notifFont
+                            family: rootMouseArea.notifFontFamily
                             weight: Font.Bold
                             bold: true
                         }
@@ -152,8 +167,7 @@ WrapperMouseArea {
                     color: "#b8bfcb"
                     font {
                         pixelSize: 12
-                        // second family catches uap/nerd codepoints glyph-by-glyph
-                        family: MiscState.notifFont + ", Symbols Nerd Font Mono"
+                        family: rootMouseArea.notifFontFamilyBody
                         weight: Font.Medium
                     }
                 }

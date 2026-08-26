@@ -54,10 +54,9 @@ RowLayout {
                 : Themes.activeHasClientsBorder
 
             color: boxy
-                ? (isActive ? Themes.boxyActiveBg : hovered ? Themes.boxyHoverBg : "transparent")
+                ? (isActive ? Themes.boxyActiveBg : "transparent")
                 : (isActive ? Qt.rgba(0.741, 0.576, 0.976, 0.18)
                     : isUrgent ? Qt.rgba(1, 0.33, 0.33, 0.15)
-                    : hovered ? Qt.rgba(1, 1, 1, 0.07)
                     : "transparent")
 
             Behavior on color {
@@ -102,8 +101,7 @@ RowLayout {
                 color: rootBlock.isActive
                     ? Themes.activeTextColor
                     : rootBlock.isUrgent ? "#ff5555"
-                    : Qt.rgba(Themes.inactiveTextColor.r, Themes.inactiveTextColor.g,
-                        Themes.inactiveTextColor.b, rootBlock.hovered ? 0.95 : 0.55)
+                    : Themes.inactiveTextColor
                 dim: false
                 font {
                     bold: rootBlock.isActive

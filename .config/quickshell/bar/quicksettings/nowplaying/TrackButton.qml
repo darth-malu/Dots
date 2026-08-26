@@ -23,7 +23,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: 6
+        radius: Math.min(6, width / 4)
         visible: !parent.flat
         color: {
             if (!parent.ghost)
@@ -40,7 +40,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: 6
+        radius: Math.min(6, width / 4)
         color: "transparent"
         border {
             width: {

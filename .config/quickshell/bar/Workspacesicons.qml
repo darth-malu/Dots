@@ -121,8 +121,8 @@ RowLayout {
             border.color: urgent ? "#ff5555" : boxy ? Themes.boxyActiveBorder : Themes.activeHasClientsBorder
 
             color: boxy
-                ? (isActive ? Themes.boxyActiveBg : hovered ? Themes.boxyHoverBg : "transparent")
-                : (isActive ? Qt.rgba(0.741, 0.576, 0.976, 0.18) : hovered ? Qt.rgba(1, 1, 1, 0.07) : "transparent")
+                ? (isActive ? Themes.boxyActiveBg : "transparent")
+                : (isActive ? Qt.rgba(0.741, 0.576, 0.976, 0.18) : "transparent")
 
             Behavior on color {
                 ColorAnimation { duration: 200; easing.type: Easing.OutQuad }
@@ -164,7 +164,7 @@ RowLayout {
                     radius: boxy ? Themes.boxyRadius : height / 2
                     color: rootBlock.isActive
                         ? (boxy ? Qt.rgba(0.74, 0.58, 0.98, 0.35) : Qt.rgba(0.741, 0.576, 0.976, 0.25))
-                        : (boxy ? Qt.rgba(0.74, 0.58, 0.98, 0.12) : Qt.rgba(1, 1, 1, 0.06))
+                        : "transparent"
 
                     Behavior on color {
                         ColorAnimation { duration: 200; easing.type: Easing.OutQuad }

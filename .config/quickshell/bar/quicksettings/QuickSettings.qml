@@ -73,7 +73,7 @@ BarBlock {
     PopupWindow {
         id: quickSettingsPopup
         visible: root.showQsPopup
-        grabFocus: root.qsPopupArmed
+        grabFocus: true
         // always transparent — the card below paints its own opaque
         // background; an opaque window backdrop would square off the
         // corners around the rounded card and shadow (border artifacts)
@@ -104,10 +104,9 @@ BarBlock {
 
             Keys.onEscapePressed: root.showQsPopup = false
 
-            MouseArea {
-                anchors.fill: parent
-                z: -1
-                onClicked: root.showQsPopup = false
+            Shortcut {
+                sequence: "Escape"
+                onActivated: root.showQsPopup = false
             }
 
             // rigid column — no scroll container, the popup grows with it
@@ -155,23 +154,16 @@ BarBlock {
                                 Layout.preferredHeight: 40
                                 radius: height / 2
                                 color: avatarMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "#343746"
-                                border.width: avatarMa.containsMouse ? 2 : 1
-                                border.color: avatarMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.55) : Qt.rgba(1, 1, 1, 0.14)
-
-                                Behavior on border.color {
-                                    ColorAnimation {
-                                        duration: 140
-                                    }
-                                }
+                                border.width: 0
 
                                 // halo of light on hover
                                 layer.enabled: true
                                 layer.effect: MultiEffect {
                                     shadowEnabled: true
                                     shadowColor: Qt.rgba(0.741, 0.576, 0.976, 1)
-                                    shadowBlur: 0.85
+                                    shadowBlur: 1.2
                                     autoPaddingEnabled: true
-                                    shadowOpacity: avatarMa.containsMouse ? 0.95 : 0
+                                    shadowOpacity: avatarMa.containsMouse ? 1.0 : 0
 
                                     Behavior on shadowOpacity {
                                         NumberAnimation {

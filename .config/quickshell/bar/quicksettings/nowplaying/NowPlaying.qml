@@ -49,8 +49,8 @@ ClippingRectangle {
     // chevron that extends the card to reveal the stream list —
     // flips over while the drawer is open
     component ChooserChevron: TrackButton {
-        width: 20
-        height: 20
+        width: 16
+        height: 16
         ghost: true
         text: "\uf078"
         idleColor: Qt.rgba(1, 1, 1, 0.32)
@@ -292,59 +292,60 @@ ClippingRectangle {
                     visible: text.length > 0
                 }
 
-                // progress bar
-                Item {
+                // progress bar + transport controls
+                RowLayout {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 10
                     Layout.topMargin: 2
+                    spacing: 4
 
-                    readonly property real ratio: {
-                        card.progressTick;
-                        var p = MprisState.cardPlayer;
-                        if (!p) return 0;
-                        var pos = p.position;
-                        var len = p.length;
-                        if (pos == null || len == null || len <= 0 || isNaN(pos) || isNaN(len))
-                            return 0;
-                        return Math.min(pos / len, 1);
-                    }
+                    // progress bar
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 10
 
-                    Rectangle {
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        height: 3
-                        radius: height / 2
-                        color: Qt.rgba(1, 1, 1, 0.09)
+                        readonly property real ratio: {
+                            card.progressTick;
+                            var p = MprisState.cardPlayer;
+                            if (!p) return 0;
+                            var pos = p.position;
+                            var len = p.length;
+                            if (pos == null || len == null || len <= 0 || isNaN(pos) || isNaN(len))
+                                return 0;
+                            return Math.min(pos / len, 1);
+                        }
 
                         Rectangle {
-                            width: parent.width * parent.parent.ratio
-                            height: parent.height
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            height: 3
                             radius: height / 2
-                            color: card.dominantColor
+                            color: Qt.rgba(1, 1, 1, 0.09)
 
-                            Behavior on width {
-                                NumberAnimation { duration: 200; easing.type: Easing.Linear }
+                            Rectangle {
+                                width: parent.width * parent.parent.ratio
+                                height: parent.height
+                                radius: height / 2
+                                color: card.dominantColor
+
+                                Behavior on width {
+                                    NumberAnimation { duration: 200; easing.type: Easing.Linear }
+                                }
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: mouse => {
+                                var p = MprisState.cardPlayer;
+                                if (p && p.length > 0)
+                                    p.position = (mouse.x / width) * p.length;
                             }
                         }
                     }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: mouse => {
-                            var p = MprisState.cardPlayer;
-                            if (p && p.length > 0)
-                                p.position = (mouse.x / width) * p.length;
-                        }
-                    }
-                }
-
-                // transport controls
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 2
-
+                    // transport controls
                     TrackButton {
                         text: "\uf048"
                         flat: true
@@ -363,8 +364,6 @@ ClippingRectangle {
                         accentColor: "#ff79c6"
                         onClicked: MprisState.cardPlayer?.next()
                     }
-
-                    Item { Layout.fillWidth: true }
                 }
             }
         }
@@ -372,13 +371,15 @@ ClippingRectangle {
         TrackButton {
             text: "+"
             ghost: true
+            width: 16
+            height: 16
             accentColor: card.color
             onClicked: card.compactNowPlaying = false
             anchors {
                 right: parent.right
                 top: parent.top
-                rightMargin: 2
-                topMargin: 2
+                rightMargin: 4
+                topMargin: 4
             }
         }
 
