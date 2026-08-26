@@ -18,7 +18,7 @@ Item {
     implicitWidth: width
     implicitHeight: height
 
-    visible: MprisState.mprisVisible
+    visible: MiscState.showMpris && MprisState.mprisVisible
 
     // closing the module must never leave its popups orphaned
     onVisibleChanged: {

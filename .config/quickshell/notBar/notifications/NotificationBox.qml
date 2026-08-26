@@ -84,7 +84,7 @@ WrapperMouseArea {
 
             Item {
                 id: songArtContainer
-                visible: rootMouseArea.image != "" || rootMouseArea.isWifiConnect
+                visible: rootMouseArea.iconSize > 0 && (rootMouseArea.image != "" || rootMouseArea.isWifiConnect)
                 implicitWidth: rootMouseArea.iconSize
                 implicitHeight: rootMouseArea.iconSize
                 Layout.topMargin: 2

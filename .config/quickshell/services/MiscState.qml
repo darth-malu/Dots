@@ -83,6 +83,9 @@ Singleton {
     property bool showEthernet: prefs.showEthernet
     onShowEthernetChanged: prefs.showEthernet = showEthernet
 
+    property bool showMpris: prefs.showMpris
+    onShowMprisChanged: prefs.showMpris = showMpris
+
     property bool showBattery: prefs.showBattery
     onShowBatteryChanged: prefs.showBattery = showBattery
 

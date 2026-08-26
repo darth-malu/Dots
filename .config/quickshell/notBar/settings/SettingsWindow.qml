@@ -730,6 +730,15 @@ Item {
                         Layout.fillWidth: true
 
                         SettingRow {
+                            icon: "\uf04b"
+                            label: "Enable MPRIS"
+                            checked: MiscState.showMpris
+                            onFlipped: MiscState.showMpris = !MiscState.showMpris
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+
+                        SettingRow {
                             icon: "\uf03e"
                             label: "Album art"
                             checked: MprisState.mprisArtVisible
@@ -1166,6 +1175,7 @@ Item {
                 }
             }
         }
+        }
 
         // ═══ NOTIFICATIONS ═══
         Component {
@@ -1433,9 +1443,21 @@ Item {
                             model: [
                                 {
                                     name: "Default",
-                                    font: "ZedMono Nerd Font",
+                                    font: "Quicksand",
                                     artSize: 90,
                                     radius: 10
+                                },
+                                {
+                                    name: "Box",
+                                    font: "Quicksand",
+                                    artSize: 0,
+                                    radius: 0
+                                },
+                                {
+                                    name: "Rounded",
+                                    font: "Quicksand",
+                                    artSize: 90,
+                                    radius: 16
                                 }
                             ]
 
@@ -1541,7 +1563,7 @@ Item {
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                    MiscState.notifFont = "ZedMono Nerd Font"
+                                    MiscState.notifFont = "Quicksand"
                                     MiscState.notifArtSize = 90
                                     MiscState.notifRadius = 10
                                 }

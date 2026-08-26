@@ -8,7 +8,7 @@ Item {
     // dynamic budget: shrink when the centered Mpris module is on stage so
     // the title never pushes into it or into the right-hand cluster — the
     // text elides at the cap instead of stretching the bar
-    readonly property bool midVisible: MprisState.mprisVisible
+    readonly property bool midVisible: MiscState.showMpris && MprisState.mprisVisible
     readonly property int maxW: Math.round(screen.width * (midVisible ? 0.24 : 0.34))
 
     implicitWidth: Math.min(titleText.implicitWidth, maxW)
