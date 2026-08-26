@@ -44,16 +44,20 @@ RowLayout {
 
             readonly property bool boxy: MiscState.boxyTheme
 
-            radius: boxy ? Themes.boxyRadius : height / 2
+            // empty workspaces: no bg, no border — just the bare number
+            readonly property bool isEmpty: !isActive && !isUrgent
 
-            border.width: boxy
+            radius: isEmpty ? 0 : (boxy ? Themes.boxyRadius : height / 2)
+
+            border.width: isEmpty ? 0 : (boxy
                 ? (isActive || isUrgent ? Themes.boxyBorderWidth : 0)
-                : (isActive || isUrgent ? 1 : 0)
+                : (isActive || isUrgent ? 1 : 0))
             border.color: isUrgent ? "#ff5555"
                 : boxy ? Themes.boxyActiveBorder
                 : Themes.activeHasClientsBorder
 
-            color: boxy
+            color: isEmpty ? "transparent"
+                : boxy
                 ? (isActive ? Themes.boxyActiveBg : "transparent")
                 : (isActive ? Qt.rgba(0.741, 0.576, 0.976, 0.18)
                     : isUrgent ? Qt.rgba(1, 0.33, 0.33, 0.15)
@@ -70,7 +74,7 @@ RowLayout {
             readonly property real sq: content.implicitHeight + 8
 
             implicitHeight: (boxy || (!boxy && isActive)) ? sq : content.implicitHeight + 4
-            Layout.preferredWidth: isActive ? sq : content.implicitWidth + 14
+            Layout.preferredWidth: isEmpty ? content.implicitWidth + 8 : (isActive ? sq : content.implicitWidth + 14)
             Layout.preferredHeight: (boxy || (!boxy && isActive)) ? sq : content.implicitHeight + 4
 
             Behavior on Layout.preferredWidth {
@@ -101,6 +105,7 @@ RowLayout {
                 color: rootBlock.isActive
                     ? Themes.activeTextColor
                     : rootBlock.isUrgent ? "#ff5555"
+                    : rootBlock.isEmpty ? Qt.rgba(1, 1, 1, 0.35)
                     : Themes.inactiveTextColor
                 dim: false
                 font {

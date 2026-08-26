@@ -92,6 +92,9 @@ RowLayout {
 
             property var clientIcons: []
 
+            // empty = no client icons at all
+            readonly property bool isEmpty: clientIcons.length === 0 && !isActive
+
             property bool _alive: true
             Component.onDestruction: _alive = false
 
@@ -115,12 +118,13 @@ RowLayout {
 
             readonly property bool boxy: MiscState.boxyTheme
 
-            radius: boxy ? Themes.boxyRadius : height / 2
+            radius: isEmpty ? 0 : (boxy ? Themes.boxyRadius : height / 2)
 
-            border.width: boxy ? (isActive ? Themes.boxyBorderWidth : 0) : (isActive ? 1 : 0)
+            border.width: isEmpty ? 0 : (boxy ? (isActive ? Themes.boxyBorderWidth : 0) : (isActive ? 1 : 0))
             border.color: urgent ? "#ff5555" : boxy ? Themes.boxyActiveBorder : Themes.activeHasClientsBorder
 
-            color: boxy
+            color: isEmpty ? "transparent"
+                : boxy
                 ? (isActive ? Themes.boxyActiveBg : "transparent")
                 : (isActive ? Qt.rgba(0.741, 0.576, 0.976, 0.18) : "transparent")
 
@@ -132,7 +136,7 @@ RowLayout {
             }
 
             implicitHeight: content.implicitHeight + 4
-            Layout.preferredWidth: content.implicitWidth + (isActive ? 8 : 12)
+            Layout.preferredWidth: isEmpty ? content.implicitWidth : (content.implicitWidth + (isActive ? 8 : 12))
             Layout.preferredHeight: content.implicitHeight + 4
 
             Behavior on Layout.preferredWidth {
@@ -159,6 +163,7 @@ RowLayout {
 
                 // workspace number badge — visible in both themes
                 Rectangle {
+                    visible: !rootBlock.isEmpty
                     Layout.fillHeight: true
                     implicitWidth: boxy ? 20 : 18
                     radius: boxy ? Themes.boxyRadius : height / 2
@@ -173,7 +178,9 @@ RowLayout {
                     Text {
                         anchors.centerIn: parent
                         text: String(rootBlock.ws?.id ?? "")
-                        color: rootBlock.isActive ? "#bd93f9" : (boxy ? Qt.rgba(0.74, 0.58, 0.98, 0.6) : Qt.rgba(1, 1, 1, 0.5))
+                        color: rootBlock.isActive ? "#bd93f9"
+                            : rootBlock.isEmpty ? Qt.rgba(1, 1, 1, 0.35)
+                            : (boxy ? Qt.rgba(0.74, 0.58, 0.98, 0.6) : Qt.rgba(1, 1, 1, 0.5))
                         font {
                             pixelSize: 9
                             bold: rootBlock.isActive

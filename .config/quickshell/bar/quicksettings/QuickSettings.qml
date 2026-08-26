@@ -28,18 +28,33 @@ BarBlock {
     property bool shuffleOn: false
     property bool loopOn: false
 
+    // debounce: ignore clicks briefly after opening so the same click
+    // that opens the popup can't immediately close it
+    property bool _openDebounce: false
+    Timer {
+        id: openDebounceTimer
+        interval: 250
+        repeat: false
+        running: root._openDebounce
+        onTriggered: root._openDebounce = false
+    }
+
     // ── player chooser — hidden until the bottom-left region is hovered,
     // which reveals a small launcher button; clicking it expands the chip
     // strip (wheel steps through players, click pins) ──
 
     // ── volume OSD ──
     onLeftClicked: {
+        if (_openDebounce)
+            return;
         root.showQsPopup = !root.showQsPopup;
     }
 
     onShowQsPopupChanged: {
         MiscState.qsOpen = showQsPopup;
         if (showQsPopup) {
+            _openDebounce = true;
+            openDebounceTimer.restart();
             qsPopupArmed = false;
             Qt.callLater(() => qsPopupArmed = true);
         } else {
@@ -70,44 +85,43 @@ BarBlock {
 
     content: NixQuickSettings {}
 
-    PopupWindow {
-        id: quickSettingsPopup
-        visible: root.showQsPopup
-        grabFocus: true
-        // always transparent — the card below paints its own opaque
-        // background; an opaque window backdrop would square off the
-        // corners around the rounded card and shadow (border artifacts)
-        color: "transparent"
+    LazyLoader {
+        loading: root.showQsPopup
 
-        anchor.window: root.host
-        anchor.rect.x: {
-            let g = root.mapToGlobal(0, 0);
-            return g.x + (root.width / 2) - (width / 2);
-        }
-        anchor.rect.y: 33
+        PopupWindow {
+            id: quickSettingsPopup
+            visible: root.showQsPopup
+            grabFocus: true
+            color: "transparent"
 
-        // rigid footprint — height always hugs the full content, never scrolls
-        implicitWidth: 300
-        implicitHeight: qsContent.implicitHeight
-
-        // same treatment as every other popup: one full-bleed rounded card
-        // with a hairline ring — no shadow effect, whose blur used to clip
-        // square-ish at the window edges
-        Rectangle {
-            id: qsCard
-            anchors.fill: parent
-            focus: true
-            radius: 12
-            color: MiscState.popupCardBg
-            border.width: 1
-            border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
-
-            Keys.onEscapePressed: root.showQsPopup = false
-
-            Shortcut {
-                sequence: "Escape"
-                onActivated: root.showQsPopup = false
+            anchor.window: root.host
+            anchor.rect.x: {
+                let g = root.mapToGlobal(0, 0);
+                let cx = g.x + (root.width / 2) - (width / 2);
+                const scrW = root.host?.screen?.width ?? 1920;
+                return Math.max(6, Math.min(cx, scrW - width - 6));
             }
+            anchor.rect.y: 33
+
+            implicitWidth: 300
+            implicitHeight: qsContent.implicitHeight
+
+            Rectangle {
+                id: qsCard
+                anchors.fill: parent
+                focus: true
+                radius: 12
+                color: MiscState.popupCardBg
+                border.width: 1
+                border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
+
+                Keys.onEscapePressed: root.showQsPopup = false
+
+                MouseArea {
+                    anchors.fill: parent
+                    z: -1
+                    onClicked: root.showQsPopup = false
+                }
 
             // rigid column — no scroll container, the popup grows with it
             ColumnLayout {
@@ -400,6 +414,7 @@ BarBlock {
                     }
                 }
             }
+        }
         }
     }
 }

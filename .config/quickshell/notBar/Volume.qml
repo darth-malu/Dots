@@ -25,17 +25,22 @@ Scope {
     }
 
     PwObjectTracker {
-        objects: [VolumeState.defaultSink]
+        objects: VolumeState.isAudioNode ? [VolumeState.isAudioNode] : []
     }
 
-    onNodeVolumeChanged: {
-        root.shouldShowOsd = true;
-        hideTimer.restart();
-    }
+    Connections {
+        target: VolumeState.isAudioNode
+        enabled: target !== null
 
-    onNodeMutedChanged: {
-        root.shouldShowOsd = true;
-        hideTimer.restart();
+        function onVolumeChanged() {
+            root.shouldShowOsd = true;
+            hideTimer.restart();
+        }
+
+        function onMutedChanged() {
+            root.shouldShowOsd = true;
+            hideTimer.restart();
+        }
     }
 
     Timer {
