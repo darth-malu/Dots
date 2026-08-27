@@ -61,7 +61,7 @@ RowLayout {
 
             visible: traySlab.content ? traySlab.content.trayCount > 0 : false
 
-            readonly property bool boxy: MiscState.boxyTray
+            readonly property bool boxy: MiscState.boxyTheme
             readonly property bool solo: traySlab.content ? traySlab.content.singleItem : false
 
             radius: boxy ? Themes.boxyRadius : height / 2

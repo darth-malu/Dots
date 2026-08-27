@@ -635,7 +635,7 @@ Item {
                         SettingRow {
                             icon: "\uf2d1"
                             label: "Boxy design"
-                            caption: MiscState.boxyTheme ? "boxy" : "rounded"
+                            caption: MiscState.boxyTheme ? "workspaces + tray + notifications" : "rounded"
                             checked: MiscState.boxyTheme
                             onFlipped: MiscState.boxyTheme = !MiscState.boxyTheme
                         }
@@ -648,16 +648,6 @@ Item {
                             caption: MiscState.popupSolidBg ? "solid" : "transparent"
                             checked: MiscState.popupSolidBg
                             onFlipped: MiscState.popupSolidBg = !MiscState.popupSolidBg
-                        }
-
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
-
-                        SettingRow {
-                            icon: "\uf290"
-                            label: "Boxy system tray"
-                            caption: MiscState.boxyTray ? "coloured pill" : "glass"
-                            checked: MiscState.boxyTray
-                            onFlipped: MiscState.boxyTray = !MiscState.boxyTray
                         }
                     }
                 }
@@ -974,6 +964,7 @@ Item {
                                 onFlipped: MiscState.showNetTotals = !MiscState.showNetTotals
                             }
                         }
+                    }
                     }
 
                     // ── tab · speedtest ──
@@ -1854,4 +1845,3 @@ Item {
             }
         }
     }
-}

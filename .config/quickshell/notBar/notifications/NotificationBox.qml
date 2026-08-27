@@ -133,7 +133,6 @@ WrapperMouseArea {
                         font.family: "Symbols Nerd Font Mono, " + MiscState.notifFont
                         font.pixelSize: 12
                         font.weight: Font.Bold
-                        font.bold: true
                     }
                 }
 

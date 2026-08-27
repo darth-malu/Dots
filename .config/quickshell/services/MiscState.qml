@@ -107,13 +107,12 @@ Singleton {
     property bool iconWorkspaces: prefs.iconWorkspaces
     onIconWorkspacesChanged: prefs.iconWorkspaces = iconWorkspaces
 
-    // boxy theme — nearly square corners, stronger active bg
+    // boxy theme — master toggle: controls workspaces, tray and notifications
     property bool boxyTheme: prefs.boxyTheme
-    onBoxyThemeChanged: prefs.boxyTheme = boxyTheme
-
-    // boxy system tray — coloured boxy pill for tray icons
-    property bool boxyTray: prefs.boxyTray
-    onBoxyTrayChanged: prefs.boxyTray = boxyTray
+    onBoxyThemeChanged: {
+        prefs.boxyTheme = boxyTheme;
+        notifRadius = boxyTheme ? 0 : 10;
+    }
 
     // show workspaces module — completely hides the workspace pills
     property bool showWorkspaces: prefs.showWorkspaces
@@ -155,7 +154,7 @@ Singleton {
 
             property bool popupSolidBg: false
             property bool showSysTray: true
-            property bool showMpris: true
+            property bool showMpris: false
             property bool showPlayerChooser: true
             property bool showShuffle: false
             property bool showLoop: false
@@ -168,7 +167,6 @@ Singleton {
             property bool showNotifTray: true
             property bool iconWorkspaces: true
             property bool boxyTheme: true
-            property bool boxyTray: true
             property bool showWorkspaces: true
             property string notifFont: "ZedMono Nerd Font"
             property int notifArtSize: 90
