@@ -14,3 +14,7 @@ hl.env("GDK_DPI_SCALE", "1")
 hl.env("GDK_BACKEND", "wayland,x11,*")
 -- hl.env("SDL_VIDEODRIVER", "wayland") -- Run SDL2 applications on Wayland. Remove or set to x11 if games that provide older versions of SDL cause compatibility issues
 -- hl.env("CLUTTER_BACKEND", "wayland")
+
+-- hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
+
+hl.env("NVD_BACKEND", "direct")
