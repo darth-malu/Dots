@@ -47,20 +47,22 @@ RowLayout {
             // empty workspaces: no bg, no border — just the bare number
             readonly property bool isEmpty: !isActive && !isUrgent
 
-            radius: isEmpty ? 0 : (boxy ? Themes.boxyRadius : height / 2)
+            radius: boxy
+                ? (isEmpty ? 0 : Themes.boxyRadius)
+                : Themes.roundedRadius
 
             border.width: isEmpty ? 0 : (boxy
-                ? (isActive || isUrgent ? Themes.boxyBorderWidth : 0)
-                : (isActive || isUrgent ? 1 : 0))
+                ? (Themes.boxyBorderWidth)
+                : Themes.roundedBorderWidth)
             border.color: isUrgent ? "#ff5555"
                 : boxy ? Themes.boxyActiveBorder
-                : Themes.activeHasClientsBorder
+                : Themes.roundedActiveBorder
 
             color: isEmpty ? "transparent"
                 : boxy
                 ? (isActive ? Themes.boxyActiveBg : "transparent")
-                : (isActive ? Qt.rgba(0.741, 0.576, 0.976, 0.18)
-                    : isUrgent ? Qt.rgba(1, 0.33, 0.33, 0.15)
+                : (isActive ? Themes.roundedActiveBg
+                    : isUrgent ? Themes.roundedUrgentBg
                     : "transparent")
 
             Behavior on color {
@@ -71,11 +73,11 @@ RowLayout {
             }
 
             // boxy active = perfect square, rounded active = perfect circle
-            readonly property real sq: content.implicitHeight + 8
+            readonly property int pillSize: content.implicitHeight + 8
 
-            implicitHeight: (boxy || (!boxy && isActive)) ? sq : content.implicitHeight + 4
-            Layout.preferredWidth: isEmpty ? content.implicitWidth + 8 : (isActive ? sq : content.implicitWidth + 14)
-            Layout.preferredHeight: (boxy || (!boxy && isActive)) ? sq : content.implicitHeight + 4
+            implicitHeight: pillSize
+            Layout.preferredWidth: isActive || (!boxy && !isEmpty) ? pillSize : content.implicitWidth + 14
+            Layout.preferredHeight: pillSize
 
             Behavior on Layout.preferredWidth {
                 NumberAnimation { duration: 200; easing.type: Easing.OutQuad }

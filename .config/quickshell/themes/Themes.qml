@@ -169,4 +169,14 @@ Singleton {
     readonly property color boxyHoverBg: Qt.rgba(1, 1, 1, 0.08)
     readonly property color boxyActiveBorder: Qt.rgba(0.74, 0.58, 0.98, 0.45)
     readonly property int boxyBorderWidth: 1
+
+    // Rounded design theme — pill/circle shapes, softer active bg
+    readonly property real roundedRadius: 999
+    readonly property color roundedActiveBg: Qt.rgba(0.741, 0.576, 0.976, 0.18)
+    readonly property color roundedHoverBg: Qt.rgba(1, 1, 1, 0.06)
+    readonly property color roundedActiveBorder: Qt.rgba(171 / 255, 141 / 255, 237 / 255, 0.65)
+    readonly property int roundedBorderWidth: 1
+    readonly property color roundedUrgentBg: Qt.rgba(1, 0.33, 0.33, 0.15)
+    readonly property color roundedBadgeBg: Qt.rgba(0.741, 0.576, 0.976, 0.25)
+    readonly property color roundedBadgeText: Qt.rgba(1, 1, 1, 0.5)
 }
