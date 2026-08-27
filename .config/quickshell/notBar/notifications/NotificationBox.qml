@@ -16,9 +16,6 @@ WrapperMouseArea {
     property real timestamp
     property real elapsed: Date.now()
 
-    readonly property string notifFontFamily: "Symbols Nerd Font Mono, " + MiscState.notifFont
-    readonly property string notifFontFamilyBody: MiscState.notifFont + ", Symbols Nerd Font Mono"
-
     readonly property bool ifMusic: (n.appName == 'mzichi' || n.appName == 'ncmpcpp' || n.appName == 'spotifY')
 
     readonly property bool isImageIcon: n.image == "" && n.appIcon != ""
@@ -133,7 +130,7 @@ WrapperMouseArea {
                         elide: Text.ElideRight
                         Layout.fillWidth: true
                         color: rootMouseArea.accent
-                        font.family: rootMouseArea.notifFontFamily
+                        font.family: "Symbols Nerd Font Mono, " + MiscState.notifFont
                         font.pixelSize: 12
                         font.weight: Font.Bold
                         font.bold: true
@@ -150,7 +147,7 @@ WrapperMouseArea {
                     maximumLineCount: rootMouseArea.expanded ? 20 : (rootMouseArea.n.actions.length > 1 ? 1 : 3)
                     text: rootMouseArea.n.body
                     color: "#b8bfcb"
-                    font.family: rootMouseArea.notifFontFamilyBody
+                    font.family: MiscState.notifFont + ", Symbols Nerd Font Mono"
                     font.pixelSize: 12
                     font.weight: Font.Medium
                 }

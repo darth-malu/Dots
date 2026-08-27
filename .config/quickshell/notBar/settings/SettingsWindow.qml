@@ -1442,7 +1442,7 @@ Item {
                         Repeater {
                             model: [
                                 {
-                                    name: "Default",
+                                    name: "Rounded",
                                     font: "Quicksand",
                                     artSize: 90,
                                     radius: 10
@@ -1452,12 +1452,6 @@ Item {
                                     font: "Quicksand",
                                     artSize: 90,
                                     radius: 0
-                                },
-                                {
-                                    name: "Rounded",
-                                    font: "Quicksand",
-                                    artSize: 90,
-                                    radius: 16
                                 }
                             ]
 
@@ -1524,51 +1518,6 @@ Item {
                             }
                         }
 
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
-
-                        // reset to defaults button
-                        Rectangle {
-                            Layout.fillWidth: true
-                            implicitHeight: 36
-                            radius: 6
-                            color: resetMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.12) : "transparent"
-
-                            Behavior on color {
-                                ColorAnimation { duration: 100 }
-                            }
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: 12
-                                anchors.rightMargin: 12
-                                spacing: 8
-
-                                Text {
-                                    text: "\uf0e2"
-                                    color: resetMa.containsMouse ? "#ff5555" : "#6272a4"
-                                    font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
-                                }
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: "Reset to defaults"
-                                    color: resetMa.containsMouse ? "#ff5555" : "#b8bfcb"
-                                    font { pixelSize: 11; family: "Quicksand" }
-                                }
-                            }
-
-                            MouseArea {
-                                id: resetMa
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    MiscState.notifFont = "Quicksand"
-                                    MiscState.notifArtSize = 90
-                                    MiscState.notifRadius = 10
-                                }
-                            }
-                        }
                     }
                 }
             }
