@@ -344,7 +344,9 @@ BarBlock {
                                             Rectangle {
                                                 id: pwBtn
 
-                                                // pw management shortcut (hyprpwcenter)
+                                                // management: left-click toggles the
+                                                // per-application volume list, right-click
+                                                // opens the full pipewire mixer (pwvucontrol)
                                                 implicitWidth: 18
                                                 implicitHeight: 18
                                                 radius: 5
@@ -359,10 +361,16 @@ BarBlock {
                                                 Text {
                                                     anchors.centerIn: parent
                                                     text: "\uf013"
-                                                    color: pwMouse.containsMouse ? "#bd93f9" : "#6272a4"
+                                                    color: MiscState.showAppVolume ? "#bd93f9" : pwMouse.containsMouse ? "#bd93f9" : "#6272a4"
                                                     font {
                                                         pixelSize: 10
                                                         family: "Symbols Nerd Font Mono"
+                                                    }
+
+                                                    Behavior on color {
+                                                        ColorAnimation {
+                                                            duration: 120
+                                                        }
                                                     }
                                                 }
 
@@ -370,10 +378,15 @@ BarBlock {
                                                     id: pwMouse
                                                     anchors.fill: parent
                                                     hoverEnabled: true
+                                                    acceptedButtons: Qt.LeftButton | Qt.RightButton
                                                     cursorShape: Qt.PointingHandCursor
-                                                    onClicked: {
-                                                        root.showQsPopup = false;
-                                                        Quickshell.execDetached(["sh", "-c", "exec pwvucontrol 2>/dev/null || exec pwvucontrol"]);
+                                                    onClicked: mouse => {
+                                                        if (mouse.button === Qt.RightButton) {
+                                                            root.showQsPopup = false;
+                                                            Quickshell.execDetached(["sh", "-c", "exec pwvucontrol 2>/dev/null || exec pwvucontrol"]);
+                                                        } else {
+                                                            MiscState.showAppVolume = !MiscState.showAppVolume;
+                                                        }
                                                     }
                                                 }
                                             }
@@ -408,69 +421,13 @@ BarBlock {
                                         }
                                     }
 
-                                    // ═══ PER-APPLICATION AUDIO TOGGLE ═══
+                                    // ═══ PER-APPLICATION AUDIO — toggled by the cog ═══
                                     Rectangle {
                                         Layout.fillWidth: true
                                         implicitHeight: 1
-                                        Layout.topMargin: 6
+                                        Layout.topMargin: 8
+                                        visible: MiscState.showAppVolume
                                         color: "#343746"
-                                    }
-
-                                    RowLayout {
-                                        Layout.fillWidth: true
-                                        spacing: 8
-
-                                        Text {
-                                            Layout.fillWidth: true
-                                            text: "\uf233  Applications"
-                                            color: "#f8f8f2"
-                                            elide: Text.ElideRight
-                                            font {
-                                                pixelSize: 10
-                                                bold: true
-                                                family: "Quicksand"
-                                                letterSpacing: 1
-                                            }
-                                        }
-
-                                        Rectangle {
-                                            id: appToggle
-
-                                            Layout.alignment: Qt.AlignVCenter
-                                            implicitWidth: 36
-                                            implicitHeight: 20
-                                            radius: 10
-                                            color: MiscState.showAppVolume ? "#bd93f9" : "#44475a"
-
-                                            Behavior on color {
-                                                ColorAnimation {
-                                                    duration: 120
-                                                }
-                                            }
-
-                                            Rectangle {
-                                                width: 16
-                                                height: 16
-                                                radius: 8
-                                                color: "#282a36"
-                                                x: MiscState.showAppVolume ? parent.width - width - 2 : 2
-                                                y: (parent.height - height) / 2
-
-                                                Behavior on x {
-                                                    NumberAnimation {
-                                                        duration: 120
-                                                        easing.type: Easing.OutCubic
-                                                    }
-                                                }
-                                            }
-
-                                            MouseArea {
-                                                anchors.fill: parent
-                                                hoverEnabled: true
-                                                cursorShape: Qt.PointingHandCursor
-                                                onClicked: MiscState.showAppVolume = !MiscState.showAppVolume
-                                            }
-                                        }
                                     }
 
                                     AppVolume {

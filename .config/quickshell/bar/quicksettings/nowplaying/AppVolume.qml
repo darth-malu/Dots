@@ -5,8 +5,10 @@ import Quickshell.Services.Pipewire
 import qs.services
 
 // ═══ PER-APPLICATION AUDIO ═══
-// One row per audio output stream (spotify, chrome, ...) — each with its own
-// mute button + volume slider, reusing the same VolumeSlider as the sinks.
+// One row per application playback stream (spotify, chrome, discord, ...),
+// each with its own mute button + volume slider, reusing the same
+// VolumeSlider as the sinks. Nodes come pre-bound from PipewireState.appStreams
+// so the PwNodeAudio volume/mute writes actually reach the stream.
 ColumnLayout {
     id: root
 
@@ -14,18 +16,16 @@ ColumnLayout {
     spacing: 6
 
     Repeater {
-        model: Pipewire.nodes
+        model: PipewireState.appStreams
 
         delegate: ColumnLayout {
             id: appStreamRow
 
             required property var modelData
 
-            readonly property bool appStream: PipewireState.isOutputApplicationStream(modelData)
-            // avoid touching mixer state for nodes that are not app streams
-            readonly property PwNode node: appStream ? modelData : null
+            readonly property PwNode node: modelData
 
-            visible: appStream && (node?.audio ?? null) !== null
+            visible: appStreamRow.node?.audio !== null || false
             Layout.fillWidth: true
             spacing: 3
 

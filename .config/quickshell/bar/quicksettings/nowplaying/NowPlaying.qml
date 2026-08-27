@@ -12,7 +12,7 @@ import qs.bar.quicksettings.nowplaying
 // ═══ NOW PLAYING ═══
 // self-contained media card — compact strip + expanded art view.
 // Set `compactNowPlaying` from the host to switch views.
-// A chevron at the bottom-right extends the card below the track
+// A cog at the bottom-right extends the card below the track
 // buttons, revealing a stream list to pick the controlled player from.
 ClippingRectangle {
     id: card
@@ -20,7 +20,7 @@ ClippingRectangle {
     required property bool compactNowPlaying
 
     // ── player chooser state ──
-    // chevron toggles the reveal; needs a real choice to offer
+    // cog toggles the reveal; needs a real choice to offer
     property bool chooserOpen: false
 
     readonly property bool chooserAvailable: MiscState.showPlayerChooser && MprisState.controlPlayers.length > 1
@@ -46,23 +46,16 @@ ClippingRectangle {
         }
     }
 
-    // chevron that extends the card to reveal the stream list —
-    // flips over while the drawer is open
+    // cog that extends the card to reveal the stream list —
+    // lights up while the drawer is open
     component ChooserChevron: TrackButton {
-        width: 12
-        height: 12
+        width: 14
+        height: 14
         ghost: true
-        text: "\uf078"
+        text: "\uf013"
         idleColor: Qt.rgba(1, 1, 1, 0.18)
         accentColor: Qt.rgba(1, 1, 1, 0.45)
-        rotation: card.chooserOpen ? 180 : 0
-
-        Behavior on rotation {
-            NumberAnimation {
-                duration: 180
-                easing.type: Easing.OutCubic
-            }
-        }
+        active: card.chooserOpen
 
         onClicked: card.chooserOpen = !card.chooserOpen
     }
@@ -659,7 +652,7 @@ ClippingRectangle {
             }
         }
 
-        // player chooser toggle — bottom-right chevron,
+        // player chooser toggle — bottom-right cog,
         // lifted to the track-text level
         ChooserChevron {
             visible: card.chooserAvailable
@@ -718,7 +711,7 @@ ClippingRectangle {
 
     // ── PLAYER CHOOSER DRAWER ──
     // revealed below the track buttons by the bottom-right
-    // chevron; lists every MPRIS stream — click to hand the
+    // cog; lists every MPRIS stream — click to hand the
     // card over, right-click to mute that stream, wheel to
     // step through them
     Rectangle {
