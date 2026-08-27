@@ -407,6 +407,77 @@ BarBlock {
                                             accent: "#8be9fd"
                                         }
                                     }
+
+                                    // ═══ PER-APPLICATION AUDIO TOGGLE ═══
+                                    Rectangle {
+                                        Layout.fillWidth: true
+                                        implicitHeight: 1
+                                        Layout.topMargin: 6
+                                        color: "#343746"
+                                    }
+
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 8
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: "\uf233  Applications"
+                                            color: "#f8f8f2"
+                                            elide: Text.ElideRight
+                                            font {
+                                                pixelSize: 10
+                                                bold: true
+                                                family: "Quicksand"
+                                                letterSpacing: 1
+                                            }
+                                        }
+
+                                        Rectangle {
+                                            id: appToggle
+
+                                            Layout.alignment: Qt.AlignVCenter
+                                            implicitWidth: 36
+                                            implicitHeight: 20
+                                            radius: 10
+                                            color: MiscState.showAppVolume ? "#bd93f9" : "#44475a"
+
+                                            Behavior on color {
+                                                ColorAnimation {
+                                                    duration: 120
+                                                }
+                                            }
+
+                                            Rectangle {
+                                                width: 16
+                                                height: 16
+                                                radius: 8
+                                                color: "#282a36"
+                                                x: MiscState.showAppVolume ? parent.width - width - 2 : 2
+                                                y: (parent.height - height) / 2
+
+                                                Behavior on x {
+                                                    NumberAnimation {
+                                                        duration: 120
+                                                        easing.type: Easing.OutCubic
+                                                    }
+                                                }
+                                            }
+
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: MiscState.showAppVolume = !MiscState.showAppVolume
+                                            }
+                                        }
+                                    }
+
+                                    AppVolume {
+                                        Layout.fillWidth: true
+                                        Layout.topMargin: 8
+                                        visible: MiscState.showAppVolume
+                                    }
                                 }
                             }
                         }

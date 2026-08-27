@@ -137,6 +137,10 @@ Singleton {
     property bool showVolumeIn: prefs.showVolumeIn
     onShowVolumeInChanged: prefs.showVolumeIn = showVolumeIn
 
+    // per-application audio streams list in the quicksettings volume card
+    property bool showAppVolume: prefs.showAppVolume
+    onShowAppVolumeChanged: prefs.showAppVolume = showAppVolume
+
     // bar mode — 0 transparent, 1 solid, 2 full-bleed.
     // Icons use this to pick soft (transparent) or bright (solid bg) colours.
     readonly property bool barSolid: BarState.barMode !== 0
@@ -173,6 +177,7 @@ Singleton {
             property int notifRadius: 10
             property bool showVolumeOut: true
             property bool showVolumeIn: true
+            property bool showAppVolume: false
         }
     }
 
