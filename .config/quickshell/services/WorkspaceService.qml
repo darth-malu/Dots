@@ -9,8 +9,7 @@ Singleton {
     readonly property var workspaces: Hyprland.workspaces.values.filter(w => !w.name.startsWith("special"))
 
     // ── dynamic per-workspace app icons ──
-    // hyprland-autoname isn't always running, so derive icons straight from
-    // the workspace's clients: class (from lastIpcObject) → theme icon
+    // class → freedesktop icon; title-in-class overrides take priority
     readonly property var classIconMap: {
         "kitty": "kitty",
         "foot": "foot",
@@ -74,6 +73,48 @@ Singleton {
         return "application-x-executable";
     }
 
+    // ── title-in-class overrides ──
+    // icon values are literal nerd-font / emoji chars — NOT escape sequences
+    readonly property var titleClassOverrides: [
+        { cls: /kitty/i,       title: /yazi/i,              icon: "kitty" },
+        { cls: /kitty/i,       title: /vim/i,               icon: "application-x-executable" },
+        { cls: /kitty/i,       title: /btop/i,              icon: "btop" },
+        { cls: /chrome.*/,     title: /Mastodon .*/,        icon: "internet-web-browser" },
+        { cls: /steam_app_\d+/,title: /Binding of Isaac: .*/,icon: "steam" },
+        { cls: /steam_app_\d+/,title: /Persona/,            icon: "steam" },
+        { cls: /steam_app_\d+/,title: /Hades/,              icon: "steam" },
+        { cls: /steam_app_default/i, title: /[bB]attle\.net/, icon: "steam" },
+        { cls: /electron/i,    title: /[fF]ree[tT]ube/,     icon: "freetube" },
+        { cls: /electron/i,    title: /WhatsApp Electron/,   icon: "whatsapp" },
+    ]
+
+    // ── exclusion patterns (class regex × title regex) ──
+    readonly property var excludePatterns: [
+        { cls: /^$/,            title: /^$/ },
+        { cls: /fcitx/i,        title: /.*/ },
+    ]
+
+    function isExcluded(cls, title) {
+        const c = cls ?? "";
+        const t = title ?? "";
+        for (const ex of root.excludePatterns) {
+            if (ex.cls.test(c) && ex.title.test(t))
+                return true;
+        }
+        return false;
+    }
+
+    function iconForClient(cls, title) {
+        const c = cls ?? "";
+        const t = title ?? "";
+        // title-in-class overrides first (highest priority)
+        for (const ov of root.titleClassOverrides) {
+            if (ov.cls.test(c) && ov.title.test(t))
+                return ov.icon;
+        }
+        return root.iconForClass(c);
+    }
+
     // deduped [{source, count}] for every client living on this workspace;
     // rev is threaded through purely as a binding dependency so callers'
     // event-driven revision counters force re-evaluation
@@ -92,8 +133,12 @@ Singleton {
             const t = tls[i];
             if (!t || !t.wayland)
                 continue;
-            const cls = root._clientsMap[root._normAddr(t.address)] ?? t.lastIpcObject?.class;
-            const icon = iconForClass(cls);
+            const info = root._clientsMap[root._normAddr(t.address)];
+            const cls = info?.class ?? t.lastIpcObject?.class ?? "";
+            const title = info?.title ?? t.lastIpcObject?.title ?? "";
+            if (root.isExcluded(cls, title))
+                continue;
+            const icon = iconForClient(cls, title);
             if (!icon)
                 continue;
             if (seen[icon]) {
@@ -152,7 +197,7 @@ Singleton {
                     const arr = JSON.parse(this.text);
                     const m = ({});
                     for (const c of arr)
-                        m[c.address] = c.class || c.initialClass || "";
+                        m[c.address] = { class: c.class || c.initialClass || "", title: c.title || "" };
                     root._clientsMap = m;
                     // new classes can change icons without changing the
                     // workspace LIST — nudge the shared revision so bars redraw

@@ -1,11 +1,10 @@
 version = "1.2.0"
 
-[format]
+# [format]
 # Deduplicate icons if enable.
 # A superscripted counter will be added.
-dedup = true
+# dedup = false
 # dedup_inactive_fullscreen = false # dedup more
-
 # window delimiter
 # delim = " "
 # max_clients = 30 # you should not need this
@@ -16,125 +15,49 @@ dedup = true
 # workspace formatter
 # workspace = "{id}:{delim}{clients}" # {id}, {delim} and {clients} are supported
 # workspace_empty = "{id}" # {id}, {delim} and {clients} are supported
-workspace = "{id} {delim} {clients}"
-# workspace_empty = "{delim}" # Empty Workspace - NO ID 
-
 # client formatter
 # client = "{icon}"
 # client_active = "*{icon}*"
-client_active = "{icon}"
 
 # deduplicate client formatter
 # client_fullscreen = "[{icon}]"
-client_fullscreen = "+{icon}"
-client_dup = "{client}{counter_sup}"
-client_dup_fullscreen = "[{icon}]{delim}{icon}{counter_unfocused}"
-client_dup_active = "*{icon}*{delim}{icon}{counter_unfocused}"
+# client_dup = "{client}{counter_sup}"
+# client_dup_fullscreen = "[{icon}]{delim}{icon}{counter_unfocused}"
+# client_dup_active = "*{icon}*{delim}{icon}{counter_unfocused}"
 
 [class]
 # Add your icons mapping
 # use double quote the key and the value
 # take class name from 'hyprctl clients'
-# "DEFAULT" = " {class}: {title}"
-"DEFAULT" = ""
-"(?i)Kitty" = ""
-"(?i)heroic" = ""
-"(?i)steam$" = "󰓓"
-"(?i)inkscape" = ""
-"(?i)Nautilus" = "📂"
-"[Ff]irefox" = ""
-"[fF]ree[tT]ube" = "󰡈"
-"freetube"= ""
-"chrom.*" = ""
-"discord" = ""
-"zen" = "Z"
-"dolphin" = "󱢴"
-"com.stremio.Stremio" = ""
-"lollypop" = "L"
-"com.obsproject.Studio" = "o"
-# "BlueMail" = "b"
-".gpodder-wrapped" = "g"
-"com.saivert.pwvucontrol" = "🔈"
-"polychromatic" = "🐭"
-"dota" = "D"
-"emacs" = ""
-"org.kde.kasts" = "󰺹"
-"cinny" = "💬"
-"et" = "📃"
-"gimp" = ""
-"io.github.ilya_zlobintsev.LACT" = "😀"
-"mpv" = ""
-"net.lutris.Lutris" = "󱎓"
-"org.qbittorrent.qBittorrent" = ""
-"qutebrowser" = "Q"
-"spotify" = ""
-"spotube" = "s"
-"openrgb" = "O"
-"cantata" = "🎵"
-"viewnior" = ""
-"wasistlos" = ""
-"wpp" = "🎁"
-"wps" = "📜"
-"zathura" = ""
-# "(?i)emacs" = ""
-"(?i)vim" = ""
-"(?i)foot" = "F"
-"libreoffice-draw" = "󰽉"
-"libreoffice-writer" = "󰷈"
-"libreoffice-calc" = ""
-"libreoffice-impress" = "󰈩"
-"steam_app_default" = "S"
+"DEFAULT" = " {class}: {title}"
+"(?i)Kitty" = "term"
+"[Ff]irefox" = "browser"
+"(?i)waydroid.*" = "droid"
 
 [class_active]
-DEFAULT = "" # "*{icon}*"
-# "(?i)ExampleOneTerm" = "<span foreground='red'>{icon}</span>"
-# DEFAULT = "<span foreground='red'></span>"
-# DEFAULT = "<span foreground='#bd93f9'>{icon}</span>"
-# "(?i)emacs" = "<span foreground='#ff79c6'>{icon}</span>"
-# "(?i)kitty" = "<span foreground='#50fa7b'>{icon}</span>"
+DEFAULT = "*{icon}*"
+"(?i)ExampleOneTerm" = "<span foreground='red'>{icon}</span>"
 
-[initial_class]
+# [initial_class]
 # "DEFAULT" = " {class}: {title}"
 # "(?i)Kitty" = "term"
-# "discord" = ""
 
 # [initial_class_active]
 # "(?i)Kitty" = "*TERM*"
 
-# [title_in_class."(?i)kitty"]
-# "(?i)neomutt" = "neomutt"
-
 [title_in_class."(?i)kitty"]
-"(?i)Yazi" = "󰇥"
-"(?i)vim" = ""
-"(?i)btop" = "🪛"
-
-[title_in_class."chrome.*"]
-"Mastodon .*" = "M"
-
-[title_in_class."steam_app_[0-9]+"]
-"Binding of Isaac: .*" = "f"
-"Persona" = "p"
-"Hades" = "h"
-
-[title_in_class."(?i)electron"]
-# "WhatsApp Electron .*" = ""
-
-[title_in_class."(?i)steam_app_default"]
-"[bB]attle.net" = "😆" 
+"(?i)neomutt" = "neomutt"
 # regex captures support is supported
 # "emerge: (.+?/.+?)-.*" = "{match1}"
 
-# [title_in_class_active."(?i)firefox"]
-# "(?i)twitch" = "<span color='purple'>{icon}</span>"
+[title_in_class_active."(?i)firefox"]
+"(?i)twitch" = "<span color='purple'>{icon}</span>"
 
 # [title_in_initial_class."(?i)kitty"]
 # "(?i)neomutt" = "neomutt"
 
-[initial_title_in_class."(?i)electron"]
+# [initial_title_in_class."(?i)kitty"]
 # "(?i)neomutt" = "neomutt"
-"[fF]ree[tT]ube" = "󰡈"
-"WhatsApp Electron" = ""
 
 # [initial_title_in_initial_class."(?i)kitty"]
 # "(?i)neomutt" = "neomutt"
@@ -153,8 +76,8 @@ DEFAULT = "" # "*{icon}*"
 "" = "^$" # prevent displaying icon for empty class
 "(?i)fcitx" = ".*" # will match all title for fcitx
 "(?i)TestApp" = "" # will match all title for TestApp
-# aProgram = "^$" # will match null title for aProgram
-# "[Ss]team" = "^(Friends List.*)?$" # will match Steam friends list plus all popups (empty titles)
+aProgram = "^$" # will match null title for aProgram
+"[Ss]team" = "^(Friends List.*)?$" # will match Steam friends list plus all popups (empty titles)
 
 [workspaces_name]
 0 = "zero"
