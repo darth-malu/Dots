@@ -128,13 +128,13 @@ ShellRoot {
             Component {
                 id: iconWorkspacesComp
 
-                Workspacesicons {}
+                WorkspaceIcons {}
             }
 
             Component {
                 id: numWorkspacesComp
 
-                Workspaces {}
+                WorkspaceNumbers {}
             }
         }
     }
