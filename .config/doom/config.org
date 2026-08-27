@@ -1792,6 +1792,11 @@ dont have to select manually you can:
                             "+ [ ] %?"
                             :prepend t)
 
+                           ("v" "Vaite: 📱" plain
+                            (file+headline "vaite.org" "TODO Vaite Checklist")
+                            "+ [ ] %?"
+                            :prepend t)
+
                            ;; Quickshell
                            ("Q" "Quickshell + QML")
                            ("QQ" "Quickshell" plain
@@ -1866,19 +1871,20 @@ dont have to select manually you can:
                             "#+begin_quote\n%i%?\n#+end_quote\n"
                             :empty-lines 1
                             :prepend t)
-                           ("v" "Video Ideas 📷")
-                           ("ve" "Emacs 📃")
-                           ("vei" "Emacs ideas ✔️" plain
-                            (file+headline "emacsVideoIdea.org" "Random Idea")
-                            " %?"
-                            :prepend t
-                            :empty-lines 1
-                            )
-                           ("vej" "emacs jolts ✏️" plain
-                            (file+headline "emacsVideoIdea.org" "Random Jolt")
-                            " %?"
-                            :prepend t
-                            :empty-lines 1)
+
+                           ;; ("v" "Video Ideas 📷")
+                           ;; ("ve" "Emacs 📃")
+                           ;; ("vei" "Emacs ideas ✔️" plain
+                           ;;  (file+headline "emacsVideoIdea.org" "Random Idea")
+                           ;;  " %?"
+                           ;;  :prepend t
+                           ;;  :empty-lines 1
+                           ;;  )
+                           ;; ("vej" "emacs jolts ✏️" plain
+                           ;;  (file+headline "emacsVideoIdea.org" "Random Jolt")
+                           ;;  " %?"
+                           ;;  :prepend t
+                           ;;  :empty-lines 1)
                            )))
 #+end_src
 **** docs
