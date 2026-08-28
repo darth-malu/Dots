@@ -26,6 +26,9 @@ Singleton {
     // APPLAUNCHER
     property bool toggleAppLauncher: false
 
+    // CALC
+    property bool toggleCalc: false
+
     // Cache the values once
     readonly property var allApps: DesktopEntries.applications.values
 

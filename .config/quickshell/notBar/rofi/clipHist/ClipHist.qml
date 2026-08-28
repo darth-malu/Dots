@@ -29,7 +29,6 @@ Rofi {
 
     delegateIngest: LauncherDelegate {
         required property var modelData
-        itemLauncher: itemLauncher
 
         iconUrl: ""
         app: TextClipHistDelegate {}

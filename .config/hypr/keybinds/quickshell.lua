@@ -35,6 +35,7 @@ hl.bind(mod .. "ALT + 5", hl.dsp.exec_cmd("qs ipc call activate toggle"), { lock
 hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("qs ipc call appLauncher toggle"))
 hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("qs ipc call openWindows toggle"))
 hl.bind(mainMod .. " + backspace", hl.dsp.exec_cmd("qs ipc call clipHist toggle"))
+hl.bind(mainMod .. " + SHIFT + comma", hl.dsp.exec_cmd("qs ipc call calc toggle"))
 
 -- QUICKSHELL - PICKERS
 hl.bind(mainMod .. " + period", hl.dsp.exec_cmd("qs ipc call emoji toggle"))

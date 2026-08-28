@@ -70,7 +70,7 @@ closeWindowBind:set_enabled(true)
 
 -- hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
-hl.bind(mainMod .. " + slash", hl.dsp.layout("swapsplit")) -- dwindle only
+hl.bind(mainMod .. " + slash", hl.dsp.layout("swapsplit")) -- SUPER+, was swapsplit — now SUPER+, = openWindows
 hl.bind("SUPER + SHIFT + slash", hl.dsp.layout("togglesplit"))
 -- hl.bind("SUPER + A", hl.dsp.layout("togglesplit"))
 hl.bind(mainMod .. "+ A", hl.dsp.window.pseudo())

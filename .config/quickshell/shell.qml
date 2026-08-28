@@ -8,6 +8,7 @@ import qs.notBar.misc
 import qs.notBar.rofi.appLauncher
 import qs.notBar.rofi.openWindows
 import qs.notBar.rofi.clipHist
+import qs.notBar.rofi.calc
 import qs.notBar.settings
 import qs.notBar.pickers
 import qs.logout
@@ -21,6 +22,7 @@ ShellRoot {
     AppLauncher {}
     OpenWindows {}
     ClipHist {}
+    Calc {}
     SettingsWindow {}
     WLogoutOverlay {}
     EmojiPicker {}

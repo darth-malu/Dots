@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: lib.mkIf carthage
+# uuid: 
+# key: -If
+# condition: t
+# --
+lib.mkIf (config.networking.hostname == "${1:carthage}") $0

@@ -109,6 +109,28 @@ PanelWindow {
                         grid.currentIndex = Math.min(grid.count - 1, grid.currentIndex + search.gridCols);
                         event.accepted = true;
                     }
+                    // vim-motion movement — Ctrl+H/J/K/L steer the grid too
+                    Keys.onPressed: event => {
+                        if (!(event.modifiers & Qt.ControlModifier))
+                            return;
+                        if (grid.count === 0) {
+                            event.accepted = true;
+                            return;
+                        }
+                        if (event.key === Qt.Key_J) {
+                            grid.currentIndex = Math.min(grid.count - 1, grid.currentIndex + search.gridCols);
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_K) {
+                            grid.currentIndex = Math.max(0, grid.currentIndex - search.gridCols);
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_H) {
+                            grid.currentIndex = grid.currentIndex > 0 ? grid.currentIndex - 1 : grid.count - 1;
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_L) {
+                            grid.currentIndex = grid.currentIndex < grid.count - 1 ? grid.currentIndex + 1 : 0;
+                            event.accepted = true;
+                        }
+                    }
                     Keys.onReturnPressed: {
                         if (grid.currentItem) {
                             root.copyEmoji(grid.currentItem.char_);

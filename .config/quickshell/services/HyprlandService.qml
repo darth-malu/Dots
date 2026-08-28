@@ -70,6 +70,14 @@ Singleton {
         dispatch(`hl.get_active_monitor():set_workspace(${parseInt(id)})`);
     }
 
+    // focus a specific client. quickshell exposes Toplevel.address as bare
+    // hex (no 0x) but the lua window selector wants the 0x-prefixed form.
+    function focusWindow(address) {
+        const a = String(address ?? "");
+        const addr = a.startsWith("0x") ? a : "0x" + a;
+        dispatch(`hl.dsp.focus({ window = 'address:${addr}' })`);
+    }
+
     function handleSubmap(ev) {
         if (ev.name !== "submap")
             return;

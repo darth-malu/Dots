@@ -32,18 +32,17 @@ PanelWindow {
     // · close THIS panel first — while a layer surface holds exclusive
     //   keyboard focus, Hyprland refuses to apply client focus changes,
     //   so dispatching before closing silently did nothing
-    // · quickshell exposes Toplevel.address as BARE hex (no 0x) but the
-    //   focuswindow dispatcher expects the 0x-prefixed form
+    // · Hyprland.dispatch uses the broken legacy wire format on 0.56+, so
+    //   the actual focus goes through HyprlandService's /dispatch Lua socket
     // · wayland.activate() as last resort — its xdg-activation token is
     //   frequently ignored by Hyprland, hence the dispatcher preference
     function focusToplevel(tl) {
         if (!tl)
             return;
-        toggler();
-        if (tl.address) {
-            const addr = String(tl.address).startsWith("0x") ? String(tl.address) : "0x" + tl.address;
-            Hyprland.dispatch("focuswindow address:" + addr);
-        } else if (tl.wayland)
+        RofiState.toggler();
+        if (tl.address)
+            HyprlandService.focusWindow(tl.address);
+        else if (tl.wayland)
             tl.wayland.activate();
     }
 

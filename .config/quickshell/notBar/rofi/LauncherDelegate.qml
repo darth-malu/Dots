@@ -9,7 +9,6 @@ Rectangle {
     height: appName.childrenRect.height + 15
     color: "transparent"
 
-    // default property alias content: appName.data // data is the contents of an instance children list
     default property Item app
 
     required property string iconUrl
@@ -18,33 +17,13 @@ Rectangle {
 
     property Component delegateMD
 
-    // delegates are created before parenting — guard so ListView setup
-    // doesn't spam null-parent TypeErrors
     required property int index
-    property bool isCurrentItem: parent ? (parent.currentIndex === index) : false
+    property bool isCurrentItem: false
 
-    property MouseArea mouseArea: mouseArea
-
-    // the launcher ListView lives in Rofi.qml — its id is out of scope in
-    // this file, so instances bind it explicitly (was a silent ReferenceError)
-    property var itemLauncher
-
-    property string windowTitle
-
-    MouseArea {
-        id: mouseArea
-        anchors.fill: root
-        hoverEnabled: true
-        acceptedButtons: Qt.LeftButton
-        onClicked: {
-            itemLauncher.currentIndex = index;
-            itemLauncher.activateCurrent();
-        }
-        // no onWheel here — the ListView/Flickable in Rofi.qml handles the
-        // wheel natively (smooth, momentum, scrollbar-synced, and works with
-        // trackpad pixel deltas). A per-delegate manual contentY jump bypassed
-        // all of that and only moved in coarse 120px/notch steps.
-    }
+    // the owning ListView via the standard attached property — robust in
+    // every delegate regardless of the creation context that built it
+    // (a cross-file `itemLauncher: itemLauncher` self-binding stays null)
+    readonly property ListView listView: ListView.view
 
     RowLayout {
         anchors.verticalCenter: root.verticalCenter
@@ -63,5 +42,22 @@ Rectangle {
             Layout.fillHeight: true // Centers text lol
             children: root.app
         }
+    }
+
+    // interactive layer on TOP of the content so clicks/hovers never slip
+    // through to the text behind; wheel is deliberately left alone so the
+    // ListView/Flickable scrolls smoothly (native momentum + scrollbar)
+    MouseArea {
+        anchors.fill: parent
+        hoverEnabled: true
+        acceptedButtons: Qt.LeftButton
+        onClicked: {
+            if (!root.listView)
+                return;
+            root.listView.currentIndex = index;
+            root.listView.activateCurrent();
+        }
+        onEntered: if (root.listView)
+            root.listView.currentIndex = index
     }
 }

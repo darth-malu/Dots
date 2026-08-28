@@ -144,6 +144,17 @@ Item {
     }
 
     IpcHandler {
+        target: 'calc'
+        function toggle(): void {
+            // calculators are overlay-exclusive — drop any other open rofi
+            RofiState.toggleAppLauncher = false;
+            RofiState.toggleOpenWindows = false;
+            RofiState.toggleClipHist = false;
+            RofiState.toggleCalc = !RofiState.toggleCalc;
+        }
+    }
+
+    IpcHandler {
         target: 'SysTray'
         function toggle(): void {
             MiscState.toggleSysTray = !MiscState.toggleSysTray;
