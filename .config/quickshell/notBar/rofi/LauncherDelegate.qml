@@ -40,14 +40,10 @@ Rectangle {
             itemLauncher.currentIndex = index;
             itemLauncher.activateCurrent();
         }
-        onWheel: wheel => {
-            let flick = itemLauncher;
-            if (flick) {
-                flick.contentY = Math.max(0, Math.min(flick.contentHeight - flick.height,
-                    flick.contentY - wheel.angleDelta.y));
-                wheel.accepted = true;
-            }
-        }
+        // no onWheel here — the ListView/Flickable in Rofi.qml handles the
+        // wheel natively (smooth, momentum, scrollbar-synced, and works with
+        // trackpad pixel deltas). A per-delegate manual contentY jump bypassed
+        // all of that and only moved in coarse 120px/notch steps.
     }
 
     RowLayout {
