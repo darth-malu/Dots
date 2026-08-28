@@ -584,6 +584,7 @@ ClippingRectangle {
                         }
                     }
 
+
                     // ── Playback controls ──
                     RowLayout {
                         Layout.fillWidth: true
