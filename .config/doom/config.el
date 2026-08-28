@@ -373,7 +373,7 @@
   (org-agenda-mode . org-agenda-open-hook)
 
   :init
-  (setq org-directory (expand-file-name "~/Documents/Org")
+  (setq org-directory (expand-file-name "~/Projects/Org")
         ;; org-agenda-files `(,org-directory ,(file-name-concat org-directory "roam") ,@my/usiu-files)
         org-agenda-files `(,org-directory ,(file-name-concat org-directory "roam"))
         org-noter-notes-search-path (list (file-name-concat org-directory "notes"))

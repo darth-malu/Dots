@@ -65,7 +65,7 @@ ColumnLayout {
                 }
             }
             readonly property bool isActive: isAlive && MprisState.player === modelData
-            readonly property bool isPinned: isAlive && MprisState.pinIdentity === modelData.identity
+            readonly property bool isPinned: isAlive && MprisState.pinPlayerName === modelData.dbusName
             readonly property bool isPaused: {
                 try {
                     return isAlive && modelData.playbackState === MprisPlaybackState.Paused;
@@ -304,7 +304,7 @@ ColumnLayout {
                         return;
                     // middle-click pins the player to the quicksettings card
                     if (mouse.button === Qt.MiddleButton) {
-                        MprisState.pinIdentity = MprisState.pinIdentity === prow.modelData.identity ? "" : prow.modelData.identity;
+                        MprisState.pinPlayerName = MprisState.pinPlayerName === prow.modelData.dbusName ? "" : prow.modelData.dbusName;
                         return;
                     }
                     try {

@@ -340,56 +340,6 @@ BarBlock {
                                                 accent: "#bd93f9"
                                                 displayName: PipewireState.outputDisplayName
                                             }
-
-                                            Rectangle {
-                                                id: pwBtn
-
-                                                // management: left-click toggles the
-                                                // per-application volume list, right-click
-                                                // opens the full pipewire mixer (pwvucontrol)
-                                                implicitWidth: 18
-                                                implicitHeight: 18
-                                                radius: 5
-                                                color: pwMouse.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "transparent"
-
-                                                Behavior on color {
-                                                    ColorAnimation {
-                                                        duration: 120
-                                                    }
-                                                }
-
-                                                Text {
-                                                    anchors.centerIn: parent
-                                                    text: "\uf013"
-                                                    color: MiscState.showAppVolume ? "#bd93f9" : pwMouse.containsMouse ? "#bd93f9" : "#6272a4"
-                                                    font {
-                                                        pixelSize: 10
-                                                        family: "Symbols Nerd Font Mono"
-                                                    }
-
-                                                    Behavior on color {
-                                                        ColorAnimation {
-                                                            duration: 120
-                                                        }
-                                                    }
-                                                }
-
-                                                MouseArea {
-                                                    id: pwMouse
-                                                    anchors.fill: parent
-                                                    hoverEnabled: true
-                                                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                                    cursorShape: Qt.PointingHandCursor
-                                                    onClicked: mouse => {
-                                                        if (mouse.button === Qt.RightButton) {
-                                                            root.showQsPopup = false;
-                                                            Quickshell.execDetached(["sh", "-c", "exec pwvucontrol 2>/dev/null || exec pwvucontrol"]);
-                                                        } else {
-                                                            MiscState.showAppVolume = !MiscState.showAppVolume;
-                                                        }
-                                                    }
-                                                }
-                                            }
                                         }
 
                                         VolumeSlider {
@@ -405,6 +355,9 @@ BarBlock {
                                         Layout.fillWidth: true
                                         spacing: 3
                                         Layout.topMargin: 5
+                                        // input sliders only make sense when an
+                                        // input device is actually present
+                                        visible: PipewireState.inputSink !== null
 
                                         SinkName {
                                             node: PipewireState.inputSink
@@ -434,6 +387,64 @@ BarBlock {
                                         Layout.fillWidth: true
                                         Layout.topMargin: 8
                                         visible: MiscState.showAppVolume
+                                    }
+                                }
+
+                                // management cog — top-right corner of the card (same
+                                // orientation/place as the now-playing button):
+                                // left-click toggles the per-application volume list,
+                                // right-click opens the full pipewire mixer (pwvucontrol)
+                                Rectangle {
+                                    id: pwBtn
+
+                                    anchors {
+                                        right: parent.right
+                                        top: parent.top
+                                        rightMargin: 8
+                                        topMargin: 8
+                                    }
+                                    implicitWidth: 18
+                                    implicitHeight: 18
+                                    radius: 5
+                                    color: pwMouse.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "transparent"
+
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: 120
+                                        }
+                                    }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "\uf013"
+                                        color: MiscState.showAppVolume ? "#bd93f9" : pwMouse.containsMouse ? "#bd93f9" : "#6272a4"
+                                        font {
+                                            pixelSize: 10
+                                            family: "Symbols Nerd Font Mono"
+                                        }
+
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: 120
+                                            }
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: pwMouse
+
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: mouse => {
+                                            if (mouse.button === Qt.RightButton) {
+                                                root.showQsPopup = false;
+                                                Quickshell.execDetached(["sh", "-c", "exec pwvucontrol 2>/dev/null || exec pwvucontrol"]);
+                                            } else {
+                                                MiscState.showAppVolume = !MiscState.showAppVolume;
+                                            }
+                                        }
                                     }
                                 }
                             }

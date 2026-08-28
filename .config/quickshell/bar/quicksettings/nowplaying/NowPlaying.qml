@@ -5,6 +5,7 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Widgets
 import Quickshell.Services.Mpris
+import Quickshell.Services.Pipewire
 import qs.customItems
 import qs.services
 import qs.bar.quicksettings.nowplaying
@@ -39,25 +40,58 @@ ClippingRectangle {
         return "#21222c";
     }
     implicitHeight: baseCardHeight + (chooserAvailable && chooserOpen ? chooserPanel.implicitHeight : 0)
-    Behavior on implicitHeight {
-        NumberAnimation {
-            duration: 250
-            easing.type: Easing.OutCubic
+
+    // combined control — one button for both card duties, styled to
+    // match the audio volume card's management cog: left-click runs the
+    // caller's primary action (expand/collapse the art view), right-click
+    // opens the player chooser; lights up while the chooser drawer is open
+    component ChooserCog: Rectangle {
+        id: cog
+
+        signal clicked
+        signal openChooser()
+
+        implicitWidth: 18
+        implicitHeight: 18
+        radius: 5
+        color: cogMouse.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "transparent"
+
+        Behavior on color {
+            ColorAnimation {
+                duration: 120
+            }
         }
-    }
 
-    // cog that extends the card to reveal the stream list —
-    // lights up while the drawer is open
-    component ChooserChevron: TrackButton {
-        width: 14
-        height: 14
-        ghost: true
-        text: "\uf013"
-        idleColor: Qt.rgba(1, 1, 1, 0.18)
-        accentColor: Qt.rgba(1, 1, 1, 0.45)
-        active: card.chooserOpen
+        Text {
+            anchors.centerIn: parent
+            text: "\uf067"
+            color: card.chooserOpen || cogMouse.containsMouse ? "#bd93f9" : "#6272a4"
+            font {
+                pixelSize: 10
+                family: "Symbols Nerd Font Mono"
+            }
 
-        onClicked: card.chooserOpen = !card.chooserOpen
+            Behavior on color {
+                ColorAnimation {
+                    duration: 120
+                }
+            }
+        }
+
+        MouseArea {
+            id: cogMouse
+
+            anchors.fill: parent
+            hoverEnabled: true
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
+            cursorShape: Qt.PointingHandCursor
+            onClicked: mouse => {
+                if (mouse.button === Qt.RightButton)
+                    cog.openChooser();
+                else
+                    cog.clicked();
+            }
+        }
     }
 
     property color dominantColor: "#bd93f9"
@@ -74,13 +108,26 @@ ClippingRectangle {
     property int progressTick: 0
     property bool showVolumeBadge: false
     // middle-click mute state · expanded controls gate
-    readonly property bool mutedNow: MprisState.isMuted(MprisState.cardPlayer)
     property bool expControlsRevealed: false
-    // external players (no MPRIS volume, e.g. chrome) get a
-    // locally tracked percentage since pactl can't be read back
-    property real extVol: 0.5
+    // external players (no MPRIS volume, e.g. chrome): resolve the real per-app
+    // pipewire stream node so scroll volume edits the actual settings (same
+    // logic as the audio > applications list) instead of a local guess
     readonly property bool mprisVolume: MprisState.cardPlayer?.volumeSupported ?? false
-    readonly property int currentVolume: Math.round((mprisVolume ? MprisState.cardPlayer?.volume ?? 0 : extVol) * 100)
+    readonly property var extNode: {
+        const p = MprisState.cardPlayer;
+        if (!p || p.volumeSupported)
+            return null;
+        return PipewireState.appStreamForPlayer(p);
+    }
+    readonly property bool mutedNow: mprisVolume
+        ? MprisState.isMuted(MprisState.cardPlayer)
+        : extNode ? (extNode.audio?.muted ?? false) : false
+    // external players without a resolvable stream fall back to a locally
+    // tracked percentage (only used when node lookup yields nothing)
+    property real extVol: 0.5
+    readonly property int currentVolume: Math.round((mprisVolume
+        ? (MprisState.cardPlayer?.volume ?? 0)
+        : extNode ? (extNode.audio?.volume ?? 0) : extVol) * 100)
 
     // visibility-first volume tint — hotter as it gets louder;
     // muted drops to red regardless of level
@@ -104,8 +151,16 @@ ClippingRectangle {
             if (!(p?.canControl))
                 return;
             if (card.mprisVolume) {
+                // spotify etc. adjust natively via MPRIS
                 MprisState.adjustVolume(p, ev.angleDelta.y > 0);
+            } else if (card.extNode) {
+                // chrome: same logic as the audio > applications slider — edit
+                // the real per-app pipewire stream volume directly
+                const step = ev.angleDelta.y > 0 ? 0.05 : -0.05;
+                const base = card.extNode.audio?.volume ?? 0;
+                card.extNode.audio.volume = Math.max(0, Math.min(base + step, 1));
             } else {
+                // no resolvable stream — local fallback + wpctl nudge
                 card.extVol = Math.max(0, Math.min(card.extVol + (ev.angleDelta.y > 0 ? 0.05 : -0.05), 1));
                 MprisState.adjustVolume(p, ev.angleDelta.y > 0);
             }
@@ -362,28 +417,15 @@ ClippingRectangle {
             }
         }
 
-        TrackButton {
-            text: "+"
-            ghost: true
-            width: 16
-            height: 16
-            accentColor: card.color
+        ChooserCog {
+            // left = expand to the art view, right = player chooser
             onClicked: card.compactNowPlaying = false
+            onOpenChooser: card.chooserOpen = !card.chooserOpen
             anchors {
                 right: parent.right
                 top: parent.top
                 rightMargin: 4
                 topMargin: 4
-            }
-        }
-
-        ChooserChevron {
-            visible: card.chooserAvailable
-            anchors {
-                right: parent.right
-                bottom: parent.bottom
-                rightMargin: 6
-                bottomMargin: 6
             }
         }
     }
@@ -639,28 +681,15 @@ ClippingRectangle {
             }
         }
 
-        TrackButton {
-            text: "−"
-            ghost: true
-            accentColor: Qt.rgba(1, 1, 1, 0.6)
+        ChooserCog {
+            // left = collapse back to compact, right = player chooser
             onClicked: card.compactNowPlaying = true
+            onOpenChooser: card.chooserOpen = !card.chooserOpen
             anchors {
                 right: parent.right
                 top: parent.top
                 rightMargin: 2
                 topMargin: 2
-            }
-        }
-
-        // player chooser toggle — bottom-right cog,
-        // lifted to the track-text level
-        ChooserChevron {
-            visible: card.chooserAvailable
-            anchors {
-                right: parent.right
-                bottom: parent.bottom
-                rightMargin: 6
-                bottomMargin: 6
             }
         }
 
@@ -710,41 +739,21 @@ ClippingRectangle {
     }
 
     // ── PLAYER CHOOSER DRAWER ──
-    // revealed below the track buttons by the bottom-right
-    // cog; lists every MPRIS stream — click to hand the
-    // card over, right-click to mute that stream, wheel to
-    // step through them
+    // revealed by right-clicking the card's cog; lists every MPRIS
+    // stream — click to hand the card over, right-click to mute that
+    // stream, wheel to step through them
     Rectangle {
         id: chooserPanel
 
-        visible: card.chooserAvailable && opacity > 0
-        // fades a beat faster than the slide so rows resolve while
-        // still emerging from under the base view instead of popping
+        visible: card.chooserAvailable && card.chooserOpen
 
-        // pinned below the base view — NOT bottom-anchored, or the
-        // drawer would ride over the track art while the card's
-        // height animates; the card clip wipes it into view instead.
-        // slides its FULL height so open/close reads as one continuous
-        // drawer motion (timed to match the card's own height animation)
+        // pinned below the base view so the card clip wipes it into view
         anchors {
             left: parent.left
             right: parent.right
             top: card.compactNowPlaying ? compactView.bottom : expandedView.bottom
         }
         implicitHeight: chooserCol.implicitHeight + 14
-        // 0→1 master progress for the whole drawer motion; rows derive a
-        // staggered ramp from it (Animation.delay is off-limits here —
-        // quickshell's AOT compiler rejects it inside Behaviors)
-        property real revealT: card.chooserOpen ? 1 : 0
-
-        Behavior on revealT {
-            NumberAnimation {
-                duration: 300
-                easing.type: Easing.OutCubic
-            }
-        }
-
-        opacity: Math.min(1, revealT * 3)
         // slightly darker floor so the drawer reads as its own zone
         color: Qt.rgba(0, 0, 0, 0.25)
 
@@ -785,10 +794,9 @@ ClippingRectangle {
                     id: streamRow
 
                     required property var modelData
-                    required property int index
 
                     readonly property bool isCurrent: modelData.identity === (MprisState.cardPlayer?.identity ?? "")
-                    readonly property bool isPinned: MprisState.pinIdentity === modelData.identity
+                    readonly property bool isPinned: MprisState.pinPlayerName === modelData.dbusName
                     readonly property bool isPlaying: {
                         try {
                             return modelData.playbackState === MprisPlaybackState.Playing;
@@ -798,24 +806,10 @@ ClippingRectangle {
                     }
                     readonly property bool isMuted: MprisState.isMuted(modelData)
 
-                    // staggered entrance — each row fades/rises in sequence
-                    // as the master revealT progress sweeps 0→1 (last row
-                    // starts ~45% in, everything settled at 1)
-                    readonly property int stagger: Math.min(index * 18, 90)
-                    readonly property real rowT: {
-                        const start = chooserPanel.revealT <= 0 ? 1 : (streamRow.stagger / 90) * 0.45;
-                        return Math.max(0, Math.min(1, (chooserPanel.revealT - start) / (1 - start)));
-                    }
-
                     Layout.fillWidth: true
                     implicitHeight: 24
                     radius: 6
                     color: rowMa.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : isCurrent ? Qt.rgba(1, 1, 1, 0.05) : "transparent"
-
-                    opacity: streamRow.rowT
-                    transform: Translate {
-                        y: (1 - streamRow.rowT) * 8
-                    }
 
                     Behavior on color {
                         ColorAnimation {
@@ -899,7 +893,7 @@ ClippingRectangle {
                                 return;
                             }
                             // clicking the shown player releases an explicit pin
-                            MprisState.pinIdentity = streamRow.isCurrent && MprisState.pinIdentity.length > 0 ? "" : streamRow.modelData.identity;
+                            MprisState.pinPlayerName = streamRow.isCurrent && MprisState.pinPlayerName.length > 0 ? "" : streamRow.modelData.dbusName;
                         }
                     }
                 }

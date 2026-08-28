@@ -76,6 +76,14 @@ ShellRoot {
                 }
             }
 
+            // double-click empty bar space toggles between the Transparent and
+            // Full bar treatments (the same choices as the settings selector)
+            TapHandler {
+                acceptedButtons: Qt.LeftButton
+                gesturePolicy: TapHandler.ReleaseWithinBounds
+                onDoubleTapped: BarState.barMode = BarState.barMode === 2 ? 0 : 2
+            }
+
             RowLayout {
                 id: panel
                 anchors.fill: parent

@@ -56,6 +56,26 @@ Singleton {
     // derived from the whole node table; recomputes as streams come and go
     readonly property var appStreams: Pipewire.ready ? Pipewire.nodes.values.filter(n => root.isOutputApplicationStream(n)) : []
 
+    // find the per-app audio stream belonging to an MPRIS player — used for
+    // players (browsers etc.) whose MPRIS exposes no volume, so the caller can
+    // drive the *real* stream node instead of a wpctl keyword guess.
+    // matches the player's desktopEntry/identity tokens against each stream's
+    // display name (e.g. "google-chrome" ↔ "Google Chrome").
+    function appStreamForPlayer(p) {
+        if (!p || !Pipewire.ready)
+            return null;
+        const kw = ((p.desktopEntry ?? "") + " " + (p.identity ?? "")).toLowerCase().replace(/[^a-z0-9 ]/g, "");
+        const tokens = kw.split(" ").filter(t => t.length >= 3);
+        if (tokens.length === 0)
+            return null;
+        for (let n of root.appStreams) {
+            const dn = root.streamDisplayName(n).toLowerCase();
+            if (tokens.some(t => dn.includes(t)))
+                return n;
+        }
+        return null;
+    }
+
     // bind the app streams so their PwNodeAudio volume/mute are valid & writable
     // (unbound nodes reject volume changes with "not bound")
     PwObjectTracker {

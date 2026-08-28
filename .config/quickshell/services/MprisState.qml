@@ -21,7 +21,7 @@ Singleton {
 
     property bool showMprisProgress: true
 
-    property bool hideWhenIdle: true
+    property bool hideWhenIdle: false
 
     // scroll-to-marquee song titles (pill + quicksettings card)
     property bool marqueeEnabled: prefs.marqueeEnabled
@@ -43,12 +43,15 @@ Singleton {
     }
 
     // ── quicksettings card persistence ──
-    // pinned player identity (set by cycling through players on the card)
-    property string pinIdentity: ""
+    // pinned player handle (dbusName). identity alone is NOT unique — a
+    // browser registers multiple MPRIS players sharing the same name — and
+    // uniqueId collapses across players in this build, so the pin tracks the
+    // player's stable, per-instance DBus bus name instead. "" = no pin.
+    property string pinPlayerName: ""
 
-    function playerByIdentity(identity) {
-        for (let p of Mpris.players.values)
-            if (p.identity === identity)
+    function playerByName(name) {
+        for (let p of root.controlPlayers)
+            if (p.dbusName === name)
                 return p;
         return null;
     }
@@ -60,25 +63,25 @@ Singleton {
     // the player the quicksettings card shows/controls — survives pause,
     // honours an explicit pin, falls back through player → lastPlayer
     readonly property MprisPlayer cardPlayer: {
-        const p = root.pinIdentity.length > 0 ? root.playerByIdentity(root.pinIdentity) : null;
+        const p = root.pinPlayerName.length > 0 ? root.playerByName(root.pinPlayerName) : null;
         return p ?? root.player ?? root.lastPlayer ?? null;
     }
 
     function cycleCardPin() {
         const list = root.controlPlayers;
         if (list.length === 0) {
-            root.pinIdentity = "";
+            root.pinPlayerName = "";
             return;
         }
-        const cur = root.cardPlayer?.identity ?? "";
+        const cur = root.cardPlayer?.dbusName ?? "";
         let idx = -1;
         for (let i = 0; i < list.length; i++)
-            if (list[i].identity === cur)
+            if (list[i].dbusName === cur)
                 idx = i;
         // stepping always hands the card to the landed player;
         // release happens by clicking the current row again
         const next = list[(idx + 1) % list.length];
-        root.pinIdentity = next.identity;
+        root.pinPlayerName = next.dbusName;
     }
 
     // step the card's player forward/back through the chooser strip
@@ -87,23 +90,23 @@ Singleton {
         const list = root.controlPlayers;
         if (list.length === 0)
             return;
-        const cur = root.cardPlayer?.identity ?? "";
+        const cur = root.cardPlayer?.dbusName ?? "";
         let idx = -1;
         for (let i = 0; i < list.length; i++)
-            if (list[i].identity === cur)
+            if (list[i].dbusName === cur)
                 idx = i;
         if (idx === -1)
             idx = dir > 0 ? 0 : list.length - 1;
         else
             idx = (idx + dir + list.length) % list.length;
-        root.pinIdentity = list[idx].identity;
+        root.pinPlayerName = list[idx].dbusName;
     }
 
     // right-click on the switcher — pin the first player that is actually playing
     function jumpToPlaying() {
         const playing = root.controlPlayers.filter(p => !root.isIgnored(p) && p.isPlaying);
         if (playing.length > 0)
-            root.pinIdentity = playing[0].identity;
+            root.pinPlayerName = playing[0].dbusName;
     }
 
     // per-app glyph for the switcher button — shows which app the card controls
@@ -223,6 +226,18 @@ Singleton {
 
         root.mprisVisible = root.hideWhenIdle ? playing.length > 0 : Mpris.players.values.length > 0;
 
+        // a pinned player clamps the selection in place — auto-selection must
+        // not chase playback changes while a pin is active (both the card and
+        // the bar track root.player); it falls back only once the pinned
+        // player disappears
+        const pinned = root.pinPlayerName.length > 0 ? root.playerByName(root.pinPlayerName) : null;
+        if (pinned) {
+            if (root.player !== pinned)
+                root.player = pinned;
+            root.lastPlayer = pinned;
+            return;
+        }
+
         let best = null;
         let fallback = null;
         for (let p of playing) {
@@ -237,15 +252,19 @@ Singleton {
             root.player = fallback;
             root.lastPlayer = fallback;
         } else {
-            root.player = null;
             // nothing playing — still remember an idle (paused) player so
             // songart / now-playing keep working right after shell startup
+            let idle = null;
             for (let p of Mpris.players.values) {
                 if (!root.isIgnored(p)) {
-                    root.lastPlayer = p;
+                    idle = p;
                     break;
                 }
             }
+            root.lastPlayer = idle;
+            // when we're not hiding on idle, keep the pill showing the last
+            // available player instead of collapsing to nothing
+            root.player = root.hideWhenIdle ? null : idle;
         }
     }
 
