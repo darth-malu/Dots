@@ -13,13 +13,6 @@ RowLayout {
 
     readonly property int wsRev: WorkspaceService.revision
 
-    Timer {
-        interval: 750
-        running: root.visible
-        repeat: true
-        onTriggered: WorkspaceService.refresh()
-    }
-
     readonly property var workspaceList: {
         const rev = wsRev;
         const list = [...Hyprland.workspaces.values].filter(ws => ws && ws.id >= 1);

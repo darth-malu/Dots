@@ -363,7 +363,7 @@ BarBlock {
                                         SinkName {
                                             node: PipewireState.inputSink
                                             fallback: "input"
-                                            accent: Themes.accent2
+                                            accent: Themes.audioInputAccent
                                         }
 
                                         VolumeSlider {
@@ -371,7 +371,7 @@ BarBlock {
                                             node: PipewireState.inputSink
                                             glyph: "\uf130"
                                             glyphMuted: "\uf131"
-                                            accent: Themes.accent2
+                                            accent: Themes.audioInputAccent
                                         }
                                     }
 

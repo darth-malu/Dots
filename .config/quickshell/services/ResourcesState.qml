@@ -17,11 +17,6 @@ Singleton {
     property real cpuFreq
     property real cpuTemp
 
-    property int gpuPercent
-    property string gpuFreq
-    property real gpuFans
-    property real gpuTemp
-
     property int memPercent
     property real memTotal: 0
     property real memUsed: 0
@@ -32,9 +27,7 @@ Singleton {
     property string diskUsed: ""
     property string diskTotal: ""
     property string diskMountPoint: "/"
-    property string mediaDisks: ""
     property string allDisks: ""
-    property string allDisksPending: ""
     property bool resourcesVisible: false
     property string uptimeText: ""
 
@@ -94,11 +87,6 @@ Singleton {
     }
 
     FileView {
-        id: gpuBusyPercent
-        path: "file:///sys/class/drm/card1/device/gpu_busy_percent"
-    }
-
-    FileView {
         id: memoryFile
         path: "file:///proc/meminfo"
     }
@@ -142,8 +130,6 @@ Singleton {
             root.processCpuData(cpuUsageFile.text());
             memoryFile.reload();
             root.processMemoryData(memoryFile.text());
-            gpuBusyPercent.reload();
-            root.gpuPercent = parseInt(gpuBusyPercent.text()) || 0;
             if (root.cpuTempPath.length > 0) {
                 cpuTempFile.reload();
                 const t = parseInt(cpuTempFile.text());
@@ -238,69 +224,98 @@ Singleton {
         };
     }
 
+    // ── disk usage (gauge + popup table) ──
+    // /proc/mounts is the source of truth for WHICH mounts to show; parsed
+    // natively so df is only spawned once per tick with exactly the mounts
+    // we render (the old code spawned df twice + a findmnt every tick).
+    FileView {
+        id: mountsFile
+        path: "file:///proc/mounts"
+        watchChanges: false
+    }
+
+    // fstypes that share the root block device or are kernel pseudo files —
+    // mirrors the old df -x exclusions and drops the noise df -x let through
+    // (e.g. efivarfs) that nobody wants in the popup table
+    function isRealMount(device, fstype) {
+        const bogus = ["tmpfs", "devtmpfs", "squashfs", "overlay", "proc",
+            "sysfs", "cgroup", "cgroup2", "devpts", "mqueue", "ramfs",
+            "securityfs", "debugfs", "tracefs", "fusectl", "configfs",
+            "pstore", "efivarfs", "bpf", "autofs", "binfmt_misc",
+            "hugetlbfs", "rpc_pipefs"];
+        if (bogus.indexOf(fstype) !== -1)
+            return false;
+        if ((device ?? "").startsWith("none"))
+            return false;
+        return true;
+    }
+
+    // parse /proc/mounts natively → the exact mount list df should report
+    function realMountTargets(rawText) {
+        const out = [];
+        if (!rawText)
+            return out;
+        for (const line of rawText.split("\n")) {
+            const p = line.trim().split(/\s+/);
+            if (p.length < 3)
+                continue;
+            if (root.isRealMount(p[0], p[2]))
+                out.push(p[1]);
+        }
+        return out;
+    }
+
+    // single df call serves both the bar gauge (target "/") and the popup
+    // table — parsed together in one pass when the process exits
     Process {
-        id: disk_usage
-        // TODO: notification on lowDisk - persistent properties
+        id: mountsProc
+        property string buf: ""
         running: false
-        command: ["sh", "-c", "df -h / --output=size,used,pcent 2>/dev/null | tail -n1"]
+        command: ["df", "-h", "--output=target,size,used,avail,pcent", "/"]
         stdout: SplitParser {
-            onRead: data => {
-                const parts = data.trim().split(/\s+/);
-                if (parts.length >= 3) {
-                    root.diskTotal = parts[0] || "";
-                    root.diskUsed = parts[1] || "";
-                    const pct = parseInt(parts[2]);
-                    if (!isNaN(pct)) root.diskUsagePercent = pct;
-                }
+            onRead: data => mountsProc.buf += data + "\n"
+        }
+        onExited: {
+            root.parseDisks(mountsProc.buf);
+            mountsProc.buf = "";
+        }
+    }
+
+    function parseDisks(rawText) {
+        const rows = [];
+        let gotRoot = false;
+        for (const line of String(rawText).split("\n")) {
+            const p = line.trim().split(/\s+/);
+            if (p.length < 5)
+                continue;
+            const pct = parseInt(p[4]);
+            if (isNaN(pct))
+                continue; // df header / warning lines
+            if (!gotRoot && p[0] === "/") {
+                gotRoot = true;
+                root.diskTotal = p[1] || "";
+                root.diskUsed = p[2] || "";
+                root.diskUsagePercent = pct;
             }
+            rows.push(line.trim());
         }
+        root.allDisks = rows.join("\n");
     }
 
-    Process {
-        id: mediaCheck
-        running: false
-        command: ["sh", "-c", "findmnt -n -l -o TARGET,AVAIL,SIZE --raw 2>/dev/null | grep '^/media/' || true"]
-        stdout: SplitParser {
-            onRead: data => {
-                if (data.length > 0)
-                    mediaDisks += data + "\n"
-            }
-        }
-    }
-
-    Process {
-        id: allDisksProcess
-        running: false
-        command: ["sh", "-c", "df -h -x tmpfs -x devtmpfs -x squashfs -x overlay --output=target,size,used,avail,pcent 2>/dev/null | tail -n +2"]
-        stdout: SplitParser {
-            onRead: data => root.allDisksPending += data + "\n"
-        }
-    }
-
+    // runs only while the disk bar block is actually showing — the popup is
+    // reachable only from that block, so this covers both consumers
     Timer {
         id: diskTimer
         interval: root.diskInterval
-        running: root.anyConsumerOpen
+        running: root.resourcesVisible
         repeat: true
         triggeredOnStart: true
         onTriggered: () => {
-            mediaDisks = "";
-            root.allDisksPending = "";
-            mediaCheck.running = true;
-            allDisksProcess.running = true;
-            disk_usage.running = true;
-            diskSwapTimer.restart();
-        }
-    }
-
-    Timer {
-        id: diskSwapTimer
-        interval: 250
-        running: false
-        repeat: false
-        onTriggered: () => {
-            if (root.allDisksPending.trim().length > 0)
-                root.allDisks = root.allDisksPending;
+            mountsFile.reload();
+            const targets = root.realMountTargets(mountsFile.text());
+            mountsProc.command = ["df", "-h", "--output=target,size,used,avail,pcent"].concat(targets.length > 0 ? targets : ["/"]);
+            mountsProc.buf = "";
+            mountsProc.running = true;
         }
     }
 

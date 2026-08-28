@@ -611,7 +611,7 @@ Item {
             }
         }
 
-                        // segmented color-theme selector — purple (default) vs rofi teal
+                        // segmented color-theme selector — purple (default) vs gron teal
                         RowLayout {
                             id: themeSeg
 
@@ -656,7 +656,7 @@ Item {
                                     Repeater {
                                         model: [
                                             { key: 0, label: "Purple" },
-                                            { key: 1, label: "Rofi" }
+                                            { key: 1, label: "Gron" }
                                         ]
 
                                         delegate: Rectangle {
@@ -706,7 +706,7 @@ Item {
 
                         SettingRow {
                             icon: "\uf1ce"
-                            label: "Show workspaces"
+                            label: "Workspaces"
                             caption: MiscState.showWorkspaces ? "on" : "off"
                             checked: MiscState.showWorkspaces
                             onFlipped: MiscState.showWorkspaces = !MiscState.showWorkspaces
@@ -716,7 +716,7 @@ Item {
 
                         SettingRow {
                             icon: "\uf009"
-                            label: "Show icons"
+                            label: "Icons"
                             caption: MiscState.iconWorkspaces ? "on" : "off"
                             checked: MiscState.iconWorkspaces
                             onFlipped: MiscState.iconWorkspaces = !MiscState.iconWorkspaces
@@ -726,8 +726,8 @@ Item {
 
                         SettingRow {
                             icon: "\uf2d1"
-                            label: "Boxy design"
-                            caption: MiscState.boxyTheme ? "workspaces + tray + notifications" : "rounded"
+                            label: "Boxy"
+                            caption: MiscState.boxyTheme ? "all modules" : "rounded"
                             checked: MiscState.boxyTheme
                             onFlipped: MiscState.boxyTheme = !MiscState.boxyTheme
                         }
@@ -736,8 +736,8 @@ Item {
 
                         SettingRow {
                             icon: "\uf070"
-                            label: "Popup background"
-                            caption: MiscState.popupSolidBg ? "solid" : "transparent"
+                            label: "Popups"
+                            caption: MiscState.popupSolidBg ? "solid" : "glass"
                             checked: MiscState.popupSolidBg
                             onFlipped: MiscState.popupSolidBg = !MiscState.popupSolidBg
                         }
@@ -813,7 +813,7 @@ Item {
 
                         SettingRow {
                             icon: "\uf04b"
-                            label: "Enable MPRIS"
+                            label: "MPRIS"
                             checked: MiscState.showMpris
                             onFlipped: MiscState.showMpris = !MiscState.showMpris
                         }
@@ -822,7 +822,7 @@ Item {
 
                         SettingRow {
                             icon: "\uf03e"
-                            label: "Album art"
+                            label: "Art"
                             checked: MprisState.mprisArtVisible
                             onFlipped: MprisState.mprisArtVisible = !MprisState.mprisArtVisible
                         }
@@ -867,7 +867,7 @@ Item {
 
                         SettingRow {
                             icon: "\uf2d1"
-                            label: "Player chooser"
+                            label: "Players"
                             checked: MiscState.showPlayerChooser
                             onFlipped: MiscState.showPlayerChooser = !MiscState.showPlayerChooser
                         }
@@ -1040,8 +1040,8 @@ Item {
 
                             SettingRow {
                                 icon: "\uf1eb"
-                                label: "Connected highlight"
-                                caption: MiscState.wifiGreenName ? "green name" : "classic"
+                                label: "Highlight"
+                                caption: MiscState.wifiGreenName ? "green" : "classic"
                                 checked: MiscState.wifiGreenName
                                 onFlipped: MiscState.wifiGreenName = !MiscState.wifiGreenName
                             }
@@ -1050,8 +1050,8 @@ Item {
 
                             SettingRow {
                                 icon: "\uf1fe"
-                                label: "Session totals"
-                                caption: MiscState.showNetTotals ? "always visible" : "with graphs"
+                                label: "Totals"
+                                caption: MiscState.showNetTotals ? "always" : "with graphs"
                                 checked: MiscState.showNetTotals
                                 onFlipped: MiscState.showNetTotals = !MiscState.showNetTotals
                             }
@@ -1291,7 +1291,7 @@ Item {
                             }
 
                             Text {
-                                text: "Notification font"
+                                text: "Font"
                                 color: Themes.fg
                                 font { pixelSize: 12; family: "Quicksand"; bold: true }
                                 Layout.alignment: Qt.AlignVCenter
@@ -1434,7 +1434,7 @@ Item {
                             }
 
                             Text {
-                                text: "Notification art size"
+                                text: "Art size"
                                 color: Themes.fg
                                 font { pixelSize: 12; family: "Quicksand"; bold: true }
                                 Layout.alignment: Qt.AlignVCenter
@@ -1481,7 +1481,7 @@ Item {
                             }
 
                             Text {
-                                text: "Notification radius"
+                                text: "Radius"
                                 color: Themes.fg
                                 font { pixelSize: 12; family: "Quicksand"; bold: true }
                                 Layout.alignment: Qt.AlignVCenter
@@ -1931,8 +1931,134 @@ Item {
                     summary: "shortcuts · where settings live"
 
                     HelpLine { text: "Escape closes any popup; most tray icons open menus on left-click." }
+                    HelpLine { text: "Double-click bar: left toggles Transparent/Full; right toggles Purple/Gron theme." }
+                    HelpLine { text: "Scroll the bar to switch workspaces." }
                     HelpLine { text: "Everything you toggle here persists in ~/.config/quickshell/prefs.json and survives reloads." }
                     HelpLine { text: "Reminders live next to it in reminders.json; both files are plain JSON you can edit." }
+                }
+
+                HelpTopic {
+                    glyph: "\uf363"
+                    title: "IPC handlers"
+                    summary: "qs ipc call <target> <function> [args]"
+
+                    HelpLine { text: "All targets are called with: qs -p ~/.config/quickshell ipc call <target> <fn>" }
+
+                    HelpCode { cmd: "ipc call mpris togglePlaying" }
+                    HelpCode { cmd: "ipc call brightness set 80" }
+
+                    Text {
+                        Layout.fillWidth: true
+                        Layout.topMargin: 4
+                        text: "mpris"
+                        color: Themes.accent
+                        font { pixelSize: 11; bold: true; family: "Quicksand" }
+                    }
+                    HelpLine { text: "togglePlaying · previous · next · pauseAll · raise · toggleMpris · toggleMprisArt · songArt" }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: "brightness"
+                        color: Themes.accent
+                        font { pixelSize: 11; bold: true; family: "Quicksand" }
+                    }
+                    HelpLine { text: "get → current % · set(pct) · adjust(delta)" }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: "notifications"
+                        color: Themes.accent
+                        font { pixelSize: 11; bold: true; family: "Quicksand" }
+                    }
+                    HelpLine { text: "dismissAll · showLast" }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: "pipewire"
+                        color: Themes.accent
+                        font { pixelSize: 11; bold: true; family: "Quicksand" }
+                    }
+                    HelpLine { text: "mute → toggle input mute" }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: "bar · netspeed · resources · SysTray"
+                        color: Themes.accent
+                        font { pixelSize: 11; bold: true; family: "Quicksand" }
+                    }
+                    HelpLine { text: "toggle → show/hide the corresponding bar element" }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: "appLauncher · openWindows · clipHist · activate · emoji · color"
+                        color: Themes.accent
+                        font { pixelSize: 11; bold: true; family: "Quicksand" }
+                    }
+                    HelpLine { text: "toggle → open/close the overlay. color also has screenPick for eyedropper." }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: "logout"
+                        color: Themes.accent
+                        font { pixelSize: 11; bold: true; family: "Quicksand" }
+                    }
+                    HelpLine { text: "toggle · open" }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: "timer"
+                        color: Themes.accent
+                        font { pixelSize: 11; bold: true; family: "Quicksand" }
+                    }
+                    HelpLine { text: "start(seconds) · toggle · reset · add(minutes) · status → JSON" }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: "reminders"
+                        color: Themes.accent
+                        font { pixelSize: 11; bold: true; family: "Quicksand" }
+                    }
+                    HelpLine { text: "add(text, date, time) · list → JSON · remove(id) · edit(id, text, date, time) · done(id)" }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: "speedtest"
+                        color: Themes.accent
+                        font { pixelSize: 11; bold: true; family: "Quicksand" }
+                    }
+                    HelpLine { text: "start · cancel · status → JSON" }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: "powerTimer"
+                        color: Themes.accent
+                        font { pixelSize: 11; bold: true; family: "Quicksand" }
+                    }
+                    HelpLine { text: "rebootIn(minutes) · shutdownIn(minutes) · cancel" }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: "idleInhibitor"
+                        color: Themes.accent
+                        font { pixelSize: 11; bold: true; family: "Quicksand" }
+                    }
+                    HelpLine { text: "isEnabled → bool · toggle · enable · disable" }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: "calendar"
+                        color: Themes.accent
+                        font { pixelSize: 11; bold: true; family: "Quicksand" }
+                    }
+                    HelpLine { text: "toggle · year · compact · probe · rem · timer · state" }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: "Time"
+                        color: Themes.accent
+                        font { pixelSize: 11; bold: true; family: "Quicksand" }
+                    }
+                    HelpLine { text: "currentDate · currentDateTime → sends notify-send" }
                 }
             }
         }

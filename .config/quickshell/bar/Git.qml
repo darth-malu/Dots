@@ -116,9 +116,13 @@ BarBlock {
         }
     }
 
+    // dirty/untracked check — the two bare repos walk the whole home
+    // directory, so this is deliberately slow (3 min) and only runs while
+    // the pill is actually on screen. The indicator can lag a few minutes;
+    // manual commit/push always does an immediate freshness check.
     Timer {
-        interval: 30000
-        running: true
+        interval: 180000
+        running: gitButton.visible
         repeat: true
         triggeredOnStart: true
         onTriggered: {

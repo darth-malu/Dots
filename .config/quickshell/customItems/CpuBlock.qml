@@ -37,15 +37,14 @@ BarBlock {
     readonly property color cpuColor: cpuPercent > 80 ? "#ff5555" : cpuPercent > 60 ? "#f1fa8c" : Themes.accent
 
     function tempColor(t) {
-        // exact 4-band palette of the per-process usage bars below
-        // (cyan → green → orange → red) so temperature reads in the
-        // same visual language as the rest of the popup
+        // same 4-band language as the per-process usage bars below, except
+        // the mild tier is a soft mint instead of the loud neon green
         if (t >= 75)
             return "#ff5555";
         if (t >= 62)
             return "#ffb86c";
         if (t >= 45)
-            return "#50fa7b";
+            return Themes.tempMild;
         return Themes.accent2;
     }
 

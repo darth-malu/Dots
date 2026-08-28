@@ -61,7 +61,6 @@ Singleton {
         return trackedDates[key] === true;
     }
 
-    property bool showGpu: false
     property bool showCpuProcs: false
     property bool showMemProcs: false
     // ── media / now-playing toggles (persisted) ──

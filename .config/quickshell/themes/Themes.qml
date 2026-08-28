@@ -7,7 +7,7 @@ Singleton {
     id: root
 
     // ── Color scheme selection ──────────────────────────────────────────
-    // 0 = Purple (Dracula-ish, default), 1 = Rofi teal/cyan
+    // 0 = Purple (Dracula-ish, default), 1 = Gron teal/cyan
     readonly property int scheme: MiscState.themeScheme
     function pick(purple, rofi): color { return scheme === 0 ? purple : rofi }
 
@@ -29,11 +29,21 @@ Singleton {
     readonly property color mauve: pick("#c6a0f6", "#5fc3d9")       // medium-tier accent (mauve -> teal)
     readonly property color brightnessAccent: pick("#f1fa8c", "#d0e56a")  // brightness slider (sun yellow -> warm teal-green)
 
+    // Audio sliders — distinct hue for the input sink so sink volume reads
+    // apart from the output slider (which stays on the primary accent). In
+    // Gron the default cyan is too close to the teal accent, so it becomes a
+    // distinct green for visible variance.
+    readonly property color audioInputAccent: pick("#8be9fd", "#2ec4a5")
+
     // Semantic status tokens (shared across schemes)
     readonly property color green: "#50fa7b"
     readonly property color red: "#ff5555"
     readonly property color orange: "#ffb86c"
     readonly property color yellow: "#f1fa8c"
+
+    // Temperature bands — soft mint for the mild tier (was bright neon
+    // green, too shouty); hotter tiers keep their existing orange/red hues
+    readonly property color tempMild: "#b5ead7"   // mild — soft mint
 
     // Popup/card background — solid (opaque) or glass variant
     readonly property color popupCardBg: MiscState.popupSolidBg ? panelBg : Qt.rgba(panelBg.r, panelBg.g, panelBg.b, 0.82)

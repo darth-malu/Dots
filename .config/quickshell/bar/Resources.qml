@@ -26,6 +26,5 @@ Loader {
         CpuBlock {
             host: resourceLoader.host
         }
-        GpuBlock {}
     }
 }

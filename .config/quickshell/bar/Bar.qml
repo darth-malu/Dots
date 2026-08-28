@@ -84,6 +84,13 @@ ShellRoot {
                 onDoubleTapped: BarState.barMode = BarState.barMode === 2 ? 0 : 2
             }
 
+            // double right-click toggles between Purple and Gron color schemes
+            TapHandler {
+                acceptedButtons: Qt.RightButton
+                gesturePolicy: TapHandler.ReleaseWithinBounds
+                onDoubleTapped: MiscState.themeScheme = MiscState.themeScheme === 0 ? 1 : 0
+            }
+
             RowLayout {
                 id: panel
                 anchors.fill: parent

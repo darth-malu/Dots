@@ -56,12 +56,10 @@ RowLayout {
         });
     }
 
-    Timer {
-        interval: 750
-        running: root.visible
-        repeat: true
-        onTriggered: root.refresh()
-    }
+    // fully event-driven — WorkspaceService.refresh() fires on the IPC events
+    // that change the icon set (open/close/move/title), and quickshell has
+    // already applied each event to its native models by the time rawEvent
+    // reaches QML, so the data read here is always settled
 
     property string _listSig: ""
     property var _listCache: []
@@ -84,10 +82,7 @@ RowLayout {
 
             property bool isActive: root.activeWsId === (ws?.id ?? -2)
 
-            readonly property bool urgent: {
-                const _rev = root.wsRev;
-                return WorkspaceService.isUrgent(ws?.id ?? -1);
-            }
+            readonly property bool urgent: ws?.urgent ?? false
             readonly property bool hovered: mouseArea.containsMouse
 
             property var clientIcons: []
@@ -150,20 +145,6 @@ RowLayout {
                 }
             }
 
-            SequentialAnimation on opacity {
-                running: rootBlock.urgent && !rootBlock.isActive
-                loops: Animation.Infinite
-                alwaysRunToEnd: true
-                NumberAnimation {
-                    to: 0.45
-                    duration: 420
-                }
-                NumberAnimation {
-                    to: 1
-                    duration: 420
-                }
-            }
-
             onClicked: function () {
                 if (ws)
                     HyprlandService.gotoWorkspace(ws.id);
@@ -177,7 +158,7 @@ RowLayout {
                 // workspace number badge — visible in both themes
                 Rectangle {
                     id: numberContainer
-                    visible: !rootBlock.isEmpty
+                    visible: !rootBlock.isEmpty || rootBlock.urgent
                     Layout.fillHeight: true
                     Layout.rightMargin: 4
                     implicitWidth: 18
@@ -185,6 +166,7 @@ RowLayout {
                     radius: boxy ? Themes.boxyRadius : Themes.roundedRadius
                     color: rootBlock.isActive
                         ? (boxy ? Themes.boxyActiveBg : Themes.roundedBadgeBg)
+                        : rootBlock.urgent ? Themes.roundedUrgentBg
                         : "transparent"
 
                     Behavior on color {
@@ -194,14 +176,25 @@ RowLayout {
                         }
                     }
 
+                    // urgent flash lives here — scoped to the badge, not the block
+                    SequentialAnimation on opacity {
+                        running: rootBlock.urgent && !rootBlock.isActive
+                        loops: Animation.Infinite
+                        alwaysRunToEnd: true
+                        NumberAnimation { to: 0.45; duration: 420 }
+                        NumberAnimation { to: 1; duration: 420 }
+                    }
+
                     Text {
                         anchors.centerIn: parent
                         text: String(rootBlock.ws?.id ?? "")
                         color: rootBlock.isActive
                             ? Themes.accent
-                            : rootBlock.isEmpty
-                                ? Qt.rgba(1, 1, 1, 0.35)
-                                : (boxy ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.6) : Themes.roundedBadgeText)
+                            : rootBlock.urgent
+                                ? "#ff5555"
+                                : rootBlock.isEmpty
+                                    ? Qt.rgba(1, 1, 1, 0.35)
+                                    : (boxy ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.6) : Themes.roundedBadgeText)
                         font {
                             pixelSize: 12
                             bold: rootBlock.isActive

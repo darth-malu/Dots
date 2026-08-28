@@ -141,10 +141,14 @@ Singleton {
                 }) : r);
     }
 
+    // a pending reminder that hasn't been fired yet — nothing to track
+    // (and nothing to fire) once every reminder is done or already notified
+    readonly property bool _dueTrackingNeeded: reminders.some(r => !r.done && !r.notified)
+
     // ── firing ──
     Timer {
         interval: 30000
-        running: true
+        running: root._dueTrackingNeeded
         repeat: true
         triggeredOnStart: true
         onTriggered: {
