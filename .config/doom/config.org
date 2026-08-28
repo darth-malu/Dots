@@ -404,6 +404,7 @@ NOTE: from Quickshell site
 #+end_src
 ** direnv
 #+begin_src elisp :tangle yes
+;; TODO: check env for if direnv enabled to start
 (use-package! direnv
  :config
  (direnv-mode))

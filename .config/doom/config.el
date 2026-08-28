@@ -64,6 +64,7 @@
                    ;; (lsp-headerline-breadcrumb-mode 1)
                    (lsp-deferred))))
 
+;; TODO: check env for if direnv enabled to start
 (use-package! direnv
  :config
  (direnv-mode))
