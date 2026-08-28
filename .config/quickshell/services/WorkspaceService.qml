@@ -134,9 +134,9 @@ Singleton {
         return root.iconForClass(c);
     }
 
-    // deduped [{source, count}] for every client living on this workspace;
-    // rev is threaded through purely as a binding dependency so callers'
-    // event-driven revision counters force re-evaluation
+    // deduped [{source, count, focused}] for every client living on this
+    // workspace; rev is threaded through purely as a binding dependency so
+    // callers' event-driven revision counters force re-evaluation
     //
     // class comes from the socket-maintained _classMap; quickshell never
     // stores class on HyprlandToplevel (it only shows up in lastIpcObject
@@ -148,6 +148,7 @@ Singleton {
         const out = [];
         const seen = ({});
         const tls = ws?.toplevels?.values ?? [];
+        const focused = (Hyprland.activeToplevel?.wayland?.activated ?? false) ? Hyprland.activeToplevel : null;
         for (let i = 0; i < tls.length; i++) {
             const t = tls[i];
             if (!t || !t.wayland)
@@ -161,11 +162,14 @@ Singleton {
                 continue;
             if (seen[icon]) {
                 seen[icon].count++;
+                if (t === focused)
+                    seen[icon].focused = true;
                 continue;
             }
             seen[icon] = {
                 source: `image://icon/${icon}`,
-                count: 1
+                count: 1,
+                focused: t === focused
             };
             out.push(seen[icon]);
         }
@@ -201,7 +205,7 @@ Singleton {
     // lists. quickshell applies every event to its native Hyprland models
     // before rawEvent reaches QML, so by the time we refresh() the data is
     // already settled — no safety-net polling needed.
-    readonly property var _listEvents: new Set(["workspace", "workspacev2", "createworkspace", "createworkspacev2", "destroyworkspace", "destroyworkspacev2", "moveworkspace", "moveworkspacev2", "movewindow", "movewindowv2", "openwindow", "closewindow", "windowtitle", "windowtitlev2", "monitoradded", "monitoraddedv2", "monitorremoved", "changefloatingmode"])
+    readonly property var _listEvents: new Set(["workspace", "workspacev2", "createworkspace", "createworkspacev2", "destroyworkspace", "destroyworkspacev2", "moveworkspace", "moveworkspacev2", "movewindow", "movewindowv2", "openwindow", "closewindow", "windowtitle", "windowtitlev2", "monitoradded", "monitoraddedv2", "monitorremoved", "changefloatingmode", "activewindow", "activewindowv2", "focusedmon", "focusedmonv2"])
 
     property int revision: 0
 

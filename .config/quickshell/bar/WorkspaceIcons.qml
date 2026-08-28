@@ -95,7 +95,7 @@ RowLayout {
 
             function applyIcons() {
                 const icons = WorkspaceService.clientIconsFor(ws, root.wsRev);
-                const sig = icons.map(i => i.source + ":" + i.count).join("|");
+                const sig = icons.map(i => i.source + ":" + i.count + ":" + (i.focused ? "f" : "")).join("|");
                 if (sig !== _iconSig) {
                     _iconSig = sig;
                     Qt.callLater(() => {
@@ -224,7 +224,12 @@ RowLayout {
                             source: parent.modelData.source
                             implicitSize: 16
                             asynchronous: true
-                            opacity: rootBlock.isActive ? 1 : 0.65
+                            // active workspace: keep the focused app full-bright,
+                            // dim the unfocused ones when more than one is open;
+                            // inactive workspaces stay uniformly dimmed
+                            opacity: rootBlock.isActive
+                                ? (rootBlock.clientIcons.length > 1 && !parent.modelData.focused ? 0.65 : 1)
+                                : 0.65
 
                             Behavior on opacity {
                                 NumberAnimation {
