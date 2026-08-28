@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell.Io
 import qs.services
+import qs.themes
 
 QtObject {
 	required property string command
@@ -10,7 +11,7 @@ QtObject {
 	// single letter shown in the overlay's keycap hint
 	property string keybindChar: ""
 	// hover / active accent for the circular button
-	property color accent: "#bd93f9"
+	property color accent: Themes.accent
 
 	id: button
 

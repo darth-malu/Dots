@@ -170,7 +170,7 @@ Item {
                             ctx.arc(width / 2, height / 2, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac);
                             ctx.lineCap = "round";
                         }
-                        ctx.strokeStyle = "#bd93f9";
+                        ctx.strokeStyle = Themes.accent;
                         ctx.lineWidth = 2.5;
                         ctx.stroke();
                     }
@@ -184,7 +184,7 @@ Item {
                     var v = Math.max(0, Math.min(MprisState.player?.volume ?? 0, 1));
                     return v <= 0.001 ? "\uf026" : "\uf028";
                 }
-                color: (MprisState.player?.volume ?? 0) <= 0.001 ? "#6272a4" : "#FF7EB3"
+                color: (MprisState.player?.volume ?? 0) <= 0.001 ? Themes.muted : Themes.pink
                 font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
             }
         }
@@ -234,7 +234,7 @@ Item {
                             anchors.centerIn: parent
                             visible: MprisState.isBrowserPlayer(MprisState.player)
                             text: MprisState.browserGlyph(MprisState.player)
-                            color: "#bd93f9"
+                            color: Themes.accent
                             font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
                         }
                     }
@@ -391,7 +391,7 @@ Item {
                                     ctx.arc(cx, cy, r, startAngle, startAngle + Math.PI * 2 * frac);
                                     ctx.lineCap = "round";
                                 }
-                                ctx.strokeStyle = mprisRoot.showVolume ? "#bd93f9" : "#FF7EB3";
+                                ctx.strokeStyle = mprisRoot.showVolume ? Themes.accent : Themes.pink;
                                 ctx.lineWidth = 2.5;
                                 ctx.stroke();
                             }
@@ -414,7 +414,7 @@ Item {
                             var v = Math.max(0, Math.min(MprisState.player?.volume ?? 0, 1));
                             return v <= 0.001 ? "\uf026" : "\uf028";
                         }
-                        color: (MprisState.player?.volume ?? 0) <= 0.001 ? "#6272a4" : "#FF7EB3"
+                        color: (MprisState.player?.volume ?? 0) <= 0.001 ? Themes.muted : Themes.pink
                         font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
                     }
 
@@ -423,8 +423,8 @@ Item {
                         // play/pause glyph hides while the volume speaker takes over
                         visible: !mprisRoot.showVolume
                         symbolText: MprisState.player?.isPlaying ? "\uf04c" : "\uf04b"
-                        baseColor: "#FF7EB3"
-                        color: "#FF7EB3"
+                        baseColor: Themes.pink
+                        color: Themes.pink
                         pointSize: 7
                         symbolSize: 7
                         paddingg: 0
@@ -459,9 +459,9 @@ Item {
                 anchors.fill: parent
                 focus: true
                 radius: 10
-                color: MiscState.popupCardBg
+                color: Themes.popupCardBg
                 border.width: 1
-                border.color: "#44475a"
+                border.color: Themes.borderMuted
 
                 Keys.onEscapePressed: mprisRoot.showPopup = false
 
@@ -498,9 +498,9 @@ Item {
                 anchors.fill: parent
                 focus: true
                 radius: 12
-                color: MiscState.popupCardBg
+                color: Themes.popupCardBg
                 border.width: 1
-                border.color: "#44475a"
+                border.color: Themes.borderMuted
 
                 Keys.onEscapePressed: mprisRoot.showArtPopup = false
 
@@ -519,7 +519,7 @@ Item {
                     anchors.centerIn: parent
                     visible: !MprisState.mprisArtVisible || MprisState.isBrowserPlayer(MprisState.player)
                     text: MprisState.isBrowserPlayer(MprisState.player) ? MprisState.browserGlyph(MprisState.player) : "🎵"
-                    color: "#bd93f9"
+                    color: Themes.accent
                     font { pixelSize: 42; family: "Symbols Nerd Font Mono" }
                 }
 

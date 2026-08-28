@@ -122,7 +122,7 @@ ColumnLayout {
                     implicitHeight: 32
                     radius: 7
                     // dark tile behind browser glyphs so they read as icons, not art
-                    color: prow.isBrowser ? "#21222c" : "transparent"
+                    color: prow.isBrowser ? Themes.cardBg : "transparent"
 
                     Image {
                         anchors.fill: parent
@@ -137,7 +137,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         visible: !prow.hasArt
                         text: prow.isBrowser ? MprisState.browserGlyph(modelData) : "\uf001"
-                        color: "#6272a4"
+                        color: Themes.muted
                         font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
                     }
                 }
@@ -152,7 +152,7 @@ ColumnLayout {
 
                         Text {
                             text: prow.playerId.toLowerCase()
-                            color: prow.isPlaying ? "#50fa7b" : "#6272a4"
+                            color: prow.isPlaying ? "#50fa7b" : Themes.muted
                             font {
                                 pixelSize: 9
                                 bold: true
@@ -174,7 +174,7 @@ ColumnLayout {
 
                     Text {
                         text: prow.trackTitle.length > 0 ? prow.trackTitle : (prow.isPlaying ? "playing" : "idle")
-                        color: prow.trackTitle.length > 0 ? "#f8f8f2" : "#b8bfcb"
+                        color: prow.trackTitle.length > 0 ? Themes.fg : Themes.dim
                         font {
                             pixelSize: 11
                             bold: true
@@ -196,7 +196,7 @@ ColumnLayout {
                     Text {
                         visible: prow.isAlive
                         text: "\uf048"
-                        color: prevHover.containsMouse ? "#f8f8f2" : "#6272a4"
+                        color: prevHover.containsMouse ? Themes.fg : Themes.muted
                         font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
 
                         MouseArea {
@@ -218,7 +218,7 @@ ColumnLayout {
                         implicitHeight: 26
                         radius: 13
                         visible: prow.isPlaying || prow.isPaused
-                        color: ppHover.containsMouse ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.18) : "transparent"
+                        color: ppHover.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.18) : "transparent"
 
                         Behavior on color {
                             ColorAnimation {
@@ -229,7 +229,7 @@ ColumnLayout {
                         Text {
                             anchors.centerIn: parent
                             text: prow.isPaused ? "\uf04b" : "\uf04c"
-                            color: ppHover.containsMouse ? "#f8f8f2" : (prow.isPaused ? "#bd93f9" : "#50fa7b")
+                            color: ppHover.containsMouse ? Themes.fg : (prow.isPaused ? Themes.accent : "#50fa7b")
                             font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
                         }
 
@@ -252,7 +252,7 @@ ColumnLayout {
                     Text {
                         visible: prow.isAlive
                         text: "\uf050"
-                        color: nextHover.containsMouse ? "#f8f8f2" : "#6272a4"
+                        color: nextHover.containsMouse ? Themes.fg : Themes.muted
                         font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
 
                         MouseArea {
@@ -284,7 +284,7 @@ ColumnLayout {
                     width: parent.width * prow.progress
                     height: parent.height
                     radius: height / 2
-                    color: prow.isPlaying ? "#50fa7b" : "#bd93f9"
+                    color: prow.isPlaying ? "#50fa7b" : Themes.accent
 
                     Behavior on width {
                         NumberAnimation { duration: 200; easing.type: Easing.Linear }
@@ -324,7 +324,7 @@ ColumnLayout {
         Layout.alignment: Qt.AlignHCenter
         visible: playersContainer.sortedPlayers.length > 0
         text: "click raises · middle-click pins to card"
-        color: "#6272a4"
+        color: Themes.muted
         font {
             pixelSize: 8
             family: "Quicksand"

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.services
+import qs.themes
 
 // Noctalia-style countdown panel — a thin client of TimerState:
 // presets & typed duration arm it, start/pause/reset drive it,
@@ -21,7 +22,7 @@ ColumnLayout {
             return "#ff5555";
         if (TimerState.active && TimerState.remainingSec <= 300)
             return "#f1fa8c";
-        return "#bd93f9";
+        return Themes.accent;
     }
 
     // live spinner edits must reach the state even mid-countdown
@@ -105,7 +106,7 @@ ColumnLayout {
                 radius: width / 2
                 color: "transparent"
                 border.width: 1
-                border.color: Qt.rgba(0.741, 0.576, 0.976, 0.25)
+                border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.25)
                 visible: TimerState.running
 
                 SequentialAnimation on opacity {
@@ -120,7 +121,7 @@ ColumnLayout {
             Text {
                 anchors.centerIn: parent
                 text: TimerState.phase === 0 && TimerState.remainingSec === 0 ? "--:--" : TimerState.formatTime(TimerState.remainingSec)
-                color: TimerState.phase === 0 ? "#8b93b8" : root.accent
+                color: TimerState.phase === 0 ? Themes.mutedSoft : root.accent
                 font { pixelSize: 26; bold: true; family: "ZedMono Nerd Font" }
             }
 
@@ -129,7 +130,7 @@ ColumnLayout {
                 anchors.bottom: parent.verticalCenter
                 anchors.bottomMargin: -26
                 text: TimerState.running ? "running" : TimerState.phase === 2 ? "paused" : TimerState.phase === 3 ? "time's up" : "ready"
-                color: "#8b93b8"
+                color: Themes.mutedSoft
                 font { pixelSize: 9; family: "Quicksand"; letterSpacing: 2 }
             }
         }
@@ -169,9 +170,9 @@ ColumnLayout {
             width: chipTxt.implicitWidth + 16
             height: 22
             radius: 11
-            color: chipMa.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.2) : Qt.rgba(1, 1, 1, 0.05)
+            color: chipMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : Qt.rgba(1, 1, 1, 0.05)
             border.width: 1
-            border.color: TimerState.durationSec === chip.mins * 60 && TimerState.phase !== 0 ? "#bd93f9" : Qt.rgba(1, 1, 1, 0.07)
+            border.color: TimerState.durationSec === chip.mins * 60 && TimerState.phase !== 0 ? Themes.accent : Qt.rgba(1, 1, 1, 0.07)
 
             Behavior on color {
                 ColorAnimation { duration: 110 }
@@ -188,7 +189,7 @@ ColumnLayout {
 
                 anchors.centerIn: parent
                 text: parent.mins >= 60 ? (parent.mins / 60) + "h" : parent.mins + "m"
-                color: chipMa.containsMouse ? "#e2d6fb" : "#8b93b8"
+                color: chipMa.containsMouse ? Themes.accentSoft : Themes.mutedSoft
                 font { pixelSize: 9; bold: true; family: "Quicksand" }
             }
 
@@ -224,9 +225,9 @@ ColumnLayout {
             Layout.preferredWidth: 108
             Layout.preferredHeight: 32
             radius: 10
-            color: startMa.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.3) : Qt.rgba(0.741, 0.576, 0.976, 0.18)
+            color: startMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.3) : Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.18)
             border.width: 1
-            border.color: Qt.rgba(0.741, 0.576, 0.976, 0.45)
+            border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.45)
 
             scale: startMa.pressed ? 0.94 : 1
 
@@ -241,14 +242,14 @@ ColumnLayout {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: TimerState.running ? "\uf04c" : "\uf04b"
-                    color: "#e2d6fb"
+                    color: Themes.accentSoft
                     font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
                 }
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: TimerState.running ? "Pause" : TimerState.phase === 2 ? "Resume" : "Start"
-                    color: "#e2d6fb"
+                    color: Themes.accentSoft
                     font { pixelSize: 10; bold: true; family: "Quicksand"; letterSpacing: 1 }
                 }
             }
@@ -294,14 +295,14 @@ ColumnLayout {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: "\uf0e2"
-                    color: "#8b93b8"
+                    color: Themes.mutedSoft
                     font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
                 }
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: "Reset"
-                    color: "#8b93b8"
+                    color: Themes.mutedSoft
                     font { pixelSize: 10; bold: true; family: "Quicksand"; letterSpacing: 1 }
                 }
             }

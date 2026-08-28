@@ -4,6 +4,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Wayland
 import qs.services
+import qs.themes
 
 // Fullscreen logout / session overlay.
 // Left-click fires the action immediately · right-click on restart /
@@ -17,10 +18,10 @@ Item {
     property int timerPicker: 0
 
     // palette
-    readonly property color fg: "#f8f8f2"
-    readonly property color dim: "#b8bfcb"
-    readonly property color faint: "#6272a4"
-    readonly property color line: "#313244"
+    readonly property color fg: Themes.fg
+    readonly property color dim: Themes.dim
+    readonly property color faint: Themes.muted
+    readonly property color line: Themes.borderColor
     readonly property color cardBg: Qt.rgba(24 / 255, 24 / 255, 37 / 255, 0.92)
 
     default property list<QtObject> _unused
@@ -160,7 +161,7 @@ Item {
                                             }
                                             GradientStop {
                                                 position: 0.5
-                                                color: Qt.rgba(0.74, 0.58, 0.98, 0.7)
+                                                color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.7)
                                             }
                                             GradientStop {
                                                 position: 1
@@ -229,7 +230,7 @@ Item {
                                                         radius: height / 2
                                                         color: ma.containsMouse ? Qt.rgba(actionBtn.modelData.accent.r, actionBtn.modelData.accent.g, actionBtn.modelData.accent.b, 0.16)
                                                             : actionBtn.armed ? Qt.rgba(actionBtn.modelData.accent.r, actionBtn.modelData.accent.g, actionBtn.modelData.accent.b, 0.10)
-                                                            : "#21222c"
+                                                            : Themes.cardBg
                                                         border.width: ma.containsMouse ? 1.5 : actionBtn.armed || actionBtn.picked ? 1.5 : 1
                                                         border.color: ma.containsMouse || actionBtn.armed || actionBtn.picked ? actionBtn.modelData.accent : root.line
 
@@ -317,7 +318,7 @@ Item {
                                                         implicitWidth: keyTxt.implicitWidth + 12
                                                         implicitHeight: 17
                                                         radius: 5
-                                                        color: ma.containsMouse ? Qt.rgba(actionBtn.modelData.accent.r, actionBtn.modelData.accent.g, actionBtn.modelData.accent.b, 0.15) : "#262636"
+                                                        color: ma.containsMouse ? Qt.rgba(actionBtn.modelData.accent.r, actionBtn.modelData.accent.g, actionBtn.modelData.accent.b, 0.15) : Themes.cardBg
                                                         border.width: 1
                                                         border.color: ma.containsMouse ? Qt.rgba(actionBtn.modelData.accent.r, actionBtn.modelData.accent.g, actionBtn.modelData.accent.b, 0.45) : root.line
 
@@ -414,7 +415,7 @@ Item {
                                                     width: parent.width
                                                     height: 6
                                                     radius: 3
-                                                    color: "#343746"
+                                                    color: Themes.separator
                                                 }
 
                                                 Rectangle {
@@ -432,7 +433,7 @@ Item {
                                                 width: 18
                                                 height: 18
                                                 radius: 9
-                                                color: delaySlider.pressed ? root.fg : "#282a36"
+                                                color: delaySlider.pressed ? root.fg : Themes.panelBg
                                                 border.color: timerZone.tint
                                                 border.width: 2
 
@@ -555,7 +556,7 @@ Item {
                                                 implicitWidth: cancelTxt.implicitWidth + 20
                                                 implicitHeight: 24
                                                 radius: 12
-                                                color: cancelMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.18) : "#343746"
+                                                color: cancelMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.18) : Themes.separator
                                                 border.width: 1
                                                 border.color: cancelMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.5) : "transparent"
 
@@ -608,7 +609,7 @@ Item {
         keybindChar: "L"
         text: "Lock"
         icon: "\uf023"
-        accent: "#bd93f9"
+        accent: Themes.accent
     }
 
     LogoutButton {
@@ -618,7 +619,7 @@ Item {
         keybindChar: "E"
         text: "Logout"
         icon: "\uf08b"
-        accent: "#ff79c6"
+        accent: Themes.pink
     }
 
     LogoutButton {

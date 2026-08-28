@@ -67,7 +67,7 @@ RowLayout {
             radius: boxy ? Themes.boxyRadius : height / 2
             color: solo ? "transparent" : (boxy ? Themes.boxyActiveBg : (BarState.barMode === 0 ? Qt.rgba(1, 1, 1, 0.16) : "#3b3f54"))
             border.width: solo ? 0 : 1
-            border.color: solo ? "transparent" : (boxy ? Themes.boxyActiveBorder : (BarState.barMode === 0 ? Qt.rgba(0.74, 0.58, 0.98, 0.28) : Qt.rgba(0.74, 0.58, 0.98, 0.18)))
+            border.color: solo ? "transparent" : (boxy ? Themes.boxyActiveBorder : (BarState.barMode === 0 ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.28) : Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.18)))
 
             Behavior on color {
                 ColorAnimation {

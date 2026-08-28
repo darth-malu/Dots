@@ -16,8 +16,8 @@ BarBlock {
     property bool showUsage: false
 
     property color colorLow: "#50fa7b"
-    property color colorMid: "#ff79c6"
-    property color colorHigh: "#8be9fd"
+    property color colorMid: Themes.pink
+    property color colorHigh: Themes.accent2
     property color colorDanger: "#ff5555"
     property int dangerThreshold: 90
 
@@ -123,9 +123,9 @@ BarBlock {
             radius: 12
             layer.enabled: true
             layer.samples: 8
-            color: MiscState.popupCardBg
+            color: Themes.popupCardBg
             border.width: 1
-            border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
+            border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.3)
 
             Shortcut {
                 sequence: "Escape"
@@ -162,7 +162,7 @@ BarBlock {
 
                         Text {
                             text: "NAS"
-                            color: "#f8f8f2"
+                            color: Themes.fg
                             font { pixelSize: 10; bold: true; family: "Quicksand"; letterSpacing: 1 }
                         }
 
@@ -181,13 +181,13 @@ BarBlock {
                             implicitWidth: mountAllTxt.implicitWidth + 14
                             implicitHeight: 18
                             radius: 9
-                            color: mountAllMa.containsMouse ? Qt.rgba(0.31, 0.98, 0.48, 0.15) : "#343746"
+                            color: mountAllMa.containsMouse ? Qt.rgba(0.31, 0.98, 0.48, 0.15) : Themes.separator
 
                             Text {
                                 id: mountAllTxt
                                 anchors.centerIn: parent
                                 text: "\ueb5b  mount all"
-                                color: mountAllMa.containsMouse ? "#50fa7b" : "#b8bfcb"
+                                color: mountAllMa.containsMouse ? "#50fa7b" : Themes.dim
                                 font { pixelSize: 9; bold: true; family: "Symbols Nerd Font Mono, Quicksand" }
                             }
 
@@ -239,7 +239,7 @@ BarBlock {
                                 Text {
                                     Layout.fillWidth: true
                                     text: nasRow.modelData.name
-                                    color: "#f8f8f2"
+                                    color: Themes.fg
                                     font { pixelSize: 10; bold: true; family: "Quicksand" }
                                 }
 
@@ -251,7 +251,7 @@ BarBlock {
                                     radius: 9
                                     color: {
                                         if (!nasBtnMouse.containsMouse)
-                                            return nasRow.mounted ? "transparent" : "#343746";
+                                            return nasRow.mounted ? "transparent" : Themes.separator;
                                         return nasRow.mounted ? Qt.rgba(1, 0.33, 0.33, 0.15) : Qt.rgba(0.31, 0.98, 0.48, 0.15);
                                     }
                                     border.width: nasRow.mounted && !nasBtnMouse.containsMouse ? 1 : 0
@@ -267,7 +267,7 @@ BarBlock {
                                         text: nasRow.mounted ? "\uf07c unmount" : "\ueb5b mount"
                                         color: {
                                             if (!nasBtnMouse.containsMouse)
-                                                return nasRow.mounted ? "#b8bfcb" : "#50fa7b";
+                                                return nasRow.mounted ? Themes.dim : "#50fa7b";
                                             return nasRow.mounted ? "#ff5555" : "#50fa7b";
                                         }
                                         font { pixelSize: 9; bold: true; family: "Symbols Nerd Font Mono, Quicksand" }
@@ -309,7 +309,7 @@ BarBlock {
 
                             Text {
                                 text: "mount"
-                                color: "#6272a4"
+                                color: Themes.muted
                                 font {
                                     pixelSize: 9
                                     bold: true
@@ -322,7 +322,7 @@ BarBlock {
 
                             Text {
                                 text: "size"
-                                color: "#6272a4"
+                                color: Themes.muted
                                 font {
                                     pixelSize: 9
                                     family: "ZedMono Nerd Font"
@@ -333,7 +333,7 @@ BarBlock {
 
                             Text {
                                 text: "free"
-                                color: "#6272a4"
+                                color: Themes.muted
                                 font {
                                     pixelSize: 9
                                     family: "ZedMono Nerd Font"
@@ -350,7 +350,7 @@ BarBlock {
 
                             Text {
                                 text: "use"
-                                color: "#6272a4"
+                                color: Themes.muted
                                 font {
                                     pixelSize: 9
                                     family: "ZedMono Nerd Font"
@@ -380,7 +380,7 @@ BarBlock {
                                 readonly property color tier: pct > 90 ? "#ff5555"
                                     : pct > 75 ? "#ffb86c"
                                     : pct > 60 ? "#50fa7b"
-                                    : "#8be9fd"
+                                    : Themes.accent2
 
                                 Layout.fillWidth: true
                                 implicitHeight: 22
@@ -400,7 +400,7 @@ BarBlock {
                                     Text {
                                         Layout.preferredWidth: 140
                                         text: drow.parts[0] || ""
-                                        color: "#f8f8f2"
+                                        color: Themes.fg
                                         font {
                                             pixelSize: 10
                                             family: "ZedMono Nerd Font"
@@ -412,7 +412,7 @@ BarBlock {
                                         Layout.preferredWidth: 44
                                         horizontalAlignment: Text.AlignRight
                                         text: drow.parts[1] || ""
-                                        color: "#6272a4"
+                                        color: Themes.muted
                                         font {
                                             pixelSize: 9
                                             family: "ZedMono Nerd Font"
@@ -423,7 +423,7 @@ BarBlock {
                                         Layout.preferredWidth: 44
                                         horizontalAlignment: Text.AlignRight
                                         text: drow.parts[3] || ""
-                                        color: "#b8bfcb"
+                                        color: Themes.dim
                                         font {
                                             pixelSize: 9
                                             family: "ZedMono Nerd Font"
@@ -478,7 +478,7 @@ BarBlock {
 
                         Text {
                             text: "no mounts found"
-                            color: "#6272a4"
+                            color: Themes.muted
                             font {
                                 pixelSize: 10
                                 italic: true

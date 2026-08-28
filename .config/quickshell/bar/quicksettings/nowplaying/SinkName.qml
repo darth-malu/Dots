@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Services.Pipewire
+import qs.themes
 
 RowLayout {
     id: root
@@ -34,7 +35,7 @@ RowLayout {
     Text {
         visible: root.node === null
         text: "unavailable"
-        color: "#6272a4"
+        color: Themes.muted
         font {
             pixelSize: 10
             family: "Monofur Nerd Font"

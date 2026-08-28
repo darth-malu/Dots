@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.services
+import qs.themes
 
 // Speed-test card — result tiles (ping / down / up) light up one-by-one,
 // a three-segment phase track fills live, and a collapsible details row
@@ -13,7 +14,7 @@ Rectangle {
     radius: 10
     color: Qt.rgba(1, 1, 1, 0.03)
     border.width: 1
-    border.color: "#343746"
+    border.color: Themes.separator
 
     readonly property bool running: SpeedtestState.running
     readonly property bool showDetails: !running && SpeedtestState.pingMs >= 0
@@ -58,12 +59,12 @@ Rectangle {
                 implicitWidth: 26
                 implicitHeight: 26
                 radius: 8
-                color: Qt.rgba(0.741, 0.576, 0.976, 0.12)
+                color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12)
 
                 Text {
                     anchors.centerIn: parent
                     text: "\uf0e4"
-                    color: "#bd93f9"
+                    color: Themes.accent
                     font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
                 }
             }
@@ -73,7 +74,7 @@ Rectangle {
 
                 Text {
                     text: "Speed test"
-                    color: "#f8f8f2"
+                    color: Themes.fg
                     font { pixelSize: 12; bold: true; family: "Quicksand" }
                 }
 
@@ -101,7 +102,7 @@ Rectangle {
                         }
                         return "Cloudflare edge · ~30 s";
                     }
-                    color: root.running ? "#bd93f9" : SpeedtestState.error.length > 0 ? "#ff5555" : "#6272a4"
+                    color: root.running ? Themes.accent : SpeedtestState.error.length > 0 ? "#ff5555" : Themes.muted
                     font { pixelSize: 9; family: "ZedMono Nerd Font" }
 
                     Behavior on color {
@@ -120,11 +121,11 @@ Rectangle {
                 radius: 14
                 color: {
                     if (actionMa.containsMouse)
-                        return root.running ? Qt.rgba(1, 0.33, 0.33, 0.2) : Qt.rgba(0.741, 0.576, 0.976, 0.26);
-                    return root.running ? Qt.rgba(1, 0.33, 0.33, 0.1) : Qt.rgba(0.741, 0.576, 0.976, 0.14);
+                        return root.running ? Qt.rgba(1, 0.33, 0.33, 0.2) : Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.26);
+                    return root.running ? Qt.rgba(1, 0.33, 0.33, 0.1) : Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14);
                 }
                 border.width: 1
-                border.color: root.running ? Qt.rgba(1, 0.33, 0.33, 0.4) : Qt.rgba(0.741, 0.576, 0.976, 0.45)
+                border.color: root.running ? Qt.rgba(1, 0.33, 0.33, 0.4) : Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.45)
 
                 Behavior on color {
                     ColorAnimation { duration: 130 }
@@ -136,13 +137,13 @@ Rectangle {
 
                     Text {
                         text: root.running ? "\uf04d" : "\uf052"
-                        color: root.running ? "#ff5555" : "#bd93f9"
+                        color: root.running ? "#ff5555" : Themes.accent
                         font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
                     }
 
                     Text {
                         text: root.running ? "Stop" : "Start"
-                        color: "#f8f8f2"
+                        color: Themes.fg
                         font { pixelSize: 11; bold: true; family: "Quicksand" }
                     }
                 }
@@ -167,7 +168,7 @@ Rectangle {
                 model: [
                     { glyph: "\uf1ae", label: "PING", unit: "ms", tint: Qt.color("#f1fa8c"), phase: "ping" },
                     { glyph: "\uf019", label: "DOWN", unit: "Mbps", tint: Qt.color("#50fa7b"), phase: "down" },
-                    { glyph: "\uf093", label: "UP", unit: "Mbps", tint: Qt.color("#ff79c6"), phase: "up" }
+                    { glyph: "\uf093", label: "UP", unit: "Mbps", tint: Qt.color(Themes.pink), phase: "up" }
                 ]
 
                 delegate: Rectangle {
@@ -184,7 +185,7 @@ Rectangle {
                     radius: 9
                     color: landed || isNext ? Qt.rgba(tile.modelData.tint.r, tile.modelData.tint.g, tile.modelData.tint.b, isNext ? 0.1 : 0.06) : Qt.rgba(1, 1, 1, 0.02)
                     border.width: 1
-                    border.color: isNext ? Qt.rgba(tile.modelData.tint.r, tile.modelData.tint.g, tile.modelData.tint.b, 0.55) : "#313244"
+                    border.color: isNext ? Qt.rgba(tile.modelData.tint.r, tile.modelData.tint.g, tile.modelData.tint.b, 0.55) : Themes.borderColor
 
                     Behavior on border.color { ColorAnimation { duration: 180 } }
                     Behavior on color { ColorAnimation { duration: 180 } }
@@ -207,14 +208,14 @@ Rectangle {
 
                             Text {
                                 text: tile.modelData.glyph
-                                color: tile.landed || tile.isNext ? tile.modelData.tint : "#6272a4"
+                                color: tile.landed || tile.isNext ? tile.modelData.tint : Themes.muted
                                 font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
                                 Behavior on color { ColorAnimation { duration: 200 } }
                             }
 
                             Text {
                                 text: tile.modelData.label
-                                color: "#6272a4"
+                                color: Themes.muted
                                 font { pixelSize: 8; bold: true; letterSpacing: 2; family: "Quicksand" }
                             }
                         }
@@ -225,7 +226,7 @@ Rectangle {
 
                             Text {
                                 text: tile.valStr.length > 0 ? tile.valStr : "—"
-                                color: tile.valStr.length > 0 ? "#f8f8f2" : "#44475a"
+                                color: tile.valStr.length > 0 ? Themes.fg : Themes.borderMuted
                                 font { pixelSize: 17; weight: Font.DemiBold; family: "ZedMono Nerd Font" }
                                 Behavior on color { ColorAnimation { duration: 250 } }
                             }
@@ -233,7 +234,7 @@ Rectangle {
                             Text {
                                 visible: tile.valStr.length > 0
                                 text: tile.modelData.unit
-                                color: "#6272a4"
+                                color: Themes.muted
                                 font { pixelSize: 8; family: "ZedMono Nerd Font" }
                             }
                         }
@@ -274,7 +275,7 @@ Rectangle {
                         }
                         width: parent.width * seg.fill
                         radius: 2
-                        color: ["#f1fa8c", "#50fa7b", "#ff79c6"][seg.index]
+                        color: ["#f1fa8c", "#50fa7b", Themes.pink][seg.index]
 
                         Behavior on width {
                             NumberAnimation { duration: 220; easing.type: Easing.OutQuad }
@@ -300,7 +301,7 @@ Rectangle {
             radius: 6
             color: Qt.rgba(1, 1, 1, 0.03)
             border.width: 1
-            border.color: "#313244"
+            border.color: Themes.borderColor
 
             ColumnLayout {
                 id: detCol
@@ -318,13 +319,13 @@ Rectangle {
 
                     Text {
                         text: "server"
-                        color: "#6272a4"
+                        color: Themes.muted
                         font { pixelSize: 8; family: "Quicksand" }
                         Layout.preferredWidth: 56
                     }
                     Text {
                         text: SpeedtestState.server.length > 0 ? SpeedtestState.server : "—"
-                        color: "#f8f8f2"
+                        color: Themes.fg
                         font { pixelSize: 9; family: "ZedMono Nerd Font" }
                         Layout.fillWidth: true
                     }
@@ -333,13 +334,13 @@ Rectangle {
 
                     Text {
                         text: "probes"
-                        color: "#6272a4"
+                        color: Themes.muted
                         font { pixelSize: 8; family: "Quicksand" }
                         Layout.preferredWidth: 42
                     }
                     Text {
                         text: "5 × best-of"
-                        color: "#f8f8f2"
+                        color: Themes.fg
                         font { pixelSize: 9; family: "ZedMono Nerd Font" }
                     }
                 }
@@ -349,13 +350,13 @@ Rectangle {
 
                     Text {
                         text: "data"
-                        color: "#6272a4"
+                        color: Themes.muted
                         font { pixelSize: 8; family: "Quicksand" }
                         Layout.preferredWidth: 56
                     }
                     Text {
                         text: SpeedtestState.totalMB > 0 ? SpeedtestState.totalMB.toFixed(1) + " MB" : "—"
-                        color: "#f8f8f2"
+                        color: Themes.fg
                         font { pixelSize: 9; family: "ZedMono Nerd Font" }
                         Layout.fillWidth: true
                     }
@@ -364,13 +365,13 @@ Rectangle {
 
                     Text {
                         text: "down"
-                        color: "#6272a4"
+                        color: Themes.muted
                         font { pixelSize: 8; family: "Quicksand" }
                         Layout.preferredWidth: 42
                     }
                     Text {
                         text: "5 × 10 MB"
-                        color: "#f8f8f2"
+                        color: Themes.fg
                         font { pixelSize: 9; family: "ZedMono Nerd Font" }
                     }
                 }
@@ -380,13 +381,13 @@ Rectangle {
 
                     Text {
                         text: "duration"
-                        color: "#6272a4"
+                        color: Themes.muted
                         font { pixelSize: 8; family: "Quicksand" }
                         Layout.preferredWidth: 56
                     }
                     Text {
                         text: SpeedtestState.testDuration > 0 ? Math.round(SpeedtestState.testDuration) + "s" : "—"
-                        color: "#f8f8f2"
+                        color: Themes.fg
                         font { pixelSize: 9; family: "ZedMono Nerd Font" }
                         Layout.fillWidth: true
                     }
@@ -395,13 +396,13 @@ Rectangle {
 
                     Text {
                         text: "up"
-                        color: "#6272a4"
+                        color: Themes.muted
                         font { pixelSize: 8; family: "Quicksand" }
                         Layout.preferredWidth: 42
                     }
                     Text {
                         text: "3 × 3 MB"
-                        color: "#f8f8f2"
+                        color: Themes.fg
                         font { pixelSize: 9; family: "ZedMono Nerd Font" }
                     }
                 }

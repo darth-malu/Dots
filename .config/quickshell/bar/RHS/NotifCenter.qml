@@ -5,6 +5,7 @@ import Quickshell.Io
 import Quickshell.Widgets
 import qs.customItems
 import qs.services
+import qs.themes
 
 BarBlock {
     id: root
@@ -45,7 +46,7 @@ BarBlock {
         Text {
             anchors.centerIn: parent
             text: "\uf0a2"
-            color: NetworkState.notifCenterVisible || NotificationState.criticalCount > 0 ? "#bd93f9" : "#6272a4"
+            color: NetworkState.notifCenterVisible || NotificationState.criticalCount > 0 ? Themes.accent : Themes.muted
             font {
                 pixelSize: 14
                 family: "Symbols Nerd Font Mono"
@@ -89,9 +90,9 @@ BarBlock {
                     anchors.fill: parent
                     focus: true
                     radius: 12
-                    color: MiscState.popupCardBg
+                    color: Themes.popupCardBg
                     border.width: 1
-                    border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
+                    border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.3)
 
                     Keys.onEscapePressed: NetworkState.notifCenterVisible = false
 
@@ -123,7 +124,7 @@ BarBlock {
                                 const n = NotificationState.allNotifs.length;
                                 return n === 0 ? "no notifications" : `${n} notification${n === 1 ? "" : "s"}`;
                             }
-                            color: "#f8f8f2"
+                            color: Themes.fg
                             font {
                                 pixelSize: 12
                                 bold: true
@@ -140,14 +141,14 @@ BarBlock {
                             implicitWidth: clearTxt.implicitWidth + 16
                             implicitHeight: 20
                             radius: 9
-                            color: clearMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.15) : "#343746"
+                            color: clearMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.15) : Themes.separator
 
                             Text {
                                 id: clearTxt
 
                                 anchors.centerIn: parent
                                 text: "\uf1f8  clear"
-                                color: clearMa.containsMouse ? "#ff5555" : "#b8bfcb"
+                                color: clearMa.containsMouse ? "#ff5555" : Themes.dim
                                 font {
                                     pixelSize: 10
                                     bold: true
@@ -206,7 +207,7 @@ BarBlock {
                                     implicitWidth: 30
                                     implicitHeight: 30
                                     radius: 7
-                                    color: "#343746"
+                                    color: Themes.separator
 
                                     IconImage {
                                         anchors.fill: parent
@@ -220,7 +221,7 @@ BarBlock {
                                         anchors.centerIn: parent
                                         visible: histRow.iconUrl == ""
                                         text: "\uf0f3"
-                                        color: "#6272a4"
+                                        color: Themes.muted
                                         font {
                                             pixelSize: 13
                                             family: "Symbols Nerd Font Mono"
@@ -235,7 +236,7 @@ BarBlock {
                                     Text {
                                         Layout.fillWidth: true
                                         text: histRow.modelData.summary
-                                        color: histRow.urgent ? "#ff5555" : "#bd93f9"
+                                        color: histRow.urgent ? "#ff5555" : Themes.accent
                                         elide: Text.ElideRight
                                         font {
                                             pixelSize: 12
@@ -248,7 +249,7 @@ BarBlock {
                                         Layout.fillWidth: true
                                         visible: histRow.modelData.body.length > 0
                                         text: histRow.modelData.body.split(String.fromCharCode(10)).join(" ")
-                                        color: "#b8bfcb"
+                                        color: Themes.dim
                                         elide: Text.ElideRight
                                         font {
                                             pixelSize: 11
@@ -259,7 +260,7 @@ BarBlock {
 
                                 Text {
                                     text: NotificationState.humanTime(Math.floor(NotificationState.notifTs(histRow.modelData) / 1000), Math.floor(centerCol.nowTs / 1000))
-                                    color: "#6272a4"
+                                    color: Themes.muted
                                     font {
                                         pixelSize: 9
                                         family: "ZedMono Nerd Font"
@@ -275,7 +276,7 @@ BarBlock {
                                     implicitHeight: 20
                                     radius: 6
                                     color: rowCopyMa.containsMouse || histRow.copied
-                                        ? Qt.rgba(0.741, 0.576, 0.976, histRow.copied ? 0.18 : 0.12)
+                                        ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, histRow.copied ? 0.18 : 0.12)
                                         : "transparent"
 
                                     Behavior on color {
@@ -285,7 +286,7 @@ BarBlock {
                                     Text {
                                         anchors.centerIn: parent
                                         text: histRow.copied ? "\uf00c" : "\uf328"
-                                        color: histRow.copied ? "#50fa7b" : rowCopyMa.containsMouse ? "#bd93f9" : "#6272a4"
+                                        color: histRow.copied ? "#50fa7b" : rowCopyMa.containsMouse ? Themes.accent : Themes.muted
                                         font {
                                             pixelSize: 12
                                             family: "Symbols Nerd Font Mono"
@@ -306,9 +307,9 @@ BarBlock {
                                         radius: 6
                                         implicitWidth: hintLabel.implicitWidth + 14
                                         implicitHeight: 17
-                                        color: "#282a36"
+                                        color: Themes.panelBg
                                         border.width: 1
-                                        border.color: histRow.copied ? Qt.rgba(0.31, 0.98, 0.48, 0.5) : Qt.rgba(0.74, 0.58, 0.98, 0.45)
+                                        border.color: histRow.copied ? Qt.rgba(0.31, 0.98, 0.48, 0.5) : Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.45)
                                         visible: opacity > 0.01
                                         opacity: rowCopyMa.containsMouse || histRow.copied ? 1 : 0
 
@@ -321,7 +322,7 @@ BarBlock {
 
                                             anchors.centerIn: parent
                                             text: histRow.copied ? "copied" : "copy · right-click body"
-                                            color: histRow.copied ? "#50fa7b" : "#bd93f9"
+                                            color: histRow.copied ? "#50fa7b" : Themes.accent
                                             font {
                                                 pixelSize: 8
                                                 bold: true
@@ -362,7 +363,7 @@ BarBlock {
 
                                 Text {
                                     text: "\uf00d"
-                                    color: rowCloseMa.containsMouse ? "#ff5555" : "#6272a4"
+                                    color: rowCloseMa.containsMouse ? "#ff5555" : Themes.muted
                                     font {
                                         pixelSize: 12
                                         family: "Symbols Nerd Font Mono"
@@ -393,7 +394,7 @@ BarBlock {
                     Text {
                         visible: NotificationState.allNotifs.length === 0
                         text: "nothing here yet"
-                        color: "#6272a4"
+                        color: Themes.muted
                         font {
                             pixelSize: 11
                             italic: true

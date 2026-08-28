@@ -206,7 +206,7 @@ PanelWindow {
             x: ts.frac * (parent.width - width)
             color: "transparent"
             border.width: 2
-            border.color: "#f8f8f2"
+            border.color: Themes.fg
 
             Rectangle {
                 anchors.fill: parent
@@ -272,14 +272,14 @@ PanelWindow {
                         visible: root.alpha < 1
                         anchors.centerIn: parent
                         text: Math.round(root.alpha * 100) + "%"
-                        color: root.val > 0.5 ? "#282a36" : "#f8f8f2"
+                        color: root.val > 0.5 ? Themes.panelBg : Themes.fg
                         font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
                     }
                 }
 
                 Text {
                     text: "\uf00d"
-                    color: closeMa.containsMouse ? "#ff5555" : "#6272a4"
+                    color: closeMa.containsMouse ? "#ff5555" : Themes.muted
                     font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
 
                     MouseArea {
@@ -414,14 +414,14 @@ PanelWindow {
                     Layout.preferredWidth: 30
                     Layout.preferredHeight: 22
                     radius: 6
-                    color: eyeMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : Qt.rgba(1, 1, 1, 0.05)
+                    color: eyeMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.18) : Qt.rgba(1, 1, 1, 0.05)
                     border.width: 1
-                    border.color: eyeMa.containsMouse ? "#bd93f9" : Qt.rgba(1, 1, 1, 0.12)
+                    border.color: eyeMa.containsMouse ? Themes.accent : Qt.rgba(1, 1, 1, 0.12)
 
                     Text {
                         anchors.centerIn: parent
                         text: "\uf1fb"
-                        color: "#bd93f9"
+                        color: Themes.accent
                         font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
                     }
 
@@ -454,9 +454,9 @@ PanelWindow {
                     Layout.preferredWidth: 28
                     Layout.preferredHeight: 24
                     radius: 6
-                    color: cbMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : Qt.rgba(1, 1, 1, 0.05)
+                    color: cbMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.18) : Qt.rgba(1, 1, 1, 0.05)
                     border.width: 1
-                    border.color: cbMa.containsMouse ? "#bd93f9" : Qt.rgba(1, 1, 1, 0.12)
+                    border.color: cbMa.containsMouse ? Themes.accent : Qt.rgba(1, 1, 1, 0.12)
 
                     scale: cbMa.pressed ? 0.92 : 1
 
@@ -467,7 +467,7 @@ PanelWindow {
                     Text {
                         anchors.centerIn: parent
                         text: "\uf0c5"
-                        color: cbMa.containsMouse ? "#e2d6fb" : "#8b93b8"
+                        color: cbMa.containsMouse ? Themes.accentSoft : Themes.mutedSoft
                         font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
                     }
 
@@ -550,7 +550,7 @@ PanelWindow {
                             radius: 6
                             color: Qt.rgba(1, 1, 1, 0.05)
                             border.width: 1
-                            border.color: hexField.activeFocus ? "#bd93f9" : Qt.rgba(1, 1, 1, 0.08)
+                            border.color: hexField.activeFocus ? Themes.accent : Qt.rgba(1, 1, 1, 0.08)
                         }
                         onTextChanged: {
                             if (!activeFocus)
@@ -602,9 +602,9 @@ PanelWindow {
                 Layout.fillWidth: true
                 implicitHeight: 30
                 radius: 8
-                color: copyMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.22) : Qt.rgba(0.74, 0.58, 0.98, 0.1)
+                color: copyMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.22) : Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.1)
                 border.width: 1
-                border.color: Qt.rgba(0.74, 0.58, 0.98, 0.45)
+                border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.45)
 
                 scale: copyMa.pressed ? 0.97 : 1
 
@@ -618,13 +618,13 @@ PanelWindow {
 
                     Text {
                         text: "\uf0c5"
-                        color: "#bd93f9"
+                        color: Themes.accent
                         font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
                     }
 
                     Text {
                         text: "copy " + root.hexString(root.alpha < 1)
-                        color: "#f8f8f2"
+                        color: Themes.fg
                         font { pixelSize: 11; bold: true; family: "Quicksand" }
                     }
                 }
@@ -676,7 +676,7 @@ PanelWindow {
                             radius: 4
                             color: modelData
                             border.width: matMa.containsMouse ? 2 : 1
-                            border.color: matMa.containsMouse ? "#f8f8f2" : Qt.rgba(1, 1, 1, 0.14)
+                            border.color: matMa.containsMouse ? Themes.fg : Qt.rgba(1, 1, 1, 0.14)
 
                             ToolTip.visible: matMa.containsMouse
                             ToolTip.delay: 350
@@ -723,7 +723,7 @@ PanelWindow {
                             radius: 5
                             color: modelData
                             border.width: recentMa.containsMouse ? 2 : 1
-                            border.color: recentMa.containsMouse ? "#f8f8f2" : Qt.rgba(1, 1, 1, 0.14)
+                            border.color: recentMa.containsMouse ? Themes.fg : Qt.rgba(1, 1, 1, 0.14)
 
                             ToolTip.visible: recentMa.containsMouse
                             ToolTip.delay: 350

@@ -35,7 +35,7 @@ RowLayout {
         : isPendingCharge ? "#f1fa8c"
         : isCritical ? "#ff5555"
         : isLow ? "#ffb86c"
-        : "#bd93f9"
+        : Themes.accent
 
 
     readonly property string batteryGlyph:
@@ -76,7 +76,7 @@ RowLayout {
             width: 23
             height: 13
             radius: 2.5
-            color: "#343746"
+            color: Themes.separator
             border.width: 1
             border.color: Qt.rgba(batteryBlock.accentColor.r, batteryBlock.accentColor.g, batteryBlock.accentColor.b, 0.55)
 
@@ -130,7 +130,7 @@ RowLayout {
                     anchors.centerIn: parent
                     text: "\uf0e7"
                     font { pixelSize: 12; family: "Symbols Nerd Font Mono"; weight: Font.Bold }
-                    color: "#f8f8f2"
+                    color: Themes.fg
                     style: Text.Outline
                     styleColor: Qt.rgba(0, 0, 0, 0.7)
                 }
@@ -142,7 +142,7 @@ RowLayout {
                 visible: batteryBlock.isCharging || batteryBlock.isPendingCharge
                 text: batteryBlock.isPendingCharge ? "\uf1e6" : "\uf0e7"
                 font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
-                color: "#f8f8f2"
+                color: Themes.fg
                 style: Text.Outline
                 styleColor: Qt.rgba(0, 0, 0, 0.65)
             }
@@ -152,7 +152,7 @@ RowLayout {
                 anchors.centerIn: parent
                 visible: batteryBlock.isLow || batteryBlock.isCritical
                 text: "!"
-                color: "#282a36"
+                color: Themes.panelBg
                 font { pixelSize: 10; weight: Font.Black; family: "ZedMono Nerd Font" }
             }
 
@@ -161,7 +161,7 @@ RowLayout {
                 anchors.centerIn: parent
                 visible: batteryBlock.showPct && !batteryBlock.isCharging && !batteryBlock.isPendingCharge && !batteryBlock.isFullyCharged
                 text: `${batteryBlock.pctDisplay}`
-                color: "#f8f8f2"
+                color: Themes.fg
                 style: Text.Outline
                 styleColor: Qt.rgba(0, 0, 0, 0.75)
                 font { pixelSize: 11; bold: true; family: "ZedMono Nerd Font" }
@@ -222,9 +222,9 @@ RowLayout {
             radius: 12
             layer.enabled: true
             layer.samples: 8
-            color: MiscState.popupCardBg
+            color: Themes.popupCardBg
             border.width: 1
-            border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
+            border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.3)
 
             Keys.onEscapePressed: batteryBlock.showPopup = false
 
@@ -317,7 +317,7 @@ RowLayout {
                                 }
                                 return "";
                             }
-                            color: "#f8f8f2"
+                            color: Themes.fg
                             font { pixelSize: 13; bold: true; family: "Quicksand" }
                             visible: text !== ""
                         }
@@ -345,12 +345,12 @@ RowLayout {
                         implicitWidth: 22
                         implicitHeight: 18
                         radius: 6
-                        color: batGraphMa.containsMouse || BatteryState.graphEnabled ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.16) : "transparent"
+                        color: batGraphMa.containsMouse || BatteryState.graphEnabled ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16) : "transparent"
 
                         Text {
                             anchors.centerIn: parent
                             text: "\uf1fe"
-                            color: BatteryState.graphEnabled ? "#bd93f9" : "#6272a4"
+                            color: BatteryState.graphEnabled ? Themes.accent : Themes.muted
                             font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
                         }
 
@@ -390,7 +390,7 @@ RowLayout {
 
                         Text {
                             text: "history · last hour"
-                            color: "#6272a4"
+                            color: Themes.muted
                             font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
                         }
 
@@ -471,12 +471,12 @@ RowLayout {
                 Rectangle {
                     Layout.fillWidth: true
                     height: 1
-                    color: "#343746"
+                    color: Themes.separator
                 }
 
                 Text {
                     text: "Power Profile"
-                    color: "#6272a4"
+                    color: Themes.muted
                     font { pixelSize: 10; bold: true; family: "Quicksand"; letterSpacing: 1 }
                 }
 
@@ -484,7 +484,7 @@ RowLayout {
                 Repeater {
                     model: [
                         { glyph: "\uf06c", name: "Power Saver", profile: PowerProfile.PowerSaver, tint: "#50fa7b" },
-                        { glyph: "\uf24e", name: "Balanced", profile: PowerProfile.Balanced, tint: "#bd93f9" },
+                        { glyph: "\uf24e", name: "Balanced", profile: PowerProfile.Balanced, tint: Themes.accent },
                         { glyph: "\uf0e7", name: "Performance", profile: PowerProfile.Performance, tint: "#ff5555" }
                     ]
 
@@ -518,13 +518,13 @@ RowLayout {
 
                             Text {
                                 text: seg.modelData.glyph
-                                color: seg.active ? seg.tint : segHover.hovered ? "#b8bfcb" : "#6272a4"
+                                color: seg.active ? seg.tint : segHover.hovered ? Themes.dim : Themes.muted
                                 font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
                             }
 
                             Text {
                                 text: seg.modelData.name
-                                color: seg.active ? "#f8f8f2" : segHover.hovered ? "#f8f8f2" : "#b8bfcb"
+                                color: seg.active ? Themes.fg : segHover.hovered ? Themes.fg : Themes.dim
                                 font { pixelSize: 10; bold: true; family: "Quicksand" }
                                 Layout.fillWidth: true
                             }
@@ -536,7 +536,7 @@ RowLayout {
                                 radius: 7
                                 color: "transparent"
                                 border.width: 1.5
-                                border.color: seg.active ? seg.tint : "#44475a"
+                                border.color: seg.active ? seg.tint : Themes.borderMuted
 
                                 Rectangle {
                                     anchors.centerIn: parent

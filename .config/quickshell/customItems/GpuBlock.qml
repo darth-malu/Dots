@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.services
 import qs.customItems
+import qs.themes
 
 BarBlock {
     id: gpu
@@ -14,7 +15,7 @@ BarBlock {
     readonly property int gpuPercent: ResourcesState.gpuPercent
     readonly property real gpuTemp: ResourcesState.gpuTemp
 
-    readonly property color gpuColor: gpuPercent > 80 ? "#ff79c6" : gpuPercent > 60 ? "#c6a0f6" : "#50fa7b"
+    readonly property color gpuColor: gpuPercent > 80 ? Themes.pink : gpuPercent > 60 ? Themes.mauve : "#50fa7b"
 
     function tempColor(t) {
         if (t >= 75)
@@ -23,7 +24,7 @@ BarBlock {
             return "#ffb86c";
         if (t >= 45)
             return "#f1fa8c";
-        return "#8be9fd";
+        return Themes.accent2;
     }
 
     onClicked: mouse => {

@@ -68,7 +68,7 @@ BarBlock {
                     color: !TimerState.active ? "#50fa7b"
                         : TimerState.phase === 2 ? "#ffb86c"
                         : TimerState.remainingSec <= 60 ? "#ff5555"
-                        : TimerState.remainingSec <= 300 ? "#f1fa8c" : "#bd93f9"
+                        : TimerState.remainingSec <= 300 ? "#f1fa8c" : Themes.accent
                     font { pixelSize: 11; family: "ZedMono Nerd Font" }
                 }
 
@@ -292,8 +292,8 @@ BarBlock {
                 radius: 12
                 anchors.fill: parent
                 border.width: 1
-                border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
-                color: MiscState.popupCardBg
+                border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.3)
+                color: Themes.popupCardBg
 
                 Keys.onEscapePressed: {
                     if (clockPopup.datePickerOpen)

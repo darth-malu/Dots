@@ -1,10 +1,11 @@
 import QtQuick
+import qs.themes
 
 Rectangle {
     id: hbtn
 
     property string glyph
-    property color tint: "#bd93f9"
+    property color tint: Themes.accent
     readonly property alias hovered: hbtnMa.containsMouse
 
     signal activated
@@ -39,7 +40,7 @@ Rectangle {
     Text {
         anchors.centerIn: parent
         text: hbtn.glyph
-        color: hbtnMa.containsMouse ? Qt.lighter(hbtn.tint, 1.25) : "#b8bfcb"
+        color: hbtnMa.containsMouse ? Qt.lighter(hbtn.tint, 1.25) : Themes.dim
         font {
             pixelSize: 14
             family: "Symbols Nerd Font Mono"

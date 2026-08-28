@@ -140,9 +140,9 @@ RowLayout {
                     id: menuSurface
                     anchors.fill: parent
                     radius: menuPopup.menuRadius
-                    color: MiscState.popupCardBg
+                    color: Themes.popupCardBg
                     border.width: 1
-                    border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
+                    border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.3)
                     clip: true
 
                     Column {
@@ -192,7 +192,7 @@ RowLayout {
                                     anchors.fill: parent
                                     radius: 6
                                     color: (rowMa.containsMouse || row.hasSub && subAnchor.visible) && row.entry.enabled
-                                           ? Qt.rgba(0.74, 0.58, 0.98, 0.22) : "transparent"
+                                           ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.22) : "transparent"
 
                                     Behavior on color {
                                         ColorAnimation { duration: 90 }
@@ -218,7 +218,7 @@ RowLayout {
                                                     return isChecked ? "\uf192" : "\uf10c";
                                                 return "";
                                             }
-                                            color: "#bd93f9"
+                                            color: Themes.accent
                                             font {
                                                 family: "Symbols Nerd Font Mono"
                                                 pixelSize: 11
@@ -241,7 +241,7 @@ RowLayout {
                                         Text {
                                             Layout.fillWidth: true
                                             text: row.entry.text
-                                            color: row.entry.enabled ? "#f8f8f2" : Qt.rgba(1, 1, 1, 0.35)
+                                            color: row.entry.enabled ? Themes.fg : Qt.rgba(1, 1, 1, 0.35)
                                             elide: Text.ElideRight
                                             font {
                                                 pixelSize: 12

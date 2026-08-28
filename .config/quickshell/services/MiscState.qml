@@ -145,6 +145,10 @@ Singleton {
     // Icons use this to pick soft (transparent) or bright (solid bg) colours.
     readonly property bool barSolid: BarState.barMode !== 0
 
+    // color scheme — 0 purple (default), 1 rofi teal
+    property int themeScheme: prefs.themeScheme
+    onThemeSchemeChanged: prefs.themeScheme = themeScheme
+
     // ── persistent store for user preferences ──
     FileView {
         id: prefStore
@@ -178,6 +182,7 @@ Singleton {
             property bool showVolumeOut: true
             property bool showVolumeIn: true
             property bool showAppVolume: false
+            property int themeScheme: 0
         }
     }
 

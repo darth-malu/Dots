@@ -15,13 +15,13 @@ Scope {
 
     readonly property color volColor: {
         if (root.nodeMuted)
-            return "#6272a4";
+            return Themes.muted;
         var v = root.nodeVolume;
         if (v > 0.8)
-            return "#ff79c6";
+            return Themes.pink;
         if (v > 0.5)
-            return "#c6a0f6";
-        return "#bd93f9";
+            return Themes.mauve;
+        return Themes.accent;
     }
 
     PwObjectTracker {

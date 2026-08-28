@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell.Services.Pipewire
 import qs.services
+import qs.themes
 
 // ═══ PER-APPLICATION AUDIO ═══
 // One row per application playback stream (spotify, chrome, discord, ...),
@@ -17,7 +18,7 @@ ColumnLayout {
 
     // applications output to the default (output) sink, so they share the
     // same accent color as the output volume slider for a consistent look
-    readonly property color sinkAccent: PipewireState.outputSink !== null ? "#bd93f9" : "#8be9fd"
+    readonly property color sinkAccent: PipewireState.outputSink !== null ? Themes.accent : Themes.accent2
 
     // feedback when nothing is playing right now
     Rectangle {
@@ -30,7 +31,7 @@ ColumnLayout {
         Text {
             anchors.centerIn: parent
             text: "no application audio"
-            color: "#6272a4"
+            color: Themes.muted
             font {
                 pixelSize: 9
                 family: "Quicksand"

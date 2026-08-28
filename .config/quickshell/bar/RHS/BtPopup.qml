@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Services.Mpris
 import qs.customItems
 import qs.services
+import qs.themes
 
 BarBlock {
     id: root
@@ -52,7 +53,7 @@ BarBlock {
         readonly property color stateColor: isBlocked ? "#ff5555"
             : isConnected ? "#50fa7b"
             : isPairing ? "#f1fa8c"
-            : "#6272a4"
+            : Themes.muted
         readonly property string stateWord: isBlocked ? "blocked"
             : isConnected ? "connected"
             : isPairing ? "pairing…"
@@ -143,7 +144,7 @@ BarBlock {
 
             Text {
                 text: drow.modelData?.name || drow.modelData?.deviceName || drow.modelData?.address || "?"
-                color: drow.isConnected ? "#f8f8f2" : "#b8bfcb"
+                color: drow.isConnected ? Themes.fg : Themes.dim
                 elide: Text.ElideRight
                 font { pixelSize: 11; bold: true; family: "Quicksand" }
                 Layout.fillWidth: true
@@ -158,7 +159,7 @@ BarBlock {
                     parts.push(drow.stateWord);
                     return parts.join(" · ");
                 }
-                color: drow.isBlocked ? "#ff5555" : drow.isConnected ? "#50fa7b" : "#6272a4"
+                color: drow.isBlocked ? "#ff5555" : drow.isConnected ? "#50fa7b" : Themes.muted
                 elide: Text.ElideRight
                 font { pixelSize: 9; family: "ZedMono Nerd Font"; letterSpacing: 0.5 }
                 Layout.fillWidth: true
@@ -196,7 +197,7 @@ BarBlock {
 
             Text {
                 text: Math.round((drow.modelData?.battery ?? 0) * 100) + "%"
-                color: "#b8bfcb"
+                color: Themes.dim
                 font { pixelSize: 9; family: "ZedMono Nerd Font" }
             }
         }
@@ -208,7 +209,7 @@ BarBlock {
 
             Text {
                 text: "\uf028"
-                color: "#6272a4"
+                color: Themes.muted
                 font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
             }
 
@@ -250,9 +251,9 @@ BarBlock {
                 anchors.fill: parent
                 focus: true
                 radius: 12
-                color: MiscState.popupCardBg
+                color: Themes.popupCardBg
                 border.width: 1
-                border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
+                border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.3)
 
                 Keys.onEscapePressed: NetworkState.btPopupVisible = false
 
@@ -277,7 +278,7 @@ BarBlock {
 
                         Text {
                             text: "bluetooth"
-                            color: "#f8f8f2"
+                            color: Themes.fg
                             font { pixelSize: 12; bold: true; family: "Quicksand" }
                             Layout.fillWidth: true
                         }
@@ -303,7 +304,7 @@ BarBlock {
                             implicitWidth: 26
                             implicitHeight: 14
                             radius: 7
-                            color: Bt.enabled ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.35) : "#343746"
+                            color: Bt.enabled ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.35) : Themes.separator
 
                             Rectangle {
                                 x: Bt.enabled ? parent.width - width - 2 : 2
@@ -311,7 +312,7 @@ BarBlock {
                                 implicitWidth: 10
                                 implicitHeight: 10
                                 radius: 5
-                                color: Bt.enabled ? "#bd93f9" : "#6272a4"
+                                color: Bt.enabled ? Themes.accent : Themes.muted
 
                                 Behavior on x {
                                     NumberAnimation {
@@ -336,7 +337,7 @@ BarBlock {
                         Layout.fillWidth: true
                         implicitHeight: 1
                         visible: root.devices.length > 0
-                        color: "#343746"
+                        color: Themes.separator
                     }
 
                     Repeater {
@@ -347,7 +348,7 @@ BarBlock {
                     Text {
                         visible: root.devices.length === 0
                         text: !root.adapter ? "no bluetooth adapter found" : (Bt.enabled ? "no known devices" : "bluetooth is off")
-                        color: "#6272a4"
+                        color: Themes.muted
                         font { pixelSize: 10; family: "Quicksand"; italic: true }
                         Layout.alignment: Qt.AlignHCenter
                     }

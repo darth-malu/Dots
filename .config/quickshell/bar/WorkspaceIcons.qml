@@ -198,10 +198,10 @@ RowLayout {
                         anchors.centerIn: parent
                         text: String(rootBlock.ws?.id ?? "")
                         color: rootBlock.isActive
-                            ? "#bd93f9"
+                            ? Themes.accent
                             : rootBlock.isEmpty
                                 ? Qt.rgba(1, 1, 1, 0.35)
-                                : (boxy ? Qt.rgba(0.74, 0.58, 0.98, 0.6) : Themes.roundedBadgeText)
+                                : (boxy ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.6) : Themes.roundedBadgeText)
                         font {
                             pixelSize: 12
                             bold: rootBlock.isActive

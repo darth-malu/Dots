@@ -11,13 +11,13 @@ Row {
         implicitWidth: imgGlyph.implicitWidth + 6
         implicitHeight: imgGlyph.implicitHeight + 2
         radius: 4
-        color: Qt.rgba(0.741, 0.576, 0.976, 0.18)
+        color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.18)
 
         Text {
             id: imgGlyph
             anchors.centerIn: parent
             text: "\uf03e"
-            color: "#bd93f9"
+            color: Themes.accent
             font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
         }
     }

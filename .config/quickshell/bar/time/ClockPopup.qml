@@ -306,7 +306,7 @@ ColumnLayout {
                 width: 76
                 height: 20
                 radius: 10
-                color: active ? Qt.rgba(0.741, 0.576, 0.976, 0.22) : tabMa.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
+                color: active ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.22) : tabMa.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
 
                 Behavior on color {
                     ColorAnimation { duration: 120 }
@@ -319,14 +319,14 @@ ColumnLayout {
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
                         text: tab.icon
-                        color: tab.active ? "#bd93f9" : "#8b93b8"
+                        color: tab.active ? Themes.accent : Themes.mutedSoft
                         font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
                     }
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
                         text: tab.label
-                        color: tab.active ? "#e2d6fb" : "#8b93b8"
+                        color: tab.active ? Themes.accentSoft : Themes.mutedSoft
                         font { pixelSize: 9; bold: tab.active; family: "Quicksand"; letterSpacing: 0.5 }
                     }
 
@@ -337,14 +337,14 @@ ColumnLayout {
                         implicitWidth: Math.max(badgeTxt.implicitWidth + 6, 12)
                         implicitHeight: 11
                         radius: 5.5
-                        color: "#bd93f9"
+                        color: Themes.accent
 
                         Text {
                             id: badgeTxt
 
                             anchors.centerIn: parent
                             text: tab.badge
-                            color: "#282a36"
+                            color: Themes.panelBg
                             font { pixelSize: 7; bold: true; family: "ZedMono Nerd Font" }
                         }
                     }
@@ -523,7 +523,7 @@ ColumnLayout {
                 font: Themes.quicksand
                 color: {
                     if (parent.isSelected) return Themes.calendarToday;
-                    if (model.today) return "#282a36";
+                    if (model.today) return Themes.panelBg;
                     if (dayCell.hovered) return Themes.calendarToday;
                     if (model.month === grid.month) return Themes.calendarActiveMonth;
                     return Themes.calendarInactiveMonth;
@@ -547,7 +547,7 @@ ColumnLayout {
                         height: 3.5
                         radius: 2
                         anchors.verticalCenter: parent.verticalCenter
-                        color: dayCell.isToday || dayCell.isSelected ? "#282a36" : "#bd93f9"
+                        color: dayCell.isToday || dayCell.isSelected ? Themes.panelBg : Themes.accent
                     }
                 }
             }
@@ -580,12 +580,12 @@ ColumnLayout {
                 width: 5
                 height: 5
                 radius: 2.5
-                color: "#bd93f9"
+                color: Themes.accent
             }
 
             Text {
                 text: "has reminders"
-                color: "#6272a4"
+                color: Themes.muted
                 font { pixelSize: 9; family: "Quicksand" }
             }
 
@@ -607,7 +607,7 @@ ColumnLayout {
             implicitHeight: 22
             radius: 11
             visible: !isCurrentMonth
-            color: todayMa.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.2) : Qt.rgba(1, 1, 1, 0.05)
+            color: todayMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : Qt.rgba(1, 1, 1, 0.05)
             border.width: 1
             border.color: Qt.rgba(1, 1, 1, 0.07)
 
@@ -624,14 +624,14 @@ ColumnLayout {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: "\uf073"
-                    color: "#bd93f9"
+                    color: Themes.accent
                     font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
                 }
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: "today"
-                    color: todayMa.containsMouse ? "#e2d6fb" : "#8b93b8"
+                    color: todayMa.containsMouse ? Themes.accentSoft : Themes.mutedSoft
                     font { pixelSize: 9; bold: true; family: "Quicksand" }
                 }
             }
@@ -734,7 +734,7 @@ ColumnLayout {
                             font { pixelSize: 10; family: "Quicksand" }
                             color: {
                                 if (model.today)
-                                    return "#282a36";
+                                    return Themes.panelBg;
                                 if (miniDay.hovered)
                                     return Themes.calendarToday;
                                 return model.month === miniMonth.index ? Themes.calendarActiveMonth : Themes.calendarInactiveMonth;
@@ -807,9 +807,9 @@ ColumnLayout {
             Layout.fillWidth: true
             implicitHeight: addCol.implicitHeight + 20
             radius: 10
-            color: Qt.rgba(0.741, 0.576, 0.976, 0.06)
+            color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.06)
             border.width: 1
-            border.color: Qt.rgba(0.741, 0.576, 0.976, 0.16)
+            border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16)
 
             ColumnLayout {
                 id: addCol
@@ -832,9 +832,9 @@ ColumnLayout {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 38
                         radius: 10
-                        color: chipMa.containsMouse || root.datePickerOpen ? Qt.rgba(0.741, 0.576, 0.976, 0.14) : Qt.rgba(1, 1, 1, 0.04)
+                        color: chipMa.containsMouse || root.datePickerOpen ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : Qt.rgba(1, 1, 1, 0.04)
                         border.width: root.datePickerOpen ? 1.5 : 1
-                        border.color: root.datePickerOpen ? "#bd93f9" : chipMa.containsMouse ? "#565d78" : "#3b3f54"
+                        border.color: root.datePickerOpen ? Themes.accent : chipMa.containsMouse ? "#565d78" : "#3b3f54"
 
                         Behavior on border.color {
                             ColorAnimation { duration: 120 }
@@ -853,7 +853,7 @@ ColumnLayout {
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: "\uf073"
-                                color: "#bd93f9"
+                                color: Themes.accent
                                 font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
                             }
 
@@ -866,14 +866,14 @@ ColumnLayout {
                                     var dt = new Date(root.effectiveYear, root.effectiveMonth, root.effectiveDay);
                                     return days[dt.getDay()] + ", " + months[root.effectiveMonth] + " " + root.effectiveDay;
                                 }
-                                color: "#e2d6fb"
+                                color: Themes.accentSoft
                                 font { pixelSize: 10; bold: true; family: "Quicksand" }
                             }
 
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: root.datePickerOpen ? "\uf077" : "\uf078"
-                                color: "#8b93b8"
+                                color: Themes.mutedSoft
                                 font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
                             }
                         }
@@ -916,7 +916,7 @@ ColumnLayout {
                         Layout.preferredHeight: 34
                         placeholderText: root.editingId >= 0 ? "editing — enter keeps changes" : "remember to…"
                         placeholderTextColor: Qt.rgba(1, 1, 1, 0.25)
-                        color: "#f8f8f2"
+                        color: Themes.fg
                         font { pixelSize: 11; family: "Quicksand" }
                         background: Rectangle {
                             radius: 8
@@ -943,9 +943,9 @@ ColumnLayout {
                         Layout.preferredWidth: 34
                         Layout.preferredHeight: 34
                         radius: 8
-                        color: addMa.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.28) : Qt.rgba(0.741, 0.576, 0.976, 0.16)
+                        color: addMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.28) : Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16)
                         border.width: 1
-                        border.color: root.editingId >= 0 ? Qt.rgba(0.31, 0.98, 0.48, 0.45) : Qt.rgba(0.741, 0.576, 0.976, 0.35)
+                        border.color: root.editingId >= 0 ? Qt.rgba(0.31, 0.98, 0.48, 0.45) : Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.35)
 
                         Behavior on border.color {
                             ColorAnimation { duration: 120 }
@@ -960,7 +960,7 @@ ColumnLayout {
                         Text {
                             anchors.centerIn: parent
                             text: root.editingId >= 0 ? "\uf00c" : "\uf067"
-                            color: root.editingId >= 0 ? "#50fa7b" : "#bd93f9"
+                            color: root.editingId >= 0 ? "#50fa7b" : Themes.accent
                             font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
                         }
 
@@ -1103,7 +1103,7 @@ ColumnLayout {
                                         if (pickCell.isSelected)
                                             return Themes.calendarToday;
                                         if (model.today)
-                                            return "#282a36";
+                                            return Themes.panelBg;
                                         if (pickCell.hovered)
                                             return Themes.calendarToday;
                                         return model.month === pickGrid.month ? Themes.calendarActiveMonth : Themes.calendarInactiveMonth;
@@ -1162,13 +1162,13 @@ ColumnLayout {
 
                     Text {
                         text: "\uf0f3"
-                        color: "#bd93f9"
+                        color: Themes.accent
                         font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
                     }
 
                     Text {
                         text: "Upcoming"
-                        color: "#bd93f9"
+                        color: Themes.accent
                         font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
                     }
 
@@ -1176,14 +1176,14 @@ ColumnLayout {
                         implicitWidth: remCount.implicitWidth + 10
                         implicitHeight: 14
                         radius: 7
-                        color: Qt.rgba(0.741, 0.576, 0.976, 0.16)
+                        color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16)
 
                         Text {
                             id: remCount
 
                             anchors.centerIn: parent
                             text: ReminderState.pending.length
-                            color: "#bd93f9"
+                            color: Themes.accent
                             font { pixelSize: 8; bold: true; family: "ZedMono Nerd Font" }
                         }
                     }
@@ -1219,7 +1219,7 @@ ColumnLayout {
                     Layout.topMargin: 4
                     Layout.bottomMargin: 4
                     text: "nothing pending — enjoy the quiet"
-                    color: "#6272a4"
+                    color: Themes.muted
                     font { pixelSize: 10; family: "Quicksand"; letterSpacing: 0.5 }
                 }
 
@@ -1261,7 +1261,7 @@ ColumnLayout {
                                 Text {
                                     Layout.leftMargin: 2
                                     text: remGroup.modelData.header
-                                    color: remGroup.modelData.overdue ? "#ff8c8c" : "#b8bfcb"
+                                    color: remGroup.modelData.overdue ? "#ff8c8c" : Themes.dim
                                     font { pixelSize: 10; bold: true; family: "Quicksand"; letterSpacing: 0.5 }
                                 }
 
@@ -1278,7 +1278,7 @@ ColumnLayout {
                                         Layout.fillWidth: true
                                         implicitHeight: 24
                                         radius: 6
-                                        color: isEdited ? Qt.rgba(0.741, 0.576, 0.976, 0.12) : remHover.containsMouse ? "#343746" : Qt.rgba(1, 1, 1, 0.02)
+                                        color: isEdited ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12) : remHover.containsMouse ? Themes.separator : Qt.rgba(1, 1, 1, 0.02)
 
                                         Behavior on color {
                                             ColorAnimation { duration: 110 }
@@ -1292,7 +1292,7 @@ ColumnLayout {
 
                                             Text {
                                                 text: remRow.modelData.time || "--:--"
-                                                color: remRow.modelData.overdue ? "#ff8c8c" : "#bd93f9"
+                                                color: remRow.modelData.overdue ? "#ff8c8c" : Themes.accent
                                                 font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
                                                 Layout.preferredWidth: 36
                                             }
@@ -1300,7 +1300,7 @@ ColumnLayout {
                                             Text {
                                                 Layout.fillWidth: true
                                                 text: remRow.modelData.text
-                                                color: "#f8f8f2"
+                                                color: Themes.fg
                                                 font { pixelSize: 10; family: "Quicksand" }
                                                 elide: Text.ElideRight
                                                 maximumLineCount: 1
@@ -1309,7 +1309,7 @@ ColumnLayout {
                                             // edit — loads the reminder back into the compose card
                                             Text {
                                                 text: "\uf044"
-                                                color: remRow.isEdited ? "#bd93f9" : edtMa.containsMouse ? "#bd93f9" : "#4c5069"
+                                                color: remRow.isEdited ? Themes.accent : edtMa.containsMouse ? Themes.accent : "#4c5069"
                                                 font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
 
                                                 MouseArea {

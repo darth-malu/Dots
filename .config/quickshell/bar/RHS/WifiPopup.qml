@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Networking
 import qs.services
+import qs.themes
 
 Item {
     id: root
@@ -48,7 +49,7 @@ Item {
 
     function signalColor(level) {
         const s = level ?? 0;
-        return s < 0.34 ? "#ffb86c" : s < 0.67 ? "#f1fa8c" : "#8be9fd";
+        return s < 0.34 ? "#ffb86c" : s < 0.67 ? "#f1fa8c" : Themes.accent2;
     }
 
     Connections {
@@ -88,7 +89,7 @@ Item {
                 height: 4 + index * 2.5
                 radius: 1
                 anchors.bottom: parent.bottom
-                color: index < Math.round((sbars.level ?? 0) * 4) ? sbars.litColor : "#44475a"
+                color: index < Math.round((sbars.level ?? 0) * 4) ? sbars.litColor : Themes.borderMuted
             }
         }
     }
@@ -98,7 +99,7 @@ Item {
 
         property var history
         property real peak: 1
-        property color accent: "#bd93f9"
+        property color accent: Themes.accent
         property int tick
         property int maxLen: 60
         // current speed chip drawn inside the graph, top-right
@@ -207,7 +208,7 @@ Item {
         // extra vertical breathing room for a comfortable list
         implicitHeight: netCol.implicitHeight + 16
         // the row being edited is isolated behind a purple tint; plain hover gets a subtle wash
-        color: editing ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.14) : rowHover.containsMouse ? Qt.rgba(1, 1, 1, 0.07) : "transparent"
+        color: editing ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : rowHover.containsMouse ? Qt.rgba(1, 1, 1, 0.07) : "transparent"
         opacity: isConnected ? 1 : 0.9
 
         Behavior on color {
@@ -271,7 +272,7 @@ Item {
 
             Text {
                 text: netrow.hiddenNet ? "hidden network" : netrow.ssidName
-                color: netrow.hiddenNet ? "#6272a4" : netrow.isConnected && MiscState.wifiGreenName ? "#50fa7b" : "#f8f8f2"
+                color: netrow.hiddenNet ? Themes.muted : netrow.isConnected && MiscState.wifiGreenName ? "#50fa7b" : Themes.fg
                 font.italic: netrow.hiddenNet
                 elide: Text.ElideRight
                 font {
@@ -286,7 +287,7 @@ Item {
             Rectangle {
                 visible: !netrow.hiddenNet && root.bandFor(netrow.ssidName).length > 0
                 radius: 4
-                color: "#343746"
+                color: Themes.separator
                 implicitWidth: bandText.implicitWidth + 10
                 implicitHeight: 14
 
@@ -294,7 +295,7 @@ Item {
                     id: bandText
                     anchors.centerIn: parent
                     text: root.bandFor(netrow.ssidName)
-                    color: "#8be9fd"
+                    color: Themes.accent2
                     font { pixelSize: 8; bold: true; family: "ZedMono Nerd Font" }
                 }
             }
@@ -303,7 +304,7 @@ Item {
             Text {
                 text: "\uf09c"
                 visible: !netrow.hiddenNet && !root.needsPsk(netrow.modelData?.security ?? 11)
-                color: "#6272a4"
+                color: Themes.muted
                 font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
             }
 
@@ -311,7 +312,7 @@ Item {
             Text {
                 visible: netrow.isKnown && netrow.ssidName.length > 0
                 text: netrow.editing ? "\uf00d" : "\uf044"
-                color: editMa.containsMouse || netrow.editing ? "#bd93f9" : "#6272a4"
+                color: editMa.containsMouse || netrow.editing ? Themes.accent : Themes.muted
                 font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
 
                 MouseArea {
@@ -343,7 +344,7 @@ Item {
             Layout.fillWidth: true
             implicitHeight: pwCol.implicitHeight + 16
             radius: 4
-            color: "#343746"
+            color: Themes.separator
 
             ColumnLayout {
                 id: pwCol
@@ -354,7 +355,7 @@ Item {
 
                 Text {
                     text: `password · ${netrow.hiddenNet ? "hidden network" : netrow.ssidName}`
-                    color: "#bd93f9"
+                    color: Themes.accent
                     elide: Text.ElideMiddle
                     font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
                     Layout.fillWidth: true
@@ -367,13 +368,13 @@ Item {
                     Layout.preferredHeight: 26
                     echoMode: TextInput.Password
                     placeholderText: "enter password… (⏎ to connect)"
-                    color: "#f8f8f2"
-                    placeholderTextColor: "#6272a4"
+                    color: Themes.fg
+                    placeholderTextColor: Themes.muted
                     font { pixelSize: 11; family: "Quicksand" }
                     background: Rectangle {
                         radius: 4
-                        color: "#282a36"
-                        border.color: pwField.activeFocus ? "#bd93f9" : "#6272a4"
+                        color: Themes.panelBg
+                        border.color: pwField.activeFocus ? Themes.accent : Themes.muted
                         border.width: 1
                     }
                     leftPadding: 8
@@ -396,7 +397,7 @@ Item {
             Layout.fillWidth: true
             implicitHeight: editorCol.implicitHeight + 16
             radius: 8
-            color: "#343746"
+            color: Themes.separator
 
             ColumnLayout {
                 id: editorCol
@@ -410,7 +411,7 @@ Item {
 
                     Text {
                         text: "autoconnect"
-                        color: "#6272a4"
+                        color: Themes.muted
                         font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
                         Layout.fillWidth: true
                     }
@@ -421,7 +422,7 @@ Item {
                         implicitWidth: 26
                         implicitHeight: 14
                         radius: 7
-                        color: on ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.35) : "#44475a"
+                        color: on ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.35) : Themes.borderMuted
 
                         Rectangle {
                             x: parent.on ? parent.width - width - 2 : 2
@@ -429,7 +430,7 @@ Item {
                             implicitWidth: 10
                             implicitHeight: 10
                             radius: 5
-                            color: parent.on ? "#bd93f9" : "#6272a4"
+                            color: parent.on ? Themes.accent : Themes.muted
 
                             Behavior on x {
                                 NumberAnimation {
@@ -459,13 +460,13 @@ Item {
                         echoMode: netrow.showPw ? TextInput.Normal : TextInput.Password
                         placeholderText: "change password…"
                         // cyan while displaying the network's stored password
-                        color: netrow.savedPw.length > 0 && pskEdit.text === netrow.savedPw ? "#8be9fd" : "#f8f8f2"
-                        placeholderTextColor: "#6272a4"
+                        color: netrow.savedPw.length > 0 && pskEdit.text === netrow.savedPw ? Themes.accent2 : Themes.fg
+                        placeholderTextColor: Themes.muted
                         font { pixelSize: 10; family: "Quicksand" }
                         background: Rectangle {
                             radius: 6
-                            color: "#282a36"
-                            border.color: pskEdit.activeFocus ? "#bd93f9" : "#6272a4"
+                            color: Themes.panelBg
+                            border.color: pskEdit.activeFocus ? Themes.accent : Themes.muted
                             border.width: 1
                         }
                         leftPadding: 8
@@ -485,11 +486,11 @@ Item {
                         implicitWidth: 22
                         implicitHeight: 22
                         radius: 6
-                        color: eyeMa.containsMouse ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.16) : "transparent"
+                        color: eyeMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16) : "transparent"
                         Text {
                             anchors.centerIn: parent
                             text: netrow.showPw ? "\uf070" : "\uf06e"
-                            color: netrow.showPw ? "#bd93f9" : "#6272a4"
+                            color: netrow.showPw ? Themes.accent : Themes.muted
                             font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
                         }
 
@@ -527,7 +528,7 @@ Item {
                         Text {
                             anchors.centerIn: parent
                             text: "\uf0c5"
-                            color: copyMa.containsMouse ? "#8be9fd" : "#6272a4"
+                            color: copyMa.containsMouse ? Themes.accent2 : Themes.muted
                             font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
                         }
 
@@ -557,7 +558,7 @@ Item {
                         implicitWidth: 22
                         implicitHeight: 22
                         radius: 6
-                        color: applyMa.containsMouse ? Qt.rgba(80 / 255, 250 / 255, 123 / 255, 0.16) : "#282a36"
+                        color: applyMa.containsMouse ? Qt.rgba(80 / 255, 250 / 255, 123 / 255, 0.16) : Themes.panelBg
 
                         Text {
                             anchors.centerIn: parent
@@ -580,7 +581,7 @@ Item {
                     Layout.fillWidth: true
                     implicitHeight: 20
                     radius: 6
-                    color: forgetMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.18) : "#282a36"
+                    color: forgetMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.18) : Themes.panelBg
 
                     RowLayout {
                         anchors.centerIn: parent
@@ -653,9 +654,9 @@ Item {
                 anchors.fill: parent
                 focus: true
                 radius: 12
-                color: MiscState.popupCardBg
+                color: Themes.popupCardBg
                 border.width: 1
-                border.color: Qt.rgba(0.74, 0.58, 0.98, 0.35)
+                border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.35)
 
                 Keys.onEscapePressed: {
                     if (root.passwordNetwork)
@@ -679,14 +680,14 @@ Item {
 
                         Text {
                             text: "\uf1eb"
-                            color: "#bd93f9"
+                            color: Themes.accent
                             font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
                         }
 
                         Text {
                             visible: (root.adapter?.name ?? "").length > 0
                             text: root.adapter?.name ?? ""
-                            color: "#f8f8f2"
+                            color: Themes.fg
                             font { pixelSize: 12; bold: true; family: "Quicksand" }
                         }
 
@@ -700,12 +701,12 @@ Item {
                             implicitWidth: 22
                             implicitHeight: 18
                             radius: 6
-                            color: graphBtnMouse.containsMouse || NetworkState.wifiGraphEnabled ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.16) : "transparent"
+                            color: graphBtnMouse.containsMouse || NetworkState.wifiGraphEnabled ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16) : "transparent"
 
                             Text {
                                 anchors.centerIn: parent
                                 text: "\uf1fe"
-                                color: NetworkState.wifiGraphEnabled ? "#bd93f9" : "#6272a4"
+                                color: NetworkState.wifiGraphEnabled ? Themes.accent : Themes.muted
                                 font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
                             }
 
@@ -724,7 +725,7 @@ Item {
                             implicitWidth: 26
                             implicitHeight: 14
                             radius: 7
-                            color: Networking.wifiEnabled ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.35) : "#343746"
+                            color: Networking.wifiEnabled ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.35) : Themes.separator
 
                             Rectangle {
                                 x: Networking.wifiEnabled ? parent.width - width - 2 : 2
@@ -732,7 +733,7 @@ Item {
                                 implicitWidth: 10
                                 implicitHeight: 10
                                 radius: 5
-                                color: Networking.wifiEnabled ? "#bd93f9" : "#6272a4"
+                                color: Networking.wifiEnabled ? Themes.accent : Themes.muted
 
                                 Behavior on x {
                                     NumberAnimation {
@@ -757,7 +758,7 @@ Item {
                         Layout.fillWidth: true
                         implicitHeight: connZone.implicitHeight + 20
                         radius: 10
-                        color: "#21222c"
+                        color: Themes.cardBg
 
                         ColumnLayout {
                             id: connZone
@@ -790,14 +791,14 @@ Item {
 
                                         Text {
                                             text: modelData.label
-                                            color: "#6272a4"
+                                            color: Themes.muted
                                             font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
                                             Layout.preferredWidth: 56
                                         }
 
                                         Text {
                                             text: modelData.value
-                                            color: "#f8f8f2"
+                                            color: Themes.fg
                                             elide: Text.ElideRight
                                             font { pixelSize: 12; bold: true; family: "ZedMono Nerd Font" }
                                             Layout.fillWidth: true
@@ -826,7 +827,7 @@ Item {
 
                                     Text {
                                         text: `\u2193 ${root.netRoot.fmtBytes(root.netRoot.ifaceRxTotal)}`
-                                        color: "#bd93f9"
+                                        color: Themes.accent
                                         font { pixelSize: 10; bold: true; family: "ZedMono Nerd Font" }
                                     }
 
@@ -834,14 +835,14 @@ Item {
 
                                     Text {
                                         text: `\u2191 ${root.netRoot.fmtBytes(root.netRoot.ifaceTxTotal)}`
-                                        color: "#ff79c6"
+                                        color: Themes.pink
                                         font { pixelSize: 10; bold: true; family: "ZedMono Nerd Font" }
                                     }
                                 }
 
                                 // ── Live traffic graphs — current speed rendered inside each graph ──
                                 TrafficGraph {
-                                    accent: "#bd93f9"
+                                    accent: Themes.accent
                                     history: root.netRoot.rxHistory
                                     peak: root.netRoot.peakRx
                                     tick: root.netRoot.graphTick
@@ -850,7 +851,7 @@ Item {
                                 }
 
                                 TrafficGraph {
-                                    accent: "#ff79c6"
+                                    accent: Themes.pink
                                     history: root.netRoot.txHistory
                                     peak: root.netRoot.peakTx
                                     tick: root.netRoot.graphTick
@@ -870,7 +871,7 @@ Item {
                         Text {
                             visible: root.knownNets.length > 0
                             text: `known \u00b7 ${root.knownNets.length}`
-                            color: "#6272a4"
+                            color: Themes.muted
                             font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
                             Layout.leftMargin: 4
                         }
@@ -883,7 +884,7 @@ Item {
                         Text {
                             visible: root.unknownNets.length > 0
                             text: `available \u00b7 ${root.unknownNets.length}`
-                            color: "#6272a4"
+                            color: Themes.muted
                             font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
                             Layout.leftMargin: 4
                             Layout.topMargin: 6
@@ -898,7 +899,7 @@ Item {
                     Text {
                         visible: Networking.wifiEnabled && root.networks.length === 0 && root.adapter !== null
                         text: "scanning for networks\u2026"
-                        color: "#6272a4"
+                        color: Themes.muted
                         font { pixelSize: 10; family: "Quicksand"; italic: true }
                         Layout.alignment: Qt.AlignHCenter
                     }

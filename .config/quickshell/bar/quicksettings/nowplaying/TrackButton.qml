@@ -1,8 +1,9 @@
 import QtQuick
+import qs.themes
 
 Item {
     property string text
-    property color accentColor: "#bd93f9"
+    property color accentColor: Themes.accent
     // rest-state glyph color — override for quiet buttons (chevrons etc.)
     property color idleColor: Qt.rgba(1, 1, 1, 0.7)
     property bool active: false

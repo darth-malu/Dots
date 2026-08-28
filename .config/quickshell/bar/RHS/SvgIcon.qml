@@ -1,13 +1,14 @@
 import QtQuick
 import QtQuick.Effects
 import qs.services
+import qs.themes
 
 Item {
     id: root
     width: 16
     height: 16
     required property string icon
-    property color color: "#ff79c6"
+    property color color: Themes.pink
 
     Image {
         id: svg

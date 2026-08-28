@@ -10,6 +10,7 @@ import qs.bar.quicksettings
 import qs.bar.quicksettings.nowplaying
 import qs.bar.quicksettings.power
 import qs.services
+import qs.themes
 
 BarBlock {
     id: root
@@ -112,9 +113,9 @@ BarBlock {
                 anchors.fill: parent
                 focus: true
                 radius: 12
-                color: MiscState.popupCardBg
+                color: Themes.popupCardBg
                 border.width: 1
-                border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
+                border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.3)
 
                 Keys.onEscapePressed: root.showQsPopup = false
 
@@ -162,14 +163,14 @@ BarBlock {
                                     Layout.preferredWidth: 40
                                     Layout.preferredHeight: 40
                                     radius: height / 2
-                                    color: avatarMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "#343746"
+                                    color: avatarMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.18) : Themes.separator
                                     border.width: 0
 
                                     // halo of light on hover
                                     layer.enabled: true
                                     layer.effect: MultiEffect {
                                         shadowEnabled: true
-                                        shadowColor: Qt.rgba(0.741, 0.576, 0.976, 1)
+                                        shadowColor: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 1)
                                         shadowBlur: 1.2
                                         autoPaddingEnabled: true
                                         shadowOpacity: avatarMa.containsMouse ? 1.0 : 0
@@ -196,7 +197,7 @@ BarBlock {
                                     Text {
                                         anchors.centerIn: parent
                                         text: "\uf007"
-                                        color: "#6272a4"
+                                        color: Themes.muted
                                         font {
                                             pixelSize: 16
                                             family: "Symbols Nerd Font Mono"
@@ -218,7 +219,7 @@ BarBlock {
                                     id: uptime
                                     Layout.alignment: Qt.AlignLeft
                                     text: ResourcesState.uptimeText.length > 0 ? ResourcesState.uptimeText : "…"
-                                    color: "#6272a4"
+                                    color: Themes.muted
                                     font {
                                         pixelSize: 9
                                         bold: true
@@ -232,14 +233,14 @@ BarBlock {
 
                                 HeaderButton {
                                     glyph: "\uf0f4"
-                                    tint: CaffeineService.enabled ? "#ffb86c" : "#6272a4"
+                                    tint: CaffeineService.enabled ? "#ffb86c" : Themes.muted
 
                                     onActivated: CaffeineService.toggle()
                                 }
 
                                 HeaderButton {
                                     glyph: "\uf013"
-                                    tint: "#bd93f9"
+                                    tint: Themes.accent
 
                                     onActivated: {
                                         root.showQsPopup = false;
@@ -254,7 +255,7 @@ BarBlock {
                                     // armed menu or hover lights it red
                                     property bool hot: root.showPowerPopup
 
-                                    tint: hot || hovered ? "#ff5555" : "#6272a4"
+                                    tint: hot || hovered ? "#ff5555" : Themes.muted
                                     border.color: hot ? Qt.rgba(0.95, 0.55, 0.66, 0.45) : hovered ? Qt.rgba(1, 0.33, 0.33, 0.45) : Qt.rgba(1, 1, 1, 0.08)
 
                                     onActivated: root.showPowerPopup = !root.showPowerPopup
@@ -299,9 +300,9 @@ BarBlock {
                                 Layout.fillWidth: true
                                 Layout.bottomMargin: 4
                                 radius: 10
-                                color: "#21222c"
+                                color: Themes.cardBg
                                 border.width: 1
-                                border.color: Qt.rgba(0.74, 0.58, 0.98, 0.25)
+                                border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.25)
                                 implicitHeight: volumeCol.implicitHeight + 16
 
                                 ColumnLayout {
@@ -321,7 +322,7 @@ BarBlock {
                                         Layout.fillWidth: true
                                         implicitHeight: 1
                                         visible: BrightnessState.available
-                                        color: "#343746"
+                                        color: Themes.separator
                                     }
 
                                     ColumnLayout {
@@ -337,7 +338,7 @@ BarBlock {
                                                 visible: true
                                                 node: PipewireState.outputSink
                                                 fallback: "output"
-                                                accent: "#bd93f9"
+                                                accent: Themes.accent
                                                 displayName: PipewireState.outputDisplayName
                                             }
                                         }
@@ -347,7 +348,7 @@ BarBlock {
                                             node: PipewireState.outputSink
                                             glyph: "\uf028"
                                             glyphMuted: "\uf026"
-                                            accent: "#bd93f9"
+                                            accent: Themes.accent
                                         }
                                     }
 
@@ -362,7 +363,7 @@ BarBlock {
                                         SinkName {
                                             node: PipewireState.inputSink
                                             fallback: "input"
-                                            accent: "#8be9fd"
+                                            accent: Themes.accent2
                                         }
 
                                         VolumeSlider {
@@ -370,7 +371,7 @@ BarBlock {
                                             node: PipewireState.inputSink
                                             glyph: "\uf130"
                                             glyphMuted: "\uf131"
-                                            accent: "#8be9fd"
+                                            accent: Themes.accent2
                                         }
                                     }
 
@@ -380,7 +381,7 @@ BarBlock {
                                         implicitHeight: 1
                                         Layout.topMargin: 8
                                         visible: MiscState.showAppVolume
-                                        color: "#343746"
+                                        color: Themes.separator
                                     }
 
                                     AppVolume {
@@ -406,7 +407,7 @@ BarBlock {
                                     implicitWidth: 18
                                     implicitHeight: 18
                                     radius: 5
-                                    color: pwMouse.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "transparent"
+                                    color: pwMouse.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.18) : "transparent"
 
                                     Behavior on color {
                                         ColorAnimation {
@@ -417,7 +418,7 @@ BarBlock {
                                     Text {
                                         anchors.centerIn: parent
                                         text: "\uf013"
-                                        color: MiscState.showAppVolume ? "#bd93f9" : pwMouse.containsMouse ? "#bd93f9" : "#6272a4"
+                                        color: MiscState.showAppVolume ? Themes.accent : pwMouse.containsMouse ? Themes.accent : Themes.muted
                                         font {
                                             pixelSize: 10
                                             family: "Symbols Nerd Font Mono"

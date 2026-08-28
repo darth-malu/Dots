@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Effects
+import qs.themes
 
 // import Qt5Compat.GraphicalEffects
 
@@ -13,7 +14,7 @@ Text {
     property string symbolText
     property int paddingg: 4
     property bool dim
-    property color baseColor: "#ff79c6" // #D295BF
+    property color baseColor: Themes.pink // #D295BF
 
     color: dim ? "grey" : baseColor
     text: wrapSymbols(symbolText)

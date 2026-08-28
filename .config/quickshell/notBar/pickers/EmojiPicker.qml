@@ -217,9 +217,9 @@ PanelWindow {
                         anchors.fill: parent
                         anchors.margins: 2
                         radius: 7
-                        color: cellMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "transparent"
+                        color: cellMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.18) : "transparent"
                         border.width: grid.currentIndex === index ? 1 : 0
-                        border.color: Qt.rgba(0.74, 0.58, 0.98, 0.55)
+                        border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.55)
 
                         Text {
                             anchors.centerIn: parent

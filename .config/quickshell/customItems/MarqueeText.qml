@@ -1,4 +1,5 @@
 import QtQuick
+import qs.themes
 
 // Scrolling overflow label — two copies chase each other with a pause between
 // loops; renders as a static label when the text fits.
@@ -14,7 +15,7 @@ Item {
     property string fontFamily: "Quicksand"
     property bool fontBold: true
     property int pixelSize: 11
-    property color textColor: "#f8f8f2"
+    property color textColor: Themes.fg
     property real pxPerSec: 26
     property int pauseMs: 1600
 

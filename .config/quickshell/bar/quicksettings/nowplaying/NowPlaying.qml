@@ -9,6 +9,7 @@ import Quickshell.Services.Pipewire
 import qs.customItems
 import qs.services
 import qs.bar.quicksettings.nowplaying
+import qs.themes
 
 // ═══ NOW PLAYING ═══
 // self-contained media card — compact strip + expanded art view.
@@ -37,7 +38,7 @@ ClippingRectangle {
     color: {
         if (MprisState.cardPlayer?.trackArtUrl)
             return Qt.rgba(card.dominantColor.r, card.dominantColor.g, card.dominantColor.b, 0.12);
-        return "#21222c";
+        return Themes.cardBg;
     }
     implicitHeight: baseCardHeight + (chooserAvailable && chooserOpen ? chooserPanel.implicitHeight : 0)
 
@@ -54,7 +55,7 @@ ClippingRectangle {
         implicitWidth: 18
         implicitHeight: 18
         radius: 5
-        color: cogMouse.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "transparent"
+        color: cogMouse.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.18) : "transparent"
 
         Behavior on color {
             ColorAnimation {
@@ -65,7 +66,7 @@ ClippingRectangle {
         Text {
             anchors.centerIn: parent
             text: "\uf067"
-            color: card.chooserOpen || cogMouse.containsMouse ? "#bd93f9" : "#6272a4"
+            color: card.chooserOpen || cogMouse.containsMouse ? Themes.accent : Themes.muted
             font {
                 pixelSize: 10
                 family: "Symbols Nerd Font Mono"
@@ -94,7 +95,7 @@ ClippingRectangle {
         }
     }
 
-    property color dominantColor: "#bd93f9"
+    property color dominantColor: Themes.accent
     border {
         width: 1
         color: Qt.rgba(card.dominantColor.r, card.dominantColor.g, card.dominantColor.b, 0.35)
@@ -131,7 +132,7 @@ ClippingRectangle {
 
     // visibility-first volume tint — hotter as it gets louder;
     // muted drops to red regardless of level
-    readonly property color volumeColor: mutedNow || currentVolume <= 0 ? "#ff5555" : currentVolume > 80 ? "#ff79c6" : currentVolume > 50 ? "#c6a0f6" : "#bd93f9"
+    readonly property color volumeColor: mutedNow || currentVolume <= 0 ? "#ff5555" : currentVolume > 80 ? Themes.pink : currentVolume > 50 ? Themes.mauve : Themes.accent
 
     Timer {
         id: volumeBadgeTimer
@@ -184,7 +185,7 @@ ClippingRectangle {
                 if (status === Image.Ready)
                     colorSampler.requestPaint();
                 else if (status === Image.Null || status === Image.Error)
-                    card.dominantColor = "#bd93f9";
+                    card.dominantColor = Themes.accent;
             }
         }
 
@@ -255,7 +256,7 @@ ClippingRectangle {
 
                 Layout.fillHeight: true
                 Layout.minimumWidth: height
-                color: compactArtImage.status === Image.Ready ? Qt.rgba(card.dominantColor.r, card.dominantColor.g, card.dominantColor.b, 0.15) : "#343746"
+                color: compactArtImage.status === Image.Ready ? Qt.rgba(card.dominantColor.r, card.dominantColor.g, card.dominantColor.b, 0.15) : Themes.separator
 
                 border {
                     width: compactArtImage.status === Image.Ready ? 1 : 0
@@ -275,7 +276,7 @@ ClippingRectangle {
                 Text {
                     anchors.centerIn: parent
                     text: !MprisState.cardPlayer ? "" : MprisState.isBrowserPlayer(MprisState.cardPlayer) ? MprisState.browserGlyph(MprisState.cardPlayer) : "\uf001"
-                    color: "#6272a4"
+                    color: Themes.muted
                     font {
                         pixelSize: 24
                         family: "Symbols Nerd Font Mono"
@@ -296,7 +297,7 @@ ClippingRectangle {
                     Text {
                         anchors.centerIn: parent
                         text: card.mutedNow ? "\uf026" : `${card.currentVolume}%`
-                        color: card.mutedNow ? "#ff5555" : "#f8f8f2"
+                        color: card.mutedNow ? "#ff5555" : Themes.fg
                         font {
                             pixelSize: 19
                             bold: true
@@ -319,7 +320,7 @@ ClippingRectangle {
                     Layout.fillWidth: true
                     scrolling: MprisState.marqueeEnabled
                     text: MprisState.cardPlayer?.trackTitle || "No track"
-                    textColor: "#f8f8f2"
+                    textColor: Themes.fg
                     fontFamily: "Quicksand"
                     fontBold: true
                     pixelSize: 11
@@ -329,7 +330,7 @@ ClippingRectangle {
                 Text {
                     Layout.fillWidth: true
                     text: MprisState.cardPlayer?.trackArtist || ""
-                    color: "#b8bfcb"
+                    color: Themes.dim
                     font {
                         pixelSize: 10
                         family: "Quicksand"
@@ -397,19 +398,19 @@ ClippingRectangle {
                     TrackButton {
                         text: "\uf048"
                         flat: true
-                        accentColor: "#8be9fd"
+                        accentColor: Themes.accent2
                         onClicked: MprisState.cardPlayer?.previous()
                     }
                     TrackButton {
                         text: MprisState.cardPlayer?.isPlaying ? "\uf04c" : "\uf04b"
                         flat: true
-                        accentColor: "#bd93f9"
+                        accentColor: Themes.accent
                         onClicked: MprisState.cardPlayer?.togglePlaying()
                     }
                     TrackButton {
                         text: "\uf050"
                         flat: true
-                        accentColor: "#ff79c6"
+                        accentColor: Themes.pink
                         onClicked: MprisState.cardPlayer?.next()
                     }
                     Item { Layout.fillWidth: true }
@@ -460,7 +461,7 @@ ClippingRectangle {
             color: {
                 if (MprisState.artFor(MprisState.cardPlayer).length > 0)
                     return Qt.rgba(card.dominantColor.r, card.dominantColor.g, card.dominantColor.b, 0.12);
-                return "#21222c";
+                return Themes.cardBg;
             }
 
             Image {
@@ -476,7 +477,7 @@ ClippingRectangle {
                 anchors.centerIn: parent
                 // browser glyph for browsers, music note for anyone else without art
                 text: !MprisState.cardPlayer ? "" : MprisState.isBrowserPlayer(MprisState.cardPlayer) ? MprisState.browserGlyph(MprisState.cardPlayer) : "\uf001"
-                color: "#6272a4"
+                color: Themes.muted
                 font {
                     pixelSize: 56
                     family: "Symbols Nerd Font Mono"
@@ -596,7 +597,7 @@ ClippingRectangle {
                             text: "\uf074"
                             visible: MiscState.showShuffle
                             active: MprisState.cardPlayer?.shuffle ?? false
-                            accentColor: MprisState.cardPlayer?.shuffle ? "#ff79c6" : Qt.rgba(1, 1, 1, 0.45)
+                            accentColor: MprisState.cardPlayer?.shuffle ? Themes.pink : Qt.rgba(1, 1, 1, 0.45)
                             onClicked: {
                                 var p = MprisState.cardPlayer;
                                 if (p?.canControl && p?.shuffleSupported)
@@ -605,24 +606,24 @@ ClippingRectangle {
                         }
                         TrackButton {
                             text: "\uf049"
-                            accentColor: "#8be9fd"
+                            accentColor: Themes.accent2
                             onClicked: MprisState.cardPlayer?.previous()
                         }
                         TrackButton {
                             text: MprisState.cardPlayer?.isPlaying ? "\uf04c" : "\uf04b"
-                            accentColor: "#bd93f9"
+                            accentColor: Themes.accent
                             onClicked: MprisState.cardPlayer?.togglePlaying()
                         }
                         TrackButton {
                             text: "\uf050"
-                            accentColor: "#ff79c6"
+                            accentColor: Themes.pink
                             onClicked: MprisState.cardPlayer?.next()
                         }
                         TrackButton {
                             text: "\uf079"
                             visible: MiscState.showLoop
                             active: MprisState.cardPlayer?.loopState !== MprisLoopState.None
-                            accentColor: MprisState.cardPlayer?.loopState === MprisLoopState.Track ? "#50fa7b" : MprisState.cardPlayer?.loopState === MprisLoopState.Playlist ? "#bd93f9" : Qt.rgba(1, 1, 1, 0.45)
+                            accentColor: MprisState.cardPlayer?.loopState === MprisLoopState.Track ? "#50fa7b" : MprisState.cardPlayer?.loopState === MprisLoopState.Playlist ? Themes.accent : Qt.rgba(1, 1, 1, 0.45)
                             onClicked: {
                                 var p = MprisState.cardPlayer;
                                 if (!p?.canControl || !p?.loopSupported)
@@ -715,7 +716,7 @@ ClippingRectangle {
                 Text {
                     Layout.alignment: Qt.AlignHCenter
                     text: card.mutedNow ? "\uf026" : `${card.currentVolume}%`
-                    color: card.mutedNow ? "#ff5555" : "#f8f8f2"
+                    color: card.mutedNow ? "#ff5555" : Themes.fg
                     font {
                         pixelSize: 64
                         bold: true
@@ -825,7 +826,7 @@ ClippingRectangle {
 
                         Text {
                             text: MprisState.appGlyph(streamRow.modelData)
-                            color: streamRow.isCurrent ? card.dominantColor : "#6272a4"
+                            color: streamRow.isCurrent ? card.dominantColor : Themes.muted
                             font {
                                 pixelSize: 11
                                 family: "Symbols Nerd Font Mono"
@@ -836,7 +837,7 @@ ClippingRectangle {
                             Layout.fillWidth: true
                             text: streamRow.modelData?.identity ?? ""
                             elide: Text.ElideRight
-                            color: streamRow.isCurrent ? "#f8f8f2" : "#b8bfcb"
+                            color: streamRow.isCurrent ? Themes.fg : Themes.dim
                             font {
                                 pixelSize: 10
                                 bold: streamRow.isCurrent
@@ -902,7 +903,7 @@ ClippingRectangle {
             Text {
                 Layout.alignment: Qt.AlignHCenter
                 text: "click switches · right-click mutes · scroll steps"
-                color: "#6272a4"
+                color: Themes.muted
                 font {
                     pixelSize: 8
                     family: "Quicksand"

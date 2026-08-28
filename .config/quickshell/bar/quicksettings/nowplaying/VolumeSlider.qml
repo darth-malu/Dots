@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Services.Pipewire
+import qs.themes
 
 // ── Volume row: mute button + pill slider + readout ──
 RowLayout {
@@ -9,7 +10,7 @@ RowLayout {
     required property PwNode node
     property string glyph
     property string glyphMuted
-    property color accent: "#bd93f9"
+    property color accent: Themes.accent
 
     readonly property bool ready: node !== null && node.audio !== null
     readonly property bool muted: root.node?.audio?.muted ?? false
@@ -47,7 +48,7 @@ RowLayout {
             text: root.muted ? root.glyphMuted : root.glyph
             color: {
                 if (root.muted)
-                    return "#6272a4";
+                    return Themes.muted;
                 return muteMouse.containsMouse ? root.accent : Qt.rgba(1, 1, 1, 0.75);
             }
 
@@ -121,7 +122,7 @@ RowLayout {
                 height: 12
                 radius: 6
                 x: Math.max(0, Math.min(parent.width * Math.min(root.level, 1) - width / 2, parent.width - width))
-                color: root.muted ? "#6272a4" : root.accent
+                color: root.muted ? Themes.muted : root.accent
                 border.width: 1
                 border.color: Qt.rgba(0, 0, 0, 0.35)
                 scale: drag.pressed || drag.containsMouse ? 1.15 : 1.0

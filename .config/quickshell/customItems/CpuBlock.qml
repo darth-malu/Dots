@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs.services
 import qs.customItems
+import qs.themes
 
 BarBlock {
     id: cpu
@@ -33,7 +34,7 @@ BarBlock {
         }
     }
 
-    readonly property color cpuColor: cpuPercent > 80 ? "#ff5555" : cpuPercent > 60 ? "#f1fa8c" : "#bd93f9"
+    readonly property color cpuColor: cpuPercent > 80 ? "#ff5555" : cpuPercent > 60 ? "#f1fa8c" : Themes.accent
 
     function tempColor(t) {
         // exact 4-band palette of the per-process usage bars below
@@ -45,7 +46,7 @@ BarBlock {
             return "#ffb86c";
         if (t >= 45)
             return "#50fa7b";
-        return "#8be9fd";
+        return Themes.accent2;
     }
 
     // left-click opens the per-process popup · right-click toggles the
@@ -137,9 +138,9 @@ BarBlock {
             Rectangle {
                 anchors.fill: parent
                 radius: 12
-                color: MiscState.popupCardBg
+                color: Themes.popupCardBg
                 border.width: 1
-                border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
+                border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.3)
 
                 Shortcut {
                     sequence: "Escape"
@@ -165,7 +166,7 @@ BarBlock {
 
                         Text {
                             text: "\uf2db"
-                            color: "#bd93f9"
+                            color: Themes.accent
                             font {
                                 pixelSize: 12
                                 family: "Symbols Nerd Font Mono"
@@ -189,7 +190,7 @@ BarBlock {
                         // session extremes as min.max — e.g. 50.56 = min 50° max 56°
                         Text {
                             text: "min·max"
-                            color: "#6272a4"
+                            color: Themes.muted
                             font {
                                 pixelSize: 10
                                 family: "ZedMono Nerd Font"
@@ -200,7 +201,7 @@ BarBlock {
                             // each extreme carries its own state color
                             text: `<font color="${cpu.tempColor(cpu.tempMin)}">${Math.round(cpu.tempMin)}</font>.<font color="${cpu.tempColor(cpu.tempMax)}">${Math.round(cpu.tempMax)}</font>°`
                             textFormat: Text.StyledText
-                            color: "#f8f8f2"
+                            color: Themes.fg
                             font {
                                 pixelSize: 12
                                 bold: true
@@ -212,7 +213,7 @@ BarBlock {
                     Rectangle {
                         Layout.fillWidth: true
                         implicitHeight: 1
-                        color: "#343746"
+                        color: Themes.separator
                     }
 
                     Repeater {
@@ -231,13 +232,13 @@ BarBlock {
                             readonly property color accent: cval > 80 ? "#ff5555"
                                 : cval > 60 ? "#ffb86c"
                                 : cval > 30 ? "#50fa7b"
-                                : "#8be9fd"
+                                : Themes.accent2
 
                             radius: 8
                             Layout.fillWidth: true
                             implicitHeight: prowCol.implicitHeight + 12
                             // hover highlight — the row under the cursor lights up
-                            color: prowHover.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.12) : "transparent"
+                            color: prowHover.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12) : "transparent"
 
                             Behavior on color {
                                 ColorAnimation {
@@ -277,7 +278,7 @@ BarBlock {
 
                                     Text {
                                         text: prow.name
-                                        color: "#f8f8f2"
+                                        color: Themes.fg
                                         elide: Text.ElideRight
                                         font {
                                             pixelSize: 11
@@ -289,7 +290,7 @@ BarBlock {
                                     Text {
                                         visible: prow.n > 1
                                         text: "×" + prow.n
-                                        color: "#6272a4"
+                                        color: Themes.muted
                                         font {
                                             pixelSize: 9
                                             family: "ZedMono Nerd Font"
@@ -298,7 +299,7 @@ BarBlock {
 
                                     Text {
                                         text: ResourcesState.fmtKib(prow.kib)
-                                        color: "#6272a4"
+                                        color: Themes.muted
                                         font {
                                             pixelSize: 9
                                             family: "ZedMono Nerd Font"
@@ -345,7 +346,7 @@ BarBlock {
                         Text {
                             visible: ResourcesState.cpuProcs.count === 0
                             text: "sampling…"
-                            color: "#6272a4"
+                            color: Themes.muted
                             font {
                                 pixelSize: 10
                                 italic: true

@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import Quickshell.Services.Notifications
 import Quickshell.Widgets
 import qs.services
+import qs.themes
 
 WrapperMouseArea {
     id: rootMouseArea
@@ -35,7 +36,7 @@ WrapperMouseArea {
     // critical notifications keep a red border; wifi connects show a signal-tinted wifi glyph
     readonly property bool urgent: n.urgency == NotificationUrgency.Critical
     readonly property bool isWifiConnect: n.appName == "Shell" && n.body.startsWith("signal · ")
-    readonly property color accent: urgent ? "#ff5555" : "#bd93f9"
+    readonly property color accent: urgent ? "#ff5555" : Themes.accent
 
     property bool expanded: false
 
@@ -60,7 +61,7 @@ WrapperMouseArea {
         radius: MiscState.notifRadius
         color: "#f0282a36"
         border.width: 1
-        border.color: rootMouseArea.urgent ? Qt.rgba(1, 0.33, 0.33, 0.45) : Qt.rgba(0.74, 0.58, 0.98, 0.32)
+        border.color: rootMouseArea.urgent ? Qt.rgba(1, 0.33, 0.33, 0.45) : Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.32)
 
         Behavior on color {
             ColorAnimation {
@@ -105,7 +106,7 @@ WrapperMouseArea {
                     id: songArt
                     visible: rootMouseArea.image != ""
                     radius: container.radius - 2
-                    color: "#343746"
+                    color: Themes.separator
                     anchors.fill: songArtContainer
                     IconImage {
                         implicitSize: songArtContainer.height
@@ -145,7 +146,7 @@ WrapperMouseArea {
                     wrapMode: Text.Wrap
                     maximumLineCount: rootMouseArea.expanded ? 20 : (rootMouseArea.n.actions.length > 1 ? 1 : 3)
                     text: rootMouseArea.n.body
-                    color: "#b8bfcb"
+                    color: Themes.dim
                     font.family: MiscState.notifFont + ", Symbols Nerd Font Mono"
                     font.pixelSize: 12
                     font.weight: Font.Medium
@@ -167,7 +168,7 @@ WrapperMouseArea {
                             implicitHeight: 24
                             Layout.fillWidth: true
                             radius: 6
-                            color: actionMA.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.18) : "#343746"
+                            color: actionMA.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.18) : Themes.separator
 
                             Behavior on color {
                                 ColorAnimation {
@@ -178,7 +179,7 @@ WrapperMouseArea {
                             Text {
                                 anchors.centerIn: parent
                                 text: actionBtn.modelData.text
-                                color: actionMA.containsMouse ? "#f8f8f2" : "#b8bfcb"
+                                color: actionMA.containsMouse ? Themes.fg : Themes.dim
                                 font {
                                     pixelSize: 10
                                     bold: true
@@ -225,7 +226,7 @@ WrapperMouseArea {
                 implicitWidth: 18
                 implicitHeight: 18
                 radius: 5
-                color: expandMA.containsMouse ? Qt.rgba(1, 1, 1, 0.09) : "#343746"
+                color: expandMA.containsMouse ? Qt.rgba(1, 1, 1, 0.09) : Themes.separator
 
                 Behavior on color {
                     ColorAnimation {
@@ -236,7 +237,7 @@ WrapperMouseArea {
                 Text {
                     anchors.centerIn: parent
                     text: rootMouseArea.expanded ? "\uf077" : "\uf078"
-                    color: "#b8bfcb"
+                    color: Themes.dim
                     font {
                         pixelSize: 9
                         family: "Symbols Nerd Font Mono"
@@ -257,7 +258,7 @@ WrapperMouseArea {
                 implicitWidth: 18
                 implicitHeight: 18
                 radius: 5
-                color: closeMA.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.25) : "#343746"
+                color: closeMA.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.25) : Themes.separator
 
                 Behavior on color {
                     ColorAnimation {
@@ -268,7 +269,7 @@ WrapperMouseArea {
                 Text {
                     anchors.centerIn: parent
                     text: "\uf00d"
-                    color: closeMA.containsMouse ? "#ff5555" : "#6272a4"
+                    color: closeMA.containsMouse ? "#ff5555" : Themes.muted
                     font {
                         pixelSize: 9
                         family: "Symbols Nerd Font Mono"

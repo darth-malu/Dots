@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.services
+import qs.themes
 
 // Speaker + mic glyphs for the bar — bare icons, no pill background,
 // sized like the other tray icons.
@@ -25,7 +26,7 @@ RowLayout {
         readonly property bool isOut: chan === 0
         readonly property var node: isOut ? PipewireState.outputSink : PipewireState.inputSink
         // pastel, low-key accents — the icons should whisper
-        readonly property color accent: isOut ? (MiscState.barSolid ? "#c9b2f5" : Qt.rgba(0.7, 0.62, 0.85, 0.6)) : (MiscState.barSolid ? "#a8e6ee" : Qt.rgba(0.55, 0.78, 0.85, 0.6))
+        readonly property color accent: isOut ? (MiscState.barSolid ? Themes.accentSoft : Qt.rgba(0.7, 0.62, 0.85, 0.6)) : (MiscState.barSolid ? Themes.accent2 : Qt.rgba(0.55, 0.78, 0.85, 0.6))
         readonly property color mutedColor: "#ff5555"
 
         // true while the wheel is active — drives the inline readout

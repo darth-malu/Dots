@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs.services
 import qs.customItems
+import qs.themes
 
 BarBlock {
     id: memory
@@ -11,8 +12,8 @@ BarBlock {
 
     // no pill background at rest — it only lights up while the swap
     // view (right-click) is open, with a faint hover hint otherwise
-    color: showSwap ? Qt.rgba(0.741, 0.576, 0.976, 0.18)
-        : mouseArea.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.10)
+    color: showSwap ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.18)
+        : mouseArea.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.10)
         : "transparent"
 
     property bool showSwap: false
@@ -22,8 +23,8 @@ BarBlock {
     readonly property string memoryDetail: `${ResourcesState.memUsed.toFixed(1)}G / ${ResourcesState.memTotal.toFixed(1)}G`
     readonly property string swapInfo: ResourcesState.swapTotal > 0 ? ` ${ResourcesState.swapUsed.toFixed(1)}Gi` : ""
 
-    readonly property color memoryColor: memoryPercent > 90 ? "#ff5555" : memoryPercent > 80 ? "#f1fa8c" : "#bd93f9"
-    readonly property color swapColor: ResourcesState.swapPercent > 80 ? "#ff5555" : "#8be9fd"
+    readonly property color memoryColor: memoryPercent > 90 ? "#ff5555" : memoryPercent > 80 ? "#f1fa8c" : Themes.accent
+    readonly property color swapColor: ResourcesState.swapPercent > 80 ? "#ff5555" : Themes.accent2
 
     onClicked: mouse => {
         if (mouse.button === Qt.LeftButton)
@@ -109,9 +110,9 @@ BarBlock {
             Rectangle {
                 anchors.fill: parent
                 radius: 12
-                color: MiscState.popupCardBg
+                color: Themes.popupCardBg
                 border.width: 1
-                border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
+                border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.3)
 
                 Shortcut {
                     sequence: "Escape"
@@ -138,7 +139,7 @@ BarBlock {
 
                         Text {
                             text: "\uf1c0"
-                            color: "#bd93f9"
+                            color: Themes.accent
                             font {
                                 pixelSize: 12
                                 family: "Symbols Nerd Font Mono"
@@ -160,7 +161,7 @@ BarBlock {
                     Rectangle {
                         Layout.fillWidth: true
                         implicitHeight: 1
-                        color: "#343746"
+                        color: Themes.separator
                     }
 
                     Repeater {
@@ -179,14 +180,14 @@ BarBlock {
                             readonly property color accent: frac > 0.15 ? "#ff5555"
                                 : frac > 0.06 ? "#ffb86c"
                                 : frac > 0.02 ? "#50fa7b"
-                                : "#8be9fd"
+                                : Themes.accent2
                             readonly property real relMax: ResourcesState.memProcs.count > 0 ? Math.max(ResourcesState.memProcs.get(0).kib, 1) : 1
 
                             radius: 8
                             Layout.fillWidth: true
                             implicitHeight: mrowCol.implicitHeight + 12
                             // hover highlight — the row under the cursor lights up
-                            color: mrowHover.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.12) : "transparent"
+                            color: mrowHover.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12) : "transparent"
 
                             Behavior on color {
                                 ColorAnimation {
@@ -226,7 +227,7 @@ BarBlock {
 
                                     Text {
                                         text: mrow.n
-                                        color: "#f8f8f2"
+                                        color: Themes.fg
                                         elide: Text.ElideRight
                                         font {
                                             pixelSize: 11
@@ -238,7 +239,7 @@ BarBlock {
                                     Text {
                                         visible: mrow.c > 1
                                         text: "×" + mrow.c
-                                        color: "#6272a4"
+                                        color: Themes.muted
                                         font {
                                             pixelSize: 9
                                             family: "ZedMono Nerd Font"
@@ -283,7 +284,7 @@ BarBlock {
                     Text {
                         visible: ResourcesState.memProcs.count === 0
                         text: "sampling…"
-                        color: "#6272a4"
+                        color: Themes.muted
                         font {
                             pixelSize: 10
                             italic: true

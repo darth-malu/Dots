@@ -5,6 +5,7 @@ import QtQuick.Controls
 import Quickshell
 import qs.customItems
 import qs.services
+import qs.themes
 
 // power menu card + reboot/shutdown timer card — extracted from
 // QuickSettings for easier management
@@ -34,8 +35,8 @@ ColumnLayout {
         radius: 6
         color: {
             if (!mouse.containsMouse)
-                return "#343746";
-            return danger ? Qt.rgba(1, 0.33, 0.33, 0.15) : Qt.rgba(0.74, 0.58, 0.98, 0.15);
+                return Themes.separator;
+            return danger ? Qt.rgba(1, 0.33, 0.33, 0.15) : Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.15);
         }
 
         Behavior on color {
@@ -47,7 +48,7 @@ ColumnLayout {
         Text {
             anchors.centerIn: parent
             text: chip.txt
-            color: mouse.containsMouse ? (chip.danger ? "#ff5555" : "#bd93f9") : "#b8bfcb"
+            color: mouse.containsMouse ? (chip.danger ? "#ff5555" : Themes.accent) : Themes.dim
             font {
                 pixelSize: 9
                 bold: true
@@ -79,7 +80,7 @@ ColumnLayout {
 
                             QsPower {
                                 icon: ""
-                                color: "#bd93f9"
+                                color: Themes.accent
                                 label: "Lock"
                                 cmd: "hyprlock"
                             }
@@ -104,7 +105,7 @@ ColumnLayout {
                             }
                             QsPower {
                                 icon: "\uf08b"
-                                color: "#bd93f9"
+                                color: Themes.accent
                                 label: "Exit"
                                 cmd: "loginctl terminate-user $USER"
                             }
@@ -113,7 +114,7 @@ ColumnLayout {
                         Text {
                             Layout.alignment: Qt.AlignHCenter
                             text: "right-click restart / shutdown to schedule"
-                            color: "#6272a4"
+                            color: Themes.muted
                             font {
                                 pixelSize: 8
                                 family: "Quicksand"
@@ -165,7 +166,7 @@ ColumnLayout {
 
                                 Text {
                                     text: timerCard.live ? timerCard.modeName + " in " + PowerTimer.formatTime(PowerTimer.remaining) : timerCard.modeName + " after:"
-                                    color: timerCard.live ? (timerCard.isReboot ? "#50fa7b" : "#ff5555") : "#6272a4"
+                                    color: timerCard.live ? (timerCard.isReboot ? "#50fa7b" : "#ff5555") : Themes.muted
                                     font {
                                         pixelSize: 9
                                         bold: true
@@ -212,7 +213,7 @@ ColumnLayout {
                                         width: parent.width
                                         height: 5
                                         radius: 2.5
-                                        color: "#343746"
+                                        color: Themes.separator
                                     }
 
                                     Rectangle {
@@ -220,7 +221,7 @@ ColumnLayout {
                                         width: timerSlider.visualPosition * parent.width
                                         height: 5
                                         radius: 2.5
-                                        readonly property color tint: timerCard.isReboot ? "#50fa7b" : "#ff79c6"
+                                        readonly property color tint: timerCard.isReboot ? "#50fa7b" : Themes.pink
                                         color: Qt.rgba(tint.r, tint.g, tint.b, 0.4)
 
                                         Rectangle {
@@ -240,7 +241,7 @@ ColumnLayout {
                                     width: 14
                                     height: 14
                                     radius: 7
-                                    readonly property color knobTint: timerCard.isReboot ? "#50fa7b" : "#ff79c6"
+                                    readonly property color knobTint: timerCard.isReboot ? "#50fa7b" : Themes.pink
                                     color: knobTint
                                     border.color: Qt.rgba(knobTint.r, knobTint.g, knobTint.b, 0.4)
                                     border.width: 1
@@ -295,7 +296,7 @@ ColumnLayout {
                                         }
                                         anchors.verticalCenter: parent.verticalCenter
                                         text: modelData.label
-                                        color: "#6272a4"
+                                        color: Themes.muted
                                         font {
                                             pixelSize: 8
                                             bold: true
@@ -308,7 +309,7 @@ ColumnLayout {
                                     anchors.left: parent.left
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: "5m"
-                                    color: "#6272a4"
+                                    color: Themes.muted
                                     font {
                                         pixelSize: 8
                                         bold: true
@@ -320,7 +321,7 @@ ColumnLayout {
                                     anchors.right: parent.right
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: "4h"
-                                    color: "#6272a4"
+                                    color: Themes.muted
                                     font {
                                         pixelSize: 8
                                         bold: true

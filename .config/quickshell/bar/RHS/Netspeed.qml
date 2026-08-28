@@ -338,7 +338,7 @@ Loader {
 
                     Text {
                         text: "\u2193"
-                        color: "#bd93f9"
+                        color: Themes.accent
                         font {
                             pixelSize: 9
                             family: "Symbols Nerd Font Mono"
@@ -348,7 +348,7 @@ Loader {
                     Text {
                         Layout.preferredWidth: 26
                         text: root.fmtRate(root.rxRate)
-                        color: "#bd93f9"
+                        color: Themes.accent
                         font {
                             pixelSize: 10
                             weight: Font.DemiBold
@@ -370,7 +370,7 @@ Loader {
 
                     Text {
                         text: "\u2191"
-                        color: "#ff79c6"
+                        color: Themes.pink
                         font {
                             pixelSize: 9
                             family: "Symbols Nerd Font Mono"
@@ -380,7 +380,7 @@ Loader {
                     Text {
                         Layout.preferredWidth: 26
                         text: root.fmtRate(root.txRate)
-                        color: "#ff79c6"
+                        color: Themes.pink
                         font {
                             pixelSize: 10
                             weight: Font.DemiBold
@@ -394,7 +394,7 @@ Loader {
             BarText {
                 visible: NetworkState.netspeedVisible && !root.online
                 text: "offline"
-                color: "#6272a4"
+                color: Themes.muted
                 font {
                     pixelSize: 10
                     family: "ZedMono Nerd Font"
@@ -431,9 +431,9 @@ Loader {
                     anchors.fill: parent
                     focus: true
                     radius: 12
-                    color: MiscState.popupCardBg
+                    color: Themes.popupCardBg
                     border.width: 1
-                    border.color: Qt.rgba(0.74, 0.58, 0.98, 0.3)
+                    border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.3)
 
                     Keys.onEscapePressed: NetworkState.netPopupVisible = false
 
@@ -450,7 +450,7 @@ Loader {
 
                             Text {
                                 text: "\uf0e8"
-                                color: "#bd93f9"
+                                color: Themes.accent
                                 font {
                                     pixelSize: 13
                                     family: "Symbols Nerd Font Mono"
@@ -459,7 +459,7 @@ Loader {
 
                             Text {
                                 text: root.ethIfName.length > 0 ? root.ethIfName : "no device"
-                                color: "#f8f8f2"
+                                color: Themes.fg
                                 font {
                                     pixelSize: 12
                                     bold: true
@@ -476,12 +476,12 @@ Loader {
                                 implicitWidth: 22
                                 implicitHeight: 18
                                 radius: 6
-                                color: graphBtnMouse.containsMouse || NetworkState.ethGraphsEnabled ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.16) : "transparent"
+                                color: graphBtnMouse.containsMouse || NetworkState.ethGraphsEnabled ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16) : "transparent"
 
                                 Text {
                                     anchors.centerIn: parent
                                     text: "\uf1fe"
-                                    color: NetworkState.ethGraphsEnabled ? "#bd93f9" : "#6272a4"
+                                    color: NetworkState.ethGraphsEnabled ? Themes.accent : Themes.muted
                                     font {
                                         pixelSize: 11
                                         family: "Symbols Nerd Font Mono"
@@ -502,7 +502,7 @@ Loader {
                                 implicitWidth: 26
                                 implicitHeight: 14
                                 radius: 7
-                                color: root.ethConnected ? Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.35) : "#343746"
+                                color: root.ethConnected ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.35) : Themes.separator
 
                                 Rectangle {
                                     x: root.ethConnected ? parent.width - width - 2 : 2
@@ -510,7 +510,7 @@ Loader {
                                     implicitWidth: 10
                                     implicitHeight: 10
                                     radius: 5
-                                    color: root.ethConnected ? "#bd93f9" : "#6272a4"
+                                    color: root.ethConnected ? Themes.accent : Themes.muted
 
                                     Behavior on x {
                                         NumberAnimation {
@@ -541,7 +541,7 @@ Loader {
                                     const gw = root.gateway.length > 0 ? root.gateway : "-";
                                     return `${ip} \u00b7 gw ${gw}`;
                                 }
-                                color: "#b8bfcb"
+                                color: Themes.dim
                                 elide: Text.ElideMiddle
                                 font {
                                     pixelSize: 9
@@ -563,7 +563,7 @@ Loader {
 
                                 Text {
                                     text: `\u2193 ${root.fmtBytes(root.ethRxTotal)}`
-                                    color: "#bd93f9"
+                                    color: Themes.accent
                                     font {
                                         pixelSize: 10
                                         bold: true
@@ -577,7 +577,7 @@ Loader {
 
                                 Text {
                                     text: `\u2191 ${root.fmtBytes(root.ethTxTotal)}`
-                                    color: "#ff79c6"
+                                    color: Themes.pink
                                     font {
                                         pixelSize: 10
                                         bold: true
@@ -589,7 +589,7 @@ Loader {
                             // ── Live traffic graphs — current speed rendered inside each graph ──
                             TrafficGraph {
                                 visible: root.ethGraphs
-                                accent: "#bd93f9"
+                                accent: Themes.accent
                                 history: root.rxHistory
                                 peak: root.peakRx
                                 tick: root.graphTick
@@ -599,7 +599,7 @@ Loader {
 
                             TrafficGraph {
                                 visible: root.ethGraphs
-                                accent: "#ff79c6"
+                                accent: Themes.pink
                                 history: root.txHistory
                                 peak: root.peakTx
                                 tick: root.graphTick
@@ -624,7 +624,7 @@ Loader {
 
         property var history
         property real peak: 1
-        property color accent: "#bd93f9"
+        property color accent: Themes.accent
         property int tick
         property int maxLen: 60
         // current speed chip drawn inside the graph, top-right

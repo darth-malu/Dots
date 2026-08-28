@@ -11,6 +11,7 @@ import qs.bar.quicksettings.nowplaying
 import qs.bar.RHS
 import Quickshell.Services.Mpris
 import Quickshell.Networking
+import qs.themes
 
 Item {
     id: root
@@ -28,7 +29,7 @@ Item {
         implicitWidth: 36
         implicitHeight: 20
         radius: 10
-        color: on ? "#bd93f9" : "#44475a"
+        color: on ? Themes.accent : Themes.borderMuted
 
         Behavior on color {
             ColorAnimation {
@@ -40,7 +41,7 @@ Item {
             width: 16
             height: 16
             radius: 8
-            color: "#282a36"
+            color: Themes.panelBg
             x: sp.on ? parent.width - width - 2 : 2
             y: (parent.height - height) / 2
 
@@ -75,7 +76,7 @@ Item {
 
         Text {
             text: sr.icon
-            color: sr.checked ? "#bd93f9" : "#6272a4"
+            color: sr.checked ? Themes.accent : Themes.muted
             font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
             Layout.preferredWidth: 20
             horizontalAlignment: Text.AlignHCenter
@@ -83,7 +84,7 @@ Item {
 
         Text {
             text: sr.label
-            color: "#f8f8f2"
+            color: Themes.fg
             font { pixelSize: 12; family: "Quicksand"; bold: true }
             Layout.alignment: Qt.AlignVCenter
             elide: Text.ElideRight
@@ -94,7 +95,7 @@ Item {
         Text {
             visible: sr.caption.length > 0
             text: sr.caption
-            color: sr.checked ? "#bd93f9" : "#6272a4"
+            color: sr.checked ? Themes.accent : Themes.muted
             font { pixelSize: 10; family: "ZedMono Nerd Font" }
             Layout.alignment: Qt.AlignVCenter
         }
@@ -115,9 +116,9 @@ Item {
         implicitWidth: 24
         implicitHeight: 24
         radius: 7
-        color: sbMa.containsMouse || sbMa.pressed ? Qt.rgba(0.74, 0.58, 0.98, 0.16) : "#343746"
+        color: sbMa.containsMouse || sbMa.pressed ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16) : Themes.separator
         border.width: 1
-        border.color: sbMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.45) : "transparent"
+        border.color: sbMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.45) : "transparent"
 
         Behavior on color {
             ColorAnimation { duration: 110 }
@@ -129,7 +130,7 @@ Item {
         Text {
             anchors.centerIn: parent
             text: sb.glyph
-            color: sbMa.pressed ? "#bd93f9" : sbMa.containsMouse ? "#f8f8f2" : "#b8bfcb"
+            color: sbMa.pressed ? Themes.accent : sbMa.containsMouse ? Themes.fg : Themes.dim
             font {
                 pixelSize: 11
                 bold: true
@@ -192,7 +193,7 @@ Item {
 
         Text {
             text: pr.icon
-            color: "#bd93f9"
+            color: Themes.accent
             font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
             Layout.preferredWidth: 20
             horizontalAlignment: Text.AlignHCenter
@@ -200,7 +201,7 @@ Item {
 
         Text {
             text: pr.label
-            color: "#f8f8f2"
+            color: Themes.fg
             font { pixelSize: 12; family: "Quicksand"; bold: true }
             Layout.alignment: Qt.AlignVCenter
         }
@@ -220,9 +221,9 @@ Item {
             implicitWidth: 58
             implicitHeight: 24
             radius: 7
-            color: valHover.containsMouse ? "#2a2c3a" : "#21222c"
+            color: valHover.containsMouse ? Themes.cardBgHover : Themes.cardBg
             border.width: 1
-            border.color: valHover.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.5) : "#313244"
+            border.color: valHover.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.5) : Themes.borderColor
 
             Behavior on color {
                 ColorAnimation { duration: 110 }
@@ -246,7 +247,7 @@ Item {
             Text {
                 anchors.centerIn: parent
                 text: root.fmtMs(pr.valueMs)
-                color: valHover.containsMouse ? "#f8f8f2" : "#bd93f9"
+                color: valHover.containsMouse ? Themes.fg : Themes.accent
                 font { pixelSize: 11; bold: true; family: "ZedMono Nerd Font" }
 
                 Behavior on color {
@@ -364,9 +365,9 @@ Item {
                 anchors.centerIn: parent
 
                 radius: 16
-                color: "#282a36"
+                color: Themes.panelBg
                 border.width: 1
-                border.color: "#3b3f51"
+                border.color: Themes.borderColor
 
                 MouseArea {
                     anchors.fill: parent
@@ -382,7 +383,7 @@ Item {
                         Layout.preferredWidth: 220
                         Layout.fillHeight: true
                         radius: 16
-                        color: "#21222c"
+                        color: Themes.cardBg
 
                         ColumnLayout {
                             anchors {
@@ -397,7 +398,7 @@ Item {
                                 Layout.leftMargin: 12
                                 Layout.bottomMargin: 12
                                 text: "Settings"
-                                color: "#f8f8f2"
+                                color: Themes.fg
                                 font {
                                     pixelSize: 16
                                     bold: true
@@ -433,7 +434,7 @@ Item {
 
                                         Text {
                                             text: modelData.icon
-                                            color: root.currentCategory === index ? "#bd93f9" : "#6272a4"
+                                            color: root.currentCategory === index ? Themes.accent : Themes.muted
                                             font {
                                                 pixelSize: 14
                                                 family: "Symbols Nerd Font Mono"
@@ -442,7 +443,7 @@ Item {
 
                                         Text {
                                             text: modelData.label
-                                            color: root.currentCategory === index ? "#f8f8f2" : "#b8bfcb"
+                                            color: root.currentCategory === index ? Themes.fg : Themes.dim
                                             font {
                                                 pixelSize: 12
                                                 family: "Quicksand"
@@ -510,7 +511,7 @@ Item {
                 Card {
                     title: "Style"
                     icon: ""
-                    accent: "#bd93f9"
+                    accent: Themes.accent
 
                     ColumnLayout {
                         spacing: 0
@@ -529,7 +530,7 @@ Item {
 
                             Text {
                                 text: "\ueac1"
-                                color: "#bd93f9"
+                                color: Themes.accent
                                 font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
                                 Layout.preferredWidth: 20
                                 horizontalAlignment: Text.AlignHCenter
@@ -537,7 +538,7 @@ Item {
 
                             Text {
                                 text: "Bar style"
-                                color: "#f8f8f2"
+                                color: Themes.fg
                                 font { pixelSize: 12; family: "Quicksand"; bold: true }
                                 Layout.alignment: Qt.AlignVCenter
                             }
@@ -549,9 +550,9 @@ Item {
                                 implicitWidth: segRow.implicitWidth + 6
                                 implicitHeight: 26
                                 radius: 8
-                                color: "#21222c"
+                                color: Themes.cardBg
                                 border.width: 1
-                                border.color: "#313244"
+                                border.color: Themes.borderColor
 
                                 Row {
                                     id: segRow
@@ -577,7 +578,7 @@ Item {
                                             width: segLbl.implicitWidth + 20
                                             height: 22
                                             radius: 6
-                                            color: sel ? "#bd93f9" : segOptMa.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.14) : "transparent"
+                                            color: sel ? Themes.accent : segOptMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : "transparent"
 
                                             Behavior on color {
                                                 ColorAnimation { duration: 120 }
@@ -588,7 +589,7 @@ Item {
 
                                                 anchors.centerIn: parent
                                                 text: segOpt.modelData.label
-                                                color: segOpt.sel ? "#181825" : segOptMa.containsMouse ? "#f8f8f2" : "#b8bfcb"
+                                                color: segOpt.sel ? "#181825" : segOptMa.containsMouse ? Themes.fg : Themes.dim
                                                 font { pixelSize: 10; bold: true; family: "Quicksand" }
 
                                                 Behavior on color {
@@ -610,7 +611,98 @@ Item {
             }
         }
 
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+                        // segmented color-theme selector — purple (default) vs rofi teal
+                        RowLayout {
+                            id: themeSeg
+
+                            readonly property int schemeVal: MiscState.themeScheme
+
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 38
+                            spacing: 12
+
+                            Text {
+                                text: "\ue61b"
+                                color: Themes.accent
+                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                Layout.preferredWidth: 20
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            Text {
+                                text: "Color theme"
+                                color: Themes.fg
+                                font { pixelSize: 12; family: "Quicksand"; bold: true }
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Rectangle {
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: themeSegRow.implicitWidth + 6
+                                implicitHeight: 26
+                                radius: 8
+                                color: Themes.cardBg
+                                border.width: 1
+                                border.color: Themes.borderColor
+
+                                Row {
+                                    id: themeSegRow
+
+                                    anchors.centerIn: parent
+                                    spacing: 2
+
+                                    Repeater {
+                                        model: [
+                                            { key: 0, label: "Purple" },
+                                            { key: 1, label: "Rofi" }
+                                        ]
+
+                                        delegate: Rectangle {
+                                            id: themeOpt
+
+                                            required property var modelData
+
+                                            readonly property bool sel: themeSeg.schemeVal === themeOpt.modelData.key
+
+                                            width: themeLbl.implicitWidth + 20
+                                            height: 22
+                                            radius: 6
+                                            color: sel ? Themes.accent : themeOptMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : "transparent"
+
+                                            Behavior on color {
+                                                ColorAnimation { duration: 120 }
+                                            }
+
+                                            Text {
+                                                id: themeLbl
+
+                                                anchors.centerIn: parent
+                                                text: themeOpt.modelData.label
+                                                color: themeOpt.sel ? "#181825" : themeOptMa.containsMouse ? Themes.fg : Themes.dim
+                                                font { pixelSize: 10; bold: true; family: "Quicksand" }
+
+                                                Behavior on color {
+                                                    ColorAnimation { duration: 120 }
+                                                }
+                                            }
+
+                                            MouseArea {
+                                                id: themeOptMa
+
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: MiscState.themeScheme = themeOpt.modelData.key
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
 
                         SettingRow {
                             icon: "\uf1ce"
@@ -620,7 +712,7 @@ Item {
                             onFlipped: MiscState.showWorkspaces = !MiscState.showWorkspaces
                         }
 
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
 
                         SettingRow {
                             icon: "\uf009"
@@ -630,7 +722,7 @@ Item {
                             onFlipped: MiscState.iconWorkspaces = !MiscState.iconWorkspaces
                         }
 
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
 
                         SettingRow {
                             icon: "\uf2d1"
@@ -640,7 +732,7 @@ Item {
                             onFlipped: MiscState.boxyTheme = !MiscState.boxyTheme
                         }
 
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
 
                         SettingRow {
                             icon: "\uf070"
@@ -655,7 +747,7 @@ Item {
                 Card {
                     title: "Bar Modules"
                     icon: "\uf132"
-                    accent: "#bd93f9"
+                    accent: Themes.accent
 
                     ColumnLayout {
                         spacing: 0
@@ -693,7 +785,7 @@ Item {
                                     visible: modCell.index < 6
                                     Layout.fillWidth: true
                                     height: 1
-                                    color: "#343746"
+                                    color: Themes.separator
                                     Layout.leftMargin: 32
                                 }
                             }
@@ -713,7 +805,7 @@ Item {
                 Card {
                     title: "MPRIS"
                     icon: ""
-                    accent: "#bd93f9"
+                    accent: Themes.accent
 
                     ColumnLayout {
                         spacing: 0
@@ -726,7 +818,7 @@ Item {
                             onFlipped: MiscState.showMpris = !MiscState.showMpris
                         }
 
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
 
                         SettingRow {
                             icon: "\uf03e"
@@ -735,7 +827,7 @@ Item {
                             onFlipped: MprisState.mprisArtVisible = !MprisState.mprisArtVisible
                         }
 
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
 
                         SettingRow {
                             icon: "\uf1ce"
@@ -744,7 +836,7 @@ Item {
                             onFlipped: MprisState.showMprisProgress = !MprisState.showMprisProgress
                         }
 
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
 
                         SettingRow {
                             icon: "\uf070"
@@ -753,7 +845,7 @@ Item {
                             onFlipped: MprisState.hideWhenIdle = !MprisState.hideWhenIdle
                         }
 
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
 
                         SettingRow {
                             icon: "\uf07c"
@@ -767,7 +859,7 @@ Item {
                 Card {
                     title: "Now Playing"
                     icon: ""
-                    accent: "#bd93f9"
+                    accent: Themes.accent
 
                     ColumnLayout {
                         spacing: 0
@@ -780,7 +872,7 @@ Item {
                             onFlipped: MiscState.showPlayerChooser = !MiscState.showPlayerChooser
                         }
 
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
 
                         SettingRow {
                             icon: "\uf074"
@@ -789,7 +881,7 @@ Item {
                             onFlipped: MiscState.showShuffle = !MiscState.showShuffle
                         }
 
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
 
                         SettingRow {
                             icon: "\uf079"
@@ -832,9 +924,9 @@ Item {
                         Layout.preferredHeight: 26
                         implicitWidth: tabRow.implicitWidth + 18
                         radius: 8
-                        color: active ? Qt.rgba(0.74, 0.58, 0.98, 0.16) : hovered ? Qt.rgba(1, 1, 1, 0.05) : Qt.rgba(1, 1, 1, 0.03)
+                        color: active ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16) : hovered ? Qt.rgba(1, 1, 1, 0.05) : Qt.rgba(1, 1, 1, 0.03)
                         border.width: 1
-                        border.color: active ? Qt.rgba(0.74, 0.58, 0.98, 0.5) : Qt.rgba(1, 1, 1, 0.07)
+                        border.color: active ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.5) : Qt.rgba(1, 1, 1, 0.07)
 
                         Behavior on color {
                             ColorAnimation { duration: 110 }
@@ -849,14 +941,14 @@ Item {
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: ctab.glyph
-                                color: ctab.active ? "#e2d6fb" : "#8b93b8"
+                                color: ctab.active ? Themes.accentSoft : Themes.mutedSoft
                                 font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
                             }
 
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: ctab.label
-                                color: ctab.active ? "#f8f8f2" : "#8b93b8"
+                                color: ctab.active ? Themes.fg : Themes.mutedSoft
                                 font { pixelSize: 10; bold: true; family: "Quicksand"; letterSpacing: 1 }
                             }
                         }
@@ -888,7 +980,7 @@ Item {
                     Card {
                         title: "Connections"
                         icon: "\uf1eb"
-                        accent: "#bd93f9"
+                        accent: Themes.accent
 
                         ColumnLayout {
                             spacing: 0
@@ -911,7 +1003,7 @@ Item {
                                 onFlipped: NetworkState.setWifiEnabled(!NetworkState.wifiEnabled)
                             }
 
-                            Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+                            Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
 
                             SettingRow {
                                 icon: "\uef44"
@@ -921,7 +1013,7 @@ Item {
                                 onFlipped: NetworkState.setEthernetEnabled(!(NetworkState.ethernet?.hasLink || false))
                             }
 
-                            Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+                            Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
 
                             SettingRow {
                                 icon: "\uf294"
@@ -940,7 +1032,7 @@ Item {
                     Card {
                         title: "Preferences"
                         icon: "\uf013"
-                        accent: "#bd93f9"
+                        accent: Themes.accent
 
                         ColumnLayout {
                             spacing: 0
@@ -954,7 +1046,7 @@ Item {
                                 onFlipped: MiscState.wifiGreenName = !MiscState.wifiGreenName
                             }
 
-                            Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+                            Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
 
                             SettingRow {
                                 icon: "\uf1fe"
@@ -976,7 +1068,7 @@ Item {
                         Card {
                             title: "History"
                             icon: "\uf1fe"
-                            accent: "#8be9fd"
+                            accent: Themes.accent2
 
                             ColumnLayout {
                                 spacing: 7
@@ -988,7 +1080,7 @@ Item {
 
                                     Text {
                                         text: "last " + SpeedtestState.history.length + " runs"
-                                        color: "#6272a4"
+                                        color: Themes.muted
                                         font { pixelSize: 9; family: "ZedMono Nerd Font" }
                                     }
 
@@ -1004,7 +1096,7 @@ Item {
                                         Text {
                                             anchors.centerIn: parent
                                             text: "\uf1f8"
-                                            color: hClearMa.containsMouse ? "#ff5555" : "#6272a4"
+                                            color: hClearMa.containsMouse ? "#ff5555" : Themes.muted
                                             font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
                                         }
 
@@ -1030,7 +1122,7 @@ Item {
                                         Layout.fillWidth: true
                                         implicitHeight: hrowCol.implicitHeight + 14
                                         radius: 8
-                                        color: hrowHover.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.12) : "transparent"
+                                        color: hrowHover.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12) : "transparent"
 
                                         Behavior on color { ColorAnimation { duration: 120 } }
 
@@ -1066,7 +1158,7 @@ Item {
 
                                                 Text {
                                                     text: hrow._fmt(hrow.d)
-                                                    color: "#b8bfcb"
+                                                    color: Themes.dim
                                                     font { pixelSize: 9; family: "ZedMono Nerd Font" }
                                                     Layout.preferredWidth: 88
                                                 }
@@ -1077,13 +1169,13 @@ Item {
 
                                                     Text {
                                                         text: hrow.modelData.net === "Ethernet" ? "\uef44" : "\uf1eb"
-                                                        color: hrow.modelData.net === "Ethernet" ? "#8be9fd" : "#bd93f9"
+                                                        color: hrow.modelData.net === "Ethernet" ? Themes.accent2 : Themes.accent
                                                         font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
                                                     }
 
                                                     Text {
                                                         text: hrow.modelData.net
-                                                        color: hrow.index === 0 ? "#f8f8f2" : "#b8bfcb"
+                                                        color: hrow.index === 0 ? Themes.fg : Themes.dim
                                                         elide: Text.ElideRight
                                                         font { pixelSize: 9; family: "Quicksand" }
                                                     }
@@ -1109,7 +1201,7 @@ Item {
 
                                                 Text {
                                                     text: hrow.uv > 0 ? hrow.uv.toFixed(1) : "—"
-                                                    color: "#ff79c6"
+                                                    color: Themes.pink
                                                     font { pixelSize: 10; bold: true; family: "ZedMono Nerd Font" }
                                                     Layout.preferredWidth: 40
                                                     horizontalAlignment: Text.AlignRight
@@ -1145,7 +1237,7 @@ Item {
                                             Text {
                                                 visible: hrow.srv.length > 0 && hrowHover.containsMouse
                                                 text: hrow.srv + " · " + Math.round(hrow.modelData.mb ?? 0) + " MB · " + (hrow.modelData.secs ?? 0) + "s"
-                                                color: "#44475a"
+                                                color: Themes.borderMuted
                                                 font { pixelSize: 8; family: "ZedMono Nerd Font" }
                                             }
                                         }
@@ -1157,7 +1249,7 @@ Item {
                                     Layout.alignment: Qt.AlignHCenter
                                     Layout.topMargin: 8
                                     text: "no runs yet"
-                                    color: "#6272a4"
+                                    color: Themes.muted
                                     font { pixelSize: 10; italic: true; family: "Quicksand" }
                                 }
                             }
@@ -1178,7 +1270,7 @@ Item {
                 Card {
                     title: "Notifications"
                     icon: "\uf0a2"
-                    accent: "#bd93f9"
+                    accent: Themes.accent
 
                     ColumnLayout {
                         spacing: 0
@@ -1192,7 +1284,7 @@ Item {
 
                             Text {
                                 text: "\uf031"
-                                color: "#6272a4"
+                                color: Themes.muted
                                 font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
                                 Layout.preferredWidth: 20
                                 horizontalAlignment: Text.AlignHCenter
@@ -1200,7 +1292,7 @@ Item {
 
                             Text {
                                 text: "Notification font"
-                                color: "#f8f8f2"
+                                color: Themes.fg
                                 font { pixelSize: 12; family: "Quicksand"; bold: true }
                                 Layout.alignment: Qt.AlignVCenter
                             }
@@ -1214,9 +1306,9 @@ Item {
                                 width: 140
                                 height: 24
                                 radius: 6
-                                color: notifFontDropMa.containsMouse ? Qt.rgba(0.741, 0.576, 0.976, 0.14) : "#21222c"
+                                color: notifFontDropMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : Themes.cardBg
                                 border.width: 1
-                                border.color: notifFontDropOpen ? "#bd93f9" : "#313244"
+                                border.color: notifFontDropOpen ? Themes.accent : Themes.borderColor
 
                                 property bool notifFontDropOpen: false
                                 property var fontOptions: ["Quicksand", "ZedMono Nerd Font", "JetBrains Mono", "Nunito", "Lato"]
@@ -1226,7 +1318,7 @@ Item {
                                     anchors.leftMargin: 8
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: MiscState.notifFont
-                                    color: "#f8f8f2"
+                                    color: Themes.fg
                                     font { pixelSize: 10; bold: true; family: "Quicksand" }
                                     elide: Text.ElideRight
                                     width: parent.width - 24
@@ -1237,7 +1329,7 @@ Item {
                                     anchors.rightMargin: 6
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: "\uf078"
-                                    color: "#6272a4"
+                                    color: Themes.muted
                                     font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
                                     rotation: notifFontDropdown.notifFontDropOpen ? 180 : 0
 
@@ -1265,9 +1357,9 @@ Item {
 
                                     background: Rectangle {
                                         radius: 6
-                                        color: "#21222c"
+                                        color: Themes.cardBg
                                         border.width: 1
-                                        border.color: "#313244"
+                                        border.color: Themes.borderColor
                                     }
 
                                     contentItem: ColumnLayout {
@@ -1285,14 +1377,14 @@ Item {
                                                 Layout.fillWidth: true
                                                 implicitHeight: 24
                                                 radius: 4
-                                                color: isSelected ? Qt.rgba(0.74, 0.58, 0.98, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
+                                                color: isSelected ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
 
                                                 Text {
                                                     anchors.left: parent.left
                                                     anchors.leftMargin: 8
                                                     anchors.verticalCenter: parent.verticalCenter
                                                     text: modelData
-                                                    color: isSelected ? "#bd93f9" : "#b8bfcb"
+                                                    color: isSelected ? Themes.accent : Themes.dim
                                                     font { pixelSize: 10; family: "Quicksand" }
                                                 }
 
@@ -1325,7 +1417,7 @@ Item {
                             }
                         }
 
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
 
                         // notification art size
                         RowLayout {
@@ -1335,7 +1427,7 @@ Item {
 
                             Text {
                                 text: "\uf03e"
-                                color: "#6272a4"
+                                color: Themes.muted
                                 font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
                                 Layout.preferredWidth: 20
                                 horizontalAlignment: Text.AlignHCenter
@@ -1343,7 +1435,7 @@ Item {
 
                             Text {
                                 text: "Notification art size"
-                                color: "#f8f8f2"
+                                color: Themes.fg
                                 font { pixelSize: 12; family: "Quicksand"; bold: true }
                                 Layout.alignment: Qt.AlignVCenter
                             }
@@ -1352,7 +1444,7 @@ Item {
 
                             Text {
                                 text: MiscState.notifArtSize + "px"
-                                color: "#bd93f9"
+                                color: Themes.accent
                                 font { pixelSize: 10; family: "ZedMono Nerd Font" }
                                 Layout.alignment: Qt.AlignVCenter
                             }
@@ -1372,7 +1464,7 @@ Item {
                             }
                         }
 
-                        Rectangle { Layout.fillWidth: true; height: 1; color: "#343746"; Layout.leftMargin: 32 }
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
 
                         // notification border radius
                         RowLayout {
@@ -1382,7 +1474,7 @@ Item {
 
                             Text {
                                 text: "\uf1dc"
-                                color: "#6272a4"
+                                color: Themes.muted
                                 font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
                                 Layout.preferredWidth: 20
                                 horizontalAlignment: Text.AlignHCenter
@@ -1390,7 +1482,7 @@ Item {
 
                             Text {
                                 text: "Notification radius"
-                                color: "#f8f8f2"
+                                color: Themes.fg
                                 font { pixelSize: 12; family: "Quicksand"; bold: true }
                                 Layout.alignment: Qt.AlignVCenter
                             }
@@ -1399,7 +1491,7 @@ Item {
 
                             Text {
                                 text: MiscState.notifRadius + "px"
-                                color: "#bd93f9"
+                                color: Themes.accent
                                 font { pixelSize: 10; family: "ZedMono Nerd Font" }
                                 Layout.alignment: Qt.AlignVCenter
                             }
@@ -1424,7 +1516,7 @@ Item {
                 Card {
                     title: "Presets"
                     icon: "\uf005"
-                    accent: "#bd93f9"
+                    accent: Themes.accent
 
                     ColumnLayout {
                         spacing: 0
@@ -1459,8 +1551,8 @@ Item {
                                 Layout.fillWidth: true
                                 implicitHeight: 36
                                 radius: 6
-                                color: presetMa.containsMouse ? Qt.rgba(0.74, 0.58, 0.98, 0.12)
-                                    : isActive ? Qt.rgba(0.74, 0.58, 0.98, 0.08) : "transparent"
+                                color: presetMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12)
+                                    : isActive ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.08) : "transparent"
 
                                 Behavior on color {
                                     ColorAnimation { duration: 100 }
@@ -1474,14 +1566,14 @@ Item {
 
                                     Text {
                                         text: "\uf005"
-                                        color: isActive ? "#bd93f9" : "#6272a4"
+                                        color: isActive ? Themes.accent : Themes.muted
                                         font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
                                     }
 
                                     Text {
                                         Layout.fillWidth: true
                                         text: presetCell.modelData.name
-                                        color: isActive ? "#f8f8f2" : "#b8bfcb"
+                                        color: isActive ? Themes.fg : Themes.dim
                                         font { pixelSize: 11; family: "Quicksand"; bold: isActive }
                                     }
 
@@ -1491,7 +1583,7 @@ Item {
                                         implicitWidth: 6
                                         implicitHeight: 6
                                         radius: 3
-                                        color: "#bd93f9"
+                                        color: Themes.accent
                                     }
                                 }
 
@@ -1524,7 +1616,7 @@ Item {
                 Card {
                     title: "Poll Rates"
                     icon: "\uf2db"
-                    accent: "#bd93f9"
+                    accent: Themes.accent
 
                     ColumnLayout {
                         spacing: 14
@@ -1576,7 +1668,7 @@ Item {
                 Card {
                     title: "Notes"
                     icon: "\uf05a"
-                    accent: "#8be9fd"
+                    accent: Themes.accent2
 
                     ColumnLayout {
                         spacing: 4
@@ -1586,7 +1678,7 @@ Item {
                         Text {
                             Layout.fillWidth: true
                             text: "· Lower rates feel snappier, higher rates save battery."
-                            color: "#b8bfcb"
+                            color: Themes.dim
                             font { pixelSize: 11; family: "ZedMono Nerd Font" }
                             wrapMode: Text.WordWrap
                         }
@@ -1594,7 +1686,7 @@ Item {
                         Text {
                             Layout.fillWidth: true
                             text: "· Values persist across config reloads."
-                            color: "#b8bfcb"
+                            color: Themes.dim
                             font { pixelSize: 11; family: "ZedMono Nerd Font" }
                             wrapMode: Text.WordWrap
                         }
@@ -1625,7 +1717,7 @@ Item {
                 clip: true
                 color: Qt.rgba(1, 1, 1, 0.02)
                 border.width: 1
-                border.color: topic.open ? Qt.rgba(0.741, 0.576, 0.976, 0.35) : "#343746"
+                border.color: topic.open ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.35) : Themes.separator
 
                 Behavior on border.color {
                     ColorAnimation { duration: 150 }
@@ -1649,12 +1741,12 @@ Item {
                             implicitWidth: 26
                             implicitHeight: 26
                             radius: 8
-                            color: Qt.rgba(0.741, 0.576, 0.976, 0.12)
+                            color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12)
 
                             Text {
                                 anchors.centerIn: parent
                                 text: topic.glyph
-                                color: "#bd93f9"
+                                color: Themes.accent
                                 font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
                             }
                         }
@@ -1666,7 +1758,7 @@ Item {
                             Text {
                                 Layout.fillWidth: true
                                 text: topic.title
-                                color: "#f8f8f2"
+                                color: Themes.fg
                                 elide: Text.ElideRight
                                 font { pixelSize: 13; bold: true; family: "Quicksand" }
                             }
@@ -1675,7 +1767,7 @@ Item {
                                 Layout.fillWidth: true
                                 visible: !topic.open && topic.summary.length > 0
                                 text: topic.summary
-                                color: "#6272a4"
+                                color: Themes.muted
                                 elide: Text.ElideRight
                                 font { pixelSize: 10; family: "ZedMono Nerd Font" }
                             }
@@ -1683,7 +1775,7 @@ Item {
 
                         Text {
                             text: topic.open ? "\uf077" : "\uf078"
-                            color: "#6272a4"
+                            color: Themes.muted
                             font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
                         }
 
@@ -1712,7 +1804,7 @@ Item {
                 // bullet prefix applied on completion — bindings stay literal
                 Component.onCompleted: text = "·  " + text
                 Layout.fillWidth: true
-                color: "#b8bfcb"
+                color: Themes.dim
                 wrapMode: Text.WordWrap
                 font { pixelSize: 11; family: "Quicksand" }
             }
@@ -1725,7 +1817,7 @@ Item {
                 radius: 7
                 color: "#181825"
                 border.width: 1
-                border.color: "#313244"
+                border.color: Themes.borderColor
 
                 Text {
                     id: codeTxt

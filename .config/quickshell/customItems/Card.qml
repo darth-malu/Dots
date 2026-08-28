@@ -1,12 +1,13 @@
 import QtQuick
 import QtQuick.Layouts
+import qs.themes
 
 Rectangle {
     id: root
 
     property string title
     property string icon
-    property color accent: "#f8f8f2"
+    property color accent: Themes.fg
     property int cardRadius: 10
     property int cardPadding: 5
     property color cardColor: "transparent"

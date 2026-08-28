@@ -50,10 +50,10 @@ ShellRoot {
                 anchors.fill: parent
                 radius: BarState.barMode === 2 || BarState.barMode === 3 ? 0 : 4
                 color: BarState.barMode === 3
-                    ? Qt.rgba(0.74, 0.58, 0.98, 0.18)
-                    : "#181825"
+                    ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.18)
+                    : Themes.barSolidBg
                 border.width: BarState.barMode >= 2 ? 0 : 1
-                border.color: "#313244"
+                border.color: Themes.borderColor
                 z: -1
             }
 

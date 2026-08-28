@@ -1,13 +1,14 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.services
+import qs.themes
 import Quickshell
 
 // ── Brightness row: sun icon + pill slider + readout ──
 RowLayout {
     id: root
 
-    readonly property color accent: "#f1fa8c"
+    readonly property color accent: Themes.brightnessAccent
     readonly property bool ready: BrightnessState.available
 
     signal adjusted(int percent)

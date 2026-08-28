@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import qs.themes
 
 Item {
     id: btn
@@ -83,7 +84,7 @@ Item {
         Text {
             Layout.alignment: Qt.AlignHCenter
             text: parent.parent.label
-            color: parent.parent.highlighted || mouseArea.containsMouse ? parent.parent.color : "#b8bfcb"
+            color: parent.parent.highlighted || mouseArea.containsMouse ? parent.parent.color : Themes.dim
             font {
                 pixelSize: 9
                 family: "Quicksand"

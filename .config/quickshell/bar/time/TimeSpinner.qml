@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.services
+import qs.themes
 
 // HH:MM entry with individually scrollable hour / minute segments.
 // Defaults to the shared clock (TimeService) snapped to 5 minutes — or
@@ -85,10 +86,10 @@ RowLayout {
 
         readonly property bool focused: segInput.activeFocus
         // quiet idle → soft hover lift → lavender focus ring
-        color: focused ? Qt.rgba(0.741, 0.576, 0.976, 0.14)
+        color: focused ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14)
             : segHover.hovered ? Qt.rgba(1, 1, 1, 0.07) : Qt.rgba(1, 1, 1, 0.04)
         border.width: focused ? 1.5 : 1
-        border.color: focused ? "#bd93f9" : segHover.hovered ? "#565d78" : "#3b3f54"
+        border.color: focused ? Themes.accent : segHover.hovered ? "#565d78" : "#3b3f54"
 
         Behavior on border.color {
             ColorAnimation { duration: 120 }
@@ -108,7 +109,7 @@ RowLayout {
             // plain initial value — the Connections blocks below keep it in
             // sync with root state without fighting manual edits
             text: parent.label
-            color: "#e2d6fb"
+            color: Themes.accentSoft
             font {
                 pixelSize: 17
                 weight: Font.DemiBold
@@ -169,7 +170,7 @@ RowLayout {
 
     Text {
         text: ":"
-        color: hhSeg.focused || mmSeg.focused ? "#bd93f9" : "#4c5069"
+        color: hhSeg.focused || mmSeg.focused ? Themes.accent : "#4c5069"
         font { pixelSize: 18; bold: true; family: "ZedMono Nerd Font" }
     }
 

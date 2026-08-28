@@ -1,13 +1,14 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Effects
+import qs.themes
 
 ProgressBar {
     id: root
     property int valueBarWidth: 23
     property int valueBarHeight: 12
     property color highlightColor: "yellow"
-    property color trackColor: "#343746"
+    property color trackColor: Themes.separator
     property alias radius: barBg.radius
     property string text
 
