@@ -41,8 +41,10 @@ Rofi {
 
     // ── load the history every time the launcher opens ──
     onVisibleChanged: {
-        if (visible)
+        if (visible) {
+            root.focusSearch();
             listProcess.running = true;
+        }
     }
 
     Process {

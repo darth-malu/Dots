@@ -57,7 +57,10 @@ Rectangle {
             root.listView.currentIndex = index;
             root.listView.activateCurrent();
         }
-        onEntered: if (root.listView)
-            root.listView.currentIndex = index
+        onEntered: {
+            if (!root.listView || root.listView.moving)
+                return;
+            root.listView.currentIndex = index;
+        }
     }
 }

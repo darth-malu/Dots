@@ -62,9 +62,14 @@ PanelWindow {
     signal clipDeleted(string entry)
 
     onVisibleChanged: {
-        if (visible) {
-            search.forceActiveFocus();
-        }
+        if (visible)
+            focusSearch();
+    }
+
+    // fresh slate on every open: no stale filter, keys land in the field
+    function focusSearch() {
+        search.text = "";
+        search.forceActiveFocus();
     }
 
     WrapperRectangle {
@@ -126,8 +131,6 @@ PanelWindow {
                         } else if (event.key === Qt.Key_Down || (event.key === Qt.Key_J && event.modifiers & Qt.ControlModifier)) {
                             itemLauncher.currentIndex = itemLauncher.currentIndex < itemLauncher.count - 1 ? itemLauncher.currentIndex + 1 : 0;
                             event.accepted = true;
-                        } else if (event.key == Qt.Key_Return && event.modifiers & Qt.ControlModifier) {
-                            //DELETE STUFF HERE
                         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                             let current = itemLauncher.currentItem;
                             if (current) {

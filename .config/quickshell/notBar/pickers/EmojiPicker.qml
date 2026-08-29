@@ -260,7 +260,8 @@ PanelWindow {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onEntered: grid.currentIndex = index
+                        onEntered: if (!grid.moving)
+                            grid.currentIndex = index
                         onClicked: root.copyEmoji(cellWrap.char_)
                     }
                 }
