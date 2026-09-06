@@ -187,7 +187,7 @@ Singleton {
 
     // ── Avatar (shared by quicksettings + settings sidebar) ──
     readonly property string avatarPath: {
-        var home = Quickshell.env("HOME") || "/home/malu";
+        var home = Quickshell.env("HOME");
         return home + "/.config/quickshell/assets/avatar.png";
     }
     // cache-busted url so pickers refresh the image everywhere it is shown

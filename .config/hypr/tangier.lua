@@ -3,7 +3,7 @@ hl.monitor(
     output = "eDP-1",
     mode = "1920x1080@60", -- Adjust resolution/refresh rate as needed
     position = "0x0",
-    scale = 1.25,
+    scale = 1.20,          --1.25,,
     cm = "auto",
   }
 )
@@ -47,7 +47,7 @@ hl.config({
     workspace_swipe_create_new = false, -- new empty after last workspace
     workspace_swipe_forever = true,     -- NOTE....false sucks
     --workspace_swipe_touch = true,       -- swipe from the edge of touchpad
-    -- workspace_swipe_use_r = true; -- r instead of m
+    -- workspace_swipe_use_r = true, -- r instead of m
   },
 })
 
@@ -55,8 +55,44 @@ hl.config({
 hl.env("LIBVA_DRIVER_NAME", "nvidia")         --hw acceleration
 hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia") -- force GBM as backend
 
-hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
-hl.gesture({ fingers = 3, direction = "down", mods = "ALT", action = "close" })
-
 hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"), { locked = true, repeating = true })
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"), { locked = true, repeating = true })
+
+hl.gesture(
+  {
+    fingers = 3,
+    direction = "up",
+    action = "fullscreen"
+  }
+)
+-- e a special workspace with a 4-finger swipe down, only when holding SUPER, bypassing inhibitors:
+
+hl.gesture({ fingers = 4, direction = "down", mods = "SUPER", action = "special", workspace_name = "scratchpad", disable_inhibit = true })
+
+hl.gesture({
+  fingers = 4,
+  direction = "down",
+  -- mod = "ALT",
+  action = "close"
+})
+
+hl.gesture({
+  fingers = 3,
+  direction = "horizontal",
+  action = "workspace"
+}
+)
+
+-- Adjust volume
+-- local volume_gesture = function(change)
+--   hl.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ " ..
+--     math.abs(change) .. "%" .. (change < 0 and "-" or "+"))
+-- end
+-- hl.gesture({
+--   fingers = 3,
+--   direction = "vertical",
+--   action = {
+--     start = function(e) volume_gesture(-0.25 * e.delta.y) end,
+--     update = function(e) volume_gesture(-0.25 * e.delta.y) end
+--   },
+-- })

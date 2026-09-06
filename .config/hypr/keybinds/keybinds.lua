@@ -8,11 +8,16 @@ local emacs_restarting = "notify-send 'restarting emacs' -i " .. emacs_restart_i
 local emacs_restarted = "notify-send 'restarted emacs' -i " .. emacs_restart_ico;
 local mainMod = "SUPER"
 local kitty = "app2unit -s a -- kitty -1 --instance-group kitty || uwsm-app -s a -- kitty -1 --instance-group kitty"
+local foot = "app2unit -s a -- foot"
 local yazi_kitty =
 "app2unit -s a -- kitty -1 --instance-group yazi -e yazi || uwsm-app -s a -- kitty -1 --instance-group yazi -e yazi"
 local mainMod = "SUPER"
 local mainMod_SHIFT = "SUPER + SHIFT"
 local mainMod_CTRL = "SUPER + CTRL"
+
+-- Foot
+hl.bind(mainMod .. "+ f", hl.dsp.exec_cmd(foot))
+hl.bind(mainMod .. "+ CONTROL + f", hl.dsp.focus({ window = "class:^foot" }))
 
 -- Kitty
 hl.bind(mainMod .. " + return", hl.dsp.exec_cmd(kitty))
@@ -40,8 +45,8 @@ hl.bind(mainMod .. "+ SHIFT + CONTROL + N", hl.dsp.focus({ window = "class:^org.
 hl.bind("SUPER + B", hl.dsp.exec_cmd("app2unit -s a -- qutebrowser || uwsm-app -s a -- qutebrowser")) -- can be --last
 hl.bind("SUPER + CONTROL + B", hl.dsp.focus({ window = "class:^org.qutebrowser.qutebrowser$" }))
 
-hl.bind("SUPER + F", hl.dsp.exec_cmd("app2unit -s a -- firefox || uwsm-app -s a -- firefox "))
-hl.bind("SUPER + CONTROL + F", hl.dsp.focus({ window = "class:^firefox$" }))
+-- hl.bind("SUPER + F", hl.dsp.exec_cmd("app2unit -s a -- firefox || uwsm-app -s a -- firefox "))
+-- hl.bind("SUPER + CONTROL + F", hl.dsp.focus({ window = "class:^firefox$" }))
 
 hl.bind("SUPER + C", hl.dsp.exec_cmd("app2unit -s a -- google-chrome || uwsm-app -s a -- google-chrome "))
 hl.bind("SUPER + CONTROL + C", hl.dsp.focus({ window = "class:[Gg]oogle-chrome" }))

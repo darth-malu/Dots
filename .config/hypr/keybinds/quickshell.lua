@@ -23,13 +23,13 @@ hl.bind(mod .. "backslash", hl.dsp.exec_cmd("qs ipc call Time currentDate"), { l
 hl.bind(mod .. "ALT + backslash", hl.dsp.exec_cmd("qs ipc call Time currentDateTime"), { locked = true })
 
 -- Resources, etc
-hl.bind(mod .. "ALT + 1", hl.dsp.exec_cmd("qs ipc call netspeed toggleNet"), { locked = true })
+-- hl.bind(mod .. "ALT + 1", hl.dsp.exec_cmd("qs ipc call netspeed toggleNet"), { locked = true })
 hl.bind(mod .. "ALT + Left", hl.dsp.exec_cmd("qs ipc call netspeed toggleNet"), { locked = true })
-hl.bind(mod .. "ALT + 2", hl.dsp.exec_cmd("qs ipc call resources toggleResources"), { locked = true })
+-- hl.bind(mod .. "ALT + 2", hl.dsp.exec_cmd("qs ipc call resources toggleResources"), { locked = true })
 hl.bind(mod .. "ALT + right", hl.dsp.exec_cmd("qs ipc call resources toggleResources"), { locked = true })
-hl.bind(mod .. "ALT + 3", hl.dsp.exec_cmd("qs ipc call SysTray toggle"), { locked = true })
+-- hl.bind(mod .. "ALT + 3", hl.dsp.exec_cmd("qs ipc call SysTray toggle"), { locked = true })
 hl.bind(mod .. "ALT + Down", hl.dsp.exec_cmd("qs ipc call SysTray toggle"), { locked = true })
-hl.bind(mod .. "ALT + 5", hl.dsp.exec_cmd("qs ipc call activate toggle"), { locked = true })
+-- hl.bind(mod .. "ALT + 5", hl.dsp.exec_cmd("qs ipc call activate toggle"), { locked = true })
 
 -- QUISHELL - ROFI
 hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("qs ipc call appLauncher toggle"))

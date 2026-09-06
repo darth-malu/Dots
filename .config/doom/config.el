@@ -61,7 +61,7 @@
   :hook
   (qml-ts-mode . (lambda () 
                    (setq-local electric-indent-chars '(?\n ?\( ?\) ?{ ?} ?\[ ?\] ?\; ?,))
-                   ;; (lsp-headerline-breadcrumb-mode 1)
+                   (lsp-headerline-breadcrumb-mode nil)
                    (lsp-deferred))))
 
 ;; TODO: check env for if direnv enabled to start
@@ -239,6 +239,8 @@
           :map doom-leader-map
           ("to" . hl-todo-occur)
           ("I" . ielm)
+          ("[" . previous-buffer)
+          ("]" . next-buffer)
           ("SPC" . ace-window)))
 
 (customize-set-variable '+format-on-save-disabled-modes '(nxml-mode)) ;Android studio

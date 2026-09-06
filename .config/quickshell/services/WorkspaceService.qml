@@ -24,7 +24,7 @@ Singleton {
         "obs": "com.obsproject.Studio",
         "mpv": "mpv",
         "nautilus": "org.gnome.Nautilus",
-        "dolphin": "dolphin",
+        "dolphin": "org.kde.dolphin",
         "code": "visual-studio-code",
         "emacs": "emacs",
         "neovide": "neovide",

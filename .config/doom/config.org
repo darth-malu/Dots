@@ -390,7 +390,7 @@ Steps to get it working:
   :hook
   (qml-ts-mode . (lambda () 
                    (setq-local electric-indent-chars '(?\n ?\( ?\) ?{ ?} ?\[ ?\] ?\; ?,))
-                   ;; (lsp-headerline-breadcrumb-mode 1)
+                   (lsp-headerline-breadcrumb-mode nil)
                    (lsp-deferred))))
 #+end_src
 
@@ -575,6 +575,9 @@ Projectile, lsp-mode, and other packages create their own files to store variabl
 https://www.gnu.org/software/emacs/manual/html_node/emacs/Auto-Save-Files.html#Auto-Save-Files
 
 ** emacs sane
+:LOGBOOK:
+CLOCK: [2026-09-04 Fri 10:42]
+:END:
 #+begin_src elisp :tangle yes
 (use-package! emacs
   :init
@@ -697,6 +700,8 @@ https://www.gnu.org/software/emacs/manual/html_node/emacs/Auto-Save-Files.html#A
           :map doom-leader-map
           ("to" . hl-todo-occur)
           ("I" . ielm)
+          ("[" . previous-buffer)
+          ("]" . next-buffer)
           ("SPC" . ace-window)))
 #+end_src
 

@@ -24,7 +24,7 @@ Singleton {
 
     readonly property WifiDevice adapter: Networking.devices.values.find(d => d.type === DeviceType.Wifi) ?? null
     readonly property WifiNetwork activeNetwork: root.adapter ? root.adapter.networks.values.find(network => network.connected) : null
-    readonly property bool wifiEnabled: Networking.wifiEnabled
+    readonly property bool wifiEnabled: !Networking.wifiEnabled
 
     // master "internet" switch: any live radio/link counts as on
     readonly property bool internetEnabled: Networking.wifiEnabled || (root.ethernet?.connected ?? false)
@@ -118,16 +118,15 @@ Singleton {
 
         const s = root.activeNetwork.signalStrength;
         if (!MiscState.barSolid) {
-            return s < 0.34 ? Qt.rgba(0.85, 0.62, 0.42, 0.55)
-                : s < 0.67 ? Qt.rgba(0.85, 0.82, 0.42, 0.55)
-                : Qt.rgba(0.42, 0.72, 0.8, 0.55);
+            return s < 0.34 ? Qt.rgba(0.85, 0.62, 0.42, 0.55) : s < 0.67 ? Qt.rgba(0.85, 0.82, 0.42, 0.55) : Qt.rgba(0.42, 0.72, 0.8, 0.55);
         }
         return s < 0.34 ? "#ffb86c" : s < 0.67 ? "#f1fa8c" : "#8be9fd";
     }
 
     // dracula: overlay0 / teal — dimmer on transparent bar, brighter on solid bg
     readonly property color ethColor: {
-        if (!root.ethernet?.hasLink) return "#6272a4";
+        if (!root.ethernet?.hasLink)
+            return "#6272a4";
         return MiscState.barSolid ? "#8be9fd" : Qt.rgba(0.55, 0.72, 0.85, 0.6);
     }
 
@@ -157,8 +156,7 @@ Singleton {
         if (root.wifiConnected && !root.wasWifiConnected && !root.wifiPopupVisible) {
             const ssid = String(root.activeNetwork?.name ?? "").replace(/'/g, "'\\''");
             const sig = Math.round((root.activeNetwork?.signalStrength ?? 0) * 100);
-            Quickshell.execDetached(["sh", "-c",
-                `notify-send '${ssid}' 'signal · ${sig}%' -i ${root.currentWifiIconPath()} -a Shell -t 4000`]);
+            Quickshell.execDetached(["sh", "-c", `notify-send '${ssid}' 'signal · ${sig}%' -i ${root.currentWifiIconPath()} -a Shell -t 4000`]);
         }
         root.wasWifiConnected = root.wifiConnected;
     }

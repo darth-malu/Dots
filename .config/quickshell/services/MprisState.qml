@@ -21,7 +21,7 @@ Singleton {
 
     property bool showMprisProgress: true
 
-    property bool hideWhenIdle: false
+    property bool hideWhenIdle: true
 
     // scroll-to-marquee song titles (pill + quicksettings card)
     property bool marqueeEnabled: prefs.marqueeEnabled

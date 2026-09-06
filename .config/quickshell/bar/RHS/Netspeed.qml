@@ -279,9 +279,10 @@ Loader {
             //     Layout.preferredWidth: 4
             // }
 
-            // ── Wifi icon — shown whenever the cable is NOT linked (exactly one net icon at all times) ──
+            // ── Wifi icon — shown whenever the cable is NOT linked, or when wifi
+            // is connected alongside ethernet (both icons shown side by side) ──
             Item {
-                visible: NetworkState.ethernet?.hasLink !== true && MiscState.showWifi
+                visible: MiscState.showWifi && (NetworkState.wifiConnected || NetworkState.ethernet?.hasLink !== true)
                 implicitWidth: wifiIco.width
                 implicitHeight: wifiIco.height
                 Layout.alignment: Qt.AlignVCenter
@@ -303,7 +304,7 @@ Loader {
                 }
             }
 
-            // ── Ethernet icon — linked cable takes over the slot and hides wifi ──
+            // ── Ethernet icon — linked cable shown; wifi may stay when also connected ──
             Item {
                 visible: NetworkState.ethernet?.hasLink === true && MiscState.showEthernet
                 implicitWidth: ethIco.width
