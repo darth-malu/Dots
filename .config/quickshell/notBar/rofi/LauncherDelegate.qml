@@ -58,7 +58,9 @@ Rectangle {
             root.listView.activateCurrent();
         }
         onEntered: {
-            if (!root.listView || root.listView.moving)
+            // only mouse-driven selection when the pointer is in motion;
+            // a settled/reflowing cursor must not fight keyboard scrolling
+            if (!root.listView || root.listView.moving || !root.listView.mouseMoving)
                 return;
             root.listView.currentIndex = index;
         }

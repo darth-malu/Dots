@@ -202,6 +202,33 @@ PanelWindow {
 
                 property var inputText
 
+                // mouse-selection policy: hovering only claims the selection
+                // while the pointer is actually moving. the instant the mouse
+                // settles (idleMs), this flips false so keyboard scrolling
+                // (arrows / Ctrl+J+K) is never yanked away by a parked cursor
+                // hovering a row — e.g. when the list reflows while typing.
+                property bool mouseMoving: false
+                property int idleMs: 350
+
+                readonly property Timer mouseIdle: Timer {
+                    interval: itemLauncher.idleMs
+                    onTriggered: itemLauncher.mouseMoving = false
+                }
+
+                // swallows nothing — just eavesdrops on motion to drive the
+                // mouseMoving heuristic above (wheel/tap still scroll freely)
+                MouseArea {
+                    id: motionProbe
+                    parent: itemLauncher
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    acceptedButtons: Qt.NoButton
+                    onPositionChanged: {
+                        itemLauncher.mouseMoving = true;
+                        itemLauncher.mouseIdle.restart();
+                    }
+                }
+
                 // property alias modelIngest: root.model
 
                 // TODO outsrc this
