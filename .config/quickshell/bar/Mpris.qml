@@ -349,65 +349,15 @@ Item {
 
                             // restart-watchdog state — some players forget to
                             // re-report Position/Seeked when the same track
-                            // restarts, leaving the ring pinned near-full
-                            property real _lastRaw: -1
-                            property string _fp: ""
+                            // restarts, leaving the ring pinned near-full. shared
+                            // progress machinery lives in MprisState.progress()
+                            property var _pstate: MprisState.progressState()
 
                             onProgressChanged: requestPaint()
                             onVisibleChanged: requestPaint()
 
-                            function fp(p) {
-                                var md = p?.metadata ?? null;
-                                if (!md)
-                                    return "";
-                                return String((md["mpris:trackid"] ?? "") + "|" + (md["xesam:url"] ?? ""));
-                            }
-
                             function updateProgress() {
-                                var p = MprisState.player;
-                                if (!p || !(p.length > 0)) {
-                                    progress = 0;
-                                    _lastRaw = -1;
-                                    _fp = "";
-                                    return;
-                                }
-                                var len = p.length;
-                                var raw = p.position ?? 0;
-                                var playing = p.isPlaying ?? false;
-
-                                // new track (incl. a repeat that got a fresh trackid)
-                                var cur = fp(p);
-                                if (cur !== _fp) {
-                                    _fp = cur;
-                                    _lastRaw = -1;
-                                }
-
-                                // paused/stopped — just show the frozen position
-                                if (!playing) {
-                                    _lastRaw = raw;
-                                    progress = Math.max(0, Math.min(raw / len, 1));
-                                    return;
-                                }
-
-                                // position jumped back while playing → the track
-                                // restarted, resume from the freshly reported value
-                                if (_lastRaw >= 0 && raw < _lastRaw - 2.0) {
-                                    _lastRaw = -1;
-                                    progress = Math.max(0, Math.min(raw / len, 1));
-                                    return;
-                                }
-
-                                // at/past the end while still playing → wrap. some
-                                // players (chrome/youtube) pin Position at Length on
-                                // replay instead of resetting to 0
-                                if (raw >= len) {
-                                    _lastRaw = -1;
-                                    progress = 0;
-                                    return;
-                                }
-
-                                _lastRaw = raw;
-                                progress = Math.max(0, Math.min(raw / len, 1));
+                                progress = MprisState.progress(MprisState.player, _pstate, MprisState.player?.isPlaying ?? false);
                             }
 
                             Connections {

@@ -1505,7 +1505,7 @@ Item {
                             SettingRow {
                                 icon: "\uf294"
                                 label: Bt.enabled ? (Bt.connected && Bt.btDev.length > 0 ? Bt.btDev : "Bluetooth") : "Bluetooth"
-                                caption: !Bt.enabled ? "radio off" : Bt.connected ? "connected" + (Bt.btBat > 0 ? " · " + Math.round(Bt.btBat * 100) + "%" : "") : "no devices"
+                                caption: !Bt.enabled ? "radio off" : Bt.connected ? "connected" + (Bt.btBat > 0 ? " · " + Math.round(Bt.btBat) + "%" : "") : "no devices"
                                 checked: Bt.enabled
                                 onFlipped: MiscState.setBtRadio(!Bt.enabled)
                             }

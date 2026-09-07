@@ -90,46 +90,16 @@ ColumnLayout {
             readonly property bool hasArt: isAlive && (modelData.trackArtUrl ?? "") !== "" && !MprisState.isBrowserPlayer(modelData)
             readonly property bool isBrowser: isAlive && MprisState.isBrowserPlayer(modelData)
 
-            // restart-watchdog state — see the progress binding below
-            property real _lastRaw: -1
-            property string _fp: ""
+            // restart-watchdog state — shared progress machinery in
+            // MprisState.progress() handles silent repeat detection
+            property var _pstate: MprisState.progressState()
 
             // 0..1 playback progress for the thin line under the row
             readonly property real progress: {
                 playersContainer.progressTick;
                 if (!isAlive)
                     return 0;
-                const len = modelData.length;
-                const raw = modelData.position;
-                if (!len || len <= 0 || raw == null || isNaN(raw))
-                    return 0;
-
-                // track fingerprint — repeated tracks sometimes restart with the
-                // same metadata, so trackid/url change normally starts a fresh pass
-                const cur = String((modelData.metadata?.["mpris:trackid"] ?? "") + "|" + (modelData.metadata?.["xesam:url"] ?? ""));
-                if (cur !== prow._fp) {
-                    prow._fp = cur;
-                    prow._lastRaw = -1;
-                }
-
-                // paused/stopped — the frozen position is the truth
-                if (!isPlaying) {
-                    prow._lastRaw = raw;
-                    return Math.min(raw / len, 1);
-                }
-
-                // position jumped back while playing → the track restarted;
-                // resume from the freshly reported value instead of the old line
-                if (prow._lastRaw >= 0 && raw < prow._lastRaw - 2.0)
-                    return Math.min(raw / len, 1);
-
-                // at/past the end while still playing → wrapped. chrome/youtube
-                // pin Position at Length on replay instead of resetting to 0
-                if (raw >= len)
-                    return 0;
-
-                prow._lastRaw = raw;
-                return Math.min(raw / len, 1);
+                return MprisState.progress(modelData, prow._pstate, isPlaying);
             }
 
             color: rowHover.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent"

@@ -604,7 +604,7 @@ Item {
 
     LogoutButton {
         id: lockBtn
-        command: "loginctl lock-session"
+        command: "qs -p ~/.config/quickshell ipc call lock lock"
         keybind: Qt.Key_L
         keybindChar: "L"
         text: "Lock"

@@ -28,9 +28,12 @@ Singleton {
         return dev ? dev.name : "";
     }
 
+    // battery is already a percentage (device.battery is 0..1 → ×100); prefer a
+    // connected device and clamp against impossible values
     readonly property real btBat: {
-        const dev = devices.find(device => device.batteryAvailable);
-        return dev ? dev.battery * 100 : 0;
+        const dev = devices.find(device => device.connected && device.batteryAvailable)
+            ?? devices.find(device => device.batteryAvailable);
+        return dev && !isNaN(dev.battery) ? Math.max(0, Math.min(dev.battery * 100, 100)) : 0;
     }
 
     readonly property bool btTrust: devices.some(device => device.trusted)

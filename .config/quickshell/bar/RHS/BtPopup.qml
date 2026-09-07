@@ -203,8 +203,9 @@ BarBlock {
         }
 
         // media volume for the device's bluez player, when one is connected
+        // and actually supports volume (some codecs/devices toggle only)
         RowLayout {
-            visible: drow.btPlayer !== null
+            visible: drow.btPlayer !== null && drow.btPlayer.volumeSupported
             spacing: 4
 
             Text {
@@ -362,10 +363,7 @@ BarBlock {
                             MouseArea {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    if (root.adapter)
-                                        root.adapter.enabled = !Bt.enabled;
-                                }
+                                onClicked: MiscState.setBtRadio(!Bt.enabled);
                             }
                         }
                     }

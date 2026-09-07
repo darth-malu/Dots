@@ -206,6 +206,101 @@ Singleton {
         return p.trackArtUrl ?? "";
     }
 
+    // ── playback progress with silent-restart handling ──
+    // some players (mostly chromium/youtube) don't re-report Position or
+    // Seeked when the SAME track restarts, which pins the interpolated
+    // position at length. progress() owns a tiny mutable state object per
+    // consumer (bar ring / popup row / lock card) so each one can detect:
+    //   · track fingerprint change         → trust freshly reported position
+    //   · position jumps backwards         → trust freshly reported position
+    //   · playing while pinned at length  → time the restarted pass itself,
+    //     synthesising 0..1 so the indicator walks, then wraps, forever.
+    function progressState(): var {
+        return { fp: "", lastRaw: -1, synth: false, synthPos: 0, lastTick: 0 };
+    }
+
+    function _fpOf(p): string {
+        const md = p?.metadata ?? null;
+        if (!md)
+            return "";
+        return String((md["mpris:trackid"] ?? "") + "|" + (md["xesam:url"] ?? ""));
+    }
+
+    // fraction 0..1 of how far through the current pass the player is
+    function progress(p, st, isPlaying): real {
+        if (!p || !(p.length > 0)) {
+            st.lastRaw = -1;
+            st.fp = "";
+            if (typeof st.synth !== "undefined")
+                st.synth = false;
+            return 0;
+        }
+        const len = p.length;
+        const raw = p.position ?? 0;
+        const now = Date.now();
+
+        // new pass: a changed fingerprint means a new track (or a repeat that
+        // got a fresh trackid) — reset and trust whatever the player reports
+        const fp = root._fpOf(p);
+        if (fp !== st.fp) {
+            st.fp = fp;
+            st.lastRaw = -1;
+            st.synth = false;
+            st.synthPos = 0;
+            st.lastTick = now;
+            return Math.max(0, Math.min(raw / len, 1));
+        }
+
+        // accrue real playback time since the last tick (clamped against dt
+        // surges from sleeps/drag); only while actually playing
+        const dt = (st.lastTick > 0 && isPlaying) ? Math.min(Math.max((now - st.lastTick) / 1000, 0), 2) : 0;
+        st.lastTick = now;
+
+        // player still stuck after a silent restart, so we're numbering a pass
+        // with our own clock until it starts reporting fresh data again
+        if (st.synth) {
+            if (raw < len) {
+                // caught up — hand back control to the real position
+                st.synth = false;
+                st.synthPos = raw;
+                st.lastRaw = -1;
+                return Math.max(0, Math.min(raw / len, 1));
+            }
+            st.synthPos = Math.max(0, st.synthPos + dt);
+            if (st.synthPos > len)
+                st.synthPos -= len; // another silent repeat mid-pass
+            st.lastRaw = -1; // the pasted-at-length raw is never a real baseline
+            return Math.max(0, Math.min(st.synthPos / len, 1));
+        }
+
+        // paused/stopped — the frozen position is the truth
+        if (!isPlaying) {
+            st.lastRaw = raw;
+            return Math.max(0, Math.min(raw / len, 1));
+        }
+
+        // a backward jump while playing means the host restarted (or seeked
+        // back) — resume from the freshly reported value
+        if (st.lastRaw >= 0 && raw < st.lastRaw - 2.0) {
+            st.lastRaw = -1;
+            st.synth = false;
+            st.synthPos = 0;
+            return Math.max(0, Math.min(raw / len, 1));
+        }
+
+        // hit/parked at the end while still playing → the host forgot to report
+        // the loop; begin timing this fresh pass ourselves
+        if (raw >= len) {
+            st.synth = true;
+            st.synthPos = 0;
+            st.lastRaw = -1;
+            return 0;
+        }
+
+        st.lastRaw = raw;
+        return Math.max(0, Math.min(raw / len, 1));
+    }
+
     function ignorePlayer(identity) {
         if (!root.ignored.includes(identity))
             root.ignored = [...root.ignored, identity];

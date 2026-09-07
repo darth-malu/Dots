@@ -270,6 +270,115 @@ WlSessionLockSurface {
                 font { pixelSize: 9; family: "Quicksand" }
                 opacity: 0.6
             }
+
+            // ── now playing ──
+            Item {
+                id: np
+
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: Math.min(cardCol.width - 20, 300)
+                visible: !!MprisState.player
+
+                readonly property bool isBrowser: MprisState.isBrowserPlayer(MprisState.player)
+                readonly property real pct: {
+                    npTick.tick;
+                    return MprisState.progress(MprisState.player, npState, MprisState.player?.isPlaying ?? false);
+                }
+                property var npState: MprisState.progressState()
+
+                implicitHeight: row.implicitHeight + 16
+
+                Timer {
+                    id: npTick
+                    interval: 1000
+                    repeat: true
+                    running: np.visible
+                    property int tick: 0
+                    onTriggered: tick++
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 14
+                    color: Themes.cardBg
+                    border.width: 1
+                    border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16)
+                }
+
+                RowLayout {
+                    id: row
+
+                    anchors.fill: parent
+                    anchors.margins: 8
+                    spacing: 10
+
+                    // art / glyph tile
+                    Rectangle {
+                        implicitWidth: 40
+                        implicitHeight: 40
+                        radius: 9
+                        color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12)
+
+                        Image {
+                            anchors.fill: parent
+                            anchors.margins: 2
+                            fillMode: Image.PreserveAspectCrop
+                            asynchronous: true
+                            sourceSize: Qt.size(80, 80)
+                            source: np.isBrowser ? "" : (MprisState.player?.trackArtUrl ?? "")
+                            visible: status === Image.Ready
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            visible: parent.children[1].status !== Image.Ready
+                            text: np.isBrowser ? MprisState.browserGlyph(MprisState.player) : "\uf001"
+                            color: Themes.accent
+                            font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 1
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: MprisState.player?.trackTitle || "Unknown Track"
+                            color: Themes.fg
+                            elide: Text.ElideRight
+                            font { pixelSize: 11; bold: true; family: "Quicksand" }
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: MprisState.player?.trackArtist || (MprisState.player?.identity ?? "")
+                            color: Themes.dim
+                            elide: Text.ElideRight
+                            font { pixelSize: 9; family: "Quicksand" }
+                        }
+
+                        // thin progress line
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.topMargin: 3
+                            implicitHeight: 2
+                            radius: 1
+                            color: Qt.rgba(1, 1, 1, 0.12)
+
+                            Rectangle {
+                                readonly property real frac: np.pct
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: parent.width * frac
+                                height: parent.height
+                                radius: 1
+                                color: Themes.accent
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
