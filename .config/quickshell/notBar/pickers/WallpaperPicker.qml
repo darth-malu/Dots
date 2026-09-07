@@ -43,11 +43,11 @@ PanelWindow {
         return list.filter(p => p.toLowerCase().includes(q));
     }
 
+    // apply stays open — Esc or the header close chip dismisses it
     function applyWallpaper(path) {
         if (!path || path.length === 0)
             return;
         WallpaperService.setWallpaper(path);
-        close();
     }
 
     function close() {
@@ -92,7 +92,7 @@ PanelWindow {
             color: chip.on ? "#50fa7b"
                 : chipMa.containsMouse ? Themes.fg : Qt.rgba(1, 1, 1, 0.55)
             font {
-                pixelSize: 8.5
+                pixelSize: 8
                 letterSpacing: 0.5
                 family: "ZedMono Nerd Font"
             }
@@ -238,6 +238,31 @@ PanelWindow {
                         onClicked: root.favFilter = !root.favFilter
                     }
                 }
+
+                // explicit close — apply no longer dismisses the picker
+                Rectangle {
+                    implicitWidth: 18
+                    implicitHeight: 18
+                    radius: 9
+                    color: closeMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.18) : "transparent"
+                    border.width: 1
+                    border.color: closeMa.containsMouse ? "#ff5555" : Themes.borderMuted
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "\uf00d"
+                        color: closeMa.containsMouse ? "#ff5555" : Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.7)
+                        font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+                    }
+
+                    MouseArea {
+                        id: closeMa
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        hoverEnabled: true
+                        onClicked: root.close()
+                    }
+                }
             }
 
                     // ── current wallpaper banner — flat, no tint behind it ──
@@ -371,19 +396,20 @@ PanelWindow {
                         color: cellMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.10) : "transparent"
                     }
 
-                    // border ring — always rendered above the thumbnail so
-                    // the wallpaper image can never overlap the border
-                    Rectangle {
-                        anchors.fill: parent
-                        anchors.margins: 2
-                        radius: 9
-                        color: "transparent"
-                        border.width: (grid.currentIndex === index || cellWrap.path_ === WallpaperService.current || cellMa.containsMouse) ? 2 : 1
-                        border.color: grid.currentIndex === index
-                            ? Themes.rofiAccent
-                            : cellWrap.path_ === WallpaperService.current
-                                ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.55)
-                                : Qt.rgba(1, 1, 1, 0.12)
+// border ring — always rendered above the thumbnail so
+                        // the wallpaper image can never overlap the border;
+                        // the keyboard-highlight ring uses a distinct color
+                        Rectangle {
+                            anchors.fill: parent
+                            anchors.margins: 2
+                            radius: 9
+                            color: "transparent"
+                            border.width: (grid.currentIndex === index || cellWrap.path_ === WallpaperService.current || cellMa.containsMouse) ? 2 : 1
+                            border.color: grid.currentIndex === index
+                                ? Themes.pink
+                                : cellWrap.path_ === WallpaperService.current
+                                    ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.55)
+                                    : Qt.rgba(1, 1, 1, 0.12)
                     }
 
                     // "applied" corner badge on the current wallpaper

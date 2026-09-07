@@ -26,6 +26,7 @@ Item {
             showPopup = false;
             showArtPopup = false;
             showVolume = false;
+            showPlayerPicker = false;
         }
     }
 
@@ -33,6 +34,7 @@ Item {
     property bool showPlaying: MprisState.player?.isPlaying ?? false
     property bool showPopup: false
     property bool showArtPopup: false
+    property bool showPlayerPicker: false
     property bool _hovering: false
     readonly property bool pillVisible: MprisState.hideWhenIdle ? showPlaying : (MprisState.player !== null)
 
@@ -464,6 +466,147 @@ Item {
                             pointSize: 10
                             symbolSize: 10
                             paddingg: 0
+                        }
+                    }
+
+                    // player picker entry — visible whenever multiple apps are open,
+                    // so the controlled app can always be switched (compact too)
+                    Rectangle {
+                        id: pickerBtn
+
+                        readonly property bool any: MprisState.controlPlayers.length > 1
+
+                        visible: mprisRoot.pillVisible && pickerBtn.any
+                        Layout.preferredWidth: visible ? 16 : 0
+                        Layout.preferredHeight: visible ? 16 : 0
+                        radius: 5
+                        color: pickerMa.containsMouse || mprisRoot.showPlayerPicker
+                            ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.18)
+                            : "transparent"
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 110
+                            }
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "\uf085"
+                            color: mprisRoot.showPlayerPicker || pickerMa.containsMouse ? Themes.accent : Themes.muted
+                            font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+                        }
+
+                        MouseArea {
+                            id: pickerMa
+
+                            anchors.fill: parent
+                            anchors.margins: -2
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: mprisRoot.showPlayerPicker = !mprisRoot.showPlayerPicker
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ── player picker popup — pick which open app the pill controls ──
+    LazyLoader {
+        loading: mprisRoot.showPlayerPicker
+
+        PopupWindow {
+            id: playerPicker
+
+            visible: mprisRoot.showPlayerPicker
+            grabFocus: true
+            color: "transparent"
+
+            anchor.window: mprisRoot.host
+            anchor.rect.x: {
+                let g = mprisRoot.mapToGlobal(0, 0);
+                return Math.max(4, Math.min(g.x + mprisRoot.width + 4, mprisRoot.host.width - width - 4));
+            }
+            anchor.rect.y: 35
+
+            implicitWidth: 210
+            implicitHeight: Math.min(listCol.implicitHeight + 16, 300)
+
+            Rectangle {
+                anchors.fill: parent
+                focus: true
+                radius: 10
+                color: Themes.popupCardBg
+                border.width: 1
+                border.color: Themes.borderMuted
+
+                Keys.onEscapePressed: mprisRoot.showPlayerPicker = false
+
+                ColumnLayout {
+                    id: listCol
+
+                    anchors.fill: parent
+                    anchors.margins: 8
+                    spacing: 4
+
+                    Text {
+                        text: "pick player"
+                        color: Themes.muted
+                        font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                    }
+
+                    Repeater {
+                        model: MprisState.controlPlayers
+
+                        delegate: Rectangle {
+                            id: pickRow
+
+                            required property var modelData
+
+                            readonly property bool cur: (MprisState.cardPlayer?.dbusName ?? "") === modelData.dbusName
+
+                            Layout.fillWidth: true
+                            implicitHeight: 28
+                            radius: 6
+                            color: pickRowMa.containsMouse
+                                ? Qt.rgba(1, 1, 1, 0.08)
+                                : pickRow.cur ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : "transparent"
+                            border.width: pickRow.cur ? 1 : 0
+                            border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.5)
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 8
+                                anchors.rightMargin: 8
+                                spacing: 8
+
+                                Text {
+                                    text: MprisState.appGlyph(pickRow.modelData)
+                                    color: pickRow.cur ? Themes.accent : Themes.dim
+                                    font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
+                                }
+
+                                Text {
+                                    text: pickRow.modelData.identity || "?"
+                                    elide: Text.ElideRight
+                                    color: pickRow.cur ? Themes.accent : Themes.fg
+                                    font { pixelSize: 10; bold: true; family: "Quicksand" }
+                                    Layout.fillWidth: true
+                                }
+                            }
+
+                            MouseArea {
+                                id: pickRowMa
+
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    MprisState.pinPlayerName = pickRow.modelData.dbusName;
+                                    mprisRoot.showPlayerPicker = false;
+                                }
+                            }
                         }
                     }
                 }
