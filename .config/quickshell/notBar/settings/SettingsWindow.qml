@@ -518,8 +518,6 @@ Item {
                 id: wpPage
                 spacing: 12
 
-                property bool favOnly: false
-
                 Card {
                     title: "Wallpaper"
                     icon: "\uf03e"
@@ -540,6 +538,16 @@ Item {
                         Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
 
                         SettingRow {
+                            icon: "\uf0b2"
+                            label: "Desktop frame"
+                            caption: BarState.frameOn ? "accent" : "off"
+                            checked: BarState.frameOn
+                            onFlipped: BarState.frameOn = !BarState.frameOn
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
+
+                        SettingRow {
                             icon: "\uf017"
                             label: "Desktop clock"
                             caption: WallpaperService.desktopClock ? "on" : "off"
@@ -555,6 +563,18 @@ Item {
                             caption: WallpaperService.slideshowEnabled ? "slideshow" : "off"
                             checked: WallpaperService.slideshowEnabled
                             onFlipped: WallpaperService.slideshowEnabled = !WallpaperService.slideshowEnabled
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
+
+                        SettingRow {
+                            icon: "\uf005"
+                            label: "Rotate favorites only"
+                            caption: WallpaperService.rotationFavoritesOnly
+                                ? (WallpaperService.favorites.length === 0 ? "no stars yet" : "stars only")
+                                : "all wallpapers"
+                            checked: WallpaperService.rotationFavoritesOnly
+                            onFlipped: WallpaperService.rotationFavoritesOnly = !WallpaperService.rotationFavoritesOnly
                         }
 
                         Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
@@ -811,34 +831,46 @@ Item {
                         Layout.fillWidth: true
                         Layout.topMargin: 4
 
-                        // favorites filter chip
+                        // browse-all (launches the rofi picker) + favorites summary
                         RowLayout {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 22
-                            spacing: 8
+                            Layout.preferredHeight: 26
+                            spacing: 10
 
                             Rectangle {
-                                id: favFilterChip
+                                id: wpBrowseBtn
 
-                                implicitWidth: favFilterTxt.implicitWidth + 18
-                                implicitHeight: 18
-                                radius: 9
-                                color: favFilterMa.containsMouse ? Qt.rgba(1, 0.72, 0.53, 0.18) : Themes.separator
+                                implicitWidth: wpBrowseTxt.implicitWidth + 16
+                                implicitHeight: 26
+                                radius: 8
+                                color: wpBrowseMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16) : Themes.cardBg
+                                border.width: 1
+                                border.color: wpBrowseMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.5) : Themes.borderColor
 
-                                Text {
-                                    id: favFilterTxt
+                                RowLayout {
+                                    id: wpBrowseTxt
                                     anchors.centerIn: parent
-                                    text: wpPage.favOnly ? "\uf005  favorites only" : "\uf006  favorites"
-                                    color: wpPage.favOnly ? "#ffb86c" : Themes.dim
-                                    font { pixelSize: 9; bold: true; family: "Symbols Nerd Font Mono, Quicksand" }
+                                    spacing: 6
+
+                                    Text {
+                                        text: "\uf15b"
+                                        color: wpBrowseMa.containsMouse ? Themes.accent : Themes.dim
+                                        font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+                                    }
+
+                                    Text {
+                                        text: "Browse all wallpapers"
+                                        color: wpBrowseMa.containsMouse ? Themes.accent : Themes.dim
+                                        font { pixelSize: 10; bold: true; family: "Quicksand" }
+                                    }
                                 }
 
                                 MouseArea {
-                                    id: favFilterMa
+                                    id: wpBrowseMa
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    onClicked: wpPage.favOnly = !wpPage.favOnly
+                                    onClicked: PickerState.wallpaperOpen = true
                                 }
                             }
 
@@ -852,8 +884,10 @@ Item {
                             Item { Layout.fillWidth: true }
 
                             Text {
-                                visible: wpPage.favOnly && WallpaperService.favorites.length === 0
-                                text: "click ★ on any wallpaper to favorite it"
+                                visible: WallpaperService.wallpaperList.length > 0
+                                text: WallpaperService.favorites.length === 0
+                                    ? "no favorites yet — star wallpapers in the picker"
+                                    : "click a tile to apply · star to remove"
                                 color: Themes.borderMuted
                                 font { pixelSize: 8; italic: true; family: "Quicksand" }
                             }
@@ -868,34 +902,23 @@ Item {
                             font { pixelSize: 11; family: "Quicksand" }
                         }
 
-                        Text {
-                            Layout.fillWidth: true
-                            visible: wpPage.favOnly && WallpaperService.wallpaperList.length > 0 && WallpaperService.favorites.length === 0
-                            text: "No favorites yet — click ★ on any wallpaper in the library."
-                            color: Themes.dim
-                            wrapMode: Text.WordWrap
-                            font { pixelSize: 11; family: "Quicksand" }
-                        }
-
+                        // favorites only — the settings surface curates stars instead
+                        // of listing the whole library (browsing lives in the picker)
                         Flow {
                             Layout.fillWidth: true
                             Layout.maximumWidth: 620
                             spacing: 8
-                            visible: WallpaperService.wallpaperList.length > 0 &&
-                                     (!wpPage.favOnly || WallpaperService.favorites.length > 0)
+                            visible: WallpaperService.wallpaperList.length > 0 && WallpaperService.favorites.length > 0
 
                             Repeater {
-                                model: wpPage.favOnly
-                                    ? WallpaperService.wallpaperList.filter(p => WallpaperService.isFavorite(p))
-                                    : WallpaperService.wallpaperList
+                                model: WallpaperService.favorites
 
                                 delegate: Rectangle {
-                                    id: wpTile
+                                    id: wpFavTile
 
                                     required property string modelData
 
-                                    readonly property bool sel: wpTile.modelData === WallpaperService.current
-                                    readonly property bool isFav: WallpaperService.isFavorite(wpTile.modelData)
+                                    readonly property bool sel: wpFavTile.modelData === WallpaperService.current
 
                                     implicitWidth: 180
                                     implicitHeight: 112
@@ -903,7 +926,7 @@ Item {
                                     clip: true
                                     color: Themes.cardBg
                                     border.width: 2
-                                    border.color: sel ? Themes.accent : wpTileHover.containsMouse ? Qt.rgba(1, 1, 1, 0.3) : "transparent"
+                                    border.color: sel ? Themes.accent : wpFavHover.containsMouse ? Qt.rgba(1, 1, 1, 0.3) : "transparent"
 
                                     Behavior on border.color {
                                         ColorAnimation { duration: 110 }
@@ -912,7 +935,7 @@ Item {
                                     Image {
                                         anchors.fill: parent
                                         anchors.margins: 2
-                                        source: wpTile.modelData
+                                        source: WallpaperService.thumbSource(wpFavTile.modelData, WallpaperService.thumbVersion)
                                         fillMode: Image.PreserveAspectCrop
                                         asynchronous: true
                                         cache: false
@@ -920,17 +943,15 @@ Item {
                                     }
 
                                     MouseArea {
-                                        id: wpTileHover
+                                        id: wpFavHover
                                         anchors.fill: parent
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: WallpaperService.setWallpaper(wpTile.modelData)
+                                        onClicked: WallpaperService.setWallpaper(wpFavTile.modelData)
                                     }
 
-                                    // star toggle — top-right, above the click zone
+                                    // star — tap to drop from favorites
                                     Rectangle {
-                                        id: wpFavBtn
-
                                         anchors.top: parent.top
                                         anchors.right: parent.right
                                         anchors.topMargin: 4
@@ -938,23 +959,23 @@ Item {
                                         implicitWidth: 20
                                         implicitHeight: 20
                                         radius: 10
-                                        color: favHover.containsMouse || wpTile.isFav ? Qt.rgba(0, 0, 0, 0.62) : Qt.rgba(0, 0, 0, 0.35)
+                                        color: favRemoveMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.75) : Qt.rgba(0, 0, 0, 0.62)
                                         border.width: 1
                                         border.color: Qt.rgba(1, 1, 1, 0.18)
 
                                         Text {
                                             anchors.centerIn: parent
-                                            text: wpTile.isFav ? "\uf005" : "\uf006"
-                                            color: wpTile.isFav ? "#ffb86c" : Themes.fg
+                                            text: "\uf005"
+                                            color: "#ffb86c"
                                             font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
                                         }
 
                                         MouseArea {
-                                            id: favHover
+                                            id: favRemoveMa
                                             anchors.fill: parent
                                             hoverEnabled: true
                                             cursorShape: Qt.PointingHandCursor
-                                            onClicked: WallpaperService.toggleFavorite(wpTile.modelData)
+                                            onClicked: WallpaperService.toggleFavorite(wpFavTile.modelData)
                                         }
                                     }
                                 }

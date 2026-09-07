@@ -15,6 +15,10 @@ Singleton {
     property int barMode: prefs.barMode
     onBarModeChanged: prefs.barMode = barMode
 
+    // caelestia-style desktop frame — accent outline around the screen
+    property bool frameOn: prefs.frameOn
+    onFrameOnChanged: prefs.frameOn = frameOn
+
     // legacy flag kept for older consumers/settings state
     readonly property bool solidBar: barMode === 1
 
@@ -35,6 +39,7 @@ Singleton {
             property bool solidBar: false
             // no stored value yet → derive from the old boolean (migration)
             property int barMode: prefs.solidBar ? 1 : 0
+            property bool frameOn: true
         }
     }
 }

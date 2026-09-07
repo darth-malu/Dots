@@ -21,8 +21,8 @@ Singleton {
     property bool toggleRofi: false
 
     // tray icons visibility — persisted so the tray survives restarts
-    property bool toggleSysTray: prefs.showSysTray
-    onToggleSysTrayChanged: prefs.showSysTray = toggleSysTray
+    property bool toggleSysTray: Prefs.prefs.showSysTray
+    onToggleSysTrayChanged: Prefs.prefs.showSysTray = toggleSysTray
     property bool toggleSettings: false
 
     // true while the quicksettings popup is open (used to suppress redundant music toasts)
@@ -35,8 +35,8 @@ Singleton {
 
     property bool showPopup: false
     // persisted preference
-    property bool popupSolidBg: prefs.popupSolidBg
-    onPopupSolidBgChanged: prefs.popupSolidBg = popupSolidBg
+    property bool popupSolidBg: Prefs.prefs.popupSolidBg
+    onPopupSolidBgChanged: Prefs.prefs.popupSolidBg = popupSolidBg
 
     // popup card theming — windows stay transparent project-wide; the CARD
     // switches between opaque slab and frosted glass
@@ -64,101 +64,101 @@ Singleton {
     property bool showCpuProcs: false
     property bool showMemProcs: false
     // ── media / now-playing toggles (persisted) ──
-    property bool showPlayerChooser: prefs.showPlayerChooser
-    onShowPlayerChooserChanged: prefs.showPlayerChooser = showPlayerChooser
+    property bool showPlayerChooser: Prefs.prefs.showPlayerChooser
+    onShowPlayerChooserChanged: Prefs.prefs.showPlayerChooser = showPlayerChooser
 
-    property bool showShuffle: prefs.showShuffle
-    onShowShuffleChanged: prefs.showShuffle = showShuffle
+    property bool showShuffle: Prefs.prefs.showShuffle
+    onShowShuffleChanged: Prefs.prefs.showShuffle = showShuffle
 
-    property bool showLoop: prefs.showLoop
-    onShowLoopChanged: prefs.showLoop = showLoop
+    property bool showLoop: Prefs.prefs.showLoop
+    onShowLoopChanged: Prefs.prefs.showLoop = showLoop
 
     // ── Bar module visibility (persisted) ──
-    property bool showBluetooth: prefs.showBluetooth
-    onShowBluetoothChanged: prefs.showBluetooth = showBluetooth
+    property bool showBluetooth: Prefs.prefs.showBluetooth
+    onShowBluetoothChanged: Prefs.prefs.showBluetooth = showBluetooth
 
-    property bool showWifi: prefs.showWifi
-    onShowWifiChanged: prefs.showWifi = showWifi
+    property bool showWifi: Prefs.prefs.showWifi
+    onShowWifiChanged: Prefs.prefs.showWifi = showWifi
 
-    property bool showEthernet: prefs.showEthernet
-    onShowEthernetChanged: prefs.showEthernet = showEthernet
+    property bool showEthernet: Prefs.prefs.showEthernet
+    onShowEthernetChanged: Prefs.prefs.showEthernet = showEthernet
 
-    property bool showMpris: prefs.showMpris
-    onShowMprisChanged: prefs.showMpris = showMpris
+    property bool showMpris: Prefs.prefs.showMpris
+    onShowMprisChanged: Prefs.prefs.showMpris = showMpris
 
-    property bool showBattery: prefs.showBattery
-    onShowBatteryChanged: prefs.showBattery = showBattery
+    property bool showBattery: Prefs.prefs.showBattery
+    onShowBatteryChanged: Prefs.prefs.showBattery = showBattery
 
-    property bool showNotifTray: prefs.showNotifTray
-    onShowNotifTrayChanged: prefs.showNotifTray = showNotifTray
+    property bool showNotifTray: Prefs.prefs.showNotifTray
+    onShowNotifTrayChanged: Prefs.prefs.showNotifTray = showNotifTray
 
     // wifi popup — green highlighted name for the connected network
     // (false = classic white name, only the dot marks the connection)
-    property bool wifiGreenName: prefs.wifiGreenName
-    onWifiGreenNameChanged: prefs.wifiGreenName = wifiGreenName
+    property bool wifiGreenName: Prefs.prefs.wifiGreenName
+    onWifiGreenNameChanged: Prefs.prefs.wifiGreenName = wifiGreenName
 
     // ethernet popup — session totals always visible (false = old behaviour,
     // totals only shown together with the traffic graphs)
-    property bool showNetTotals: prefs.showNetTotals
-    onShowNetTotalsChanged: prefs.showNetTotals = showNetTotals
+    property bool showNetTotals: Prefs.prefs.showNetTotals
+    onShowNetTotalsChanged: Prefs.prefs.showNetTotals = showNetTotals
 
     // workspace module flavour — true = app icons (default), false = numbers
-    property bool iconWorkspaces: prefs.iconWorkspaces
-    onIconWorkspacesChanged: prefs.iconWorkspaces = iconWorkspaces
+    property bool iconWorkspaces: Prefs.prefs.iconWorkspaces
+    onIconWorkspacesChanged: Prefs.prefs.iconWorkspaces = iconWorkspaces
 
     // transparent active workspace number badge (parent container stays colored)
-    property bool transparentWsBadge: prefs.transparentWsBadge
-    onTransparentWsBadgeChanged: prefs.transparentWsBadge = transparentWsBadge
+    property bool transparentWsBadge: Prefs.prefs.transparentWsBadge
+    onTransparentWsBadgeChanged: Prefs.prefs.transparentWsBadge = transparentWsBadge
 
     // boxy theme — master toggle: controls workspaces, tray and notifications
-    property bool boxyTheme: prefs.boxyTheme
+    property bool boxyTheme: Prefs.prefs.boxyTheme
     onBoxyThemeChanged: {
-        prefs.boxyTheme = boxyTheme;
+        Prefs.prefs.boxyTheme = boxyTheme;
         notifRadius = boxyTheme ? 0 : 10;
     }
 
     // show workspaces module — completely hides the workspace pills
-    property bool showWorkspaces: prefs.showWorkspaces
-    onShowWorkspacesChanged: prefs.showWorkspaces = showWorkspaces
+    property bool showWorkspaces: Prefs.prefs.showWorkspaces
+    onShowWorkspacesChanged: Prefs.prefs.showWorkspaces = showWorkspaces
 
     // notification font family
-    property string notifFont: prefs.notifFont
-    onNotifFontChanged: prefs.notifFont = notifFont
+    property string notifFont: Prefs.prefs.notifFont
+    onNotifFontChanged: Prefs.prefs.notifFont = notifFont
 
     // notification popup art size and border radius
-    property int notifArtSize: prefs.notifArtSize
-    onNotifArtSizeChanged: prefs.notifArtSize = notifArtSize
+    property int notifArtSize: Prefs.prefs.notifArtSize
+    onNotifArtSizeChanged: Prefs.prefs.notifArtSize = notifArtSize
 
-    property int notifRadius: prefs.notifRadius
-    onNotifRadiusChanged: prefs.notifRadius = notifRadius
+    property int notifRadius: Prefs.prefs.notifRadius
+    onNotifRadiusChanged: Prefs.prefs.notifRadius = notifRadius
 
     // bar audio modules — output (speaker) and input (mic) can be hidden
     // independently from settings
-    property bool showVolumeOut: prefs.showVolumeOut
-    onShowVolumeOutChanged: prefs.showVolumeOut = showVolumeOut
+    property bool showVolumeOut: Prefs.prefs.showVolumeOut
+    onShowVolumeOutChanged: Prefs.prefs.showVolumeOut = showVolumeOut
 
-    property bool showVolumeIn: prefs.showVolumeIn
-    onShowVolumeInChanged: prefs.showVolumeIn = showVolumeIn
+    property bool showVolumeIn: Prefs.prefs.showVolumeIn
+    onShowVolumeInChanged: Prefs.prefs.showVolumeIn = showVolumeIn
 
     // per-application audio streams list in the quicksettings volume card
-    property bool showAppVolume: prefs.showAppVolume
-    onShowAppVolumeChanged: prefs.showAppVolume = showAppVolume
+    property bool showAppVolume: Prefs.prefs.showAppVolume
+    onShowAppVolumeChanged: Prefs.prefs.showAppVolume = showAppVolume
 
     // bar mode — 0 transparent, 1 solid, 2 full-bleed.
     // Icons use this to pick soft (transparent) or bright (solid bg) colours.
     readonly property bool barSolid: BarState.barMode !== 0
 
     // color scheme — 0 purple (default), 1 rofi teal
-    property int themeScheme: prefs.themeScheme
-    onThemeSchemeChanged: prefs.themeScheme = themeScheme
+    property int themeScheme: Prefs.prefs.themeScheme
+    onThemeSchemeChanged: Prefs.prefs.themeScheme = themeScheme
 
     // ── radio states persisted across reboots (settings → connections) ──
     // wifi radio matter — `wifiEnabled` on NetworkState is !Networking.wifiEnabled
-    property bool wifiRadioWanted: prefs.wifiRadioWanted
-    onWifiRadioWantedChanged: prefs.wifiRadioWanted = wifiRadioWanted
+    property bool wifiRadioWanted: Prefs.prefs.wifiRadioWanted
+    onWifiRadioWantedChanged: Prefs.prefs.wifiRadioWanted = wifiRadioWanted
 
-    property bool btRadioWanted: prefs.btRadioWanted
-    onBtRadioWantedChanged: prefs.btRadioWanted = btRadioWanted
+    property bool btRadioWanted: Prefs.prefs.btRadioWanted
+    onBtRadioWantedChanged: Prefs.prefs.btRadioWanted = btRadioWanted
 
     function setWifiRadio(on) {
         root.wifiRadioWanted = on;
@@ -195,46 +195,6 @@ Singleton {
         }
     }
     property int count: 0
-
-    // ── persistent store for user preferences ──
-    FileView {
-        id: prefStore
-
-        path: Quickshell.env("HOME") + "/.config/quickshell/prefs.json"
-        watchChanges: false
-        onAdapterUpdated: writeAdapter()
-
-        JsonAdapter {
-            id: prefs
-
-            property bool popupSolidBg: false
-            property bool showSysTray: true
-            property bool showMpris: false
-            property bool showPlayerChooser: true
-            property bool showShuffle: false
-            property bool showLoop: false
-            property bool wifiGreenName: true
-            property bool showNetTotals: true
-            property bool showBluetooth: true
-            property bool showWifi: true
-            property bool showEthernet: true
-            property bool showBattery: true
-            property bool showNotifTray: true
-            property bool iconWorkspaces: true
-            property bool boxyTheme: true
-            property bool showWorkspaces: true
-            property bool transparentWsBadge: false
-            property string notifFont: "ZedMono Nerd Font"
-            property int notifArtSize: 90
-            property int notifRadius: 10
-            property bool showVolumeOut: true
-            property bool showVolumeIn: true
-            property bool showAppVolume: false
-            property int themeScheme: 0
-            property bool wifiRadioWanted: true
-            property bool btRadioWanted: true
-        }
-    }
 
     // ── Avatar (shared by quicksettings + settings sidebar) ──
     readonly property string avatarPath: {

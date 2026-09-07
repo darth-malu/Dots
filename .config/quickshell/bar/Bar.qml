@@ -121,6 +121,19 @@ ShellRoot {
                     // macOS menu-bar rhythm — one identical gap between modules
                     spacing: 8 // 14::
 
+                    // media moves in-line with the right cluster so the centered
+                    // pill can no longer slide under the active-window title
+                    Item {
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.preferredWidth: mprisModule.implicitWidth
+                        Layout.preferredHeight: mprisModule.implicitHeight
+
+                        Mpris {
+                            id: mprisModule
+                            host: barr
+                        }
+                    }
+
                     Resources {
                         host: barr
                     }
@@ -129,11 +142,6 @@ ShellRoot {
                         clockInside: true
                     }
                 }
-            }
-
-            Mpris {
-                host: barr
-                anchors.centerIn: parent
             }
 
             BrightnessOsd {

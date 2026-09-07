@@ -455,7 +455,11 @@ Item {
             // anchor.rect.x: mprisRoot.host.width / 2 - width / 2
             // anchor.rect.y: 35
             anchor.window: mprisRoot.host
-            anchor.rect.x: mprisRoot.host.width / 2 - width / 2
+            anchor.rect.x: {
+                let g = mprisRoot.mapToGlobal(0, 0);
+                return Math.max(4, Math.min(g.x + mprisRoot.width / 2 - width / 2,
+                    mprisRoot.host.width - width - 4));
+            }
             anchor.rect.y: 35
             visible: mprisRoot.showPopup
             grabFocus: true
@@ -493,7 +497,8 @@ Item {
             anchor.window: mprisRoot.host
             anchor.rect.x: {
                 let g = mprisRoot.mapToGlobal(0, 0);
-                return g.x + mprisRoot.width / 2 - width / 2;
+                return Math.max(4, Math.min(g.x + mprisRoot.width / 2 - width / 2,
+                    mprisRoot.host.width - width - 4));
             }
             anchor.rect.y: 35
             visible: mprisRoot.showArtPopup && MprisState.player !== null
