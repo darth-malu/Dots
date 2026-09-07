@@ -40,14 +40,23 @@ Variants {
 
                 sourceComponent: Image {
                     id: wallpaperImg
+
+                    // decode size frozen from the screen geometry, NOT live-bound:
+                    // a re-binding to win.width*dpr on transient re-maps/size
+                    // churn during workspace transitions can re-decode the
+                    // wallpaper and re-trigger the 0→1 fade (the flash)
+                    readonly property size decodeSize: {
+                        const s = win.screen;
+                        if (!s)
+                            return Qt.size(1920, 1080);
+                        return Qt.size(Math.round(s.width * (s.devicePixelRatio ?? 1)),
+                            Math.round(s.height * (s.devicePixelRatio ?? 1)));
+                    }
+
                     source: WallpaperService.current
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
-                    cache: false
-                    sourceSize: {
-                        const dpr = win.screen?.devicePixelRatio ?? 1;
-                        return Qt.size(win.width * dpr, win.height * dpr);
-                    }
+                    sourceSize: wallpaperImg.decodeSize
 
                     opacity: status === Image.Ready ? 1 : 0
                     Behavior on opacity {

@@ -231,4 +231,63 @@ Item {
             WallpaperService.desktopClock = !WallpaperService.desktopClock;
         }
     }
+
+    // ── per-handler on/off toggles (Settings → Help) ──
+    readonly property var handlerModel: [
+        { target: "mpris", icon: "\uf001", label: "MPRIS" },
+        { target: "pipewire", icon: "\uf028", label: "PipeWire" },
+        { target: "notifications", icon: "\uf0f3", label: "Notifications" },
+        { target: "brightness", icon: "\uf185", label: "Brightness" },
+        { target: "netspeed", icon: "\uf0e8", label: "Net speed" },
+        { target: "resources", icon: "\uf1c0", label: "Resources" },
+        { target: "bar", icon: "\uf0c9", label: "Bar" },
+        { target: "appLauncher", icon: "\uf0ae", label: "App launcher" },
+        { target: "activate", icon: "\uf023", label: "Activate Linux" },
+        { target: "openWindows", icon: "\uf108", label: "Open windows" },
+        { target: "clipHist", icon: "\uf0c5", label: "Clipboard history" },
+        { target: "calc", icon: "\uf1ec", label: "Calculator" },
+        { target: "SysTray", icon: "\uf2d0", label: "SysTray" },
+        { target: "emoji", icon: "\uf118", label: "Emoji picker" },
+        { target: "color", icon: "\uf53f", label: "Color picker" },
+        { target: "wallpaperPicker", icon: "\uf87c", label: "Wallpaper picker" },
+        { target: "logout", icon: "\uf08b", label: "Logout overlay" },
+        { target: "wallpaper", icon: "\uf87c", label: "Wallpaper" }
+    ]
+
+    function ipcEnabled(target: string): bool {
+        const v = Prefs.prefs.ipcEnabled[target];
+        return v === undefined ? true : !!v;
+    }
+
+    function setIpcEnabled(target: string, on: bool): void {
+        const map = {};
+        for (const k in Prefs.prefs.ipcEnabled)
+            map[k] = Prefs.prefs.ipcEnabled[k];
+        map[target] = on;
+        Prefs.prefs.ipcEnabled = map;
+        const children = root.data;
+        for (let i = 0; i < children.length; i++) {
+            const h = children[i];
+            if (h && h.target === target) {
+                h.enabled = on;
+                break;
+            }
+        }
+        Prefs.write();
+    }
+
+    // apply persisted toggles on (re)load — once here, settings toggles and
+    // process restarts stay in sync
+    Component.onCompleted: {
+        const map = Prefs.prefs.ipcEnabled;
+        const children = root.data;
+        for (let i = 0; i < children.length; i++) {
+            const h = children[i];
+            if (!h || !h.target)
+                continue;
+            const v = map[h.target];
+            if (v !== undefined)
+                h.enabled = v;
+        }
+    }
 }

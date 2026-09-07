@@ -18,7 +18,7 @@ import qs.logout
 ShellRoot {
     Bar {}
     Volume {}
-    IpcHandler {}
+    IpcHandler { id: ipcHandlers }
     NotificationOverlay {}
     Activate {}
     AppLauncher {}

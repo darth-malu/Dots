@@ -40,6 +40,15 @@ Item {
     // (the default view is a settings option)
     readonly property bool showDetails: !MprisState.mprisCompact || mprisRoot._hovering
 
+    // 0..1 animated expansion factor — drives width/spacing/opacity of the
+    // detail items so the compact hover is a smooth slide, not a pop
+    property real _details: 0
+    Behavior on _details {
+        NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+    }
+    onShowDetailsChanged: mprisRoot._details = mprisRoot.showDetails ? 1 : 0
+    Component.onCompleted: mprisRoot._details = mprisRoot.showDetails ? 1 : 0
+
     // survives across the pill's show/hide so timers keep working
     Timer {
         id: hideVolumeTimer
@@ -57,10 +66,12 @@ Item {
 
         onEntered: {
             mprisRoot._hovering = true;
+            mprisRoot._details = 1;
         }
 
         onExited: {
             mprisRoot._hovering = false;
+            mprisRoot._details = 0;
             hideVolumeTimer.restart();
         }
 
@@ -215,16 +226,21 @@ Item {
                 RowLayout {
                     id: pillRow
                     anchors.fill: parent
-                    anchors.leftMargin: 6
-                    anchors.rightMargin: 6
+                    anchors.leftMargin: mprisRoot._details * 6
+                    anchors.rightMargin: mprisRoot._details * 6
                     // hidden detail items still reserve their grid gap — collapse it
-                    spacing: mprisRoot.showDetails ? 6 : 0
+                    spacing: mprisRoot._details * 6
 
                     // ── album art + fallback ──
                     Item {
-                        visible: mprisRoot.showDetails
-                        Layout.preferredWidth: visible ? pill.height - 4 : 0
+                        visible: mprisRoot._details > 0.01
+                        opacity: mprisRoot._details
+                        Layout.preferredWidth: visible ? (pill.height - 4) * mprisRoot._details : 0
                         Layout.preferredHeight: visible ? pill.height - 4 : 0
+
+                        Behavior on opacity {
+                            NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                        }
 
                         // ClippingRectangle (not ClippingWrapperRectangle) — the wrapper
                         // variant manages child geometry and breaks anchored images
@@ -278,15 +294,20 @@ Item {
                     // ── track title (marquee-scrolls when it doesn't fit) ──
                     MarqueeText {
                         id: title
-                        visible: mprisRoot.showDetails
+                        visible: mprisRoot._details > 0.01
+                        opacity: mprisRoot._details
                         Layout.alignment: Qt.AlignVCenter
-                        maxWidth: 150
+                        maxWidth: 150 * mprisRoot._details
                         scrolling: MprisState.marqueeEnabled
                         text: MprisState.player?.trackTitle || "Unknown Track"
                         textColor: Themes.mprisTextColor
                         fontFamily: "quicksand"
                         fontBold: true
                         pixelSize: 12
+
+                        Behavior on opacity {
+                            NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                        }
                     }
 
                     // ── active player name ──
@@ -295,8 +316,13 @@ Item {
                         text: "· " + (MprisState.player?.identity || "")
                         color: Themes.toxicGreen
                         font: Themes.quicksand_medium
-                        visible: Mpris.players.length > 1 && mprisRoot.showDetails
+                        visible: Mpris.players.length > 1 && mprisRoot._details > 0.01
+                        opacity: mprisRoot._details
                         Layout.alignment: Qt.AlignVCenter
+
+                        Behavior on opacity {
+                            NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                        }
 
                         MouseArea {
                             anchors.fill: parent
@@ -317,7 +343,7 @@ Item {
                     }
 
                     Item {
-                        visible: mprisRoot.showDetails
+                        visible: mprisRoot._details > 0.01
                         Layout.fillWidth: true
                     }
 

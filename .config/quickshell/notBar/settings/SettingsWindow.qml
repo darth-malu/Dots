@@ -2576,6 +2576,49 @@ Item {
                     }
                     HelpLine { text: "currentDate · currentDateTime → sends notify-send" }
                 }
+
+                Card {
+                    title: "IPC handlers"
+                    icon: "\uf0e4"
+                    accent: Themes.accent
+
+                    ColumnLayout {
+                        spacing: 0
+                        Layout.fillWidth: true
+
+                        Repeater {
+                            model: ipcHandlers.handlerModel
+
+                            delegate: ColumnLayout {
+                                id: ipcCell
+
+                                required property var modelData
+                                required property int index
+
+                                spacing: 0
+                                Layout.fillWidth: true
+
+                                SettingRow {
+                                    icon: ipcCell.modelData.icon
+                                    label: ipcCell.modelData.label
+                                    caption: "ipc call " + ipcCell.modelData.target
+                                    checked: ipcHandlers.ipcEnabled(ipcCell.modelData.target)
+                                    onFlipped: ipcHandlers.setIpcEnabled(ipcCell.modelData.target,
+                                        !ipcHandlers.ipcEnabled(ipcCell.modelData.target))
+                                }
+
+                                // separator between handler rows
+                                Rectangle {
+                                    visible: ipcCell.index < ipcHandlers.handlerModel.length - 1
+                                    Layout.fillWidth: true
+                                    height: 1
+                                    color: Themes.separator
+                                    Layout.leftMargin: 32
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

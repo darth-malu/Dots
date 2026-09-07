@@ -6,6 +6,16 @@
 -- })
 -- overlayLayerRule:set_enabled(false)
 
+-- The qs wallpaper is a committed layersurface; letting hypr fade its alpha on
+-- (re)map shows a flash of the static background underneath during workspace
+-- transitions (hyprpaper, being a once-committed opaque surface, never did).
+local bgNoAnim = hl.layer_rule({
+  name           = "no-anim-quickshell-bg",
+  match          = { namespace = "^quickshell-bg$" },
+  no_anim        = true,
+})
+bgNoAnim:set_enabled(true)
+
 local suppressMaximizeRule = hl.window_rule({
   -- Ignore maximize requests from all apps. You'll probably like this.
   name           = "suppress-maximize-events",

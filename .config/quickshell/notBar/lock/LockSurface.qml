@@ -320,18 +320,19 @@ WlSessionLockSurface {
                         color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12)
 
                         Image {
+                            id: artImg
                             anchors.fill: parent
                             anchors.margins: 2
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
                             sourceSize: Qt.size(80, 80)
-                            source: np.isBrowser ? "" : (MprisState.player?.trackArtUrl ?? "")
+                            source: np.isBrowser ? "" : String(MprisState.player?.trackArtUrl ?? "")
                             visible: status === Image.Ready
                         }
 
                         Text {
                             anchors.centerIn: parent
-                            visible: parent.children[1].status !== Image.Ready
+                            visible: artImg.status !== Image.Ready
                             text: np.isBrowser ? MprisState.browserGlyph(MprisState.player) : "\uf001"
                             color: Themes.accent
                             font { pixelSize: 14; family: "Symbols Nerd Font Mono" }

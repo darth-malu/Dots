@@ -47,9 +47,8 @@ BarBlock {
         return raw.length > 0 ? raw.split("\n") : [];
     }
 
-    // human bytes for a mount's trash, "—" when empty, "…" while unknown
-    function trashSizeFor(mount) {
-        var b = disk.trashSizes[mount];
+    // human bytes; "—" when empty, "…" while unknown
+    function fmtSize(b) {
         if (b === undefined)
             return "…";
         if (b <= 0)
@@ -61,6 +60,21 @@ BarBlock {
         if (b < 1073741824)
             return (b / 1048576).toFixed(1) + "M";
         return (b / 1073741824).toFixed(1) + "G";
+    }
+
+    // per-mount trash column value, "…" while the scan is running
+    function trashSizeFor(mount) {
+        return disk.fmtSize(disk.trashSizes[mount]);
+    }
+
+    // summed trash across every measured mount (rounded to a single unit)
+    readonly property string trashTotal: {
+        var t = 0;
+        for (var m in disk.trashSizes) {
+            if (disk.trashSizes[m] > 0)
+                t += disk.trashSizes[m];
+        }
+        return disk.fmtSize(t);
     }
 
     // one sh pass measuring trash for every visible mount; each line is "mount<TAB>bytes"
@@ -119,6 +133,7 @@ done`;
             NasState.kickRecheck(1);
         if (disk.trashShow)
             disk.computeTrash();
+        disk.armedMount = "";
     }
     onRightClicked: showUsage = !showUsage
 
@@ -439,9 +454,11 @@ done`;
 
                             Text {
                                 visible: disk.trashShow
-                                text: "click trash icon to empty"
+                                text: disk.trashTotal + " total"
                                 color: Themes.muted
-                                font { pixelSize: 8; italic: true; family: "Quicksand" }
+                                font { pixelSize: 8; family: "ZedMono Nerd Font"; letterSpacing: 1 }
+                                elide: Text.ElideRight
+                                Layout.maximumWidth: 120
                             }
                         }
 
@@ -488,14 +505,13 @@ done`;
 
                             Text {
                                 text: "trash"
-                                color: Themes.muted
+                                color: disk.trashShow ? Themes.muted : Themes.borderMuted
                                 font {
                                     pixelSize: 9
                                     family: "ZedMono Nerd Font"
                                 }
                                 Layout.preferredWidth: 42
                                 Layout.alignment: Qt.AlignRight
-                                visible: disk.trashShow
                             }
 
                             // spacer standing in for the usage-bar column
@@ -516,7 +532,6 @@ done`;
                             }
 
                             Item {
-                                visible: disk.trashShow
                                 Layout.preferredWidth: 38
                             }
                         }
@@ -598,13 +613,12 @@ done`;
                                         Layout.preferredWidth: 42
                                         horizontalAlignment: Text.AlignRight
                                         text: disk.trashSizeFor(drow.mount)
-                                        color: drow.hasTrash ? "#ffb86c" : Themes.borderMuted
+                                        color: !disk.trashShow ? Themes.borderMuted : drow.hasTrash ? "#ffb86c" : Themes.borderMuted
                                         font {
                                             pixelSize: 9
                                             bold: drow.hasTrash
                                             family: "ZedMono Nerd Font"
                                         }
-                                        visible: disk.trashShow
                                     }
 
                                     Rectangle {
@@ -654,32 +668,35 @@ done`;
                                         Layout.preferredWidth: 38
                                         implicitHeight: 16
                                         radius: 8
-                                        visible: disk.trashShow
-                                        color: dEmptyMa.containsMouse && drow.hasTrash ? (drow.armed ? Qt.rgba(1, 0.33, 0.33, 0.18) : Qt.rgba(1, 1, 1, 0.06)) : "transparent"
-                                        border.width: drow.armed && drow.hasTrash ? 1 : 0
+                                        color: !disk.trashShow ? "transparent"
+                                            : dEmptyMa.containsMouse && drow.hasTrash ? (drow.armed ? Qt.rgba(1, 0.33, 0.33, 0.18) : Qt.rgba(1, 1, 1, 0.06)) : "transparent"
+                                        border.width: disk.trashShow && drow.armed && drow.hasTrash ? 1 : 0
                                         border.color: Qt.rgba(1, 0.33, 0.33, 0.4)
 
                                         Text {
                                             anchors.centerIn: parent
-                                            text: drow.armed ? "empty?" : "\uf014"
-                                            color: !drow.hasTrash ? Themes.borderMuted : drow.armed ? "#ff5555" : dEmptyMa.containsMouse ? Themes.fg : Themes.dim
+                                            text: "\uf014"
+                                            color: !disk.trashShow ? Themes.borderMuted : !drow.hasTrash ? Themes.borderMuted : drow.armed ? "#ff5555" : dEmptyMa.containsMouse ? Themes.fg : Themes.dim
                                             font { pixelSize: 8; bold: true; family: "Symbols Nerd Font Mono, Quicksand" }
                                         }
 
+                                        // a fully armed row keeps the old double-click
+                                        // shortcut; single-click arms for the banner
                                         MouseArea {
                                             id: dEmptyMa
                                             anchors.fill: parent
                                             anchors.margins: -5
                                             hoverEnabled: true
                                             cursorShape: Qt.PointingHandCursor
-                                            enabled: drow.hasTrash
+                                            enabled: disk.trashShow && drow.hasTrash
                                             onClicked: {
                                                 if (drow.armed) {
+                                                    const m = disk.armedMount;
                                                     disk.armedMount = "";
-                                                    disk.emptyTrashFor(drow.mount);
+                                                    if (m)
+                                                        disk.emptyTrashFor(m);
                                                 } else {
                                                     disk.armedMount = drow.mount;
-                                                    trashArmTimer.restart();
                                                 }
                                             }
                                         }
@@ -688,17 +705,84 @@ done`;
                             }
                         }
 
-                        Text {
-                            text: "no mounts found"
-                            color: Themes.muted
-                            font {
-                                pixelSize: 10
-                                italic: true
-                                family: "Quicksand"
+Text {
+                                text: "no mounts found"
+                                color: Themes.muted
+                                font {
+                                    pixelSize: 10
+                                    italic: true
+                                    family: "Quicksand"
+                                }
+                                visible: disk.allDisksList.length === 0
+                                Layout.alignment: Qt.AlignHCenter
                             }
-                            visible: disk.allDisksList.length === 0
-                            Layout.alignment: Qt.AlignHCenter
-                        }
+
+                            // ── trash confirm banner — slow fade instead of pop ──
+                            Rectangle {
+                                id: trashBanner
+
+                                Layout.fillWidth: true
+                                implicitHeight: 28
+                                radius: 7
+                                visible: disk.trashShow && disk.armedMount.length > 0
+                                color: Qt.rgba(1, 0.33, 0.33, 0.1)
+                                border.width: 1
+                                border.color: Qt.rgba(1, 0.33, 0.33, 0.3)
+
+                                opacity: disk.armedMount.length > 0 ? 1 : 0
+                                Behavior on opacity {
+                                    NumberAnimation { duration: 150 }
+                                }
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 8
+                                    spacing: 8
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: "Empty trash on " + disk.armedMount + "?"
+                                        color: Themes.fg
+                                        font { pixelSize: 10; bold: true; family: "Quicksand" }
+                                        elide: Text.ElideRight
+                                    }
+
+                                    Text {
+                                        text: "Cancel"
+                                        color: Themes.muted
+                                        font { pixelSize: 9; bold: true; family: "Quicksand" }
+                                        TapHandler {
+                                            gesturePolicy: TapHandler.ReleaseWithinBounds
+                                            onTapped: disk.armedMount = ""
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        implicitWidth: emptyBtnTxt.implicitWidth + 14
+                                        implicitHeight: 20
+                                        radius: 10
+                                        color: "#ff5555"
+
+                                        Text {
+                                            id: emptyBtnTxt
+                                            anchors.centerIn: parent
+                                            text: "\uf014 Empty"
+                                            color: Qt.rgba(0.04, 0.02, 0.08, 0.9)
+                                            font { pixelSize: 9; bold: true; family: "Symbols Nerd Font Mono, Quicksand" }
+                                        }
+
+                                        TapHandler {
+                                            gesturePolicy: TapHandler.ReleaseWithinBounds
+                                            onTapped: {
+                                                const m = disk.armedMount;
+                                                disk.armedMount = "";
+                                                if (m)
+                                                    disk.emptyTrashFor(m);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                 }
             }
         }
@@ -729,11 +813,5 @@ done`;
             }
             disk.trashSizes = map;
         }
-    }
-
-    Timer {
-        id: trashArmTimer
-        interval: 3500
-        onTriggered: disk.armedMount = ""
     }
 }

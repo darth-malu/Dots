@@ -53,6 +53,10 @@ Singleton {
             property bool wifiRadioWanted: true
             property bool btRadioWanted: true
 
+            // ── ipc handler toggles ──
+            // map target → enabled; missing targets default to enabled
+            property var ipcEnabled: ({})
+
             // ── wallpaper keys ──
             property string wallpaper: ""
             property bool wallpaperEnabled: true
