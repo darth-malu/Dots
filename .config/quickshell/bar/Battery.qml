@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 import qs.services
@@ -480,81 +482,107 @@ RowLayout {
                     font { pixelSize: 10; bold: true; family: "Quicksand"; letterSpacing: 1 }
                 }
 
-                // ── Profile list — one sleek row per profile ──
-                Repeater {
-                    model: [
-                        { glyph: "\uf06c", name: "Power Saver", profile: PowerProfile.PowerSaver, tint: "#50fa7b" },
-                        { glyph: "\uf24e", name: "Balanced", profile: PowerProfile.Balanced, tint: Themes.accent },
-                        { glyph: "\uf0e7", name: "Performance", profile: PowerProfile.Performance, tint: "#ff5555" }
-                    ]
+                // ── Profile selector — caelestia-style segmented pill ──
+                // an accent fill slides over the active segment; icon contrast
+                // flips so the active one reads against the fill
+                Rectangle {
+                    id: profilePill
 
-                    delegate: Rectangle {
-                        id: seg
+                    readonly property int activeIndex: {
+                        const p = PowerProfiles.profile;
+                        if (p === PowerProfile.PowerSaver)
+                            return 0;
+                        if (p === PowerProfile.Performance)
+                            return 2;
+                        return 1;
+                    }
+                    property int segWidth: 40
 
-                        required property var modelData
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.topMargin: 4
+                    implicitWidth: 3 * segWidth + 6
+                    implicitHeight: 32
+                    radius: height / 2
+                    color: Qt.rgba(1, 1, 1, 0.06)
+                    border.width: 1
+                    border.color: Qt.rgba(1, 1, 1, 0.1)
 
-                        readonly property bool active: PowerProfiles.profile === seg.modelData.profile
-                        readonly property color tint: seg.modelData.tint
+                    Item {
+                        anchors.fill: parent
+                        anchors.margins: 3
 
-                        Layout.fillWidth: true
-                        implicitHeight: 28
-                        radius: 8
-                        color: seg.active ? Qt.rgba(seg.tint.r, seg.tint.g, seg.tint.b, 0.13)
-                            : segHover.hovered ? Qt.rgba(seg.tint.r, seg.tint.g, seg.tint.b, 0.08) : "transparent"
-                        border.width: seg.active ? 1 : 0
-                        border.color: Qt.rgba(seg.tint.r, seg.tint.g, seg.tint.b, 0.45)
+                        Rectangle {
+                            id: profileFill
 
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: 120
-                            }
-                        }
+                            width: profilePill.segWidth
+                            height: parent.height
+                            radius: height / 2
+                            color: Themes.accent
+                            x: profilePill.activeIndex * width
 
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 9
-                            anchors.rightMargin: 9
-                            spacing: 8
-
-                            Text {
-                                text: seg.modelData.glyph
-                                color: seg.active ? seg.tint : segHover.hovered ? Themes.dim : Themes.muted
-                                font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
-                            }
-
-                            Text {
-                                text: seg.modelData.name
-                                color: seg.active ? Themes.fg : segHover.hovered ? Themes.fg : Themes.dim
-                                font { pixelSize: 10; bold: true; family: "Quicksand" }
-                                Layout.fillWidth: true
-                            }
-
-                            // radio indicator
-                            Rectangle {
-                                implicitWidth: 14
-                                implicitHeight: 14
-                                radius: 7
-                                color: "transparent"
-                                border.width: 1.5
-                                border.color: seg.active ? seg.tint : Themes.borderMuted
-
-                                Rectangle {
-                                    anchors.centerIn: parent
-                                    implicitWidth: 6
-                                    implicitHeight: 6
-                                    radius: 3
-                                    color: seg.tint
-                                    visible: seg.active
+                            Behavior on x {
+                                NumberAnimation {
+                                    duration: 180
+                                    easing.type: Easing.OutCubic
                                 }
                             }
                         }
 
-                        HoverHandler {
-                            id: segHover
-                        }
+                        Row {
+                            anchors.fill: parent
+                            spacing: 0
 
-                        TapHandler {
-                            onTapped: PowerProfiles.profile = seg.modelData.profile
+                            Repeater {
+                                model: [
+                                    { glyph: "\uf06c", profile: PowerProfile.PowerSaver },
+                                    { glyph: "\uf24e", profile: PowerProfile.Balanced },
+                                    { glyph: "\uf0e7", profile: PowerProfile.Performance }
+                                ]
+
+                                delegate: Item {
+                                    id: segCell
+
+                                    required property var modelData
+                                    required property int index
+                                    readonly property bool active: index === profilePill.activeIndex
+
+                                    width: profilePill.segWidth
+                                    height: parent.height
+
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        radius: parent.height / 2
+                                        color: segMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : "transparent"
+                                        // hover tint only off the active segment —
+                                        // the accent fill already marks it
+                                        visible: !segCell.active
+
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: 110
+                                            }
+                                        }
+                                    }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: modelData.glyph
+                                        // active icons invert onto the accent fill
+                                        color: segCell.active ? Qt.rgba(0.04, 0.02, 0.08, 0.85)
+                                            : segMouse.containsMouse ? Themes.fg : Themes.dim
+                                        font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
+                                    }
+
+                                    MouseArea {
+                                        id: segMouse
+
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: PowerProfiles.profile = modelData.profile
+                                    }
+                                }
+                            }
                         }
                     }
                 }

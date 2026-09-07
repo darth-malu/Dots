@@ -1485,6 +1485,16 @@ Item {
                         Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
 
                         SettingRow {
+                            icon: "\uf1ce"
+                            label: "Compact by default"
+                            caption: "hover to expand"
+                            checked: MprisState.mprisCompact
+                            onFlipped: MprisState.mprisCompact = !MprisState.mprisCompact
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
+
+                        SettingRow {
                             icon: "\uf07c"
                             label: "Marquee titles"
                             checked: MprisState.marqueeEnabled

@@ -27,6 +27,11 @@ Singleton {
     property bool marqueeEnabled: prefs.marqueeEnabled
     onMarqueeEnabledChanged: prefs.marqueeEnabled = marqueeEnabled
 
+    // pill default view — compact (icon + thin progress ring only) or the
+    // full artwork/title layout; hovering the compact pill expands it
+    property bool mprisCompact: prefs.mprisCompact
+    onMprisCompactChanged: prefs.mprisCompact = mprisCompact
+
     // ── persistent store ──
     FileView {
         id: prefStore
@@ -39,6 +44,7 @@ Singleton {
             id: prefs
 
             property bool marqueeEnabled: true
+            property bool mprisCompact: true
         }
     }
 

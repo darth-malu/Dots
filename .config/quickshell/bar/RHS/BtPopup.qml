@@ -298,27 +298,64 @@ BarBlock {
                             }
                         }
 
+                        // adapter power — segmented on/off pill, same sliding-fill
+                        // language as the power-profile selector
                         Rectangle {
                             visible: root.adapter !== null
                             Layout.alignment: Qt.AlignVCenter
-                            implicitWidth: 26
-                            implicitHeight: 14
-                            radius: 7
-                            color: Bt.enabled ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.35) : Themes.separator
+                            property int segWidth: 24
 
-                            Rectangle {
-                                x: Bt.enabled ? parent.width - width - 2 : 2
-                                anchors.verticalCenter: parent.verticalCenter
-                                implicitWidth: 10
-                                implicitHeight: 10
-                                radius: 5
-                                color: Bt.enabled ? Themes.accent : Themes.muted
+                            implicitWidth: 2 * segWidth + 5
+                            implicitHeight: 20
+                            radius: height / 2
+                            color: Qt.rgba(1, 1, 1, 0.06)
+                            border.width: 1
+                            border.color: Qt.rgba(1, 1, 1, 0.1)
 
-                                Behavior on x {
-                                    NumberAnimation {
-                                        duration: 120
-                                        easing.type: Easing.OutQuad
+                            Item {
+                                anchors.fill: parent
+                                anchors.margins: 2.5
+
+                                Rectangle {
+                                    width: parent.parent.segWidth
+                                    height: parent.height
+                                    radius: height / 2
+                                    color: Bt.enabled ? Themes.accent : Themes.muted
+                                    opacity: Bt.enabled ? 1 : 0.5
+                                    x: Bt.enabled ? parent.width - width : 0
+                                    z: -1
+
+                                    Behavior on x {
+                                        NumberAnimation {
+                                            duration: 150
+                                            easing.type: Easing.OutCubic
+                                        }
                                     }
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: 150
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    anchors.left: parent.left
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: parent.parent.segWidth
+                                    horizontalAlignment: Text.AlignHCenter
+                                    text: "on"
+                                    color: Bt.enabled ? Qt.rgba(0.04, 0.02, 0.08, 0.85) : Themes.muted
+                                    font { pixelSize: 8; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                                }
+
+                                Text {
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: parent.parent.segWidth
+                                    horizontalAlignment: Text.AlignHCenter
+                                    text: "off"
+                                    color: Bt.enabled ? Themes.muted : Qt.rgba(0.04, 0.02, 0.08, 0.85)
+                                    font { pixelSize: 8; bold: true; family: "Quicksand"; letterSpacing: 1 }
                                 }
                             }
 

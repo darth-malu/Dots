@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
@@ -35,6 +36,21 @@ BarBlock {
     readonly property var history: {
         const all = NotificationState.allNotifs;
         return [...all.filter(n => n.urgency === 2), ...all.filter(n => n.urgency !== 2)];
+    }
+
+    // search narrows history by summary / body / app name
+    property string query: ""
+
+    readonly property var filteredHistory: {
+        const q = root.query.trim().toLowerCase();
+        if (q.length === 0)
+            return root.history;
+        return root.history.filter(n => {
+            const s = String(n.summary ?? "").toLowerCase();
+            const b = String(n.body ?? "").toLowerCase();
+            const a = String(n.appName ?? "").toLowerCase();
+            return s.includes(q) || b.includes(q) || a.includes(q);
+        });
     }
 
     onClicked: NetworkState.notifCenterVisible = !NetworkState.notifCenterVisible
@@ -167,9 +183,29 @@ BarBlock {
                         }
                     }
 
+                    // search box — filters by title/body/app name
+                    TextField {
+                        id: notifSearch
+
+                        Layout.fillWidth: true
+                        color: Themes.windowTextColor
+                        selectByMouse: true
+                        placeholderText: "\uf002  search…"
+                        placeholderTextColor: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.5)
+                        background: Rectangle {
+                            radius: 7
+                            color: Qt.rgba(1, 1, 1, 0.04)
+                            implicitHeight: 24
+                            border.width: 1
+                            border.color: notifSearch.activeFocus ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.45) : "transparent"
+                        }
+                        Keys.onEscapePressed: NetworkState.notifCenterVisible = false
+                        onTextChanged: root.query = text
+                    }
+
                     // history rows — criticals pinned to the top
                     Repeater {
-                        model: root.history
+                        model: root.filteredHistory
 
                         delegate: Rectangle {
                             id: histRow
@@ -182,6 +218,10 @@ BarBlock {
                             // brief check-mark feedback after copying the content
                             property bool copied: false
 
+                            // compact rows show the summary only; click to expand
+                            // the full body (search auto-shows bodies so matches read)
+                            property bool expanded: false
+
                             // the app's own icon — image first, theme icon fallback
                             readonly property string iconUrl: {
                                 const n = histRow.modelData;
@@ -193,9 +233,17 @@ BarBlock {
                             }
 
                             Layout.fillWidth: true
-                            implicitHeight: 42
+                            implicitHeight: histRow.expanded ? 84 : 42
                             radius: 9
                             color: histMouse.hovered ? Qt.rgba(1, 1, 1, 0.05) : histRow.urgent ? Qt.rgba(1, 0.33, 0.33, 0.08) : "transparent"
+
+                            // click anywhere on the row toggles summary ⇄ full body
+                            MouseArea {
+                                anchors.fill: parent
+                                acceptedButtons: Qt.LeftButton
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: histRow.expanded = !histRow.expanded
+                            }
 
                             RowLayout {
                                 anchors.fill: parent
@@ -247,10 +295,12 @@ BarBlock {
 
                                     Text {
                                         Layout.fillWidth: true
-                                        visible: histRow.modelData.body.length > 0
+                                        visible: (histRow.expanded || root.query.length > 0) && histRow.modelData.body.length > 0
                                         text: histRow.modelData.body.split(String.fromCharCode(10)).join(" ")
                                         color: Themes.dim
                                         elide: Text.ElideRight
+                                        wrapMode: histRow.expanded ? Text.WrapAtWordBoundaryOrAnywhere : Text.NoWrap
+                                        maximumLineCount: histRow.expanded ? 4 : 1
                                         font {
                                             pixelSize: 11
                                             family: MiscState.notifFont
@@ -392,8 +442,8 @@ BarBlock {
                     }
 
                     Text {
-                        visible: NotificationState.allNotifs.length === 0
-                        text: "nothing here yet"
+                        visible: root.filteredHistory.length === 0
+                        text: root.query.length > 0 ? "no matches" : "nothing here yet"
                         color: Themes.muted
                         font {
                             pixelSize: 11

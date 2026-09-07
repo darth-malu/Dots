@@ -33,7 +33,12 @@ Item {
     property bool showPlaying: MprisState.player?.isPlaying ?? false
     property bool showPopup: false
     property bool showArtPopup: false
+    property bool _hovering: false
     readonly property bool pillVisible: MprisState.hideWhenIdle ? showPlaying : (MprisState.player !== null)
+
+    // compact pills show only the ring/icon; hovering expands the full layout
+    // (the default view is a settings option)
+    readonly property bool showDetails: !MprisState.mprisCompact || mprisRoot._hovering
 
     // survives across the pill's show/hide so timers keep working
     Timer {
@@ -50,7 +55,12 @@ Item {
         hoverEnabled: true
         acceptedButtons: Qt.RightButton | Qt.LeftButton | Qt.MiddleButton | Qt.ForwardButton | Qt.BackButton
 
+        onEntered: {
+            mprisRoot._hovering = true;
+        }
+
         onExited: {
+            mprisRoot._hovering = false;
             hideVolumeTimer.restart();
         }
 
@@ -207,12 +217,14 @@ Item {
                     anchors.fill: parent
                     anchors.leftMargin: 6
                     anchors.rightMargin: 6
-                    spacing: 6
+                    // hidden detail items still reserve their grid gap — collapse it
+                    spacing: mprisRoot.showDetails ? 6 : 0
 
                     // ── album art + fallback ──
                     Item {
-                        Layout.preferredWidth: pill.height - 4
-                        Layout.preferredHeight: pill.height - 4
+                        visible: mprisRoot.showDetails
+                        Layout.preferredWidth: visible ? pill.height - 4 : 0
+                        Layout.preferredHeight: visible ? pill.height - 4 : 0
 
                         // ClippingRectangle (not ClippingWrapperRectangle) — the wrapper
                         // variant manages child geometry and breaks anchored images
@@ -266,6 +278,7 @@ Item {
                     // ── track title (marquee-scrolls when it doesn't fit) ──
                     MarqueeText {
                         id: title
+                        visible: mprisRoot.showDetails
                         Layout.alignment: Qt.AlignVCenter
                         maxWidth: 150
                         scrolling: MprisState.marqueeEnabled
@@ -282,7 +295,7 @@ Item {
                         text: "· " + (MprisState.player?.identity || "")
                         color: Themes.toxicGreen
                         font: Themes.quicksand_medium
-                        visible: Mpris.players.length > 1
+                        visible: Mpris.players.length > 1 && mprisRoot.showDetails
                         Layout.alignment: Qt.AlignVCenter
 
                         MouseArea {
@@ -304,11 +317,13 @@ Item {
                     }
 
                     Item {
+                        visible: mprisRoot.showDetails
                         Layout.fillWidth: true
                     }
 
-                    // ── play/pause button with progress ring ──
-                    // hiding the progress pill hides the pause button with it
+                    // ── player icon button with progress ring ──
+                    // the ring is thin; the center shows the APP's glyph (not a
+                    // play/pause symbol) — status lives in the ring/icon colours
                     Item {
                         id: playButtonBox
                         visible: MprisState.showMprisProgress
@@ -381,8 +396,8 @@ Item {
                                 // dim track
                                 ctx.beginPath();
                                 ctx.arc(cx, cy, r, 0, Math.PI * 2);
-                                ctx.strokeStyle = Qt.rgba(1, 0.71, 0.76, 0.25);
-                                ctx.lineWidth = 2.5;
+                                ctx.strokeStyle = Qt.rgba(1, 0.71, 0.76, 0.18);
+                                ctx.lineWidth = 1.5;
                                 ctx.stroke();
 
                                 if (frac > 0.004) {
@@ -397,8 +412,11 @@ Item {
                                         ctx.arc(cx, cy, r, startAngle, startAngle + Math.PI * 2 * frac);
                                         ctx.lineCap = "round";
                                     }
-                                    ctx.strokeStyle = mprisRoot.showVolume ? Themes.accent : Themes.pink;
-                                    ctx.lineWidth = 2.5;
+                                    // playing = full pink, paused = faded — status hints
+                                    const playing = MprisState.player?.isPlaying ?? false;
+                                    ctx.strokeStyle = mprisRoot.showVolume ? Themes.accent
+                                        : (playing ? Themes.pink : Qt.rgba(Themes.pink.r, Themes.pink.g, Themes.pink.b, 0.45));
+                                    ctx.lineWidth = 1.5;
                                     ctx.stroke();
                                 }
                             }
@@ -429,13 +447,14 @@ Item {
 
                         BarText {
                             anchors.centerIn: parent
-                            // play/pause glyph hides while the volume speaker takes over
+                            // current player's glyph replaces the play/pause symbol —
+                            // state is hinted by ring/icon colour
                             visible: !mprisRoot.showVolume
-                            symbolText: MprisState.player?.isPlaying ? "\uf04c" : "\uf04b"
-                            baseColor: Themes.pink
-                            color: Themes.pink
-                            pointSize: 7
-                            symbolSize: 7
+                            symbolText: MprisState.appGlyph(MprisState.player)
+                            baseColor: (MprisState.player?.isPlaying ?? false) ? Themes.pink : Themes.muted
+                            color: (MprisState.player?.isPlaying ?? false) ? Themes.pink : Themes.muted
+                            pointSize: 9
+                            symbolSize: 9
                             paddingg: 0
                         }
                     }

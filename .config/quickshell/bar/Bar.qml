@@ -106,14 +106,11 @@ ShellRoot {
                         visible: MiscState.showWorkspaces
                         sourceComponent: MiscState.iconWorkspaces ? iconWorkspacesComp : numWorkspacesComp
                     }
-
-                    ActiveWindow {}
                 }
 
-                Item {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 50
-                }
+                // lives flat in the panel (not the left block) so it stretches
+                // into the leftover space and elides against the RHS boundary
+                ActiveWindow {}
 
                 RowLayout {
                     id: rightBlock

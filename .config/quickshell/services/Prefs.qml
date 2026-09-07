@@ -1,0 +1,66 @@
+pragma Singleton
+import QtQuick
+import Quickshell
+import Quickshell.Io
+
+// Single persistent store for ALL user preferences (settings + wallpaper/misc
+// state). One JsonAdapter owns prefs.json so no service can clobber another's
+// keys: every write serialises the full union of properties.
+Singleton {
+    id: root
+
+    readonly property alias prefs: storeAdapter
+
+    function write(): void {
+        prefStore.writeAdapter();
+    }
+
+    FileView {
+        id: prefStore
+
+        path: Quickshell.env("HOME") + "/.config/quickshell/prefs.json"
+        watchChanges: false
+        onAdapterUpdated: writeAdapter()
+
+        JsonAdapter {
+            id: storeAdapter
+
+            // ── misc / settings keys ──
+            property bool popupSolidBg: true
+            property bool showSysTray: true
+            property bool showMpris: false
+            property bool showPlayerChooser: true
+            property bool showShuffle: false
+            property bool showLoop: false
+            property bool wifiGreenName: true
+            property bool showNetTotals: true
+            property bool showBluetooth: true
+            property bool showWifi: true
+            property bool showEthernet: true
+            property bool showBattery: true
+            property bool showNotifTray: true
+            property bool iconWorkspaces: true
+            property bool boxyTheme: true
+            property bool showWorkspaces: true
+            property bool transparentWsBadge: false
+            property string notifFont: "ZedMono Nerd Font"
+            property int notifArtSize: 90
+            property int notifRadius: 10
+            property bool showVolumeOut: true
+            property bool showVolumeIn: true
+            property bool showAppVolume: false
+            property int themeScheme: 0
+            property bool wifiRadioWanted: true
+            property bool btRadioWanted: true
+
+            // ── wallpaper keys ──
+            property string wallpaper: ""
+            property bool wallpaperEnabled: true
+            property bool desktopClock: true
+            property bool slideshowEnabled: false
+            property int slideshowMinutes: 30
+            property var favorites: []
+            property bool rotationFavoritesOnly: false
+        }
+    }
+}
