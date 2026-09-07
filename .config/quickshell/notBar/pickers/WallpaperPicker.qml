@@ -55,6 +55,59 @@ PanelWindow {
         PickerState.wallpaperOpen = false;
     }
 
+    // toggle pill for the banner — on = green filled, off = neutral pill;
+    // hover hints so all three stay clearly legible over any wallpaper
+    component WallChip: Rectangle {
+        id: chip
+
+        property string label: ""
+        property bool on: false
+        signal toggled()
+
+        implicitWidth: chipText.implicitWidth + 16
+        implicitHeight: 20
+        radius: 10
+        color: chip.on ? Qt.rgba(0.31, 0.98, 0.48, 0.15)
+            : chipMa.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : Qt.rgba(1, 1, 1, 0.05)
+        border.width: 1
+        border.color: chip.on ? "#50fa7b"
+            : chipMa.containsMouse ? Qt.rgba(0.31, 0.98, 0.48, 0.5) : Qt.rgba(1, 1, 1, 0.18)
+
+        Behavior on color {
+            ColorAnimation {
+                duration: 110
+            }
+        }
+        Behavior on border.color {
+            ColorAnimation {
+                duration: 110
+            }
+        }
+
+        Text {
+            id: chipText
+
+            anchors.centerIn: parent
+            text: chip.label
+            color: chip.on ? "#50fa7b"
+                : chipMa.containsMouse ? Themes.fg : Qt.rgba(1, 1, 1, 0.55)
+            font {
+                pixelSize: 8.5
+                letterSpacing: 0.5
+                family: "ZedMono Nerd Font"
+            }
+        }
+
+        MouseArea {
+            id: chipMa
+
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            hoverEnabled: true
+            onClicked: chip.toggled()
+        }
+    }
+
     Rectangle {
         anchors.fill: parent
         radius: 10
@@ -187,16 +240,13 @@ PanelWindow {
                 }
             }
 
-                    // ── current wallpaper banner ──
+                    // ── current wallpaper banner — flat, no tint behind it ──
                     Rectangle {
                         id: currentBanner
 
                         Layout.fillWidth: true
                         Layout.preferredHeight: 56
-                        radius: 9
-                        color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12)
-                        border.width: 1
-                        border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.4)
+                        color: "transparent"
 
                         RowLayout {
                             anchors.fill: parent
@@ -236,88 +286,35 @@ PanelWindow {
                                     Layout.fillWidth: true
                                     spacing: 6
 
-                                    readonly property color on: "#50fa7b"
-                                    readonly property color off: Themes.borderMuted
-
-                                    // desktop clock
-                                    Rectangle {
-                                        implicitWidth: clockChipText.implicitWidth + 14
-                                        implicitHeight: 16
-                                        radius: 8
-                                        color: WallpaperService.desktopClock ? Qt.rgba(0.31, 0.98, 0.48, 0.12) : "transparent"
-                                        border.width: 1
-                                        border.color: WallpaperService.desktopClock ? parent.on : parent.off
-
-                                        Text {
-                                            id: clockChipText
-                                            anchors.centerIn: parent
-                                            text: "\uf017 clock"
-                                            color: parent.border.color
-                                            font { pixelSize: 8; letterSpacing: 0.5; family: "ZedMono Nerd Font" }
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            hoverEnabled: true
-                                            onClicked: WallpaperService.desktopClock = !WallpaperService.desktopClock
-                                        }
+                                    WallChip {
+                                        label: "\uf017 clock"
+                                        on: WallpaperService.desktopClock
+                                        onToggled: WallpaperService.desktopClock = !WallpaperService.desktopClock
                                     }
 
-                                    // slideshow
-                                    Rectangle {
-                                        implicitWidth: slideChipText.implicitWidth + 14
-                                        implicitHeight: 16
-                                        radius: 8
-                                        color: WallpaperService.slideshowEnabled ? Qt.rgba(0.31, 0.98, 0.48, 0.12) : "transparent"
-                                        border.width: 1
-                                        border.color: WallpaperService.slideshowEnabled ? parent.on : parent.off
-
-                                        Text {
-                                            id: slideChipText
-                                            anchors.centerIn: parent
-                                            text: "slideshow"
-                                            color: parent.border.color
-                                            font { pixelSize: 8; letterSpacing: 0.5; family: "ZedMono Nerd Font" }
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            hoverEnabled: true
-                                            onClicked: WallpaperService.slideshowEnabled = !WallpaperService.slideshowEnabled
-                                        }
+                                    WallChip {
+                                        label: "slideshow"
+                                        on: WallpaperService.slideshowEnabled
+                                        onToggled: WallpaperService.slideshowEnabled = !WallpaperService.slideshowEnabled
                                     }
 
-                                    // rotate favorites only
-                                    Rectangle {
-                                        implicitWidth: starChipText.implicitWidth + 14
-                                        implicitHeight: 16
-                                        radius: 8
-                                        color: WallpaperService.rotationFavoritesOnly ? Qt.rgba(0.31, 0.98, 0.48, 0.12) : "transparent"
-                                        border.width: 1
-                                        border.color: WallpaperService.rotationFavoritesOnly ? parent.on : parent.off
-
-                                        Text {
-                                            id: starChipText
-                                            anchors.centerIn: parent
-                                            text: "\uf005 stars only"
-                                            color: parent.border.color
-                                            font { pixelSize: 8; letterSpacing: 0.5; family: "ZedMono Nerd Font" }
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            hoverEnabled: true
-                                            onClicked: WallpaperService.rotationFavoritesOnly = !WallpaperService.rotationFavoritesOnly
-                                        }
+                                    WallChip {
+                                        label: "\uf005 stars only"
+                                        on: WallpaperService.rotationFavoritesOnly
+                                        onToggled: WallpaperService.rotationFavoritesOnly = !WallpaperService.rotationFavoritesOnly
                                     }
 
                                     Item { Layout.fillWidth: true }
                                 }
                             }
                         }
+                    }
+
+                    // hairline under the banner once the tinted bg is gone
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 1
+                        color: Qt.rgba(1, 1, 1, 0.1)
                     }
 
                     // ── wallpaper grid ──
@@ -420,30 +417,38 @@ PanelWindow {
                         onClicked: root.applyWallpaper(cellWrap.path_)
                     }
 
-                    // favorite star — top-right, above the click zone so it
-                    // toggles the star without applying the wallpaper
+                    // favorite star — top-right, above the click zone so it toggles the
+                    // star without applying the wallpaper. seen while the tile is
+                    // hovered (or always when already a favorite); the star's own
+                    // hover keeps it alive while the cursor sits on it
                     Rectangle {
                         id: favBtn
 
                         readonly property bool fav: WallpaperService.isFavorite(cellWrap.path_)
 
-                        visible: favFavMa.containsMouse || favBtn.fav
+                        visible: cellMa.containsMouse || favFavMa.containsMouse || favBtn.fav
                         anchors.top: parent.top
                         anchors.right: parent.right
                         anchors.topMargin: 5
                         anchors.rightMargin: 5
-                        implicitWidth: 20
-                        implicitHeight: 20
-                        radius: 10
-                        color: favFavMa.containsMouse || favBtn.fav ? Qt.rgba(0, 0, 0, 0.68) : Qt.rgba(0, 0, 0, 0.4)
+                        implicitWidth: 22
+                        implicitHeight: 22
+                        radius: 11
+                        color: favFavMa.containsMouse || favBtn.fav ? Qt.rgba(0, 0, 0, 0.72) : Qt.rgba(0, 0, 0, 0.5)
                         border.width: 1
-                        border.color: Qt.rgba(1, 1, 1, 0.18)
+                        border.color: Qt.rgba(1, 1, 1, 0.22)
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 110
+                            }
+                        }
 
                         Text {
                             anchors.centerIn: parent
                             text: favBtn.fav ? "\uf005" : "\uf006"
-                            color: favBtn.fav ? "#ffb86c" : Themes.fg
-                            font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+                            color: favBtn.fav ? "#ffb86c" : (favFavMa.containsMouse ? "#ffb86c" : "white")
+                            font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
                         }
 
                         MouseArea {

@@ -327,8 +327,16 @@ Item {
                     Item {
                         id: playButtonBox
                         visible: MprisState.showMprisProgress
-                        Layout.preferredWidth: visible ? 22 : 0
-                        Layout.preferredHeight: visible ? 22 : 0
+                        Layout.preferredWidth: visible ? 26 : 0
+                        Layout.preferredHeight: visible ? 26 : 0
+
+                        // solid disc behind ring + glyph so it reads over any art
+                        Rectangle {
+                            anchors.fill: parent
+                            anchors.margins: 2
+                            radius: width / 2
+                            color: Qt.rgba(0, 0, 0, 0.28)
+                        }
 
                         Canvas {
                             id: progressRing
@@ -453,8 +461,8 @@ Item {
                             symbolText: MprisState.appGlyph(MprisState.player)
                             baseColor: (MprisState.player?.isPlaying ?? false) ? Themes.pink : Themes.muted
                             color: (MprisState.player?.isPlaying ?? false) ? Themes.pink : Themes.muted
-                            pointSize: 9
-                            symbolSize: 9
+                            pointSize: 10
+                            symbolSize: 10
                             paddingg: 0
                         }
                     }
