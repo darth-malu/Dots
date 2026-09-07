@@ -7,33 +7,37 @@ Singleton {
     id: root
 
     // ── Color scheme selection ──────────────────────────────────────────
-    // 0 = Purple (Dracula-ish, default), 1 = Gron teal/cyan
+    // 0 = Purple (Dracula-ish, default), 1 = Gron teal/cyan,
+    // 2 = Nord arctic blue, 3 = Rose warm pink, 4 = Amber warm gold
     readonly property int scheme: MiscState.themeScheme
-    function pick(purple, rofi): color { return scheme === 0 ? purple : rofi }
+    function pick(p, g, n, r, a): color {
+        var v = scheme === 0 ? p : scheme === 1 ? g : scheme === 2 ? n : scheme === 3 ? r : a;
+        return v || g;
+    }
 
     // Core identity tokens (themed)
-    readonly property color accent2: pick("#8be9fd", "#48bfe3")  // cyan secondary
-    readonly property color pink: pick("#ff79c6", "#e5a8cf")
-    readonly property color fg: pick("#f8f8f2", "#eef4f7")
-    readonly property color dim: pick("#b8bfcb", "#aebbc4")
-    readonly property color muted: pick("#6272a4", "#5f6f7d")
-    readonly property color cardBg: pick("#21222c", "#1f2b31")
-    readonly property color cardBgHover: pick("#2a2c3a", "#28343b")
-    readonly property color panelBg: pick("#282a36", "#24313a")
-    readonly property color separator: pick("#343746", "#2e3f47")
-    readonly property color borderColor: pick("#313244", "#293a43")
-    readonly property color borderMuted: pick("#44475a", "#3a4a52")
-    readonly property color barSolidBg: pick("#181825", "#1b252c")  // solid/full bar slab background
-    readonly property color accentSoft: pick("#e2d6fb", "#c9eaf5")  // light accent (active glyphs/hover text)
-    readonly property color mutedSoft: pick("#8b93b8", "#7d93a0")   // muted lavender inactive -> teal-grey
-    readonly property color mauve: pick("#c6a0f6", "#5fc3d9")       // medium-tier accent (mauve -> teal)
-    readonly property color brightnessAccent: pick("#f1fa8c", "#d0e56a")  // brightness slider (sun yellow -> warm teal-green)
+    readonly property color accent2: pick("#8be9fd", "#48bfe3", "#81a1c1", "#f2b0cd", "#f5c86a")  // cyan secondary
+    readonly property color pink: pick("#ff79c6", "#e5a8cf", "#b48ead", "#ff6b9d", "#e8788a")
+    readonly property color fg: pick("#f8f8f2", "#eef4f7", "#eceff4", "#f6eaf1", "#f0e8df")
+    readonly property color dim: pick("#b8bfcb", "#aebbc4", "#b7c1cc", "#b8a8b4", "#c4b8a8")
+    readonly property color muted: pick("#6272a4", "#5f6f7d", "#4c566a", "#8a647a", "#8a7a5c")
+    readonly property color cardBg: pick("#21222c", "#1f2b31", "#2e3440", "#2a1f27", "#26201a")
+    readonly property color cardBgHover: pick("#2a2c3a", "#28343b", "#3b4252", "#372a32", "#32281f")
+    readonly property color panelBg: pick("#282a36", "#24313a", "#2e3440", "#2f222c", "#2b2419")
+    readonly property color separator: pick("#343746", "#2e3f47", "#3b4252", "#3a2d33", "#382f22")
+    readonly property color borderColor: pick("#313244", "#293a43", "#3b4252", "#3a2b32", "#382e20")
+    readonly property color borderMuted: pick("#44475a", "#3a4a52", "#4c5a6e", "#57434e", "#574a35")
+    readonly property color barSolidBg: pick("#181825", "#1b252c", "#20252e", "#191217", "#16130d")  // solid/full bar slab background
+    readonly property color accentSoft: pick("#e2d6fb", "#c9eaf5", "#d8dee9", "#f5d5e5", "#f5ddc0")  // light accent (active glyphs/hover text)
+    readonly property color mutedSoft: pick("#8b93b8", "#7d93a0", "#8ea3bd", "#a98fa0", "#b49a7a")   // muted lavender inactive -> teal-grey
+    readonly property color mauve: pick("#c6a0f6", "#5fc3d9", "#81a1c1", "#d98bb0", "#e8b06a")       // medium-tier accent (mauve -> teal)
+    readonly property color brightnessAccent: pick("#f1fa8c", "#d0e56a", "#ebcb8b", "#ffcf6b", "#a8cc5c")  // brightness slider (sun yellow -> warm teal-green)
 
     // Audio sliders — distinct hue for the input sink so sink volume reads
     // apart from the output slider (which stays on the primary accent). In
     // Gron the default cyan is too close to the teal accent, so it becomes a
     // distinct green for visible variance.
-    readonly property color audioInputAccent: pick("#8be9fd", "#2ec4a5")
+    readonly property color audioInputAccent: pick("#8be9fd", "#2ec4a5", "#88c0d0", "#f2b0cd", "#85c47c")
 
     // Semantic status tokens (shared across schemes)
     readonly property color green: "#50fa7b"
@@ -79,7 +83,7 @@ Singleton {
     readonly property color toxicGreen: "#88FF00"
 
     // MPRIS
-    readonly property color mprisTextColor: pick("#FAAB8DED", "#cde6f0")
+    readonly property color mprisTextColor: pick("#FAAB8DED", "#cde6f0", "#d8dee9", "#f5d5e5", "#f5ddc0")
 
     readonly property color mprisVolumeColor: root.pink
 
@@ -158,7 +162,7 @@ Singleton {
     property color surface: Qt.rgba(255, 255, 255, 0.15)
     property color overlay: Qt.rgba(255, 255, 255, 0.7)
 
-    property color accent: pick("#bd93f9", "#3fa7c5")
+    property color accent: pick("#bd93f9", "#3fa7c5", "#88c0d0", "#e57aa7", "#f0a640")
 
     property color buttonEnabled: accent
     property color buttonEnabledHover: Qt.lighter(accent, 0.9)

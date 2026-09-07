@@ -447,7 +447,7 @@ PanelWindow {
                     // star without applying the wallpaper. seen while the tile is
                     // hovered (or always when already a favorite); the star's own
                     // hover keeps it alive while the cursor sits on it
-                    Rectangle {
+                    Item {
                         id: favBtn
 
                         readonly property bool fav: WallpaperService.isFavorite(cellWrap.path_)
@@ -459,16 +459,6 @@ PanelWindow {
                         anchors.rightMargin: 5
                         implicitWidth: 22
                         implicitHeight: 22
-                        radius: 11
-                        color: favFavMa.containsMouse || favBtn.fav ? Qt.rgba(0, 0, 0, 0.72) : Qt.rgba(0, 0, 0, 0.5)
-                        border.width: 1
-                        border.color: Qt.rgba(1, 1, 1, 0.22)
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: 110
-                            }
-                        }
 
                         Text {
                             anchors.centerIn: parent

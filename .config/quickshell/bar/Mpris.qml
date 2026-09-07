@@ -26,7 +26,6 @@ Item {
             showPopup = false;
             showArtPopup = false;
             showVolume = false;
-            showPlayerPicker = false;
         }
     }
 
@@ -34,7 +33,6 @@ Item {
     property bool showPlaying: MprisState.player?.isPlaying ?? false
     property bool showPopup: false
     property bool showArtPopup: false
-    property bool showPlayerPicker: false
     property bool _hovering: false
     readonly property bool pillVisible: MprisState.hideWhenIdle ? showPlaying : (MprisState.player !== null)
 
@@ -268,12 +266,12 @@ Item {
                             pointSize: 10
                         }
 
-                        // left-click art → toggle art popup (other buttons pass through to pill)
+                        // left-click art → open art popup (re-click keeps it open)
                         MouseArea {
                             anchors.fill: parent
                             acceptedButtons: Qt.LeftButton
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: mprisRoot.showArtPopup = !mprisRoot.showArtPopup
+                            onClicked: if (!mprisRoot.showArtPopup) mprisRoot.showArtPopup = true
                         }
                     }
 
@@ -349,17 +347,67 @@ Item {
 
                             property real progress: 0
 
+                            // restart-watchdog state — some players forget to
+                            // re-report Position/Seeked when the same track
+                            // restarts, leaving the ring pinned near-full
+                            property real _lastRaw: -1
+                            property string _fp: ""
+
                             onProgressChanged: requestPaint()
                             onVisibleChanged: requestPaint()
+
+                            function fp(p) {
+                                var md = p?.metadata ?? null;
+                                if (!md)
+                                    return "";
+                                return String((md["mpris:trackid"] ?? "") + "|" + (md["xesam:url"] ?? ""));
+                            }
 
                             function updateProgress() {
                                 var p = MprisState.player;
                                 if (!p || !(p.length > 0)) {
                                     progress = 0;
+                                    _lastRaw = -1;
+                                    _fp = "";
                                     return;
                                 }
-                                var pos = Math.max(0, Math.min(p.position ?? 0, p.length));
-                                progress = pos / p.length;
+                                var len = p.length;
+                                var raw = p.position ?? 0;
+                                var playing = p.isPlaying ?? false;
+
+                                // new track (incl. a repeat that got a fresh trackid)
+                                var cur = fp(p);
+                                if (cur !== _fp) {
+                                    _fp = cur;
+                                    _lastRaw = -1;
+                                }
+
+                                // paused/stopped — just show the frozen position
+                                if (!playing) {
+                                    _lastRaw = raw;
+                                    progress = Math.max(0, Math.min(raw / len, 1));
+                                    return;
+                                }
+
+                                // position jumped back while playing → the track
+                                // restarted, resume from the freshly reported value
+                                if (_lastRaw >= 0 && raw < _lastRaw - 2.0) {
+                                    _lastRaw = -1;
+                                    progress = Math.max(0, Math.min(raw / len, 1));
+                                    return;
+                                }
+
+                                // at/past the end while still playing → wrap. some
+                                // players (chrome/youtube) pin Position at Length on
+                                // replay instead of resetting to 0
+                                if (raw >= len) {
+                                    _lastRaw = -1;
+                                    progress = 0;
+                                    return;
+                                }
+
+                                _lastRaw = raw;
+                                progress = Math.max(0, Math.min(raw / len, 1));
                             }
 
                             Connections {
@@ -469,146 +517,6 @@ Item {
                         }
                     }
 
-                    // player picker entry — visible whenever multiple apps are open,
-                    // so the controlled app can always be switched (compact too)
-                    Rectangle {
-                        id: pickerBtn
-
-                        readonly property bool any: MprisState.controlPlayers.length > 1
-
-                        visible: mprisRoot.pillVisible && pickerBtn.any
-                        Layout.preferredWidth: visible ? 16 : 0
-                        Layout.preferredHeight: visible ? 16 : 0
-                        radius: 5
-                        color: pickerMa.containsMouse || mprisRoot.showPlayerPicker
-                            ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.18)
-                            : "transparent"
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: 110
-                            }
-                        }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "\uf085"
-                            color: mprisRoot.showPlayerPicker || pickerMa.containsMouse ? Themes.accent : Themes.muted
-                            font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
-                        }
-
-                        MouseArea {
-                            id: pickerMa
-
-                            anchors.fill: parent
-                            anchors.margins: -2
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: mprisRoot.showPlayerPicker = !mprisRoot.showPlayerPicker
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // ── player picker popup — pick which open app the pill controls ──
-    LazyLoader {
-        loading: mprisRoot.showPlayerPicker
-
-        PopupWindow {
-            id: playerPicker
-
-            visible: mprisRoot.showPlayerPicker
-            grabFocus: true
-            color: "transparent"
-
-            anchor.window: mprisRoot.host
-            anchor.rect.x: {
-                let g = mprisRoot.mapToGlobal(0, 0);
-                return Math.max(4, Math.min(g.x + mprisRoot.width + 4, mprisRoot.host.width - width - 4));
-            }
-            anchor.rect.y: 35
-
-            implicitWidth: 210
-            implicitHeight: Math.min(listCol.implicitHeight + 16, 300)
-
-            Rectangle {
-                anchors.fill: parent
-                focus: true
-                radius: 10
-                color: Themes.popupCardBg
-                border.width: 1
-                border.color: Themes.borderMuted
-
-                Keys.onEscapePressed: mprisRoot.showPlayerPicker = false
-
-                ColumnLayout {
-                    id: listCol
-
-                    anchors.fill: parent
-                    anchors.margins: 8
-                    spacing: 4
-
-                    Text {
-                        text: "pick player"
-                        color: Themes.muted
-                        font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
-                    }
-
-                    Repeater {
-                        model: MprisState.controlPlayers
-
-                        delegate: Rectangle {
-                            id: pickRow
-
-                            required property var modelData
-
-                            readonly property bool cur: (MprisState.cardPlayer?.dbusName ?? "") === modelData.dbusName
-
-                            Layout.fillWidth: true
-                            implicitHeight: 28
-                            radius: 6
-                            color: pickRowMa.containsMouse
-                                ? Qt.rgba(1, 1, 1, 0.08)
-                                : pickRow.cur ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : "transparent"
-                            border.width: pickRow.cur ? 1 : 0
-                            border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.5)
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: 8
-                                anchors.rightMargin: 8
-                                spacing: 8
-
-                                Text {
-                                    text: MprisState.appGlyph(pickRow.modelData)
-                                    color: pickRow.cur ? Themes.accent : Themes.dim
-                                    font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
-                                }
-
-                                Text {
-                                    text: pickRow.modelData.identity || "?"
-                                    elide: Text.ElideRight
-                                    color: pickRow.cur ? Themes.accent : Themes.fg
-                                    font { pixelSize: 10; bold: true; family: "Quicksand" }
-                                    Layout.fillWidth: true
-                                }
-                            }
-
-                            MouseArea {
-                                id: pickRowMa
-
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    MprisState.pinPlayerName = pickRow.modelData.dbusName;
-                                    mprisRoot.showPlayerPicker = false;
-                                }
-                            }
-                        }
-                    }
                 }
             }
         }
