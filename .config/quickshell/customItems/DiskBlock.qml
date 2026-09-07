@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 import qs.services
 import qs.themes
 
@@ -21,6 +22,12 @@ BarBlock {
     property color colorDanger: "#ff5555"
     property int dangerThreshold: 90
 
+    // ── trash size / empty helpers ──
+    property bool trashShow: false
+    property var trashSizes: ({})
+    property int trashTick: 0
+    property string armedMount: ""
+
     readonly property int diskUsageValue: ResourcesState.diskUsagePercent
     readonly property string diskFigures: `${ResourcesState.diskUsed}/${ResourcesState.diskTotal}`
 
@@ -40,10 +47,78 @@ BarBlock {
         return raw.length > 0 ? raw.split("\n") : [];
     }
 
+    // human bytes for a mount's trash, "—" when empty, "…" while unknown
+    function trashSizeFor(mount) {
+        var b = disk.trashSizes[mount];
+        if (b === undefined)
+            return "…";
+        if (b <= 0)
+            return "—";
+        if (b < 1024)
+            return Math.round(b) + "B";
+        if (b < 1048576)
+            return (b / 1024).toFixed(0) + "K";
+        if (b < 1073741824)
+            return (b / 1048576).toFixed(1) + "M";
+        return (b / 1073741824).toFixed(1) + "G";
+    }
+
+    // one sh pass measuring trash for every visible mount; each line is "mount<TAB>bytes"
+    function computeTrash() {
+        const scan = `while [ "$#" -gt 0 ]; do
+  m="$1"; shift
+  dirs=""
+  case "$HOME" in
+    "$m"/* | "$m") dirs="$HOME/.local/share/Trash" ;;
+  esac
+  dirs="$dirs $m/.Trash-$(id -u) $m/.Trash"
+  sz=0
+  for d in $dirs; do
+    if [ -d "$d" ]; then
+      b=$(du -sb "$d" 2>/dev/null | awk '{print $1}')
+      [ -n "$b" ] && sz=$((sz + b))
+    fi
+  done
+  printf '%s\t%s\n' "$m" "$sz"
+done`;
+        var mounts = [];
+        var list = disk.allDisksList;
+        for (var i = 0; i < list.length; i++) {
+            var target = list[i].trim().split(/\s+/)[0];
+            if (target && target.length > 0)
+                mounts.push(target);
+        }
+        disk.trashTick++;
+        trashCompute.tick = disk.trashTick;
+        trashCompute.buf = "";
+        trashCompute.command = ["sh", "-c", scan, "sh"].concat(mounts);
+        trashCompute.running = true;
+    }
+
+    // candidates: $HOME/.local/share/Trash when home lives on this mount,
+    // plus the classic top-level .Trash-<uid> / .Trash dirs
+    function emptyTrashFor(mount) {
+        if (!mount)
+            return;
+        const script = `m=${JSON.stringify(mount)}
+dirs=""
+case "$HOME" in
+  "$m"/* | "$m") dirs="$HOME/.local/share/Trash" ;;
+esac
+dirs="$dirs $m/.Trash-$(id -u) $m/.Trash"
+for d in $dirs; do
+  rm -rf "$d" 2>/dev/null
+done`;
+        Quickshell.execDetached(["sh", "-c", script]);
+        disk.computeTrash();
+    }
+
     onLeftClicked: {
         allDisksPopup.visible = !allDisksPopup.visible;
         if (NasState.available)
             NasState.kickRecheck(1);
+        if (disk.trashShow)
+            disk.computeTrash();
     }
     onRightClicked: showUsage = !showUsage
 
@@ -301,6 +376,75 @@ BarBlock {
                     Layout.fillWidth: true
                     spacing: 4
 
+                        // trash size option
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 22
+                            spacing: 8
+
+                            Rectangle {
+                                id: trashToggle
+
+                                implicitWidth: trashToggleTxt.implicitWidth + 18
+                                implicitHeight: 18
+                                radius: 9
+                                color: trashToggleMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.15) : Themes.separator
+
+                                Text {
+                                    id: trashToggleTxt
+                                    anchors.centerIn: parent
+                                    text: disk.trashShow ? "\uf1f8  trash: on" : "\uf1f8  trash: off"
+                                    color: disk.trashShow ? "#50fa7b" : Themes.dim
+                                    font { pixelSize: 9; bold: true; family: "Symbols Nerd Font Mono, Quicksand" }
+                                }
+
+                                MouseArea {
+                                    id: trashToggleMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        disk.trashShow = !disk.trashShow;
+                                        if (disk.trashShow)
+                                            disk.computeTrash();
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                visible: disk.trashShow
+                                implicitWidth: trashRefreshTxt.implicitWidth + 18
+                                implicitHeight: 18
+                                radius: 9
+                                color: trashRefreshMa.containsMouse ? Qt.rgba(0.31, 0.98, 0.48, 0.15) : Themes.separator
+
+                                Text {
+                                    id: trashRefreshTxt
+                                    anchors.centerIn: parent
+                                    text: "\uf021"
+                                    color: trashRefreshMa.containsMouse ? "#50fa7b" : Themes.dim
+                                    font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+                                }
+
+                                MouseArea {
+                                    id: trashRefreshMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: disk.computeTrash()
+                                }
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Text {
+                                visible: disk.trashShow
+                                text: "click trash icon to empty"
+                                color: Themes.muted
+                                font { pixelSize: 8; italic: true; family: "Quicksand" }
+                            }
+                        }
+
                         // column labels — widths mirror the rows below:
                         // mount(140) · size(44) · free(44) · bar(fills) · use(32)
                         RowLayout {
@@ -342,6 +486,18 @@ BarBlock {
                                 Layout.alignment: Qt.AlignRight
                             }
 
+                            Text {
+                                text: "trash"
+                                color: Themes.muted
+                                font {
+                                    pixelSize: 9
+                                    family: "ZedMono Nerd Font"
+                                }
+                                Layout.preferredWidth: 42
+                                Layout.alignment: Qt.AlignRight
+                                visible: disk.trashShow
+                            }
+
                             // spacer standing in for the usage-bar column
                             Item {
                                 Layout.fillWidth: true
@@ -357,6 +513,11 @@ BarBlock {
                                 }
                                 Layout.preferredWidth: 32
                                 Layout.alignment: Qt.AlignRight
+                            }
+
+                            Item {
+                                visible: disk.trashShow
+                                Layout.preferredWidth: 38
                             }
                         }
 
@@ -375,7 +536,10 @@ BarBlock {
                                 required property string modelData
 
                                 readonly property var parts: modelData.trim().split(/\s+/)
+                                readonly property string mount: drow.parts.length >= 1 ? drow.parts[0] : ""
                                 readonly property int pct: parts.length >= 5 ? parseInt(parts[4]) || 0 : 0
+                                readonly property bool armed: disk.armedMount === drow.mount
+                                readonly property bool hasTrash: (disk.trashSizes[drow.mount] ?? 0) > 0
                                 // cpu-popup band palette for consistency
                                 readonly property color tier: pct > 90 ? "#ff5555"
                                     : pct > 75 ? "#ffb86c"
@@ -430,6 +594,19 @@ BarBlock {
                                         }
                                     }
 
+                                    Text {
+                                        Layout.preferredWidth: 42
+                                        horizontalAlignment: Text.AlignRight
+                                        text: disk.trashSizeFor(drow.mount)
+                                        color: drow.hasTrash ? "#ffb86c" : Themes.borderMuted
+                                        font {
+                                            pixelSize: 9
+                                            bold: drow.hasTrash
+                                            family: "ZedMono Nerd Font"
+                                        }
+                                        visible: disk.trashShow
+                                    }
+
                                     Rectangle {
                                         Layout.fillWidth: true
                                         Layout.preferredHeight: 5
@@ -472,6 +649,41 @@ BarBlock {
                                             family: "ZedMono Nerd Font"
                                         }
                                     }
+
+                                    Rectangle {
+                                        Layout.preferredWidth: 38
+                                        implicitHeight: 16
+                                        radius: 8
+                                        visible: disk.trashShow
+                                        color: dEmptyMa.containsMouse && drow.hasTrash ? (drow.armed ? Qt.rgba(1, 0.33, 0.33, 0.18) : Qt.rgba(1, 1, 1, 0.06)) : "transparent"
+                                        border.width: drow.armed && drow.hasTrash ? 1 : 0
+                                        border.color: Qt.rgba(1, 0.33, 0.33, 0.4)
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: drow.armed ? "empty?" : "\uf014"
+                                            color: !drow.hasTrash ? Themes.borderMuted : drow.armed ? "#ff5555" : dEmptyMa.containsMouse ? Themes.fg : Themes.dim
+                                            font { pixelSize: 8; bold: true; family: "Symbols Nerd Font Mono, Quicksand" }
+                                        }
+
+                                        MouseArea {
+                                            id: dEmptyMa
+                                            anchors.fill: parent
+                                            anchors.margins: -5
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            enabled: drow.hasTrash
+                                            onClicked: {
+                                                if (drow.armed) {
+                                                    disk.armedMount = "";
+                                                    disk.emptyTrashFor(drow.mount);
+                                                } else {
+                                                    disk.armedMount = drow.mount;
+                                                    trashArmTimer.restart();
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -490,5 +702,38 @@ BarBlock {
                 }
             }
         }
+    }
+
+    Process {
+        id: trashCompute
+        property int tick: 0
+        property string buf: ""
+
+        stdout: SplitParser {
+            onRead: data => trashCompute.buf += data
+        }
+
+        onExited: code => {
+            if (trashCompute.tick !== disk.trashTick)
+                return;
+            var map = {};
+            var lines = trashCompute.buf.split("\n");
+            for (var i = 0; i < lines.length; i++) {
+                var line = lines[i];
+                if (line.length === 0)
+                    continue;
+                var tab = line.indexOf("\t");
+                if (tab < 0)
+                    continue;
+                map[line.slice(0, tab)] = parseInt(line.slice(tab + 1), 10) || 0;
+            }
+            disk.trashSizes = map;
+        }
+    }
+
+    Timer {
+        id: trashArmTimer
+        interval: 3500
+        onTriggered: disk.armedMount = ""
     }
 }

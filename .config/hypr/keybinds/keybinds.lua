@@ -92,9 +92,9 @@ hl.bind("Print",
   hl.dsp.exec_cmd(
     'grim - | satty -f - --copy-command wl-copy -o "/media/Hyogo/Pictures/Satty/%Y-%m-%d_%H:%M:%S.png" --action-on-enter "save-to-file" --notification-thumbnail screenshot --font-family nunito'))
 
-hl.bind("SHIFT + Print", hl.dsp.exec_cmd("grimblast --cursor --notify -e 2 copy screen"))
+hl.bind("SHIFT + Print", hl.dsp.exec_cmd("grimblast --notify -e 2 copy area")) --copy {area,screen}
 -- hl.bind("CONTROL + Print", hl.dsp.exec_cmd("grimblast --notify -e 2 copy area"))
-hl.bind(mainMod .. "+ Print", hl.dsp.exec_cmd("grimblast save area - | satty --filename -"))
+-- hl.bind(mainMod .. "+ Print", hl.dsp.exec_cmd("grimblast save area - | satty --filename -"))
 
 hl.bind(mainMod .. " + M", hl.dsp.workspace.toggle_special("magic"))
 hl.bind(mainMod .. " + SHIFT + M", hl.dsp.window.move({ workspace = "special:magic" }))

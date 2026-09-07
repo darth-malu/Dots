@@ -183,6 +183,17 @@ Item {
     }
 
     IpcHandler {
+        target: 'wallpaperPicker'
+        function toggle(): void {
+            PickerState.wallpaperOpen = !PickerState.wallpaperOpen;
+        }
+
+        function open(): void {
+            PickerState.wallpaperOpen = true;
+        }
+    }
+
+    IpcHandler {
         target: 'logout'
         function toggle(): void {
             // console.log("[logout] toggle -> " + !MiscState.logoutOpen);
@@ -191,6 +202,33 @@ Item {
 
         function open(): void {
             MiscState.logoutOpen = true;
+        }
+    }
+
+    IpcHandler {
+        target: 'wallpaper'
+        function toggle(): void {
+            WallpaperService.enabled = !WallpaperService.enabled;
+        }
+
+        function next(): void {
+            WallpaperService.nextWallpaper();
+        }
+
+        function prev(): void {
+            WallpaperService.prevWallpaper();
+        }
+
+        function set(path: string): void {
+            WallpaperService.setWallpaper(path);
+        }
+
+        function current(): string {
+            return WallpaperService.current;
+        }
+
+        function toggleClock(): void {
+            WallpaperService.desktopClock = !WallpaperService.desktopClock;
         }
     }
 }

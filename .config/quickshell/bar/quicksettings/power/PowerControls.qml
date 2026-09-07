@@ -79,10 +79,11 @@ ColumnLayout {
                             Layout.preferredHeight: 42
 
                             QsPower {
-                                icon: ""
+                                icon: "\uf023"
                                 color: Themes.accent
                                 label: "Lock"
-                                cmd: "hyprlock"
+                                cmd: "qs -p ~/.config/quickshell ipc call lock lock"
+                                onActivated: pc.closeRequested()
                             }
                             QsPower {
                                 icon: ""
@@ -108,6 +109,7 @@ ColumnLayout {
                                 color: Themes.accent
                                 label: "Exit"
                                 cmd: "loginctl terminate-user $USER"
+                                onActivated: pc.closeRequested()
                             }
                         }
 

@@ -271,8 +271,16 @@ Item {
         return ms + "ms";
     }
 
+    function wpBaseName(path) {
+        var p = String(path ?? "");
+        if (p.length === 0)
+            return "none";
+        return p.split("/").pop();
+    }
+
     readonly property var categories: [
         { icon: "\uf080", label: "Bar" },
+        { icon: "\uf03e", label: "Wallpaper" },
         { icon: "\uf144", label: "Media" },
         { icon: "\uf0a2", label: "Notifications" },
         { icon: "\uf1eb", label: "Connections" },
@@ -488,11 +496,467 @@ Item {
                                     id: pageLoader
                                     width: parent.width
                                 sourceComponent: root.currentCategory === 0 ? barPage
-                                    : root.currentCategory === 1 ? mediaPage
-                                    : root.currentCategory === 2 ? notificationsPage
-                                    : root.currentCategory === 3 ? connectionsPage
-                                    : root.currentCategory === 4 ? performancePage
+                                    : root.currentCategory === 1 ? wallpaperPage
+                                    : root.currentCategory === 2 ? mediaPage
+                                    : root.currentCategory === 3 ? notificationsPage
+                                    : root.currentCategory === 4 ? connectionsPage
+                                    : root.currentCategory === 5 ? performancePage
                                     : helpPage
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ═══ WALLPAPER ═══
+        Component {
+            id: wallpaperPage
+
+            ColumnLayout {
+                id: wpPage
+                spacing: 12
+
+                property bool favOnly: false
+
+                Card {
+                    title: "Wallpaper"
+                    icon: "\uf03e"
+                    accent: Themes.accent
+
+                    ColumnLayout {
+                        spacing: 0
+                        Layout.fillWidth: true
+
+                        SettingRow {
+                            icon: "\uf1c5"
+                            label: "Enabled"
+                            caption: WallpaperService.enabled ? "on" : "off"
+                            checked: WallpaperService.enabled
+                            onFlipped: WallpaperService.enabled = !WallpaperService.enabled
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
+
+                        SettingRow {
+                            icon: "\uf017"
+                            label: "Desktop clock"
+                            caption: WallpaperService.desktopClock ? "on" : "off"
+                            checked: WallpaperService.desktopClock
+                            onFlipped: WallpaperService.desktopClock = !WallpaperService.desktopClock
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
+
+                        SettingRow {
+                            icon: "\uf2f1"
+                            label: "Auto rotate"
+                            caption: WallpaperService.slideshowEnabled ? "slideshow" : "off"
+                            checked: WallpaperService.slideshowEnabled
+                            onFlipped: WallpaperService.slideshowEnabled = !WallpaperService.slideshowEnabled
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
+
+                        // interval dropdown — like the notification font picker
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 38
+                            spacing: 12
+
+                            Text {
+                                text: "\uf254"
+                                color: Themes.accent
+                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                Layout.preferredWidth: 20
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            Text {
+                                text: "Interval"
+                                color: Themes.fg
+                                font { pixelSize: 12; family: "Quicksand"; bold: true }
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Rectangle {
+                                id: slideshowDropdown
+
+                                Layout.alignment: Qt.AlignVCenter
+                                width: 140
+                                height: 24
+                                radius: 6
+                                color: slideshowDropMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : Themes.cardBg
+                                border.width: 1
+                                border.color: slideshowDropOpen ? Themes.accent : Themes.borderColor
+
+                                property bool slideshowDropOpen: false
+                                property var slideshowOptions: [
+                                    { minutes: 5, label: "5 min" },
+                                    { minutes: 15, label: "15 min" },
+                                    { minutes: 30, label: "30 min" },
+                                    { minutes: 60, label: "1 hr" },
+                                    { minutes: 180, label: "3 hr" },
+                                    { minutes: 360, label: "6 hr" },
+                                    { minutes: 720, label: "12 hr" },
+                                    { minutes: 1440, label: "1 day" }
+                                ]
+
+                                function curLabel() {
+                                    for (var i = 0; i < slideshowOptions.length; i++)
+                                        if (slideshowOptions[i].minutes === WallpaperService.slideshowMinutes)
+                                            return slideshowOptions[i].label;
+                                    return "30 min";
+                                }
+
+                                Text {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 8
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: slideshowDropdown.curLabel()
+                                    color: Themes.fg
+                                    font { pixelSize: 10; bold: true; family: "Quicksand" }
+                                    elide: Text.ElideRight
+                                    width: parent.width - 24
+                                }
+
+                                Text {
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 6
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "\uf078"
+                                    color: Themes.muted
+                                    font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
+                                    rotation: slideshowDropdown.slideshowDropOpen ? 180 : 0
+
+                                    Behavior on rotation {
+                                        NumberAnimation { duration: 120; easing.type: Easing.OutQuad }
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: slideshowDropMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: slideshowDropdown.slideshowDropOpen = !slideshowDropdown.slideshowDropOpen
+                                }
+
+                                Popup {
+                                    id: slideshowPopup
+                                    y: slideshowDropdown.height + 4
+                                    width: slideshowDropdown.width
+                                    height: slideshowPopupCol.implicitHeight + 8
+                                    closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
+                                    onOpened: slideshowDropdown.slideshowDropOpen = true
+                                    onClosed: slideshowDropdown.slideshowDropOpen = false
+
+                                    background: Rectangle {
+                                        radius: 6
+                                        color: Themes.cardBg
+                                        border.width: 1
+                                        border.color: Themes.borderColor
+                                    }
+
+                                    contentItem: ColumnLayout {
+                                        id: slideshowPopupCol
+                                        spacing: 0
+
+                                        Repeater {
+                                            model: slideshowDropdown.slideshowOptions
+
+                                            Rectangle {
+                                                required property var modelData
+                                                property bool isHovered: slideshowItemMa.containsMouse
+                                                property bool isSelected: WallpaperService.slideshowMinutes === modelData.minutes
+
+                                                Layout.fillWidth: true
+                                                implicitHeight: 24
+                                                radius: 4
+                                                color: isSelected ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
+
+                                                Text {
+                                                    anchors.left: parent.left
+                                                    anchors.leftMargin: 8
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    text: modelData.label
+                                                    color: isSelected ? Themes.accent : Themes.dim
+                                                    font { pixelSize: 10; family: "Quicksand" }
+                                                }
+
+                                                MouseArea {
+                                                    id: slideshowItemMa
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: {
+                                                        WallpaperService.slideshowMinutes = modelData.minutes
+                                                        slideshowPopup.close()
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    onVisibleChanged: slideshowDropdown.slideshowDropOpen = visible
+                                }
+
+                                Connections {
+                                    target: slideshowDropdown
+                                    function onSlideshowDropOpenChanged() {
+                                        if (slideshowDropdown.slideshowDropOpen && !slideshowPopup.visible)
+                                            slideshowPopup.open();
+                                        else if (!slideshowDropdown.slideshowDropOpen && slideshowPopup.visible)
+                                            slideshowPopup.close();
+                                    }
+                                }
+                            }
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
+
+                        // currently applied wallpaper + cycle controls
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 34
+                            Layout.topMargin: 4
+                            spacing: 8
+
+                            Text {
+                                text: "\uf03e"
+                                color: Themes.accent
+                                font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
+                                Layout.preferredWidth: 20
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: root.wpBaseName(WallpaperService.current)
+                                elide: Text.ElideRight
+                                color: Themes.fg
+                                font { pixelSize: 11; bold: true; family: "ZedMono Nerd Font" }
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+
+                            Rectangle {
+                                id: wpRefreshBtn
+
+                                implicitWidth: 24
+                                implicitHeight: 24
+                                radius: 7
+                                color: wpRefreshMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16) : Themes.separator
+                                border.width: 1
+                                border.color: wpRefreshMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.45) : "transparent"
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "\uf2f1"
+                                    color: wpRefreshMa.containsMouse ? Themes.accent : Themes.dim
+                                    font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                }
+
+                                MouseArea {
+                                    id: wpRefreshMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: WallpaperService._refreshList()
+                                }
+                            }
+
+                            Rectangle {
+                                id: wpPickerBtn
+
+                                implicitWidth: wpPickerTxt.implicitWidth + 14
+                                implicitHeight: 24
+                                radius: 7
+                                color: wpPickerMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16) : Themes.separator
+                                border.width: 1
+                                border.color: wpPickerMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.45) : "transparent"
+
+                                Text {
+                                    id: wpPickerTxt
+                                    anchors.centerIn: parent
+                                    text: "\uf03e pick"
+                                    color: wpPickerMa.containsMouse ? Themes.accent : Themes.dim
+                                    font { pixelSize: 10; bold: true; family: "Symbols Nerd Font Mono, Quicksand" }
+                                }
+
+                                MouseArea {
+                                    id: wpPickerMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: PickerState.wallpaperOpen = true
+                                }
+                            }
+
+                            StepBtn { glyph: "\uf04a"; onStepped: WallpaperService.prevWallpaper() }
+                            StepBtn { glyph: "\uf04e"; onStepped: WallpaperService.nextWallpaper() }
+                        }
+                    }
+                }
+
+                Card {
+                    title: "Library"
+                    icon: "\uf302"
+                    accent: Themes.accent2
+
+                    ColumnLayout {
+                        spacing: 10
+                        Layout.fillWidth: true
+                        Layout.topMargin: 4
+
+                        // favorites filter chip
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 22
+                            spacing: 8
+
+                            Rectangle {
+                                id: favFilterChip
+
+                                implicitWidth: favFilterTxt.implicitWidth + 18
+                                implicitHeight: 18
+                                radius: 9
+                                color: favFilterMa.containsMouse ? Qt.rgba(1, 0.72, 0.53, 0.18) : Themes.separator
+
+                                Text {
+                                    id: favFilterTxt
+                                    anchors.centerIn: parent
+                                    text: wpPage.favOnly ? "\uf005  favorites only" : "\uf006  favorites"
+                                    color: wpPage.favOnly ? "#ffb86c" : Themes.dim
+                                    font { pixelSize: 9; bold: true; family: "Symbols Nerd Font Mono, Quicksand" }
+                                }
+
+                                MouseArea {
+                                    id: favFilterMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: wpPage.favOnly = !wpPage.favOnly
+                                }
+                            }
+
+                            Text {
+                                visible: WallpaperService.favorites.length > 0
+                                text: `${WallpaperService.favorites.length} starred`
+                                color: Themes.muted
+                                font { pixelSize: 8; letterSpacing: 0.5; family: "ZedMono Nerd Font" }
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Text {
+                                visible: wpPage.favOnly && WallpaperService.favorites.length === 0
+                                text: "click ★ on any wallpaper to favorite it"
+                                color: Themes.borderMuted
+                                font { pixelSize: 8; italic: true; family: "Quicksand" }
+                            }
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            visible: WallpaperService.wallpaperList.length === 0
+                            text: "No wallpapers yet — drop images into ~/.config/quickshell/wallpapers\n(png · jpg · jpeg · webp · bmp) then hit refresh."
+                            color: Themes.dim
+                            wrapMode: Text.WordWrap
+                            font { pixelSize: 11; family: "Quicksand" }
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            visible: wpPage.favOnly && WallpaperService.wallpaperList.length > 0 && WallpaperService.favorites.length === 0
+                            text: "No favorites yet — click ★ on any wallpaper in the library."
+                            color: Themes.dim
+                            wrapMode: Text.WordWrap
+                            font { pixelSize: 11; family: "Quicksand" }
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            Layout.maximumWidth: 620
+                            spacing: 8
+                            visible: WallpaperService.wallpaperList.length > 0 &&
+                                     (!wpPage.favOnly || WallpaperService.favorites.length > 0)
+
+                            Repeater {
+                                model: wpPage.favOnly
+                                    ? WallpaperService.wallpaperList.filter(p => WallpaperService.isFavorite(p))
+                                    : WallpaperService.wallpaperList
+
+                                delegate: Rectangle {
+                                    id: wpTile
+
+                                    required property string modelData
+
+                                    readonly property bool sel: wpTile.modelData === WallpaperService.current
+                                    readonly property bool isFav: WallpaperService.isFavorite(wpTile.modelData)
+
+                                    implicitWidth: 180
+                                    implicitHeight: 112
+                                    radius: 10
+                                    clip: true
+                                    color: Themes.cardBg
+                                    border.width: 2
+                                    border.color: sel ? Themes.accent : wpTileHover.containsMouse ? Qt.rgba(1, 1, 1, 0.3) : "transparent"
+
+                                    Behavior on border.color {
+                                        ColorAnimation { duration: 110 }
+                                    }
+
+                                    Image {
+                                        anchors.fill: parent
+                                        anchors.margins: 2
+                                        source: wpTile.modelData
+                                        fillMode: Image.PreserveAspectCrop
+                                        asynchronous: true
+                                        cache: false
+                                        sourceSize: { const s = 256; return Qt.size(s, s); }
+                                    }
+
+                                    MouseArea {
+                                        id: wpTileHover
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: WallpaperService.setWallpaper(wpTile.modelData)
+                                    }
+
+                                    // star toggle — top-right, above the click zone
+                                    Rectangle {
+                                        id: wpFavBtn
+
+                                        anchors.top: parent.top
+                                        anchors.right: parent.right
+                                        anchors.topMargin: 4
+                                        anchors.rightMargin: 4
+                                        implicitWidth: 20
+                                        implicitHeight: 20
+                                        radius: 10
+                                        color: favHover.containsMouse || wpTile.isFav ? Qt.rgba(0, 0, 0, 0.62) : Qt.rgba(0, 0, 0, 0.35)
+                                        border.width: 1
+                                        border.color: Qt.rgba(1, 1, 1, 0.18)
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: wpTile.isFav ? "\uf005" : "\uf006"
+                                            color: wpTile.isFav ? "#ffb86c" : Themes.fg
+                                            font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+                                        }
+
+                                        MouseArea {
+                                            id: favHover
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: WallpaperService.toggleFavorite(wpTile.modelData)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -506,7 +970,83 @@ Item {
             id: barPage
 
             ColumnLayout {
+                id: barPageRoot
+
                 spacing: 12
+
+                // which section of the bar page is showing
+                property int barTab: 0
+
+                // ── tab strip · style | bar modules ──
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    component BarTab: Rectangle {
+                        id: btab
+
+                        property string label
+                        property string glyph
+                        property int idx
+
+                        readonly property bool active: barPageRoot.barTab === btab.idx
+                        readonly property bool hovered: btabMa.containsMouse
+
+                        Layout.preferredHeight: 26
+                        implicitWidth: btabRow.implicitWidth + 18
+                        radius: 8
+                        color: active ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16) : hovered ? Qt.rgba(1, 1, 1, 0.05) : Qt.rgba(1, 1, 1, 0.03)
+                        border.width: 1
+                        border.color: active ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.5) : Qt.rgba(1, 1, 1, 0.07)
+
+                        Behavior on color {
+                            ColorAnimation { duration: 110 }
+                        }
+
+                        Row {
+                            id: btabRow
+
+                            anchors.centerIn: parent
+                            spacing: 6
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: btab.glyph
+                                color: btab.active ? Themes.accentSoft : Themes.mutedSoft
+                                font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                            }
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: btab.label
+                                color: btab.active ? Themes.fg : Themes.mutedSoft
+                                font { pixelSize: 10; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                            }
+                        }
+
+                        MouseArea {
+                            id: btabMa
+
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: barPageRoot.barTab = btab.idx
+                        }
+                    }
+
+                    BarTab { label: "Style"; glyph: "\ueac1"; idx: 0 }
+                    BarTab { label: "Bar Modules"; glyph: "\uf132"; idx: 1 }
+
+                    Item { Layout.fillWidth: true }
+                }
+
+                StackLayout {
+                    Layout.fillWidth: true
+                    currentIndex: barPageRoot.barTab
+
+                    // ── tab · style ──
+                    ColumnLayout {
+                        spacing: 12
 
                 Card {
                     title: "Style"
@@ -517,13 +1057,8 @@ Item {
                         spacing: 0
                         Layout.fillWidth: true
 
-                        // segmented style selector — pick the bar
-                        // treatment directly instead of an on/off switch
+                        // bar style dropdown — like the notification font picker
                         RowLayout {
-                            id: barStyleSeg
-
-                            readonly property int mode: BarState.barMode
-
                             Layout.fillWidth: true
                             Layout.preferredHeight: 38
                             spacing: 12
@@ -546,70 +1081,134 @@ Item {
                             Item { Layout.fillWidth: true }
 
                             Rectangle {
+                                id: barStyleDropdown
+
                                 Layout.alignment: Qt.AlignVCenter
-                                implicitWidth: segRow.implicitWidth + 6
-                                implicitHeight: 26
-                                radius: 8
-                                color: Themes.cardBg
+                                width: 140
+                                height: 24
+                                radius: 6
+                                color: barStyleDropMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : Themes.cardBg
                                 border.width: 1
-                                border.color: Themes.borderColor
+                                border.color: barStyleDropOpen ? Themes.accent : Themes.borderColor
 
-                                Row {
-                                    id: segRow
+                                property bool barStyleDropOpen: false
+                                property var barStyleOptions: [
+                                    { key: 0, label: "Transparent" },
+                                    { key: 1, label: "Solid" },
+                                    { key: 2, label: "Full" },
+                                    { key: 3, label: "Glass" }
+                                ]
 
-                                    anchors.centerIn: parent
-                                    spacing: 2
+                                function curLabel() {
+                                    for (var i = 0; i < barStyleOptions.length; i++)
+                                        if (barStyleOptions[i].key === BarState.barMode)
+                                            return barStyleOptions[i].label;
+                                    return "Transparent";
+                                }
 
-                                    Repeater {
-                                        model: [
-                                            { key: 0, label: "Transparent" },
-                                            { key: 1, label: "Solid" },
-                                            { key: 2, label: "Full" },
-                                            { key: 3, label: "Glass" }
-                                        ]
+                                Text {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 8
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: barStyleDropdown.curLabel()
+                                    color: Themes.fg
+                                    font { pixelSize: 10; bold: true; family: "Quicksand" }
+                                    elide: Text.ElideRight
+                                    width: parent.width - 24
+                                }
 
-                                        delegate: Rectangle {
-                                            id: segOpt
+                                Text {
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 6
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "\uf078"
+                                    color: Themes.muted
+                                    font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
+                                    rotation: barStyleDropdown.barStyleDropOpen ? 180 : 0
 
-                                            required property var modelData
+                                    Behavior on rotation {
+                                        NumberAnimation { duration: 120; easing.type: Easing.OutQuad }
+                                    }
+                                }
 
-                                            readonly property bool sel: barStyleSeg.mode === segOpt.modelData.key
+                                MouseArea {
+                                    id: barStyleDropMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: barStyleDropdown.barStyleDropOpen = !barStyleDropdown.barStyleDropOpen
+                                }
 
-                                            width: segLbl.implicitWidth + 20
-                                            height: 22
-                                            radius: 6
-                                            color: sel ? Themes.accent : segOptMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : "transparent"
+                                Popup {
+                                    id: barStylePopup
+                                    y: barStyleDropdown.height + 4
+                                    width: barStyleDropdown.width
+                                    height: barStylePopupCol.implicitHeight + 8
+                                    closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
+                                    onOpened: barStyleDropdown.barStyleDropOpen = true
+                                    onClosed: barStyleDropdown.barStyleDropOpen = false
 
-                                            Behavior on color {
-                                                ColorAnimation { duration: 120 }
-                                            }
+                                    background: Rectangle {
+                                        radius: 6
+                                        color: Themes.cardBg
+                                        border.width: 1
+                                        border.color: Themes.borderColor
+                                    }
 
-                                            Text {
-                                                id: segLbl
+                                    contentItem: ColumnLayout {
+                                        id: barStylePopupCol
+                                        spacing: 0
 
-                                                anchors.centerIn: parent
-                                                text: segOpt.modelData.label
-                                                color: segOpt.sel ? "#181825" : segOptMa.containsMouse ? Themes.fg : Themes.dim
-                                                font { pixelSize: 10; bold: true; family: "Quicksand" }
+                                        Repeater {
+                                            model: barStyleDropdown.barStyleOptions
 
-                                                Behavior on color {
-                                                    ColorAnimation { duration: 120 }
+                                            Rectangle {
+                                                required property var modelData
+                                                property bool isHovered: barStyleItemMa.containsMouse
+                                                property bool isSelected: BarState.barMode === modelData.key
+
+                                                Layout.fillWidth: true
+                                                implicitHeight: 24
+                                                radius: 4
+                                                color: isSelected ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
+
+                                                Text {
+                                                    anchors.left: parent.left
+                                                    anchors.leftMargin: 8
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    text: modelData.label
+                                                    color: isSelected ? Themes.accent : Themes.dim
+                                                    font { pixelSize: 10; family: "Quicksand" }
+                                                }
+
+                                                MouseArea {
+                                                    id: barStyleItemMa
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: {
+                                                        BarState.barMode = modelData.key
+                                                        barStylePopup.close()
+                                                    }
                                                 }
                                             }
+                                        }
+                                    }
 
-                                            MouseArea {
-                                                id: segOptMa
+                                    onVisibleChanged: barStyleDropdown.barStyleDropOpen = visible
+                                }
 
-                                                anchors.fill: parent
-                                                hoverEnabled: true
-                                                cursorShape: Qt.PointingHandCursor
-                                                onClicked: BarState.barMode = segOpt.modelData.key
+                                Connections {
+                                    target: barStyleDropdown
+                                    function onBarStyleDropOpenChanged() {
+                                        if (barStyleDropdown.barStyleDropOpen && !barStylePopup.visible)
+                                            barStylePopup.open();
+                                        else if (!barStyleDropdown.barStyleDropOpen && barStylePopup.visible)
+                                            barStylePopup.close();
+                                    }
+                                }
                             }
                         }
-                    }
-                }
-            }
-        }
 
                         // segmented color-theme selector — purple (default) vs gron teal
                         RowLayout {
@@ -735,6 +1334,16 @@ Item {
                         Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
 
                         SettingRow {
+                            icon: "\uf044"
+                            label: "Badge transparent"
+                            caption: MiscState.transparentWsBadge ? "on" : "off"
+                            checked: MiscState.transparentWsBadge
+                            onFlipped: MiscState.transparentWsBadge = !MiscState.transparentWsBadge
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
+
+                        SettingRow {
                             icon: "\uf070"
                             label: "Popups"
                             caption: MiscState.popupSolidBg ? "solid" : "glass"
@@ -743,6 +1352,11 @@ Item {
                         }
                     }
                 }
+                }
+
+                    // ── tab · bar modules ──
+                    ColumnLayout {
+                        spacing: 12
 
                 Card {
                     title: "Bar Modules"
@@ -790,6 +1404,8 @@ Item {
                                 }
                             }
                         }
+                    }
+                }
                     }
                 }
             }
@@ -1000,7 +1616,7 @@ Item {
                                     : NetworkState.wifiConnected ? Math.round((NetworkState.activeNetwork?.signalStrength ?? 0) * 100) + "% signal"
                                     : "scanning…"
                                 checked: NetworkState.wifiEnabled
-                                onFlipped: NetworkState.setWifiEnabled(!NetworkState.wifiEnabled)
+                                onFlipped: MiscState.setWifiRadio(!NetworkState.wifiEnabled)
                             }
 
                             Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
@@ -1020,10 +1636,7 @@ Item {
                                 label: Bt.enabled ? (Bt.connected && Bt.btDev.length > 0 ? Bt.btDev : "Bluetooth") : "Bluetooth"
                                 caption: !Bt.enabled ? "radio off" : Bt.connected ? "connected" + (Bt.btBat > 0 ? " · " + Math.round(Bt.btBat * 100) + "%" : "") : "no devices"
                                 checked: Bt.enabled
-                                onFlipped: {
-                                    if (Bt.adapter)
-                                        Bt.adapter.enabled = !Bt.adapter.enabled;
-                                }
+                                onFlipped: MiscState.setBtRadio(!Bt.enabled)
                             }
                         }
                     }
@@ -1291,7 +1904,7 @@ Item {
                             }
 
                             Text {
-                                text: "Font"
+                                text: "Notification font"
                                 color: Themes.fg
                                 font { pixelSize: 12; family: "Quicksand"; bold: true }
                                 Layout.alignment: Qt.AlignVCenter
@@ -1414,6 +2027,38 @@ Item {
                                             notifFontPopup.close();
                                     }
                                 }
+                            }
+                        }
+
+                        // live preview — proves the pick applies instantly
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.topMargin: 4
+                            Layout.bottomMargin: 8
+                            implicitHeight: 42
+                            radius: 8
+                            color: Qt.rgba(1, 1, 1, 0.05)
+                            border.width: 1
+                            border.color: Themes.borderColor
+
+                            Text {
+                                anchors.left: parent.left
+                                anchors.leftMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "AaBbCc 123 — The quick brown fox"
+                                color: Themes.fg
+                                font { pixelSize: 13; family: MiscState.notifFont }
+                                elide: Text.ElideRight
+                                width: parent.width - 90
+                            }
+
+                            Text {
+                                anchors.right: parent.right
+                                anchors.rightMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: MiscState.notifFont
+                                color: Themes.borderMuted
+                                font { pixelSize: 8; letterSpacing: 0.5; family: "ZedMono Nerd Font" }
                             }
                         }
 

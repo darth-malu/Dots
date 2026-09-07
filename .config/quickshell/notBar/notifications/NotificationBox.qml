@@ -82,7 +82,7 @@ WrapperMouseArea {
 
             Item {
                 id: songArtContainer
-                visible: rootMouseArea.iconSize > 0 && (rootMouseArea.image != "" || rootMouseArea.isWifiConnect)
+                visible: rootMouseArea.iconSize > 0
                 implicitWidth: rootMouseArea.iconSize
                 implicitHeight: rootMouseArea.iconSize
                 Layout.topMargin: 2
@@ -99,6 +99,28 @@ WrapperMouseArea {
                     font {
                         pixelSize: Math.round(rootMouseArea.iconSize * 0.6)
                         family: "Symbols Nerd Font Mono"
+                    }
+                }
+
+                // default app icon for notifications that ship no art — music
+                // gets a note, everything else a bell (matches the history list)
+                Rectangle {
+                    id: defaultIcon
+                    visible: rootMouseArea.image == "" && !rootMouseArea.isWifiConnect
+                    anchors.fill: songArtContainer
+                    radius: container.radius - 2
+                    color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12)
+                    border.width: 1
+                    border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.22)
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: rootMouseArea.ifMusic ? "\uf001" : "\uf0f3"
+                        color: Themes.accentSoft
+                        font {
+                            pixelSize: Math.round(rootMouseArea.iconSize * 0.48)
+                            family: "Symbols Nerd Font Mono"
+                        }
                     }
                 }
 

@@ -165,7 +165,7 @@ RowLayout {
                     implicitHeight: width
                     radius: boxy ? Themes.boxyRadius : Themes.roundedRadius
                     color: rootBlock.isActive
-                        ? (boxy ? Themes.boxyActiveBg : Themes.roundedBadgeBg)
+                        ? (MiscState.transparentWsBadge ? "transparent" : (boxy ? Themes.boxyActiveBg : Themes.roundedBadgeBg))
                         : rootBlock.urgent ? Themes.roundedUrgentBg
                         : "transparent"
 

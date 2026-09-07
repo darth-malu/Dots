@@ -106,6 +106,10 @@ Singleton {
     property bool iconWorkspaces: prefs.iconWorkspaces
     onIconWorkspacesChanged: prefs.iconWorkspaces = iconWorkspaces
 
+    // transparent active workspace number badge (parent container stays colored)
+    property bool transparentWsBadge: prefs.transparentWsBadge
+    onTransparentWsBadgeChanged: prefs.transparentWsBadge = transparentWsBadge
+
     // boxy theme — master toggle: controls workspaces, tray and notifications
     property bool boxyTheme: prefs.boxyTheme
     onBoxyThemeChanged: {
@@ -148,6 +152,50 @@ Singleton {
     property int themeScheme: prefs.themeScheme
     onThemeSchemeChanged: prefs.themeScheme = themeScheme
 
+    // ── radio states persisted across reboots (settings → connections) ──
+    // wifi radio matter — `wifiEnabled` on NetworkState is !Networking.wifiEnabled
+    property bool wifiRadioWanted: prefs.wifiRadioWanted
+    onWifiRadioWantedChanged: prefs.wifiRadioWanted = wifiRadioWanted
+
+    property bool btRadioWanted: prefs.btRadioWanted
+    onBtRadioWantedChanged: prefs.btRadioWanted = btRadioWanted
+
+    function setWifiRadio(on) {
+        root.wifiRadioWanted = on;
+        NetworkState.setWifiEnabled(on);
+    }
+
+    function setBtRadio(on) {
+        root.btRadioWanted = on;
+        if (Bt.adapter)
+            Bt.adapter.enabled = on;
+    }
+
+    // apply the persisted radio states once the adapters come up at boot
+    Timer {
+        id: radioReconcile
+
+        interval: 1000
+        repeat: true
+        running: true
+        onTriggered: {
+            var done = true;
+            if (Bt.adapter) {
+                if (Bt.enabled !== root.btRadioWanted)
+                    Bt.adapter.enabled = root.btRadioWanted;
+            } else {
+                done = false;
+            }
+            if (Networking.wifiEnabled !== root.wifiRadioWanted) {
+                NetworkState.setWifiEnabled(root.wifiRadioWanted);
+            }
+            if (root.count >= 15 || (done && Networking.wifiEnabled === root.wifiRadioWanted))
+                timer.stop();
+            root.count++;
+        }
+    }
+    property int count: 0
+
     // ── persistent store for user preferences ──
     FileView {
         id: prefStore
@@ -175,6 +223,7 @@ Singleton {
             property bool iconWorkspaces: true
             property bool boxyTheme: true
             property bool showWorkspaces: true
+            property bool transparentWsBadge: false
             property string notifFont: "ZedMono Nerd Font"
             property int notifArtSize: 90
             property int notifRadius: 10
@@ -182,6 +231,8 @@ Singleton {
             property bool showVolumeIn: true
             property bool showAppVolume: false
             property int themeScheme: 0
+            property bool wifiRadioWanted: true
+            property bool btRadioWanted: true
         }
     }
 
