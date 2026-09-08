@@ -265,8 +265,9 @@ Item {
 
     // ── persistent Hyprland integer option stepper ──
     // reads the value from (and writes back to) the user's lua config via the
-    // HyprConfig service, then `hyprctl reload` applies it instantly
-    component HyprStepRow: RowLayout {
+    // HyprConfig service, then `hyprctl reload` applies it instantly. The row
+    // also steps under the mouse wheel.
+    component HyprStepRow: Item {
         id: hsr
 
         required property string icon
@@ -288,53 +289,69 @@ Item {
             HyprConfig.applyInt(hsr.key, v);
         }
 
-        spacing: 12
         Layout.fillWidth: true
         Layout.preferredHeight: 34
 
-        Text {
-            text: hsr.icon
-            color: Themes.accent
-            font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-            Layout.preferredWidth: 20
-            horizontalAlignment: Text.AlignHCenter
-        }
-
-        Text {
-            text: hsr.label
-            color: Themes.fg
-            font { pixelSize: 12; family: "Quicksand"; bold: true }
-            Layout.alignment: Qt.AlignVCenter
-        }
-
-        Item { Layout.fillWidth: true }
-
-        StepBtn {
-            glyph: "\uf068"
-            Layout.alignment: Qt.AlignVCenter
-            onStepped: hsr.nudge(-1)
-        }
-
-        Rectangle {
-            implicitWidth: 44
-            implicitHeight: 24
-            radius: 7
-            color: Themes.cardBg
-            border.width: 1
-            border.color: Themes.borderColor
+        RowLayout {
+            anchors.fill: parent
+            spacing: 12
 
             Text {
-                anchors.centerIn: parent
-                text: hsr.value
+                text: hsr.icon
                 color: Themes.accent
-                font { pixelSize: 11; bold: true; family: "ZedMono Nerd Font" }
+                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                Layout.preferredWidth: 20
+                horizontalAlignment: Text.AlignHCenter
+            }
+
+            Text {
+                text: hsr.label
+                color: Themes.fg
+                font { pixelSize: 12; family: "Quicksand"; bold: true }
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            Item { Layout.fillWidth: true }
+
+            StepBtn {
+                glyph: "\uf068"
+                Layout.alignment: Qt.AlignVCenter
+                onStepped: hsr.nudge(-1)
+            }
+
+            Rectangle {
+                implicitWidth: 44
+                implicitHeight: 24
+                radius: 7
+                color: Themes.cardBg
+                border.width: 1
+                border.color: Themes.borderColor
+
+                Text {
+                    anchors.centerIn: parent
+                    text: hsr.value
+                    color: Themes.accent
+                    font { pixelSize: 11; bold: true; family: "ZedMono Nerd Font" }
+                }
+            }
+
+            StepBtn {
+                glyph: "\uf067"
+                Layout.alignment: Qt.AlignVCenter
+                onStepped: hsr.nudge(1)
             }
         }
 
-        StepBtn {
-            glyph: "\uf067"
-            Layout.alignment: Qt.AlignVCenter
-            onStepped: hsr.nudge(1)
+        // wheel over the whole row steps the value (up = +step, down = −step)
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.NoButton
+            cursorShape: Qt.ArrowCursor
+            onWheel: w => {
+                if (!hsr.interactive)
+                    return;
+                hsr.nudge(w.angleDelta.y > 0 ? 1 : -1);
+            }
         }
     }
 
@@ -2935,6 +2952,26 @@ Item {
                             label: "Inactive border"
                             borderKey: "inactiveBorder"
                         }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
+
+                        SettingRow {
+                            icon: "\uf04b"
+                            label: "Dual tone borders"
+                            caption: HyprConfig.dualTone ? "gradient" : "solid"
+                            checked: HyprConfig.dualTone
+                            onFlipped: HyprConfig.setDualTone(!HyprConfig.dualTone)
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
+
+                        HyprColorRow {
+                            id: borderTone2Row
+                            icon: "\uf096"
+                            label: "Active border 2"
+                            borderKey: "borderTone2"
+                            visible: HyprConfig.dualTone
+                        }
                     }
                 }
 
@@ -2955,6 +2992,37 @@ Item {
                         wrapMode: Text.WordWrap
                         color: Themes.muted
                         font { pixelSize: 9; family: "Quicksand" }
+                    }
+
+                    // re-read the lua files and re-sync the UI to whatever is in
+                    // them now — discards any local divergence
+                    Rectangle {
+                        implicitWidth: resetLbl.implicitWidth + 18
+                        implicitHeight: 22
+                        radius: 11
+                        color: resetMa.containsMouse
+                            ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.15)
+                            : Themes.separator
+                        border.width: 1
+                        border.color: resetMa.containsMouse
+                            ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.45)
+                            : "transparent"
+
+                        Text {
+                            id: resetLbl
+                            anchors.centerIn: parent
+                            text: "\uf0e2 reset"
+                            color: resetMa.containsMouse ? Themes.accent : Themes.dim
+                            font { pixelSize: 9; bold: true; family: "Symbols Nerd Font Mono, Quicksand" }
+                        }
+
+                        MouseArea {
+                            id: resetMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: HyprConfig.reload()
+                        }
                     }
                 }
 

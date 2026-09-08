@@ -62,46 +62,73 @@ BarBlock {
     content: RowLayout {
         spacing: 4
 
-        Canvas {
-            id: gauge
+        Item {
+            id: sprite
 
-            readonly property real progress: cpu.cpuPercent / 100
+            Layout.preferredWidth: 26
+            Layout.preferredHeight: 26
 
-            implicitWidth: 22
-            implicitHeight: 22
+            // solid disc behind the ring so it reads over any wallpaper —
+            // same slot look as the mpris play-button ring
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: 2
+                radius: width / 2
+                color: Qt.rgba(0, 0, 0, 0.28)
+            }
 
-            onProgressChanged: requestPaint()
+            Canvas {
+                id: gauge
+                anchors.fill: parent
+                anchors.margins: 2
+                antialiasing: true
 
-            onPaint: {
-                var ctx = getContext("2d");
-                ctx.clearRect(0, 0, width, height);
+                readonly property real progress: cpu.cpuPercent / 100
 
-                var cx = width / 2;
-                var cy = height / 2;
-                var r = cx - 2;
-                var lw = 3;
-                var startAngle = -Math.PI / 2;
+                onProgressChanged: requestPaint()
 
-                ctx.beginPath();
-                ctx.arc(cx, cy, r, 0, Math.PI * 2);
-                ctx.strokeStyle = "rgba(255, 255, 255, 0.06)";
-                ctx.lineWidth = lw;
-                ctx.stroke();
+                onPaint: {
+                    var ctx = getContext("2d");
+                    ctx.clearRect(0, 0, width, height);
 
-                if (progress > 0) {
+                    var cx = width / 2;
+                    var cy = height / 2;
+                    var r = Math.min(cx, cy) - 1.5;
+
+                    // zero-sized slot would make arc() throw
+                    if (r <= 0)
+                        return;
+
+                    // dim track — same tint as the mpris ring slot
                     ctx.beginPath();
-                    ctx.arc(cx, cy, r, startAngle, startAngle + Math.PI * 2 * Math.min(progress, 0.999));
-                    ctx.strokeStyle = cpu.cpuColor;
-                    ctx.lineWidth = lw;
-                    ctx.lineCap = "round";
+                    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                    ctx.strokeStyle = Qt.rgba(1, 0.71, 0.76, 0.18);
+                    ctx.lineWidth = 1.5;
                     ctx.stroke();
-                }
 
-                ctx.fillStyle = cpu.cpuColor;
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.font = `11px "Symbols Nerd Font Mono"`;
-                ctx.fillText("", cx, cy + 0.5);
+                    if (progress > 0.004) {
+                        var startAngle = -Math.PI / 2;
+                        var full = progress >= 0.9985;
+                        ctx.beginPath();
+                        if (full) {
+                            // complete circle avoids a round-cap nub at 12 o'clock
+                            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                            ctx.lineCap = "butt";
+                        } else {
+                            ctx.arc(cx, cy, r, startAngle, startAngle + Math.PI * 2 * progress);
+                            ctx.lineCap = "round";
+                        }
+                        ctx.strokeStyle = cpu.cpuColor;
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                    }
+
+                    ctx.fillStyle = cpu.cpuColor;
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.font = `10px "Symbols Nerd Font Mono"`;
+                    ctx.fillText("", cx, cy + 0.5);
+                }
             }
         }
 

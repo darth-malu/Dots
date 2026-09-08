@@ -28,6 +28,11 @@ Singleton {
     property color activeBorder: "#00abf5"
     property color inactiveBorder: "#595959"
 
+    // dual-tone gradient border — the active border becomes a two-colour
+    // gradient (angle 45) when on; both colours are editable from the picker
+    property bool dualTone: false
+    property color borderTone2: "#00ff99"
+
     // gaps-out master switch — persisted in prefs.json so the "off" state
     // survives restarts; the file value is forced to 0 while off
     property bool gapsOutEnabled: Prefs.prefs.hyprGapsOutEnabled
@@ -56,6 +61,10 @@ Singleton {
         if (ab) root.activeBorder = "#" + ab[1].slice(0, 6);
         const ib = buf.match(/inactive_border\s*=\s*"rgba\(([0-9A-Fa-f]{8})\)"/);
         if (ib) root.inactiveBorder = "#" + ib[1].slice(0, 6);
+        const dw = buf.match(/active_border\s*=\s*\{[^}]*"rgba\(([0-9A-Fa-f]{8})\)"\s*,\s*"rgba\(([0-9A-Fa-f]{8})\)"/);
+        root.dualTone = !!dw;
+        if (dw)
+            root.borderTone2 = "#" + dw[2].slice(0, 6);
     }
 
     Process {
@@ -126,6 +135,12 @@ Singleton {
                 "s/(active_border\\s*=\\s*\\{[^\"]*\"rgba\\()[0-9A-Fa-f]{8}(\\)\")/${1}" + rgba8 + "$2/");
             return true;
         }
+        if (key === "borderTone2") {
+            root.borderTone2 = hex;
+            root._apply(root.generalPath,
+                "s/(colors\\s*=\\s*\\{[^\"]*\"rgba\\([0-9A-Fa-f]{8}\\)\",\\s*\"rgba\\()[0-9A-Fa-f]{8}(\\)\")/${1}" + rgba8 + "$2/");
+            return true;
+        }
         if (key === "inactiveBorder") {
             root.inactiveBorder = hex;
             root._apply(root.generalPath,
@@ -133,6 +148,23 @@ Singleton {
             return true;
         }
         return false;
+    }
+
+    // ── dual-tone gradient switch ──
+    // on: active_border becomes "colors = { A, B }, angle = 45" (gradient);
+    // off: back to the single "colors = { A }" form. The first colour is
+    // always the current activeBorder, so toggling never loses it.
+    function setDualTone(on: bool): void {
+        root.dualTone = on;
+        const a = ((root.activeBorder || "").replace("#", "") + "ff").toUpperCase();
+        const b = ((root.borderTone2 || "").replace("#", "") + "ff").toUpperCase();
+        const dual = "active_border = { colors = { \"rgba(" + a + ")\", \"rgba(" + b + ")\" }, angle = 45 }";
+        const single = "active_border = { colors = { \"rgba(" + a + ")\" } }";
+        // angle-aware: matches the single-colour form AND the two-colour
+        // "… }, angle = 45 }" form so toggling always replaces cleanly
+        const expr = "s/active_border\\s*=\\s*\\{.*?\\}\\s*(?:,\\s*angle\\s*=\\s*\\d+\\s*)?\\}/"
+            + (on ? dual : single) + "/";
+        root._apply(root.generalPath, expr);
     }
 
     // master gaps-out switch: off forces gaps_out to 0, on restores the
