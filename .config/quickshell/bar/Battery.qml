@@ -132,19 +132,19 @@ RowLayout {
                     anchors.centerIn: parent
                     text: "\uf0e7"
                     font { pixelSize: 12; family: "Symbols Nerd Font Mono"; weight: Font.Bold }
-                    color: Themes.fg
+                    color: Themes.barText
                     style: Text.Outline
                     styleColor: Qt.rgba(0, 0, 0, 0.7)
                 }
             }
 
             // ── Charge status icon — centered in the body while plugged in ──
-            Text {
-                anchors.centerIn: parent
-                visible: batteryBlock.isCharging || batteryBlock.isPendingCharge
-                text: batteryBlock.isPendingCharge ? "\uf1e6" : "\uf0e7"
-                font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
-                color: Themes.fg
+Text {
+                    anchors.centerIn: parent
+                    visible: batteryBlock.isCharging || batteryBlock.isPendingCharge
+                    text: batteryBlock.isPendingCharge ? "\uf1e6" : "\uf0e7"
+                    font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+                    color: Themes.barText
                 style: Text.Outline
                 styleColor: Qt.rgba(0, 0, 0, 0.65)
             }
@@ -159,11 +159,11 @@ RowLayout {
             }
 
             // ── Percentage — inside the body, outlined for legibility over the fill ──
-            Text {
-                anchors.centerIn: parent
-                visible: batteryBlock.showPct && !batteryBlock.isCharging && !batteryBlock.isPendingCharge && !batteryBlock.isFullyCharged
-                text: `${batteryBlock.pctDisplay}`
-                color: Themes.fg
+Text {
+                    anchors.centerIn: parent
+                    visible: batteryBlock.showPct && !batteryBlock.isCharging && !batteryBlock.isPendingCharge && !batteryBlock.isFullyCharged
+                    text: `${batteryBlock.pctDisplay}`
+                    color: Themes.barText
                 style: Text.Outline
                 styleColor: Qt.rgba(0, 0, 0, 0.75)
                 font { pixelSize: 11; bold: true; family: "ZedMono Nerd Font" }

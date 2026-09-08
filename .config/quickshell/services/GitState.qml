@@ -16,7 +16,7 @@ Singleton {
 
     // ── defaults (only applied the very first run, before any user edits) ──
     readonly property var defaultBare: [
-        { alias: "dots", dir: "/home/malu/Projects/Dots", workTree: "/home/malu", upstream: "gitlab/main", untracked: true }
+        { alias: "dots", dir: "/home/malu/Projects/Dots", workTree: "/home/malu", upstream: "gitlab/main", untracked: false }
     ]
     readonly property var defaultRegular: []
 
@@ -136,8 +136,12 @@ Singleton {
         return 2;
     }
 
-    // one shared sh pass — status + ahead/behind for every repo in a single
-    // process; --untracked-files=no keeps the home-tree bare repo cheap
+    // one shared sh pass covers every repo in a single process. Per repo we run
+    // ONE git (`status -sb`) which yields the flags AND ahead/behind in a single
+    // call; a custom upstream ref (dots/gitlab/main) needs one extra rev-list.
+    // --untracked-files=no keeps huge-worktree bare repos cheap. gc.auto=0 +
+    // maintenance.auto=0 on every call stop git self-triggering a repack
+    // (the `git pack-objects` CPU hog).
     readonly property string probeScript: `
 while [ "$#" -gt 0 ]; do
   kind="$1"; idx="$2"; shift 2
@@ -145,32 +149,48 @@ while [ "$#" -gt 0 ]; do
   case "$kind" in
     r)
       p="$1"; up="$2"; shift 2
-      [ -d "$p/.git" ] || [ -f "$p/.git" ] || { printf '%s\t%s\t\t%s\n' "r" "$idx" "err"; continue; }
-      G() { git -C "$p" "$@"; }
+      [ -d "$p/.git" ] || [ -f "$p/.git" ] || { printf '%s\t%s\t\t%s\t%s\n' "r" "$idx" "err" "none"; continue; }
+      G() { git -C "$p" -c gc.auto=0 -c maintenance.auto=0 "$@"; }
       ;;
     b)
       alias="$1"; dir="$2"; wt="$3"; up="$4"; uno="$5"; shift 5
-      [ -d "$dir" ] || { printf '%s\t%s\t\t%s\n' "b" "$idx" "err"; continue; }
-      G() { git --git-dir="$dir" --work-tree="$wt" "$@"; }
+      [ -d "$dir" ] || { printf '%s\t%s\t\t%s\t%s\n' "b" "$idx" "err" "none"; continue; }
+      G() { git --git-dir="$dir" --work-tree="$wt" -c gc.auto=0 -c maintenance.auto=0 "$@"; }
       ;;
     *) continue ;;
   esac
 
-  extra=""
-  [ "$uno" = "y" ] && extra="--untracked-files=no"
-  st=$(G status --porcelain=v1 $extra 2>/dev/null)
-  flags=""
-  if [ -n "$st" ]; then
-    printf '%s\n' "$st" | grep -qE '^[MADRC]' && flags="\${flags}s"
-    printf '%s\n' "$st" | grep -qE '^.[MD]' && flags="\${flags}u"
-    printf '%s\n' "$st" | grep -qE '^\?\?' && flags="\${flags}t"
-  fi
+  extra="--untracked-files=no"
+  [ "$uno" = "y" ] && extra=""
+  st=$(G status --porcelain=v1 -sb $extra 2>/dev/null)
 
-  ref="@{u}"
-  [ -n "$up" ] && ref="$up"
-  ab=$(G rev-list --count --left-right "$ref"...HEAD 2>/dev/null)
+  flags=""
+  ab=""
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    case "$line" in
+      "##"*) case "$line" in
+                *"ahead"*|*"behind"*) ab=$(printf '%s' "$line" | awk '{ for(i=1;i<=NF;i++){ f=$i; if(f~/ahead/){ v=$(i+1); gsub(/[^0-9]/,"",v); a=v } if(f~/behind/){ v=$(i+1); gsub(/[^0-9]/,"",v); b=v } } if(a=="")a=0; if(b=="")b=0; printf "B%s A%s", b, a }');;
+                *"..."*) ab="B0 A0";;
+              esac;;
+      *) n="\${#line}"; [ "$n" -ge 2 ] || continue
+         x="\${line:0:1}"; y="\${line:1:1}"
+         case "$x" in M|A|D|R|C) flags="\${flags}s";; esac
+         case "$y" in M|D) flags="\${flags}u";; esac
+         [ "$x" = "?" ] && [ "$y" = "?" ] && flags="\${flags}t";;
+    esac
+  done <<EOF
+$st
+EOF
+
+  # custom upstream (not a git-configured @{u}) needs an explicit rev-list;
+  # --left-right separates the two counts with a tab (behind\t ahead)
+  if [ -n "$up" ]; then
+    rv=$(G rev-list --count --left-right "$up"...HEAD 2>/dev/null)
+    [ -n "$rv" ] && ab="B\${rv%%	*} A\${rv##*	}"
+  fi
   [ -n "$ab" ] || ab="none"
-  printf '%s\t%s\t%s\t%s\n' "$kind" "$idx" "$flags" "\${ab//	/:}"
+  printf '%s\t%s\t%s\t%s\n' "$kind" "$idx" "$flags" "$ab"
 done
 `
 
@@ -187,7 +207,8 @@ done
         return args;
     }
 
-    // cheap-nothing if a probe is already in flight or there are no repos
+    // probe on demand only — no background polling (unless the popup is open,
+    // see the timer below)
     function refresh() {
         if (root.busy || root.totalRepos === 0)
             return;
@@ -199,17 +220,18 @@ done
     }
 
     // ── commit / push (per-repo and bulk, refresh afterwards) ──
-    // returns the git argv prefix: ["git","-C",path] or ["git","--git-dir=..","--work-tree=.."]
+    // gc.auto=0 + maintenance.auto=0 on writes too: commit/push can otherwise
+    // auto-trigger a background `git gc` → pack-objects repack on big repos
     function gitFor(kind, idx, sub) {
         let prefix = null;
         if (kind === "r") {
             const repo = root.regularRepos[idx];
             if (repo)
-                prefix = ["git", "-C", repo.path];
+                prefix = ["git", "-c", "gc.auto=0", "-c", "maintenance.auto=0", "-C", repo.path];
         } else {
             const repo = root.bareRepos[idx];
             if (repo)
-                prefix = ["git", "--git-dir=" + repo.dir, "--work-tree=" + repo.workTree];
+                prefix = ["git", "-c", "gc.auto=0", "-c", "maintenance.auto=0", "--git-dir=" + repo.dir, "--work-tree=" + repo.workTree];
         }
         if (!prefix)
             return null;
@@ -280,12 +302,13 @@ done
         }
     }
 
-    // poll only while the module is visible — the popup also refreshes on open
+    // no background polling — the pill keeps the last known state; rows refresh
+    // when the popup opens/refresh button/add/commit/push. While the popup is
+    // open, a slow 60s tick keeps the rows current.
     Timer {
         interval: 60000
         running: root.monitoring
         repeat: true
-        triggeredOnStart: true
         onTriggered: root.refresh()
     }
 
@@ -315,19 +338,21 @@ done
                 const key = f[0] + ":" + f[1];
                 const flags = f[2] || "";
                 const ab = f[3];
-                if (ab === "err") {
+                if (flags === "err") {
                     map[key] = { flags: "", ahead: -1, behind: -1, upstream: false, error: true };
                     continue;
                 }
                 let ahead = 0;
                 let behind = 0;
                 let upstream = true;
-                if (ab === "none") {
+                if (ab === "none" || ab === "") {
                     upstream = false;
                 } else {
-                    const p = ab.split(":");
-                    behind = parseInt(p[0], 10) || 0;
-                    ahead = parseInt(p[1], 10) || 0;
+                    // "B<n> A<n>" — behind then ahead, from either -b or rev-list
+                    const bm = /B(\d+)/.exec(ab);
+                    const am = /A(\d+)/.exec(ab);
+                    behind = bm ? parseInt(bm[1], 10) : 0;
+                    ahead = am ? parseInt(am[1], 10) : 0;
                 }
                 map[key] = { flags, ahead, behind, upstream, error: false };
             }

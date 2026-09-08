@@ -51,6 +51,7 @@ Singleton {
             property bool showAppVolume: false
             property bool showClock: true
             property bool showResources: true
+            property bool resourcesVisible: false
             property int themeScheme: 0
             property bool wifiRadioWanted: true
             property bool btRadioWanted: true
@@ -68,7 +69,11 @@ Singleton {
             property var favorites: []
             property bool rotationFavoritesOnly: false
             property string textTone: "light" // "light" | "dark" — desktop overlay text (toggle)
-            property string barTextTone: "auto" // "auto" | "light" | "dark" — bar text tone (picker) = "dark" means dark text on light
+            property string barTextTone: "dark" // "dark" | "light" — wallpaper-tone mode for the bar
+
+            // ── hyprland settings keys ──
+            property bool hyprGapsOutEnabled: true
+            property int hyprGapsOutValue: 12
         }
     }
 }

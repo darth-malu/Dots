@@ -120,11 +120,11 @@ ShellRoot {
 
                     // media moves in-line with the right cluster so the centered
                     // pill can no longer slide under the active-window title
-                    Mpris {
+                    Git {
                         host: barr
                     }
 
-                    Git {
+                    Mpris {
                         host: barr
                     }
 

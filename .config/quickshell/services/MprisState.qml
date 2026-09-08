@@ -17,23 +17,29 @@ Singleton {
 
     property bool mprisVisible: false
 
+    // setting any of these is only remembered if the store is flushed to disk —
+    // assigning the JsonAdapter property alone never persists
+    function persistPrefs(): void {
+        prefStore.writeAdapter();
+    }
+
     property bool mprisArtVisible: prefs.mprisArtVisible
-    onMprisArtVisibleChanged: prefs.mprisArtVisible = mprisArtVisible
+    onMprisArtVisibleChanged: { prefs.mprisArtVisible = mprisArtVisible; root.persistPrefs(); }
 
     property bool showMprisProgress: prefs.showMprisProgress
-    onShowMprisProgressChanged: prefs.showMprisProgress = showMprisProgress
+    onShowMprisProgressChanged: { prefs.showMprisProgress = showMprisProgress; root.persistPrefs(); }
 
     property bool hideWhenIdle: prefs.hideWhenIdle
-    onHideWhenIdleChanged: prefs.hideWhenIdle = hideWhenIdle
+    onHideWhenIdleChanged: { prefs.hideWhenIdle = hideWhenIdle; root.persistPrefs(); }
 
     // scroll-to-marquee song titles (pill + quicksettings card)
     property bool marqueeEnabled: prefs.marqueeEnabled
-    onMarqueeEnabledChanged: prefs.marqueeEnabled = marqueeEnabled
+    onMarqueeEnabledChanged: { prefs.marqueeEnabled = marqueeEnabled; root.persistPrefs(); }
 
     // pill default view — compact (icon + thin progress ring only) or the
     // full artwork/title layout; hovering the compact pill expands it
     property bool mprisCompact: prefs.mprisCompact
-    onMprisCompactChanged: prefs.mprisCompact = mprisCompact
+    onMprisCompactChanged: { prefs.mprisCompact = mprisCompact; root.persistPrefs(); }
 
     // ── persistent store ──
     FileView {

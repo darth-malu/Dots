@@ -25,9 +25,10 @@ Singleton {
         Prefs.write();
     }
 
-    // bar text: "auto" (follow the wallpaper's light/dark folder tone),
-    // "light" (light text), "dark" (dark text) — chosen from the wallpaper rofi
-    property string barTextTone: Prefs.prefs.barTextTone ?? "auto"
+    // bar text: two-way wallpaper-tone toggle — "dark" (default) auto-follows
+    // each wallpaper's detected tone so glyphs stay legible (dark walls →
+    // light glyphs, bright walls → dark glyphs); "light" forces dark glyphs
+    property string barTextTone: Prefs.prefs.barTextTone ?? "dark"
     onBarTextToneChanged: {
         Prefs.prefs.barTextTone = barTextTone;
         Prefs.write();
@@ -182,7 +183,9 @@ Singleton {
             return;
         root._mvSrc = path;
         root._mvDest = root.wallpaperDirPath + "/" + tone + "/" + path.split("/").pop();
-        mvProc.command = ["sh", "-c", "mkdir -p \"$1\" && mv -n \"$2\" \"$3\" 2>/dev/null", "sh",
+        // plain force move: always relocates (a same-named file in the target
+        // folder is replaced — allocation is a pure file move, nothing else)
+        mvProc.command = ["sh", "-c", "mkdir -p \"$1\" && mv -f \"$2\" \"$3\"", "sh",
             root.wallpaperDirPath + "/" + tone, path, root._mvDest];
         mvProc.running = true;
     }
@@ -193,9 +196,58 @@ Singleton {
         onExited: code => {
             if (code !== 0)
                 return;
-            if (root.current === root._mvSrc)
-                root.current = root._mvDest;
+            root._applyMovedFile(root._mvSrc, root._mvDest);
+        }
+    }
+
+    // in-place move: swap the path and re-sort instead of a full re-scan, so
+    // the grid keeps its delegates (no blank re-decode flash, no thumbnail storm).
+    // Only touches `current` when the moved file IS the applied wallpaper — and
+    // then just re-points it to the relocated copy (same image, never a new one);
+    // allocation never applies/sets a different wallpaper.
+    function _applyMovedFile(src: string, dest: string): void {
+        const i = root.wallpaperList.indexOf(src);
+        if (i < 0) {
             root._refreshList();
+            return;
+        }
+        const next = root.wallpaperList.slice();
+        next[i] = dest;
+        next.sort();
+        root.wallpaperList = next;
+        if (root.current === src)
+            root.current = dest;
+        root._warmThumbs();
+    }
+
+    // delete a wallpaper file (picker header) — if it was the applied one,
+    // fall through to the next wallpaper in the list, else clear it
+    property string _rmPath: ""
+
+    function removeWallpaper(path: string): void {
+        if (!path || path.length === 0)
+            return;
+        root._rmPath = path;
+        rmProc.command = ["sh", "-c", "rm -f -- \"$1\"", "sh", path];
+        rmProc.running = true;
+    }
+
+    Process {
+        id: rmProc
+        running: false
+        onExited: code => {
+            if (code !== 0)
+                return;
+            if (root.current === root._rmPath) {
+                const i = root.wallpaperList.indexOf(root._rmPath);
+                const next = root.wallpaperList[i + 1] ?? root.wallpaperList[i - 1] ?? "";
+                if (next.length > 0)
+                    root.setWallpaper(next);
+                else
+                    root.current = "";
+            }
+            root._refreshList();
+            root._rmPath = "";
         }
     }
 

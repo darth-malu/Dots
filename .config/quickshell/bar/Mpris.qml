@@ -509,8 +509,8 @@ Item {
                             // active player's brand hue
                             visible: !mprisRoot.showVolume
                             symbolText: MprisState.appGlyph(MprisState.player)
-                            baseColor: (MprisState.player?.isPlaying ?? false) ? mprisRoot.brand : Themes.muted
-                            color: (MprisState.player?.isPlaying ?? false) ? mprisRoot.brand : Themes.muted
+                            baseColor: (MprisState.player?.isPlaying ?? false) ? mprisRoot.brand : Themes.barMuted
+                            color: (MprisState.player?.isPlaying ?? false) ? mprisRoot.brand : Themes.barMuted
                             pointSize: 10
                             symbolSize: 10
                             paddingg: 0

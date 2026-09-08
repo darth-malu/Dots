@@ -34,10 +34,6 @@ BarBlock {
             ResourcesState.resourcesVisible = !ResourcesState.resourcesVisible;
     }
 
-    // keep the module stale-proof while the pill is actually on screen
-    onVisibleChanged: GitState.monitoring = visible
-    Component.onCompleted: GitState.monitoring = visible
-
     function commitAll() {
         for (let i = 0; i < GitState.regularRepos.length; i++)
             GitState.commitRepo("r", i);
@@ -128,8 +124,11 @@ BarBlock {
             implicitWidth: 400
             implicitHeight: Math.min(gitPopupCol.implicitHeight + 28, 420)
 
-            onVisibleChanged: if (visible)
-                GitState.refresh()
+            onVisibleChanged: {
+                GitState.monitoring = visible;
+                if (visible)
+                    GitState.refresh();
+            }
 
             Rectangle {
                 anchors.fill: parent
@@ -193,7 +192,7 @@ BarBlock {
                                 Layout.fillWidth: true
                             }
 
-                            // refresh
+                            // refresh (full untracked scan per repo toggle)
                             MiniBtn {
                                 glyph: "\uf021"
                                 onClicked: GitState.refresh()

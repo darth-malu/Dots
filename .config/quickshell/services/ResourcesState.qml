@@ -3,6 +3,7 @@ pragma Singleton
 import Quickshell
 import Quickshell.Io
 import QtQuick
+import qs.services
 
 Singleton {
     id: root
@@ -28,7 +29,8 @@ Singleton {
     property string diskTotal: ""
     property string diskMountPoint: "/"
     property string allDisks: ""
-    property bool resourcesVisible: false
+    property bool resourcesVisible: Prefs.prefs.resourcesVisible
+    onResourcesVisibleChanged: Prefs.prefs.resourcesVisible = resourcesVisible
     property string uptimeText: ""
 
     // ── per-process popups (cpu / memory) ──

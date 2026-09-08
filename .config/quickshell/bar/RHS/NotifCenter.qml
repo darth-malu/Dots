@@ -62,7 +62,7 @@ BarBlock {
         Text {
             anchors.centerIn: parent
             text: "\uf0a2"
-            color: NetworkState.notifCenterVisible || NotificationState.criticalCount > 0 ? Themes.accent : Themes.muted
+            color: NetworkState.notifCenterVisible || NotificationState.criticalCount > 0 ? Themes.accent : Themes.barMuted
             font {
                 pixelSize: 14
                 family: "Symbols Nerd Font Mono"

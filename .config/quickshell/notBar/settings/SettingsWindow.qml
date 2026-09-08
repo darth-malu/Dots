@@ -263,43 +263,29 @@ Item {
         }
     }
 
-    // ── live Hyprland integer option stepper ──
-    // reads the current value with `hyprctl getoption` and applies changes
-    // instantly with `hyprctl keyword` (session-only — lua config is untouched)
+    // ── persistent Hyprland integer option stepper ──
+    // reads the value from (and writes back to) the user's lua config via the
+    // HyprConfig service, then `hyprctl reload` applies it instantly
     component HyprStepRow: RowLayout {
         id: hsr
 
         required property string icon
         required property string label
-        required property string option   // e.g. "general:gaps_in"
+        required property string key   // HyprConfig property — "gapsIn" etc.
         property int minValue: 0
         property int maxValue: 200
         property int stepValue: 1
-        property int value: 0
+        property bool interactive: true
 
-        function refresh() {
-            getProc.running = false;
-            getProc.command = ["hyprctl", "getoption", option];
-            getProc.running = true;
-        }
-        function apply() {
-            Quickshell.execDetached(["hyprctl", "keyword", option, String(value)]);
-        }
+        readonly property int value: HyprConfig[hsr.key]
+
+        opacity: hsr.interactive ? 1 : 0.45
+
         function nudge(dir) {
-            value = Math.max(minValue, Math.min(maxValue, value + dir * stepValue));
-            apply();
-        }
-
-        Process {
-            id: getProc
-            running: false
-            stdout: SplitParser {
-                onRead: data => {
-                    const m = data.trim().match(/-?\d+/);
-                    if (m)
-                        hsr.value = parseInt(m[0], 10);
-                }
-            }
+            if (!hsr.interactive)
+                return;
+            const v = Math.max(hsr.minValue, Math.min(hsr.maxValue, hsr.value + dir * hsr.stepValue));
+            HyprConfig.applyInt(hsr.key, v);
         }
 
         spacing: 12
@@ -352,18 +338,17 @@ Item {
         }
     }
 
-    // ── live Hyprland border-color picker (material palette popup) ──
+    // ── persistent Hyprland border-color picker (material palette popup) ──
     component HyprColorRow: RowLayout {
         id: hcr
 
         required property string icon
         required property string label
-        required property string option   // e.g. "general:col.active_border"
-        property color value: Themes.accent
+        required property string borderKey   // HyprConfig property — "activeBorder" | "inactiveBorder"
+        readonly property color value: HyprConfig[hcr.borderKey]
 
         function applyColor(hex) {
-            value = hex;
-            Quickshell.execDetached(["hyprctl", "keyword", option, "0x" + hex.replace("#", "")]);
+            HyprConfig.applyBorder(hcr.borderKey, hex);
         }
 
         spacing: 12
@@ -386,7 +371,7 @@ Item {
         }
 
         Text {
-            text: "live"
+            text: "saved"
             color: Themes.muted
             font { pixelSize: 9; family: "ZedMono Nerd Font" }
             Layout.alignment: Qt.AlignVCenter
@@ -1435,8 +1420,7 @@ Item {
                                 { icon: "\uf1e6", label: "Ethernet", key: "showEthernet" },
                                 { icon: "\uf240", label: "Battery", key: "showBattery" },
                                 { icon: "\uf0a2", label: "Notifications", key: "showNotifTray" },
-                                { icon: "\uf017", label: "Clock", key: "showClock" },
-                                { icon: "\uf1c0", label: "Performance", key: "showResources" }
+                                { icon: "\uf017", label: "Clock", key: "showClock" }
                             ]
 
                             delegate: ColumnLayout {
@@ -1464,6 +1448,16 @@ Item {
                                     Layout.leftMargin: 32
                                 }
                             }
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
+
+                        SettingRow {
+                            icon: "\uf1c0"
+                            label: "Performance"
+                            caption: ResourcesState.resourcesVisible ? "on" : "off"
+                            checked: ResourcesState.resourcesVisible
+                            onFlipped: ResourcesState.resourcesVisible = !ResourcesState.resourcesVisible
                         }
                     }
                 }
@@ -2862,11 +2856,21 @@ Item {
                         spacing: 0
                         Layout.fillWidth: true
 
+                        SettingRow {
+                            icon: "\uf0b2"
+                            label: "Gaps out on/off"
+                            caption: HyprConfig.gapsOutEnabled ? "on" : "off"
+                            checked: HyprConfig.gapsOutEnabled
+                            onFlipped: HyprConfig.setGapsOutEnabled(!HyprConfig.gapsOutEnabled)
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
+
                         HyprStepRow {
                             id: gapsInRow
                             icon: "\uf0b2"
                             label: "Gaps in"
-                            option: "general:gaps_in"
+                            key: "gapsIn"
                             minValue: 0
                             maxValue: 48
                         }
@@ -2877,9 +2881,10 @@ Item {
                             id: gapsOutRow
                             icon: "\uf0b2"
                             label: "Gaps out"
-                            option: "general:gaps_out"
+                            key: "gapsOut"
                             minValue: 0
                             maxValue: 64
+                            interactive: HyprConfig.gapsOutEnabled
                         }
 
                         Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
@@ -2888,7 +2893,7 @@ Item {
                             id: borderSizeRow
                             icon: "\uf0c8"
                             label: "Border size"
-                            option: "general:border_size"
+                            key: "borderSize"
                             minValue: 0
                             maxValue: 12
                         }
@@ -2899,7 +2904,7 @@ Item {
                             id: roundingRow
                             icon: "\uf1b2"
                             label: "Corner rounding"
-                            option: "decoration:rounding"
+                            key: "rounding"
                             minValue: 0
                             maxValue: 24
                         }
@@ -2919,7 +2924,7 @@ Item {
                             id: activeBorderRow
                             icon: "\uf096"
                             label: "Active border"
-                            option: "general:col.active_border"
+                            borderKey: "activeBorder"
                         }
 
                         Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
@@ -2928,7 +2933,7 @@ Item {
                             id: inactiveBorderRow
                             icon: "\uf096"
                             label: "Inactive border"
-                            option: "general:col.inactive_border"
+                            borderKey: "inactiveBorder"
                         }
                     }
                 }
@@ -2946,20 +2951,15 @@ Item {
 
                     Text {
                         Layout.fillWidth: true
-                        text: "Changes apply live via hyprctl and reset when Hyprland (or a workspace/scheme reload) restarts"
+                        text: "Values are read from and written to ~/.config/hypr/general.lua + decoration.lua and applied instantly (hyprctl reload)"
                         wrapMode: Text.WordWrap
                         color: Themes.muted
                         font { pixelSize: 9; family: "Quicksand" }
                     }
                 }
 
-                // pull the current live values each time the page opens
-                Component.onCompleted: {
-                    gapsInRow.refresh();
-                    gapsOutRow.refresh();
-                    borderSizeRow.refresh();
-                    roundingRow.refresh();
-                }
+                // pull the current values from the lua config every time the page opens
+                Component.onCompleted: HyprConfig.reload()
             }
         }
 

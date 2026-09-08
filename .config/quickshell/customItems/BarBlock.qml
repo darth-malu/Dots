@@ -34,17 +34,6 @@ Rectangle {
     signal rightClicked
     signal middleClicked
 
-    // subtle zoom on hover — the icon breathes up smoothly and returns
-    // on exit; scale is purely visual so it never disturbs the layout
-    property real hoverScale: 1.08
-    scale: mouseArea.containsMouse ? hoverScale : 1.0
-    Behavior on scale {
-        NumberAnimation {
-            duration: 160
-            easing.type: Easing.OutCubic
-        }
-    }
-
     color: "transparent"
 
     // declared BEFORE contentContainer so it sits BEHIND the content:

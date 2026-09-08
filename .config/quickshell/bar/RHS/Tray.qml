@@ -50,16 +50,6 @@ RowLayout {
                 }
             }
 
-            // gentle hover zoom (+ smooth) with a tactile squish on press
-            scale: delegateMa.pressed ? 0.86 : delegateMa.containsMouse ? 1.15 : 1
-
-            Behavior on scale {
-                NumberAnimation {
-                    duration: 140
-                    easing.type: Easing.OutCubic
-                }
-            }
-
             IconImage {
                 anchors.centerIn: parent
                 source: parent.item.icon

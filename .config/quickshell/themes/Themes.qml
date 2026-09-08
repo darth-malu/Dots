@@ -62,14 +62,13 @@ Singleton {
         : Qt.rgba(0, 0, 0, 0.65)
 
     // ── bar text — wallpaper-aware ──
-    // bar text must be legible on any wallpaper. Tone is user-selectable from
-    // the wallpaper rofi: "light"/"dark" pin the text explicitly, "auto" (the
-    // default) follows the wallpaper's folder tone (light/ dark/ dirs).
-    readonly property bool _barLightWall: WallpaperService.barTextTone === "dark"
+    // bar text must stay legible on any wallpaper. The two-way toggle picks
+    // the wallpaper domain: "dark" (default) follows each wallpaper's detected
+    // tone — dark walls → light glyphs, bright walls → dark glyphs — so glyphs
+    // are always legible; "light" forces dark glyphs for light/bright sets.
+    readonly property bool _barLightWall: WallpaperService.barTextTone === "light"
         ? true
-        : WallpaperService.barTextTone === "light"
-            ? false
-            : WallpaperService.toneFor(WallpaperService.current) === "light"
+        : WallpaperService.lightWallpaper
     readonly property color barText: root._barLightWall ? "#1a1a24" : root.fg
     readonly property color barMuted: root._barLightWall ? "#5a5a68" : root.muted
     readonly property color barDim: root._barLightWall ? "#8a8a96" : root.dim

@@ -36,15 +36,6 @@ RowLayout {
         implicitHeight: 18
         implicitWidth: row.implicitWidth
 
-        // smooth hover zoom on the active volume glyph
-        scale: viMa.containsMouse ? 1.15 : 1
-        Behavior on scale {
-            NumberAnimation {
-                duration: 140
-                easing.type: Easing.OutCubic
-            }
-        }
-
         RowLayout {
             id: row
 
@@ -76,7 +67,7 @@ RowLayout {
                     }
                     return viMa.containsMouse ? 1 : 0.8;
                 }
-                color: ((vi.node?.audio?.muted) ?? true) ? vi.mutedColor : Qt.rgba(0.91, 0.91, 0.96, 0.62)
+                color: ((vi.node?.audio?.muted) ?? true) ? vi.mutedColor : Themes.barMuted
                 font {
                     pixelSize: 15
                     family: "Symbols Nerd Font Mono"
