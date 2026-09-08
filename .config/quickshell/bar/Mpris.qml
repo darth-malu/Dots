@@ -43,9 +43,9 @@ Item {
     // 0..1 animated expansion factor — drives width/spacing/opacity of the
     // detail items so the compact hover is a smooth slide, not a pop
     property real _details: 0
-    Behavior on _details {
-        NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
-    }
+    // Behavior on _details {
+    //     NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+    // }
     onShowDetailsChanged: mprisRoot._details = mprisRoot.showDetails ? 1 : 0
     Component.onCompleted: mprisRoot._details = mprisRoot.showDetails ? 1 : 0
 
@@ -227,7 +227,7 @@ Item {
                     id: pillRow
                     anchors.fill: parent
                     anchors.leftMargin: mprisRoot._details * 6
-                    anchors.rightMargin: mprisRoot._details * 6
+                    // anchors.rightMargin: mprisRoot._details * 6
                     // hidden detail items still reserve their grid gap — collapse it
                     spacing: mprisRoot._details * 6
 
@@ -239,7 +239,10 @@ Item {
                         Layout.preferredHeight: visible ? pill.height - 4 : 0
 
                         Behavior on opacity {
-                            NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                            NumberAnimation {
+                                duration: 200
+                                easing.type: Easing.OutCubic
+                            }
                         }
 
                         // ClippingRectangle (not ClippingWrapperRectangle) — the wrapper
@@ -287,7 +290,8 @@ Item {
                             anchors.fill: parent
                             acceptedButtons: Qt.LeftButton
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: if (!mprisRoot.showArtPopup) mprisRoot.showArtPopup = true
+                            onClicked: if (!mprisRoot.showArtPopup)
+                                mprisRoot.showArtPopup = true
                         }
                     }
 
@@ -306,7 +310,10 @@ Item {
                         pixelSize: 12
 
                         Behavior on opacity {
-                            NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                            NumberAnimation {
+                                duration: 200
+                                easing.type: Easing.OutCubic
+                            }
                         }
                     }
 
@@ -321,7 +328,10 @@ Item {
                         Layout.alignment: Qt.AlignVCenter
 
                         Behavior on opacity {
-                            NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                            NumberAnimation {
+                                duration: 200
+                                easing.type: Easing.OutCubic
+                            }
                         }
 
                         MouseArea {
@@ -448,8 +458,7 @@ Item {
                                     }
                                     // playing = full pink, paused = faded — status hints
                                     const playing = MprisState.player?.isPlaying ?? false;
-                                    ctx.strokeStyle = mprisRoot.showVolume ? Themes.accent
-                                        : (playing ? Themes.pink : Qt.rgba(Themes.pink.r, Themes.pink.g, Themes.pink.b, 0.45));
+                                    ctx.strokeStyle = mprisRoot.showVolume ? Themes.accent : (playing ? Themes.pink : Qt.rgba(Themes.pink.r, Themes.pink.g, Themes.pink.b, 0.45));
                                     ctx.lineWidth = 1.5;
                                     ctx.stroke();
                                 }
@@ -492,7 +501,6 @@ Item {
                             paddingg: 0
                         }
                     }
-
                 }
             }
         }
@@ -511,8 +519,7 @@ Item {
             anchor.window: mprisRoot.host
             anchor.rect.x: {
                 let g = mprisRoot.mapToGlobal(0, 0);
-                return Math.max(4, Math.min(g.x + mprisRoot.width / 2 - width / 2,
-                    mprisRoot.host.width - width - 4));
+                return Math.max(4, Math.min(g.x + mprisRoot.width / 2 - width / 2, mprisRoot.host.width - width - 4));
             }
             anchor.rect.y: 35
             visible: mprisRoot.showPopup
@@ -551,8 +558,7 @@ Item {
             anchor.window: mprisRoot.host
             anchor.rect.x: {
                 let g = mprisRoot.mapToGlobal(0, 0);
-                return Math.max(4, Math.min(g.x + mprisRoot.width / 2 - width / 2,
-                    mprisRoot.host.width - width - 4));
+                return Math.max(4, Math.min(g.x + mprisRoot.width / 2 - width / 2, mprisRoot.host.width - width - 4));
             }
             anchor.rect.y: 35
             visible: mprisRoot.showArtPopup && MprisState.player !== null

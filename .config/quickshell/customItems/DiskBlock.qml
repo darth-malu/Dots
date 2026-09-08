@@ -77,14 +77,30 @@ BarBlock {
         return disk.fmtSize(t);
     }
 
+    // "home trash" ($HOME/.local/share/Trash) belongs to exactly one mount: the
+    // longest visible mount that equals $HOME or is an ancestor of it (plain
+    // "$m"/* collapses to "//*" at the root mount and skips home's trash, and a
+    // naive "/"-check double counts when HOME sits on a separate /home mount).
+    // The block leaves `homeMount` set in the shell; it must run BEFORE argv is
+    // consumed, since it walks `for hm in "$@"`.
+    readonly property string homeMountBlock: `
+homeMount=""
+for hm in "$@"; do
+  mm=\${hm%/}
+  if [ "$HOME" = "$mm" ] || [ "\${HOME#\$mm/}" != "$HOME" ]; then
+    if [ -z "$homeMount" ] || [ \${#hm} -gt \${#homeMount} ]; then
+      homeMount="$hm"
+    fi
+  fi
+done`
+
     // one sh pass measuring trash for every visible mount; each line is "mount<TAB>bytes"
     function computeTrash() {
-        const scan = `while [ "$#" -gt 0 ]; do
+        const scan = `${disk.homeMountBlock}
+while [ "$#" -gt 0 ]; do
   m="$1"; shift
   dirs=""
-  case "$HOME" in
-    "$m"/* | "$m") dirs="$HOME/.local/share/Trash" ;;
-  esac
+  [ "$m" = "$homeMount" ] && dirs="$HOME/.local/share/Trash"
   dirs="$dirs $m/.Trash-$(id -u) $m/.Trash"
   sz=0
   for d in $dirs; do
@@ -109,21 +125,27 @@ done`;
         trashCompute.running = true;
     }
 
-    // candidates: $HOME/.local/share/Trash when home lives on this mount,
-    // plus the classic top-level .Trash-<uid> / .Trash dirs
+    // candidates: $HOME/.local/share/Trash only when this mount is the resolved
+    // home mount, plus the classic top-level .Trash-<uid> / .Trash dirs
     function emptyTrashFor(mount) {
         if (!mount)
             return;
-        const script = `m=${JSON.stringify(mount)}
+        const mounts = [];
+        const list = disk.allDisksList;
+        for (var i = 0; i < list.length; i++) {
+            const target = list[i].trim().split(/\s+/)[0];
+            if (target && target.length > 0)
+                mounts.push(target);
+        }
+        const script = `${disk.homeMountBlock}
+m="$1"
 dirs=""
-case "$HOME" in
-  "$m"/* | "$m") dirs="$HOME/.local/share/Trash" ;;
-esac
+[ "$m" = "$homeMount" ] && dirs="$HOME/.local/share/Trash"
 dirs="$dirs $m/.Trash-$(id -u) $m/.Trash"
 for d in $dirs; do
-  rm -rf "$d" 2>/dev/null
+  rm -rf -- "$d" 2>/dev/null
 done`;
-        Quickshell.execDetached(["sh", "-c", script]);
+        Quickshell.execDetached(["sh", "-c", script, "sh", mount].concat(mounts));
         disk.computeTrash();
     }
 
@@ -794,7 +816,7 @@ Text {
         property string buf: ""
 
         stdout: SplitParser {
-            onRead: data => trashCompute.buf += data
+            onRead: data => trashCompute.buf += data + "\n"
         }
 
         onExited: code => {

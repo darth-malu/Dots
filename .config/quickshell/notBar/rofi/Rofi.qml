@@ -145,11 +145,11 @@ PanelWindow {
                                     // Current Item is a raw cliphist list line ("id\tpreview")
                                     launcher.clipChosen(current.modelData);
                                 }
-                            // openWindows path closes the panel inside
-                            // focusToplevel — everything else toggles here
-                            if (!RofiState.toggleOpenWindows)
-                                RofiState.toggler();
-                            search.text = "";
+                                // openWindows path closes the panel inside
+                                // focusToplevel — everything else toggles here
+                                if (!RofiState.toggleOpenWindows)
+                                    RofiState.toggler();
+                                search.text = "";
                                 event.accepted = true;
                             }
                             event.accepted = true;
@@ -244,7 +244,8 @@ PanelWindow {
                         return;
                     const wasWindows = RofiState.toggleOpenWindows;
                     if (wasWindows)
-                        focusToplevel(current.modelData); // closes the panel itself
+                        focusToplevel(current.modelData);
+                        // closes the panel itself
                     else {
                         if (RofiState.toggleAppLauncher)
                             current.modelData.execute();
@@ -272,7 +273,6 @@ PanelWindow {
                     }
                 }
             }
-
         }
     }
 }
