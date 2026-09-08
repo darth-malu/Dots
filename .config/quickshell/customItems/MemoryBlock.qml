@@ -119,12 +119,6 @@ BarBlock {
                     onActivated: MiscState.showMemProcs = false
                 }
 
-                MouseArea {
-                    anchors.fill: parent
-                    z: -1
-                    onClicked: MiscState.showMemProcs = false
-                }
-
                 // mirrors the cpu popup layout: header row + per-process bar rows
                 ColumnLayout {
                     id: memCol

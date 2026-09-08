@@ -37,12 +37,12 @@ BarBlock {
         SvgIcon {
             icon: Bt.btIcon
             color: Bt.btColor
-            width: 16
-            height: 16
+            implicitWidth: 16
+            implicitHeight: 16
         }
     }
 
-    component DeviceRow: RowLayout {
+    component DeviceRow: Item {
         id: drow
         required property var modelData
 
@@ -101,9 +101,11 @@ BarBlock {
             return null;
         }
 
-        spacing: 7
+        implicitHeight: 34
         Layout.fillWidth: true
 
+        // whole-row toggle: connect / disconnect. sits behind the content so
+        // interactive sub-controls (battery, volume slider) still win
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
@@ -117,113 +119,120 @@ BarBlock {
             }
         }
 
-        // device-type glyph in a state-tinted tile
-        Rectangle {
-            implicitWidth: 24
-            implicitHeight: 24
-            radius: 6
-            color: Qt.rgba(drow.stateColor.r, drow.stateColor.g, drow.stateColor.b, drow.isConnected ? 0.14 : 0.07)
-
-            Text {
-                anchors.centerIn: parent
-                text: drow.devGlyph
-                color: drow.stateColor
-                font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
-            }
-
-            Behavior on color {
-                ColorAnimation {
-                    duration: 120
-                }
-            }
-        }
-
-        ColumnLayout {
-            spacing: 1
-            Layout.fillWidth: true
-
-            Text {
-                text: drow.modelData?.name || drow.modelData?.deviceName || drow.modelData?.address || "?"
-                color: drow.isConnected ? Themes.fg : Themes.dim
-                elide: Text.ElideRight
-                font { pixelSize: 11; bold: true; family: "Quicksand" }
-                Layout.fillWidth: true
-            }
-
-            // address · device class · state word — the informational line
-            Text {
-                text: {
-                    const parts = [drow.modelData?.address ?? "?"];
-                    if (drow.devType.length > 0)
-                        parts.push(drow.devType);
-                    parts.push(drow.stateWord);
-                    return parts.join(" · ");
-                }
-                color: drow.isBlocked ? "#ff5555" : drow.isConnected ? "#50fa7b" : Themes.muted
-                elide: Text.ElideRight
-                font { pixelSize: 9; family: "ZedMono Nerd Font"; letterSpacing: 0.5 }
-                Layout.fillWidth: true
-            }
-        }
-
         RowLayout {
-            visible: drow.modelData?.batteryAvailable === true
-            spacing: 4
+            anchors.fill: parent
+            anchors.leftMargin: 2
+            anchors.rightMargin: 2
+            spacing: 7
 
-            Text {
-                text: "\uf240"
-                color: drow.modelData && drow.modelData.battery > 0.5 ? "#50fa7b"
-                    : drow.modelData && drow.modelData.battery > 0.2 ? "#f1fa8c"
-                    : "#ff5555"
-                font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+            // device-type glyph in a state-tinted tile
+            Rectangle {
+                implicitWidth: 24
+                implicitHeight: 24
+                radius: 6
+                color: Qt.rgba(drow.stateColor.r, drow.stateColor.g, drow.stateColor.b, drow.isConnected ? 0.14 : 0.07)
+
+                Text {
+                    anchors.centerIn: parent
+                    text: drow.devGlyph
+                    color: drow.stateColor
+                    font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+                }
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 120
+                    }
+                }
             }
 
-            // mini battery bar
-            Rectangle {
-                implicitWidth: 26
-                implicitHeight: 3
-                radius: 1.5
-                color: Qt.rgba(1, 1, 1, 0.08)
+            ColumnLayout {
+                spacing: 1
+                Layout.fillWidth: true
 
-                Rectangle {
-                    width: parent.width * Math.min(Math.max(drow.modelData?.battery ?? 0, 0), 1)
-                    height: parent.height
-                    radius: 1.5
+                Text {
+                    text: drow.modelData?.name || drow.modelData?.deviceName || drow.modelData?.address || "?"
+                    color: drow.isConnected ? Themes.fg : Themes.dim
+                    elide: Text.ElideRight
+                    font { pixelSize: 11; bold: true; family: "Quicksand" }
+                    Layout.fillWidth: true
+                }
+
+                // address · device class · state word — the informational line
+                Text {
+                    text: {
+                        const parts = [drow.modelData?.address ?? "?"];
+                        if (drow.devType.length > 0)
+                            parts.push(drow.devType);
+                        parts.push(drow.stateWord);
+                        return parts.join(" · ");
+                    }
+                    color: drow.isBlocked ? "#ff5555" : drow.isConnected ? "#50fa7b" : Themes.muted
+                    elide: Text.ElideRight
+                    font { pixelSize: 9; family: "ZedMono Nerd Font"; letterSpacing: 0.5 }
+                    Layout.fillWidth: true
+                }
+            }
+
+            RowLayout {
+                visible: drow.modelData?.batteryAvailable === true
+                spacing: 4
+
+                Text {
+                    text: "\uf240"
                     color: drow.modelData && drow.modelData.battery > 0.5 ? "#50fa7b"
                         : drow.modelData && drow.modelData.battery > 0.2 ? "#f1fa8c"
                         : "#ff5555"
+                    font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                }
+
+                // mini battery bar
+                Rectangle {
+                    implicitWidth: 26
+                    implicitHeight: 3
+                    radius: 1.5
+                    color: Qt.rgba(1, 1, 1, 0.08)
+
+                    Rectangle {
+                        width: parent.width * Math.min(Math.max(drow.modelData?.battery ?? 0, 0), 1)
+                        height: parent.height
+                        radius: 1.5
+                        color: drow.modelData && drow.modelData.battery > 0.5 ? "#50fa7b"
+                            : drow.modelData && drow.modelData.battery > 0.2 ? "#f1fa8c"
+                            : "#ff5555"
+                    }
+                }
+
+                Text {
+                    text: Math.round((drow.modelData?.battery ?? 0) * 100) + "%"
+                    color: Themes.dim
+                    font { pixelSize: 9; family: "ZedMono Nerd Font" }
                 }
             }
 
-            Text {
-                text: Math.round((drow.modelData?.battery ?? 0) * 100) + "%"
-                color: Themes.dim
-                font { pixelSize: 9; family: "ZedMono Nerd Font" }
-            }
-        }
+            // media volume for the device's bluez player, when one is connected
+            // and actually supports volume (some codecs/devices toggle only)
+            RowLayout {
+                visible: drow.btPlayer !== null && drow.btPlayer.volumeSupported
+                spacing: 4
 
-        // media volume for the device's bluez player, when one is connected
-        // and actually supports volume (some codecs/devices toggle only)
-        RowLayout {
-            visible: drow.btPlayer !== null && drow.btPlayer.volumeSupported
-            spacing: 4
-
-            Text {
-                text: "\uf028"
-                color: Themes.muted
-                font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
-            }
-
-            Slider {
-                from: 0
-                to: 1
-                stepSize: 0.01
-                value: drow.btPlayer?.volume ?? 0
-                onMoved: {
-                    if (drow.btPlayer)
-                        drow.btPlayer.volume = value;
+                Text {
+                    text: "\uf028"
+                    color: Themes.muted
+                    font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
                 }
-                implicitWidth: 56
+
+                Slider {
+                    from: 0
+                    to: 1
+                    stepSize: 0.01
+                    value: drow.btPlayer?.volume ?? 0
+                    onMoved: {
+                        if (drow.btPlayer)
+                            drow.btPlayer.volume = value;
+                    }
+                    implicitWidth: 56
+                }
             }
         }
     }
@@ -245,7 +254,7 @@ BarBlock {
 
             anchor.rect.y: 33
 
-            implicitWidth: 280
+            implicitWidth: 300
             implicitHeight: card.implicitHeight + 28
 
             Rectangle {
@@ -272,8 +281,8 @@ BarBlock {
                         SvgIcon {
                             icon: Bt.btIcon
                             color: Bt.btColor
-                            width: 15
-                            height: 15
+                            implicitWidth: 15
+                            implicitHeight: 15
                             Layout.alignment: Qt.AlignVCenter
                         }
 
@@ -339,13 +348,16 @@ BarBlock {
                                     }
                                 }
 
+                                // off on the left, on on the right — the sliding
+                                // fill sits on the RIGHT when enabled, so the dark
+                                // (active) label must be the right one to read
                                 Text {
                                     anchors.left: parent.left
                                     anchors.verticalCenter: parent.verticalCenter
                                     width: parent.parent.segWidth
                                     horizontalAlignment: Text.AlignHCenter
-                                    text: "on"
-                                    color: Bt.enabled ? Qt.rgba(0.04, 0.02, 0.08, 0.85) : Themes.muted
+                                    text: "off"
+                                    color: !Bt.enabled ? Qt.rgba(0.04, 0.02, 0.08, 0.85) : Themes.muted
                                     font { pixelSize: 8; bold: true; family: "Quicksand"; letterSpacing: 1 }
                                 }
 
@@ -354,8 +366,8 @@ BarBlock {
                                     anchors.verticalCenter: parent.verticalCenter
                                     width: parent.parent.segWidth
                                     horizontalAlignment: Text.AlignHCenter
-                                    text: "off"
-                                    color: Bt.enabled ? Themes.muted : Qt.rgba(0.04, 0.02, 0.08, 0.85)
+                                    text: "on"
+                                    color: Bt.enabled ? Qt.rgba(0.04, 0.02, 0.08, 0.85) : Themes.muted
                                     font { pixelSize: 8; bold: true; family: "Quicksand"; letterSpacing: 1 }
                                 }
                             }
@@ -380,9 +392,11 @@ BarBlock {
                         delegate: DeviceRow {}
                     }
 
+                    // empty state — the segmented switch already communicates
+                    // power state, so no redundant "bluetooth is off" wording
                     Text {
                         visible: root.devices.length === 0
-                        text: !root.adapter ? "no bluetooth adapter found" : (Bt.enabled ? "no known devices" : "bluetooth is off")
+                        text: !root.adapter ? "no bluetooth adapter found" : "no devices paired yet"
                         color: Themes.muted
                         font { pixelSize: 10; family: "Quicksand"; italic: true }
                         Layout.alignment: Qt.AlignHCenter

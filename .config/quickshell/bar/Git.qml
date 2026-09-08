@@ -1,136 +1,460 @@
 import QtQuick
-import QtQml
-import Quickshell.Io
+import QtQuick.Layouts
+import QtQuick.Controls
 import Quickshell
+
+import qs.services
 import qs.customItems
 import qs.themes
 
+// Git bar module — monitors both bare repos (alias + gitdir + worktree) and
+// regular worktrees with one cheap shared probe (see GitState).
+//
+// · icon color = worst state across all repos (clean/upstream → staged →
+//   modified/untracked → unpushed → failed)
+// · left click opens the monitor popup, right = push all,
+//   middle = toggle the RHS performance modules, shift+middle = commit all
+// · popup lists every repo with its state, per-repo commit/push, delete, and
+//   an "add" form for new regular/bare repo locations
 BarBlock {
-    id: gitButton
+    id: gitPill
 
-    property var gitLoc: {
-        const home = "/home/malu";
-        const configDir = ["doom", "quickshell"].map(conf => `${home}/.config/${conf}`);
-        const homeDir = ["Shibuya", "Development", "Documents/IMPORTANT/Org"].map(path => `${home}/${path}`);
-        return [...configDir, ...homeDir];
-    }
+    required property var host
 
-    // Bare repos: { alias, dir, workTree }
-    readonly property var bareGitLoc: [
-        { alias: "dots", dir: "/home/malu/.dots", workTree: "/home/malu" },
-        { alias: "studious", dir: "/home/malu/.studious", workTree: "/home/malu" }
-    ]
-
-    property bool isDirty: false
-
-    property bool isUntracked: false
-
-    property bool isRunning: false // New: Track if a command is active
-
-    property bool isCommited: false
+    property bool popupOpen: false
 
     onClicked: mouse => {
-        if (isRunning)
-            return; // Ignore clicks while a sync is in progress
         if (mouse.button === Qt.LeftButton)
-            commitOrPush("commit");
+            gitPill.popupOpen = !gitPill.popupOpen;
         else if (mouse.button === Qt.RightButton)
-            commitOrPush("push");
+            pushAll();
+        else if ((mouse.modifiers & Qt.ShiftModifier) && (mouse.button === Qt.MiddleButton))
+            commitAll();
+        else if (mouse.button === Qt.MiddleButton)
+            ResourcesState.resourcesVisible = !ResourcesState.resourcesVisible;
+    }
+
+    // keep the module stale-proof while the pill is actually on screen
+    onVisibleChanged: GitState.monitoring = visible
+    Component.onCompleted: GitState.monitoring = visible
+
+    function commitAll() {
+        for (let i = 0; i < GitState.regularRepos.length; i++)
+            GitState.commitRepo("r", i);
+        for (let i = 0; i < GitState.bareRepos.length; i++)
+            GitState.commitRepo("b", i);
+    }
+
+    function pushAll() {
+        for (let i = 0; i < GitState.regularRepos.length; i++)
+            GitState.pushRepo("r", i);
+        for (let i = 0; i < GitState.bareRepos.length; i++)
+            GitState.pushRepo("b", i);
+    }
+
+    // ── state → color/label mapping (shared severity scale) ──
+    readonly property var sevColors: [Themes.muted           // 0 waiting for first probe
+        , Themes.green           // 1 clean & synced
+        , "#8a8fa1"              // 2 no upstream configured
+        , "#8be9fd"              // 3 unpushed (ahead)
+        , "#ffb86c"              // 4 unstaged/untracked
+        , "#f5c86a"              // 5 staged
+        , Themes.red              // 6 unreachable repo
+    ]
+
+    readonly property color pillColor: gitPill.sevColors[GitState.worstSeverity]
+
+    function stateColor(kind, idx) {
+        const s = GitState.statuses[kind + ":" + idx];
+        const sev = GitState.severityOf(s);
+        if (sev === 3 && s) {
+            if (s.ahead > 0 && s.behind > 0)
+                return "#ffd866";
+            if (s.ahead > 0)
+                return "#8be9fd";
+            return Themes.pink;
+        }
+        return gitPill.sevColors[sev];
+    }
+
+    function stateLabel(kind, idx) {
+        const s = GitState.statuses[kind + ":" + idx];
+        if (!s)
+            return "…";
+        if (s.error)
+            return "unreachable";
+        const parts = [];
+        if (s.flags.includes("s"))
+            parts.push("staged");
+        if (s.flags.includes("u"))
+            parts.push("modified");
+        if (s.flags.includes("t"))
+            parts.push("untracked");
+        if (parts.length === 0) {
+            if (!s.upstream)
+                return "no upstream";
+            if (s.ahead > 0 && s.behind > 0)
+                return `↑${s.ahead} · ↓${s.behind}`;
+            if (s.ahead > 0)
+                return `↑${s.ahead} unpushed`;
+            if (s.behind > 0)
+                return `↓${s.behind} behind`;
+            return "clean · synced";
+        }
+        return parts.join(" + ");
     }
 
     content: BarText {
-        text: ""               // 
+        text: "\uf1d3"
         pointSize: 13
-        color: {
-            if (gitButton.isRunning)
-                return 'cyan';
-            return gitButton.isUntracked ? "yellow" : gitButton.isDirty ? "fuchsia" : 'grey';
-        }
+        color: gitPill.pillColor
     }
 
-    function commitOrPush(arg) {
-        gitButton.isRunning = true;
+    LazyLoader {
+        loading: gitPill.popupOpen
 
-        gitButton.gitLoc.forEach(location => {
-            let cleanPath = " " + location.split("/").pop();
-            let iconDir = "/home/malu/.config/quickshell/assets";
-            let icon = gitButton.isDirty ? `${iconDir}/gitRed.png` : `${iconDir}/gitBlack.png`;
+        PopupWindow {
+            id: gitPopup
 
-            if (arg === "commit") {
-                let cmd = `git -C "${location}" add . && git -C "${location}" commit -m "++AutoCommit++" && notify-send -i "${icon}" "Git" "Commited ${cleanPath}" || true`;
-                Quickshell.execDetached(["sh", "-c", cmd]);
-            } else if (arg === "push") {
-                let cmd = `git -C "${location}" push && notify-send -i "${icon}" "Git" "Pushed: ${cleanPath}" || true`;
-                Quickshell.execDetached(["sh", "-c", cmd]);
+            anchor.window: gitPill.host
+            anchor.rect.x: {
+                let g = gitPill.mapToGlobal(0, 0);
+                return Math.max(4, Math.min(g.x + gitPill.width / 2 - width / 2, gitPill.host.width - width - 4));
             }
-        });
+            anchor.rect.y: 35
+            visible: gitPill.popupOpen
+            grabFocus: true
+            color: "transparent"
+            implicitWidth: 400
+            implicitHeight: Math.min(gitPopupCol.implicitHeight + 28, 420)
 
-        gitButton.bareGitLoc.forEach(repo => {
-            let iconDir = "/home/malu/.config/quickshell/assets";
-            let icon = gitButton.isDirty ? `${iconDir}/gitRed.png` : `${iconDir}/gitBlack.png`;
+            onVisibleChanged: if (visible)
+                GitState.refresh()
 
-            if (arg === "commit") {
-                let cmd = `git --git-dir="${repo.dir}" --work-tree="${repo.workTree}" add . && git --git-dir="${repo.dir}" --work-tree="${repo.workTree}" commit -m "++AutoCommit++" && notify-send -i "${icon}" "Git" "Commited ${repo.alias}" || true`;
-                Quickshell.execDetached(["sh", "-c", cmd]);
-            } else if (arg === "push") {
-                let cmd = `git --git-dir="${repo.dir}" push && notify-send -i "${icon}" "Git" "Pushed: ${repo.alias}" || true`;
-                Quickshell.execDetached(["sh", "-c", cmd]);
-            }
-        });
+            Rectangle {
+                anchors.fill: parent
+                radius: 12
+                color: Themes.popupCardBg
+                border.width: 1
+                border.color: Themes.borderMuted
 
-        cooldownTimer.start();
-    }
+                Keys.onEscapePressed: gitPill.popupOpen = false
+                focus: true
 
-    Timer {
-        id: cooldownTimer
-        interval: 1000
-        repeat: false
-        running: false
-        onTriggered: {
-            gitButton.isRunning = false;
-            gitStatusProcess.running = true;
-            gitButton.isDirty = false;
-            gitButton.isUntracked = false;
-        }
-    }
+                ScrollView {
+                    id: gitScroll
+                    anchors.fill: parent
+                    anchors.margins: 4
+                    clip: true
+                    contentWidth: gitPopupCol.width
 
-    Process {
-        id: gitStatusProcess
-        command: ["sh", "-c", (() => {
-            const regular = gitButton.gitLoc.map(loc => `git -C "${loc}" status --porcelain`);
-            const bare = gitButton.bareGitLoc.map(r => `git --git-dir="${r.dir}" --work-tree="${r.workTree}" status --porcelain`);
-            return [...regular, ...bare].join("; ");
-        })()]
-        running: false
+                    ColumnLayout {
+                        id: gitPopupCol
 
-        stdout: SplitParser {
-            onRead: data => {
-                data = data.trim();
-                if (data.length > 0) {
-                    if (data.startsWith("?"))
-                        gitButton.isUntracked = true;
-                    else
-                        gitButton.isDirty = true;
+                        width: gitScroll.availableWidth
+                        spacing: 6
+
+                        // ── header ──
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
+
+                            Text {
+                                text: "\uf1d3"
+                                color: gitPill.pillColor
+                                font {
+                                    pixelSize: 12
+                                    family: "Symbols Nerd Font Mono"
+                                    bold: true
+                                }
+                            }
+
+                            Text {
+                                text: "Git"
+                                color: Themes.fg
+                                font {
+                                    pixelSize: 12
+                                    bold: true
+                                    family: "Quicksand Medium"
+                                }
+                            }
+
+                            Text {
+                                visible: GitState.regularRepos.length > 0 || GitState.bareRepos.length > 0
+                                text: `${GitState.regularRepos.length + GitState.bareRepos.length} repo${GitState.regularRepos.length + GitState.bareRepos.length === 1 ? "" : "s"}`
+                                color: Themes.muted
+                                font {
+                                    pixelSize: 9
+                                    family: "ZedMono Nerd Font"
+                                }
+                            }
+
+                            Item {
+                                Layout.fillWidth: true
+                            }
+
+                            // refresh
+                            MiniBtn {
+                                glyph: "\uf021"
+                                onClicked: GitState.refresh()
+                            }
+
+                            // add
+                            MiniBtn {
+                                glyph: "\u002b"
+                                active: gitPill.showAdd
+                                onClicked: gitPill.showAdd = !gitPill.showAdd
+                            }
+
+                            // close
+                            MiniBtn {
+                                glyph: "\uf00d"
+                                tint: Themes.red
+                                onClicked: gitPill.popupOpen = false
+                            }
+                        }
+
+                        // ── repo rows (with section headers) ──
+                        Text {
+                            visible: GitState.regularRepos.length > 0
+                            Layout.fillWidth: true
+                            text: "WORKTREES"
+                            color: Themes.muted
+                            font {
+                                pixelSize: 8
+                                letterSpacing: 2
+                                family: "ZedMono Nerd Font"
+                            }
+                            Layout.topMargin: 2
+                        }
+
+                        Repeater {
+                            model: GitState.regularRepos
+
+                            delegate: GitRepoRow {
+                                Layout.fillWidth: true
+                                displayTitle: modelData.path.split("/").filter(Boolean).pop()
+                                subTitle: modelData.path
+                                kind: "r"
+                                idx: index
+                                dotColor: gitPill.stateColor("r", index)
+                                stateText: gitPill.stateLabel("r", index)
+                                canUntoggle: false
+                            }
+                        }
+
+                        Text {
+                            visible: GitState.bareRepos.length > 0
+                            Layout.fillWidth: true
+                            text: "BARE"
+                            color: Themes.muted
+                            font {
+                                pixelSize: 8
+                                letterSpacing: 2
+                                family: "ZedMono Nerd Font"
+                            }
+                            Layout.topMargin: GitState.regularRepos.length > 0 ? 6 : 2
+                        }
+
+                        Repeater {
+                            model: GitState.bareRepos
+
+                            delegate: GitRepoRow {
+                                Layout.fillWidth: true
+                                displayTitle: modelData.alias
+                                subTitle: modelData.dir
+                                kind: "b"
+                                idx: index
+                                dotColor: gitPill.stateColor("b", index)
+                                stateText: gitPill.stateLabel("b", index)
+                                canUntoggle: true
+                            }
+                        }
+
+                        // ── add repo form ──
+                        Rectangle {
+                            Layout.fillWidth: true
+                            visible: gitPill.showAdd
+                            Layout.preferredHeight: addCol.implicitHeight + 16
+                            radius: 10
+                            color: Qt.rgba(1, 1, 1, 0.04)
+                            border.width: 1
+                            border.color: Themes.separator
+
+                            ColumnLayout {
+                                id: addCol
+                                anchors.fill: parent
+                                anchors.margins: 10
+                                spacing: 8
+
+                                Text {
+                                    text: gitPill.addMode === "regular" ? "Add worktree" : "Add bare repo"
+                                    color: Themes.fg
+                                    font {
+                                        pixelSize: 10
+                                        bold: true
+                                        family: "Quicksand Medium"
+                                    }
+                                }
+
+                                // one-line usage hint so the form explains itself
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: gitPill.addMode === "regular" ? "path = an existing repo folder; upstream = remote to compare (optional)" : "alias = display name · dir = bare git dir · worktree = the checkout it tracks · untracked = scan for ?? files (slow over a tree like ~/)"
+                                    color: Qt.rgba(Themes.muted.r, Themes.muted.g, Themes.muted.b, 1)
+                                    font {
+                                        pixelSize: 8
+                                        family: "ZedMono Nerd Font"
+                                    }
+                                    wrapMode: Text.WordWrap
+                                }
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    visible: gitPill.addError !== ""
+                                    text: "\uf071  " + gitPill.addError
+                                    color: Themes.red
+                                    font {
+                                        pixelSize: 8
+                                        family: "ZedMono Nerd Font"
+                                    }
+                                    wrapMode: Text.WordWrap
+                                }
+
+                                // mode switch
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 6
+
+                                    MiniBtn {
+                                        text: "worktree"
+                                        active: gitPill.addMode === "regular"
+                                        onClicked: gitPill.addMode = "regular"
+                                    }
+                                    MiniBtn {
+                                        text: "bare"
+                                        active: gitPill.addMode === "bare"
+                                        onClicked: gitPill.addMode = "bare"
+                                    }
+                                    Item {
+                                        Layout.fillWidth: true
+                                    }
+                                }
+
+                                // regular: path + optional upstream
+                                ColumnLayout {
+                                    visible: gitPill.addMode === "regular"
+                                    Layout.fillWidth: true
+                                    spacing: 6
+
+                                    Field {
+                                        id: regPathField
+                                        Layout.fillWidth: true
+                                        placeholder: "repo path (e.g. ~/projects/foo)"
+                                        onReturnPressed: gitPill.doAddRegular()
+                                    }
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 6
+
+                                        Field {
+                                            id: regUpField
+                                            Layout.fillWidth: true
+                                            placeholder: "upstream (optional)"
+                                            onReturnPressed: gitPill.doAddRegular()
+                                        }
+                                        MiniBtn {
+                                            text: "add"
+                                            onClicked: gitPill.doAddRegular()
+                                        }
+                                    }
+                                }
+
+                                // bare: alias, gitdir, worktree, upstream, untracked toggle
+                                ColumnLayout {
+                                    visible: gitPill.addMode === "bare"
+                                    Layout.fillWidth: true
+                                    spacing: 6
+
+                                    Field {
+                                        id: bareAliasField
+                                        Layout.fillWidth: true
+                                        placeholder: "alias (e.g. dots)"
+                                        onReturnPressed: gitPill.doAddBare()
+                                    }
+                                    Field {
+                                        id: bareDirField
+                                        Layout.fillWidth: true
+                                        placeholder: "bare git directory"
+                                        onReturnPressed: gitPill.doAddBare()
+                                    }
+                                    Field {
+                                        id: bareWtField
+                                        Layout.fillWidth: true
+                                        placeholder: "worktree path"
+                                        onReturnPressed: gitPill.doAddBare()
+                                    }
+                                    Field {
+                                        id: bareUpField
+                                        Layout.fillWidth: true
+                                        placeholder: "upstream (optional)"
+                                        onReturnPressed: gitPill.doAddBare()
+                                    }
+
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 6
+
+                                        MiniBtn {
+                                            text: "untracked scan"
+                                            active: gitPill.addUntracked
+                                            onClicked: gitPill.addUntracked = !gitPill.addUntracked
+                                        }
+                                        Item {
+                                            Layout.fillWidth: true
+                                        }
+                                        MiniBtn {
+                                            text: "add"
+                                            onClicked: gitPill.doAddBare()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 
-    // dirty/untracked check — the two bare repos walk the whole home
-    // directory, so this is deliberately slow (3 min) and only runs while
-    // the pill is actually on screen. The indicator can lag a few minutes;
-    // manual commit/push always does an immediate freshness check.
-    Timer {
-        interval: 180000
-        running: gitButton.visible
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: {
-            if (!gitButton.isRunning) {
-                gitButton.isDirty = false;
-                gitButton.isUntracked = false;
-                gitStatusProcess.running = true;
-            }
+    property bool showAdd: false
+    property string addMode: "regular"
+    property bool addUntracked: false
+    property string addError: ""
+
+    function doAddRegular() {
+        const ok = GitState.addRegular(regPathField.text, regUpField.text);
+        if (ok) {
+            regPathField.text = "";
+            regUpField.text = "";
+            gitPill.addError = "";
+            GitState.refresh();
+        } else {
+            gitPill.addError = "enter a non-duplicate repo path";
+        }
+    }
+
+    function doAddBare() {
+        const ok = GitState.addBare(bareAliasField.text, bareDirField.text, bareWtField.text, bareUpField.text, gitPill.addUntracked);
+        if (ok) {
+            bareAliasField.text = "";
+            bareDirField.text = "";
+            bareWtField.text = "";
+            bareUpField.text = "";
+            gitPill.addError = "";
+            GitState.refresh();
+        } else {
+            gitPill.addError = "alias, bare dir and worktree are all required (no duplicates)";
         }
     }
 }

@@ -25,7 +25,7 @@ ClippingRectangle {
     // cog toggles the reveal; needs a real choice to offer
     property bool chooserOpen: false
 
-    readonly property bool chooserAvailable: MiscState.showPlayerChooser && MprisState.controlPlayers.length > 1
+    readonly property bool chooserAvailable: MiscState.showPlayerChooser && MprisState.pickablePlayers.length > 1
 
     onChooserAvailableChanged: {
         if (!chooserAvailable)
@@ -40,7 +40,11 @@ ClippingRectangle {
             return Qt.rgba(card.dominantColor.r, card.dominantColor.g, card.dominantColor.b, 0.12);
         return Themes.cardBg;
     }
-    implicitHeight: baseCardHeight + (chooserAvailable && chooserOpen ? chooserPanel.implicitHeight : 0)
+    // vertical footprint of the expanded controls row — 16 (seek) + 6
+    // (spacing) + 32 (transport); pulled out so the card + art view both
+    // grow in lockstep when the controls reveal
+    readonly property int expRevealH: 54
+    implicitHeight: baseCardHeight + (chooserAvailable && chooserOpen ? chooserPanel.implicitHeight : 0) + (card.expControlsRevealed ? card.expRevealH : 0)
 
     // combined control — one button for both card duties, styled to
     // match the audio volume card's management cog: left-click runs the
@@ -444,7 +448,7 @@ ClippingRectangle {
             right: parent.right
             top: parent.top
         }
-        height: baseCardHeight
+        height: baseCardHeight + (card.expControlsRevealed ? card.expRevealH : 0)
 
         // controls always start tucked away
         onVisibleChanged: {
@@ -495,24 +499,67 @@ ClippingRectangle {
         Item {
             anchors.fill: parent
 
-            // ── title + controls — anchored to bottom, revealing pushes title up ──
+            // track text pinned near the TOP of the card (fixed y-position);
+            // tapping reveals the seek/transport row BELOW it, growing the
+            // card downward via expRevealCol.revealHeight
             ColumnLayout {
                 anchors.left: parent.left
                 anchors.right: parent.right
-                anchors.bottom: parent.bottom
+                anchors.top: parent.top
                 anchors.leftMargin: 8
                 anchors.rightMargin: 12
-                anchors.bottomMargin: 8
+                anchors.topMargin: 40
                 spacing: 6
 
-                // ── seek bar + transport ──
+                // ── track text — keeps its position when controls reveal ──
+                ColumnLayout {
+                    id: expInfoCol
+
+                    Layout.fillWidth: true
+                    Layout.rightMargin: 22
+                    spacing: 1
+
+                    TapHandler {
+                        acceptedButtons: Qt.LeftButton
+                        gesturePolicy: TapHandler.ReleaseWithinBounds
+                        cursorShape: Qt.PointingHandCursor
+                        onTapped: card.expControlsRevealed = !card.expControlsRevealed
+                    }
+
+                    MarqueeText {
+                        Layout.fillWidth: true
+                        text: MprisState.cardPlayer?.trackTitle || "No track"
+                        textColor: "#ffffff"
+                        fontFamily: "quicksand"
+                        fontBold: true
+                        pixelSize: 18
+                        maxWidth: 420
+                    }
+
+                    MarqueeText {
+                        Layout.fillWidth: true
+                        visible: text.length > 0
+                        text: MprisState.cardPlayer?.trackArtist || ""
+                        textColor: Qt.rgba(1, 1, 1, 0.7)
+                        fontFamily: "ZedMono Nerd Font"
+                        fontBold: false
+                        pixelSize: 12
+                        maxWidth: 420
+                    }
+                }
+
+                // ── seek bar + transport — revealed below the track text ──
                 ColumnLayout {
                     id: expRevealCol
 
+                    // exact vertical footprint when open — drives the card's
+                    // taller implicitHeight so the card grows, text stays put
+                    readonly property real revealHeight: card.expControlsRevealed ? card.expRevealH : 0
+
                     Layout.fillWidth: true
                     spacing: 6
+                    visible: card.expControlsRevealed
 
-                    enabled: card.expControlsRevealed
                     opacity: card.expControlsRevealed ? 1 : 0
 
                     Behavior on opacity {
@@ -643,43 +690,6 @@ ClippingRectangle {
                         }
                     }
                 }
-
-                // ── track text — bottom ──
-                ColumnLayout {
-                    id: expInfoCol
-
-                    Layout.fillWidth: true
-                    Layout.rightMargin: 22
-                    spacing: 1
-
-                    TapHandler {
-                        acceptedButtons: Qt.LeftButton
-                        gesturePolicy: TapHandler.ReleaseWithinBounds
-                        cursorShape: Qt.PointingHandCursor
-                        onTapped: card.expControlsRevealed = !card.expControlsRevealed
-                    }
-
-                    MarqueeText {
-                        Layout.fillWidth: true
-                        text: MprisState.cardPlayer?.trackTitle || "No track"
-                        textColor: "#ffffff"
-                        fontFamily: "quicksand"
-                        fontBold: true
-                        pixelSize: 18
-                        maxWidth: 420
-                    }
-
-                    MarqueeText {
-                        Layout.fillWidth: true
-                        visible: text.length > 0
-                        text: MprisState.cardPlayer?.trackArtist || ""
-                        textColor: Qt.rgba(1, 1, 1, 0.7)
-                        fontFamily: "ZedMono Nerd Font"
-                        fontBold: false
-                        pixelSize: 12
-                        maxWidth: 420
-                    }
-                }
             }
         }
 
@@ -691,6 +701,49 @@ ClippingRectangle {
                 right: parent.right
                 top: parent.top
                 rightMargin: 2
+                topMargin: 2
+            }
+        }
+
+        // ── player-picker icon — appears only when there is more than one
+        // controllable player; click pinpoints the controlled stream via the
+        // same drawer the cog's right-click reveals ──
+        Rectangle {
+            id: expSwitcher
+
+            visible: card.chooserAvailable
+            implicitWidth: 18
+            implicitHeight: 18
+            radius: 5
+            color: expSwitcherMa.containsMouse ? Qt.rgba(card.dominantColor.r, card.dominantColor.g, card.dominantColor.b, 0.18) : "transparent"
+
+            Behavior on color {
+                ColorAnimation { duration: 120 }
+            }
+
+            Text {
+                anchors.centerIn: parent
+                text: "\uf0c9" // list — "you can pick the player"
+                color: expSwitcherMa.containsMouse || card.chooserOpen ? card.dominantColor : Themes.muted
+                font {
+                    pixelSize: 10
+                    family: "Symbols Nerd Font Mono"
+                }
+            }
+
+            MouseArea {
+                id: expSwitcherMa
+
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: card.chooserOpen = !card.chooserOpen
+            }
+
+            anchors {
+                right: parent.right
+                top: parent.top
+                rightMargin: 24
                 topMargin: 2
             }
         }
@@ -790,7 +843,7 @@ ClippingRectangle {
             spacing: 2
 
             Repeater {
-                model: MprisState.controlPlayers
+                model: MprisState.pickablePlayers
 
                 delegate: Rectangle {
                     id: streamRow
@@ -896,6 +949,34 @@ ClippingRectangle {
                             }
                             // clicking the shown player releases an explicit pin
                             MprisState.pinPlayerName = streamRow.isCurrent && MprisState.pinPlayerName.length > 0 ? "" : streamRow.modelData.dbusName;
+                        }
+                    }
+
+                    // ── delete — removes the player from the picker list
+                    // (via the ignored filter). declared after rowMa so this
+                    // small hit-target wins clicks over the row's pin-toggle
+                    MouseArea {
+                        id: delMa
+
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        width: 18
+                        height: 18
+                        anchors {
+                            right: parent.right
+                            verticalCenter: parent.verticalCenter
+                            rightMargin: 3
+                        }
+                        onClicked: MprisState.ignorePlayer(streamRow.modelData.identity)
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "\uf2ed"
+                            color: delMa.containsMouse ? "#ff5555" : Themes.muted
+                            font {
+                                pixelSize: 9
+                                family: "Symbols Nerd Font Mono"
+                            }
                         }
                     }
                 }

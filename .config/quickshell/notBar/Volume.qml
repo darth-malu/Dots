@@ -28,18 +28,34 @@ Scope {
         objects: VolumeState.isAudioNode ? [VolumeState.isAudioNode] : []
     }
 
-    Connections {
-        target: VolumeState.isAudioNode
-        enabled: target !== null
+    // isAudioNode is a `var` (runtime Pipewire object), so a static
+    // Connections block can't bind its signals — drive the OSD from a cheap
+    // compare-poll instead (two property reads / 250 ms while a node exists).
+    Timer {
+        id: volWatch
+        interval: 250
+        repeat: true
+        running: VolumeState.isAudioNode != null
 
-        function onVolumeChanged() {
-            root.shouldShowOsd = true;
-            hideTimer.restart();
-        }
+        property real lastVol: NaN
+        property bool lastMuted: false
+        property bool init: false
 
-        function onMutedChanged() {
-            root.shouldShowOsd = true;
-            hideTimer.restart();
+        onTriggered: {
+            const v = root.nodeVolume;
+            const m = root.nodeMuted;
+            if (!volWatch.init) {
+                volWatch.init = true;
+                volWatch.lastVol = v;
+                volWatch.lastMuted = m;
+                return;
+            }
+            if (volWatch.lastVol !== v || volWatch.lastMuted !== m) {
+                volWatch.lastVol = v;
+                volWatch.lastMuted = m;
+                root.shouldShowOsd = true;
+                hideTimer.restart();
+            }
         }
     }
 

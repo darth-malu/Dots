@@ -23,7 +23,7 @@ BarBlock {
     property int dangerThreshold: 90
 
     // ── trash size / empty helpers ──
-    property bool trashShow: false
+    property bool trashShow: true
     property var trashSizes: ({})
     property int trashTick: 0
     property string armedMount: ""
@@ -227,7 +227,7 @@ done`;
         }
         anchor.rect.y: 33
 
-        implicitWidth: 420
+        implicitWidth: 520
         implicitHeight: allDisksCol.implicitHeight + 24
 
         Rectangle {
@@ -242,12 +242,6 @@ done`;
             Shortcut {
                 sequence: "Escape"
                 onActivated: allDisksPopup.visible = false
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                z: -1
-                onClicked: allDisksPopup.visible = false
             }
 
             ColumnLayout {
@@ -485,7 +479,9 @@ done`;
                         }
 
                         // column labels — widths mirror the rows below:
-                        // mount(140) · size(44) · free(44) · bar(fills) · use(32)
+                        // mount(130) · size(46) · free(46) · bar(fill) ·
+                        // use(36) · trash(52) — the trash column value doubles
+                        // as the hover empty-button
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 6
@@ -496,10 +492,10 @@ done`;
                                 font {
                                     pixelSize: 9
                                     bold: true
-                                    family: "Quicksand"
+                                    family: "ZedMono Nerd Font"
                                     letterSpacing: 1
                                 }
-                                Layout.preferredWidth: 140
+                                Layout.preferredWidth: 130
                                 elide: Text.ElideRight
                             }
 
@@ -510,7 +506,7 @@ done`;
                                     pixelSize: 9
                                     family: "ZedMono Nerd Font"
                                 }
-                                Layout.preferredWidth: 44
+                                Layout.preferredWidth: 46
                                 Layout.alignment: Qt.AlignRight
                             }
 
@@ -521,18 +517,7 @@ done`;
                                     pixelSize: 9
                                     family: "ZedMono Nerd Font"
                                 }
-                                Layout.preferredWidth: 44
-                                Layout.alignment: Qt.AlignRight
-                            }
-
-                            Text {
-                                text: "trash"
-                                color: disk.trashShow ? Themes.muted : Themes.borderMuted
-                                font {
-                                    pixelSize: 9
-                                    family: "ZedMono Nerd Font"
-                                }
-                                Layout.preferredWidth: 42
+                                Layout.preferredWidth: 46
                                 Layout.alignment: Qt.AlignRight
                             }
 
@@ -549,12 +534,20 @@ done`;
                                     pixelSize: 9
                                     family: "ZedMono Nerd Font"
                                 }
-                                Layout.preferredWidth: 32
+                                Layout.preferredWidth: 36
                                 Layout.alignment: Qt.AlignRight
                             }
 
-                            Item {
-                                Layout.preferredWidth: 38
+                            Text {
+                                visible: disk.trashShow
+                                text: "trash"
+                                color: Themes.muted
+                                font {
+                                    pixelSize: 9
+                                    family: "ZedMono Nerd Font"
+                                }
+                                Layout.preferredWidth: 52
+                                Layout.alignment: Qt.AlignRight
                             }
                         }
 
@@ -599,7 +592,7 @@ done`;
                                     spacing: 6
 
                                     Text {
-                                        Layout.preferredWidth: 140
+                                        Layout.preferredWidth: 130
                                         text: drow.parts[0] || ""
                                         color: Themes.fg
                                         font {
@@ -610,7 +603,7 @@ done`;
                                     }
 
                                     Text {
-                                        Layout.preferredWidth: 44
+                                        Layout.preferredWidth: 46
                                         horizontalAlignment: Text.AlignRight
                                         text: drow.parts[1] || ""
                                         color: Themes.muted
@@ -621,24 +614,12 @@ done`;
                                     }
 
                                     Text {
-                                        Layout.preferredWidth: 44
+                                        Layout.preferredWidth: 46
                                         horizontalAlignment: Text.AlignRight
                                         text: drow.parts[3] || ""
                                         color: Themes.dim
                                         font {
                                             pixelSize: 9
-                                            family: "ZedMono Nerd Font"
-                                        }
-                                    }
-
-                                    Text {
-                                        Layout.preferredWidth: 42
-                                        horizontalAlignment: Text.AlignRight
-                                        text: disk.trashSizeFor(drow.mount)
-                                        color: !disk.trashShow ? Themes.borderMuted : drow.hasTrash ? "#ffb86c" : Themes.borderMuted
-                                        font {
-                                            pixelSize: 9
-                                            bold: drow.hasTrash
                                             family: "ZedMono Nerd Font"
                                         }
                                     }
@@ -675,7 +656,7 @@ done`;
                                     }
 
                                     Text {
-                                        Layout.preferredWidth: 32
+                                        Layout.preferredWidth: 36
                                         horizontalAlignment: Text.AlignRight
                                         text: `${drow.pct}%`
                                         color: drow.tier
@@ -686,28 +667,51 @@ done`;
                                         }
                                     }
 
+                                    // trash cell — hidden entirely when trash is
+                                    // off; the delete button lives INSIDE the
+                                    // value: text by default, an icon on hover
                                     Rectangle {
-                                        Layout.preferredWidth: 38
-                                        implicitHeight: 16
+                                        visible: disk.trashShow
+                                        Layout.preferredWidth: 52
+                                        Layout.preferredHeight: 16
                                         radius: 8
-                                        color: !disk.trashShow ? "transparent"
-                                            : dEmptyMa.containsMouse && drow.hasTrash ? (drow.armed ? Qt.rgba(1, 0.33, 0.33, 0.18) : Qt.rgba(1, 1, 1, 0.06)) : "transparent"
-                                        border.width: disk.trashShow && drow.armed && drow.hasTrash ? 1 : 0
+                                        Layout.alignment: Qt.AlignVCenter
+                                        color: dEmptyMa.containsMouse && drow.hasTrash
+                                            ? (drow.armed ? Qt.rgba(1, 0.33, 0.33, 0.18) : Qt.rgba(1, 1, 1, 0.06))
+                                            : "transparent"
+                                        border.width: drow.armed && drow.hasTrash ? 1 : 0
                                         border.color: Qt.rgba(1, 0.33, 0.33, 0.4)
+
+                                        Behavior on color {
+                                            ColorAnimation { duration: 100 }
+                                        }
 
                                         Text {
                                             anchors.centerIn: parent
-                                            text: "\uf014"
-                                            color: !disk.trashShow ? Themes.borderMuted : !drow.hasTrash ? Themes.borderMuted : drow.armed ? "#ff5555" : dEmptyMa.containsMouse ? Themes.fg : Themes.dim
-                                            font { pixelSize: 8; bold: true; family: "Symbols Nerd Font Mono, Quicksand" }
+                                            text: dEmptyMa.containsMouse && drow.hasTrash
+                                                ? "\uf014"
+                                                : disk.trashSizeFor(drow.mount)
+                                            horizontalAlignment: Text.AlignRight
+                                            color: dEmptyMa.containsMouse && drow.hasTrash
+                                                ? (drow.armed ? "#ff5555" : Themes.fg)
+                                                : drow.hasTrash ? "#ffb86c" : Themes.borderMuted
+                                            font {
+                                                pixelSize: 9
+                                                bold: dEmptyMa.containsMouse && drow.hasTrash ? true : drow.hasTrash
+                                                family: "Symbols Nerd Font Mono, Quicksand"
+                                            }
+
+                                            Behavior on color {
+                                                ColorAnimation { duration: 100 }
+                                            }
                                         }
 
-                                        // a fully armed row keeps the old double-click
-                                        // shortcut; single-click arms for the banner
+                                        // hover arms the row; re-click confirms —
+                                        // same two-step flow the old icon used
                                         MouseArea {
                                             id: dEmptyMa
                                             anchors.fill: parent
-                                            anchors.margins: -5
+                                            anchors.margins: -2
                                             hoverEnabled: true
                                             cursorShape: Qt.PointingHandCursor
                                             enabled: disk.trashShow && drow.hasTrash
@@ -744,7 +748,7 @@ Text {
                                 id: trashBanner
 
                                 Layout.fillWidth: true
-                                implicitHeight: 28
+                                implicitHeight: 34
                                 radius: 7
                                 visible: disk.trashShow && disk.armedMount.length > 0
                                 color: Qt.rgba(1, 0.33, 0.33, 0.1)
@@ -762,20 +766,57 @@ Text {
                                     spacing: 8
 
                                     Text {
-                                        Layout.fillWidth: true
-                                        text: "Empty trash on " + disk.armedMount + "?"
-                                        color: Themes.fg
-                                        font { pixelSize: 10; bold: true; family: "Quicksand" }
-                                        elide: Text.ElideRight
+                                        text: "\uf014"
+                                        color: "#ff5555"
+                                        font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
                                     }
 
-                                    Text {
-                                        text: "Cancel"
-                                        color: Themes.muted
-                                        font { pixelSize: 9; bold: true; family: "Quicksand" }
-                                        TapHandler {
-                                            gesturePolicy: TapHandler.ReleaseWithinBounds
-                                            onTapped: disk.armedMount = ""
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 0
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: "Empty trash"
+                                            color: Themes.fg
+                                            font { pixelSize: 10; bold: true; family: "Quicksand" }
+                                            elide: Text.ElideRight
+                                        }
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: disk.armedMount
+                                                + disk.trashSizeFor(disk.armedMount)
+                                            color: Themes.muted
+                                            font { pixelSize: 8; family: "ZedMono Nerd Font" }
+                                            elide: Text.ElideRight
+                                        }
+                                    }
+
+                                    Item { Layout.fillWidth: true }
+
+                                    Rectangle {
+                                        implicitWidth: cancelTxt.implicitWidth + 16
+                                        implicitHeight: 20
+                                        radius: 10
+                                        color: cancelMa.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : "transparent"
+                                        border.width: 1
+                                        border.color: cancelMa.containsMouse ? Qt.rgba(1, 1, 1, 0.25) : Qt.rgba(1, 1, 1, 0.15)
+
+                                        Text {
+                                            id: cancelTxt
+                                            anchors.centerIn: parent
+                                            text: "Cancel"
+                                            color: Themes.dim
+                                            font { pixelSize: 9; bold: true; family: "Quicksand" }
+                                        }
+
+                                        MouseArea {
+                                            id: cancelMa
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: disk.armedMount = ""
                                         }
                                     }
 
@@ -783,19 +824,26 @@ Text {
                                         implicitWidth: emptyBtnTxt.implicitWidth + 14
                                         implicitHeight: 20
                                         radius: 10
-                                        color: "#ff5555"
+                                        color: emptyBtnMa.containsMouse ? "#ff6b6b" : "#ff5555"
+
+                                        Behavior on color {
+                                            ColorAnimation { duration: 100 }
+                                        }
 
                                         Text {
                                             id: emptyBtnTxt
                                             anchors.centerIn: parent
-                                            text: "\uf014 Empty"
+                                            text: "Empty"
                                             color: Qt.rgba(0.04, 0.02, 0.08, 0.9)
-                                            font { pixelSize: 9; bold: true; family: "Symbols Nerd Font Mono, Quicksand" }
+                                            font { pixelSize: 9; bold: true; family: "Quicksand" }
                                         }
 
-                                        TapHandler {
-                                            gesturePolicy: TapHandler.ReleaseWithinBounds
-                                            onTapped: {
+                                        MouseArea {
+                                            id: emptyBtnMa
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
                                                 const m = disk.armedMount;
                                                 disk.armedMount = "";
                                                 if (m)

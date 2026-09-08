@@ -13,6 +13,7 @@ Item {
 
     required property var host
 
+    Layout.alignment: Qt.AlignVCenter
     width: mprisRoot.pillVisible ? pill.implicitWidth : idleVolumeSpot.width
     height: mprisRoot.pillVisible ? pill.implicitHeight : idleVolumeSpot.height
     implicitWidth: width
@@ -36,6 +37,10 @@ Item {
     property bool _hovering: false
     readonly property bool pillVisible: MprisState.hideWhenIdle ? showPlaying : (MprisState.player !== null)
 
+    // player-brand accent — spotify/chrome/mpd/discord get their own hue for
+    // the ring + center glyph; unknown players fall back to the theme pink
+    readonly property color brand: MprisState.brandColor(MprisState.player) ?? Themes.pink
+
     // compact pills show only the ring/icon; hovering expands the full layout
     // (the default view is a settings option)
     readonly property bool showDetails: !MprisState.mprisCompact || mprisRoot._hovering
@@ -43,9 +48,12 @@ Item {
     // 0..1 animated expansion factor — drives width/spacing/opacity of the
     // detail items so the compact hover is a smooth slide, not a pop
     property real _details: 0
-    // Behavior on _details {
-    //     NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
-    // }
+    Behavior on _details {
+        NumberAnimation {
+            duration: 200
+            easing.type: Easing.OutCubic
+        }
+    }
     onShowDetailsChanged: mprisRoot._details = mprisRoot.showDetails ? 1 : 0
     Component.onCompleted: mprisRoot._details = mprisRoot.showDetails ? 1 : 0
 
@@ -71,7 +79,11 @@ Item {
 
         onExited: {
             mprisRoot._hovering = false;
-            mprisRoot._details = 0;
+            // collapse back to compact only when we expanded *because* of hover.
+            // with "Compact by default" turned off the pill is meant to stay
+            // open permanently — a stray mouse-exit must not hide it.
+            if (MprisState.mprisCompact)
+                mprisRoot._details = 0;
             hideVolumeTimer.restart();
         }
 
@@ -119,7 +131,7 @@ Item {
                 id: idleVolumeSpot
 
                 visible: !mprisRoot.pillVisible && MprisState.player !== null
-                implicitWidth: visible ? 26 : 0
+                implicitWidth: visible ? 18 : 0
                 implicitHeight: mprisRoot.host ? mprisRoot.host.height : 30
 
                 MouseArea {
@@ -218,7 +230,9 @@ Item {
                 id: pill
                 visible: mprisRoot.pillVisible
                 implicitHeight: mprisRoot.host ? mprisRoot.host.height : 30
-                implicitWidth: pillRow.implicitWidth + 12
+                // in compact the pill hugs the ring flush (no dead padding),
+                // matching the tight sizing of the neighbouring RHS icons
+                implicitWidth: pillRow.implicitWidth + mprisRoot._details * 4
                 radius: height / 2
                 // color: Qt.rgba(0.1, 0.04, 0.18, 0.4)
                 color: "transparent"
@@ -227,7 +241,7 @@ Item {
                     id: pillRow
                     anchors.fill: parent
                     anchors.leftMargin: mprisRoot._details * 6
-                    // anchors.rightMargin: mprisRoot._details * 6
+                    anchors.rightMargin: mprisRoot._details * 6
                     // hidden detail items still reserve their grid gap — collapse it
                     spacing: mprisRoot._details * 6
 
@@ -456,9 +470,9 @@ Item {
                                         ctx.arc(cx, cy, r, startAngle, startAngle + Math.PI * 2 * frac);
                                         ctx.lineCap = "round";
                                     }
-                                    // playing = full pink, paused = faded — status hints
+                                    // playing = brand, paused = faded — status hints
                                     const playing = MprisState.player?.isPlaying ?? false;
-                                    ctx.strokeStyle = mprisRoot.showVolume ? Themes.accent : (playing ? Themes.pink : Qt.rgba(Themes.pink.r, Themes.pink.g, Themes.pink.b, 0.45));
+                                    ctx.strokeStyle = mprisRoot.showVolume ? mprisRoot.brand : (playing ? mprisRoot.brand : Qt.rgba(mprisRoot.brand.r, mprisRoot.brand.g, mprisRoot.brand.b, 0.45));
                                     ctx.lineWidth = 1.5;
                                     ctx.stroke();
                                 }
@@ -481,7 +495,7 @@ Item {
                                 var v = Math.max(0, Math.min(MprisState.player?.volume ?? 0, 1));
                                 return v <= 0.001 ? "\uf026" : "\uf028";
                             }
-                            color: (MprisState.player?.volume ?? 0) <= 0.001 ? Themes.muted : Themes.pink
+                            color: (MprisState.player?.volume ?? 0) <= 0.001 ? Themes.muted : mprisRoot.brand
                             font {
                                 pixelSize: 9
                                 family: "Symbols Nerd Font Mono"
@@ -491,11 +505,12 @@ Item {
                         BarText {
                             anchors.centerIn: parent
                             // current player's glyph replaces the play/pause symbol —
-                            // state is hinted by ring/icon colour
+                            // state is hinted by ring/icon colour; playing uses the
+                            // active player's brand hue
                             visible: !mprisRoot.showVolume
                             symbolText: MprisState.appGlyph(MprisState.player)
-                            baseColor: (MprisState.player?.isPlaying ?? false) ? Themes.pink : Themes.muted
-                            color: (MprisState.player?.isPlaying ?? false) ? Themes.pink : Themes.muted
+                            baseColor: (MprisState.player?.isPlaying ?? false) ? mprisRoot.brand : Themes.muted
+                            color: (MprisState.player?.isPlaying ?? false) ? mprisRoot.brand : Themes.muted
                             pointSize: 10
                             symbolSize: 10
                             paddingg: 0

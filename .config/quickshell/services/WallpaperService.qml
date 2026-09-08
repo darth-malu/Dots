@@ -8,13 +8,30 @@ Singleton {
     id: root
 
     property string current: Prefs.prefs.wallpaper
-    onCurrentChanged: Prefs.prefs.wallpaper = current
-
+    onCurrentChanged: {
+        Prefs.prefs.wallpaper = current;
+        if (current.length > 0 && root.toneFor(current) === "unknown")
+            root._probeLum(current);
+    }
     property bool enabled: Prefs.prefs.wallpaperEnabled
     onEnabledChanged: Prefs.prefs.wallpaperEnabled = enabled
-
     property bool desktopClock: Prefs.prefs.desktopClock
     onDesktopClockChanged: Prefs.prefs.desktopClock = desktopClock
+
+    // desktop overlay text: "light" | "dark" (two-way toggle, no auto)
+    property string textTone: Prefs.prefs.textTone ?? "light"
+    onTextToneChanged: {
+        Prefs.prefs.textTone = textTone;
+        Prefs.write();
+    }
+
+    // bar text: "auto" (follow the wallpaper's light/dark folder tone),
+    // "light" (light text), "dark" (dark text) — chosen from the wallpaper rofi
+    property string barTextTone: Prefs.prefs.barTextTone ?? "auto"
+    onBarTextToneChanged: {
+        Prefs.prefs.barTextTone = barTextTone;
+        Prefs.write();
+    }
 
     // ── auto-rotate slideshow ──
     property bool slideshowEnabled: Prefs.prefs.slideshowEnabled
@@ -98,12 +115,108 @@ Singleton {
 
     readonly property string wallpaperDirPath: Quickshell.env("HOME") + "/.config/quickshell/wallpapers"
 
+    // tone of a wallpaper path: "light" / "dark" from its folder, else "unknown"
+    function toneFor(path) {
+        if (!path)
+            return "unknown";
+        const i = path.lastIndexOf("/");
+        const parent = i > 0 ? path.slice(0, i) : "";
+        if (parent.endsWith("/light"))
+            return "light";
+        if (parent.endsWith("/dark"))
+            return "dark";
+        return "unknown";
+    }
+
+    // ── light/dark awareness ──
+    // known directly from the folder when the wallpaper lives in light/ dark/;
+    // otherwise probed once via a 1x1 ImageMagick average (perceptual luma)
+    property bool _autoLight: false
+    property string _lumPath: ""
+
+    readonly property bool lightWallpaper: {
+        const t = root.toneFor(root.current);
+        if (t === "light")
+            return true;
+        if (t === "dark")
+            return false;
+        return root._autoLight;
+    }
+
+    function _probeLum(path) {
+        if (!path || path.length === 0 || path === root._lumPath)
+            return;
+        root._lumPath = path;
+        lumProc.buf = "";
+        lumProc.command = ["sh", "-c", "magick \"$1\" -auto-orient -resize 1x1! -format '%[fx:int(round(255*(0.2126*r+0.7152*g+0.0722*b)))]' info: 2>/dev/null", "sh", path];
+        lumProc.running = true;
+    }
+
+    Process {
+        id: lumProc
+        property string buf: ""
+        running: false
+        stdout: SplitParser {
+            onRead: data => {
+                const v = parseInt(data.trim(), 10);
+                if (!isNaN(v))
+                    root._autoLight = v > 128;
+            }
+        }
+        onExited: code => {
+            if (code !== 0) {
+                root._autoLight = false;
+                root._lumPath = "";
+            }
+        }
+    }
+
+    // move a wallpaper into the light/ or dark/ folder (used by the picker)
+    property string _mvSrc: ""
+    property string _mvDest: ""
+
+    function moveToTone(path, tone) {
+        if (!path || path.length === 0 || (tone !== "light" && tone !== "dark"))
+            return;
+        if (root.toneFor(path) === tone)
+            return;
+        root._mvSrc = path;
+        root._mvDest = root.wallpaperDirPath + "/" + tone + "/" + path.split("/").pop();
+        mvProc.command = ["sh", "-c", "mkdir -p \"$1\" && mv -n \"$2\" \"$3\" 2>/dev/null", "sh",
+            root.wallpaperDirPath + "/" + tone, path, root._mvDest];
+        mvProc.running = true;
+    }
+
+    Process {
+        id: mvProc
+        running: false
+        onExited: code => {
+            if (code !== 0)
+                return;
+            if (root.current === root._mvSrc)
+                root.current = root._mvDest;
+            root._refreshList();
+        }
+    }
+
+    // per-tone counts for the picker / settings display
+    function countTone(tone: string): int {
+        let n = 0;
+        const list = root.wallpaperList;
+        for (let i = 0; i < list.length; i++)
+            if (root.toneFor(list[i]) === tone)
+                n++;
+        return n;
+    }
+
     // accumulator for the wallpaper-listing process
     property var _acc: []
 
+    // scans BOTH the flat dir AND its light/ dark/ subfolders — the folder
+    // name is what tags each wallpaper's tone for the text provider
     Process {
         id: lsProc
-        command: ["sh", "-c", "find " + root.wallpaperDirPath + " -maxdepth 1 -type f \\( -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' -o -name '*.webp' -o -name '*.bmp' \\) | sort"]
+        command: ["sh", "-c", "find " + root.wallpaperDirPath + " -maxdepth 2 -type f \\( -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' -o -name '*.webp' -o -name '*.bmp' \\) | sort"]
 
         stdout: SplitParser {
             onRead: data => {

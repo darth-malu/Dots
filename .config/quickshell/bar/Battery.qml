@@ -230,12 +230,6 @@ RowLayout {
 
             Keys.onEscapePressed: batteryBlock.showPopup = false
 
-            MouseArea {
-                anchors.fill: parent
-                z: -1
-                onClicked: batteryBlock.showPopup = false
-            }
-
             ColumnLayout {
                 id: popupCol
 

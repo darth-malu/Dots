@@ -15,6 +15,7 @@ RowLayout {
     required property var host
 
     Layout.alignment: Qt.AlignVCenter
+    // consistent with the rest of the RHS module gap (Bar.qml rightBlock / SystemTray)
     spacing: 8
 
     readonly property bool pipewireReady: PipewireState.pipewireReady
@@ -34,6 +35,15 @@ RowLayout {
 
         implicitHeight: 18
         implicitWidth: row.implicitWidth
+
+        // smooth hover zoom on the active volume glyph
+        scale: viMa.containsMouse ? 1.15 : 1
+        Behavior on scale {
+            NumberAnimation {
+                duration: 140
+                easing.type: Easing.OutCubic
+            }
+        }
 
         RowLayout {
             id: row

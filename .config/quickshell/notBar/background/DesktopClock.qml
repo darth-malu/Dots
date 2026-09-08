@@ -50,10 +50,10 @@ Variants {
                 Text {
                     id: clockTime
                     Layout.alignment: Qt.AlignRight
-                    color: Themes.fg
+                    color: Themes.desktopText
                     font { pixelSize: 64; family: "ZedMono Nerd Font"; bold: true }
                     style: Text.Outline
-                    styleColor: Qt.rgba(0, 0, 0, 0.6)
+                    styleColor: Themes.desktopOutline
 
                     function updateTime() {
                         var now = new Date();
@@ -76,10 +76,10 @@ Variants {
                 Text {
                     id: clockDate
                     Layout.alignment: Qt.AlignRight
-                    color: Themes.fg
+                    color: Themes.desktopMuted
                     font { pixelSize: 16; family: "Quicksand"; bold: true; letterSpacing: 1 }
                     style: Text.Outline
-                    styleColor: Qt.rgba(0, 0, 0, 0.6)
+                    styleColor: Themes.desktopOutline
 
                     function updateDate() {
                         var now = new Date();

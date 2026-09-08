@@ -13,25 +13,35 @@ Singleton {
     property bool emojiOpen: false
     property bool colorOpen: false
     property bool wallpaperOpen: false
+    property bool avatarOpen: false
 
     function closeAll() {
         root.emojiOpen = false;
         root.colorOpen = false;
         root.wallpaperOpen = false;
+        root.avatarOpen = false;
     }
 
     // opening one picker dismisses the others — they share the overlay layer
     onEmojiOpenChanged: if (emojiOpen) {
         colorOpen = false;
         wallpaperOpen = false;
+        avatarOpen = false;
     }
     onColorOpenChanged: if (colorOpen) {
         emojiOpen = false;
         wallpaperOpen = false;
+        avatarOpen = false;
     }
     onWallpaperOpenChanged: if (wallpaperOpen) {
         emojiOpen = false;
         colorOpen = false;
+        avatarOpen = false;
+    }
+    onAvatarOpenChanged: if (avatarOpen) {
+        emojiOpen = false;
+        colorOpen = false;
+        wallpaperOpen = false;
     }
 
     // ── persistent store ──

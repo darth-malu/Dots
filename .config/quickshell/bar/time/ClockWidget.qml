@@ -25,11 +25,11 @@ BarBlock {
     onClicked: mouse => {
         // mouse.accepted = true;
         if (mouse.button === Qt.LeftButton) {
-            ResourcesState.resourcesVisible = !ResourcesState.resourcesVisible;
-            // beep.play();
+            // left-click opens the calendar popup
+            MiscState.showPopup = !MiscState.showPopup;
         } else if ((mouse.modifiers & Qt.ShiftModifier) && (mouse.button === Qt.RightButton))
             root.beepPlay();
-        else if (mouse.button === Qt.RightButton)
+        else if (mouse.button === Qt.MiddleButton)
             MiscState.showPopup = !MiscState.showPopup;
     }
 
@@ -49,7 +49,7 @@ BarBlock {
                 paddingg: 0
                 bottomPadding: 2
                 font: Themes.monofur
-                baseColor: Themes.clockColor
+                baseColor: Themes._barLightWall ? Themes.barText : Themes.clockColor
             }
 
             // noctalia-style bar surface: hourglass while armed, live

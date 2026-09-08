@@ -17,11 +17,14 @@ Singleton {
 
     property bool mprisVisible: false
 
-    property bool mprisArtVisible: true
+    property bool mprisArtVisible: prefs.mprisArtVisible
+    onMprisArtVisibleChanged: prefs.mprisArtVisible = mprisArtVisible
 
-    property bool showMprisProgress: true
+    property bool showMprisProgress: prefs.showMprisProgress
+    onShowMprisProgressChanged: prefs.showMprisProgress = showMprisProgress
 
-    property bool hideWhenIdle: true
+    property bool hideWhenIdle: prefs.hideWhenIdle
+    onHideWhenIdleChanged: prefs.hideWhenIdle = hideWhenIdle
 
     // scroll-to-marquee song titles (pill + quicksettings card)
     property bool marqueeEnabled: prefs.marqueeEnabled
@@ -45,6 +48,9 @@ Singleton {
 
             property bool marqueeEnabled: true
             property bool mprisCompact: true
+            property bool mprisArtVisible: true
+            property bool showMprisProgress: true
+            property bool hideWhenIdle: true
         }
     }
 
@@ -65,6 +71,10 @@ Singleton {
     // every player including normally-ignored ones (chrome etc.) so they
     // can be selected as the card's control target
     readonly property var controlPlayers: Mpris.players.values
+
+    // the subset a user may actually pick in the quicksettings chooser —
+    // players they "deleted" (ignored) drop out of this list
+    readonly property var pickablePlayers: root.controlPlayers.filter(p => !root.isIgnored(p))
 
     // the player the quicksettings card shows/controls — survives pause,
     // honours an explicit pin, falls back through player → lastPlayer
@@ -125,6 +135,24 @@ Singleton {
         if (s.includes("firefox") || s.includes("zen"))
             return "\uf269";
         return "\uf001";
+    }
+
+    // brand accent per player — drives the bar ring + center glyph (and the
+    // volume flash) so the module reads as "owned" by the active app.
+    // returns a QColor (or undefined → caller falls back to the theme pink)
+    function brandColor(p) {
+        const s = ((p?.identity ?? "") + " " + (p?.desktopEntry ?? "")).toLowerCase();
+        if (s.includes("spotify"))
+            return "#1db954";
+        if (s.includes("chrome") || s.includes("chromium"))
+            return "#4285f4";
+        if (s.includes("firefox") || s.includes("zen"))
+            return "#ff7139";
+        if (s.includes("discord") || s.includes("music"))
+            return "#5865f2";
+        if (s.includes("mpv") || s.includes("mpd") || s.includes("player"))
+            return "#ff5f56";
+        return undefined;
     }
 
     // wpctl pipeline that resolves a player's sink-input id by keyword
@@ -369,6 +397,17 @@ Singleton {
         }
     }
 
+    // fire-and-forget: when a player starts playing, pause ANY other player
+    // that was already playing — one active sink at a time.
+    function pauseOthers(p) {
+        if (!p || !p.isPlaying)
+            return;
+        for (const other of Mpris.players.values) {
+            if (other !== p && other.isPlaying && other.canPause)
+                other.pause();
+        }
+    }
+
     function sendNotify() {
         // fall back to the last active player so the songart toast also works while nothing is playing
         let p = root.player && !root.isIgnored(root.player) ? root.player : null;
@@ -427,9 +466,11 @@ Singleton {
 
             function onPlaybackStateChanged() {
                 root.refresh();
+                root.pauseOthers(modelData);
             }
             function onIsPlayingChanged() {
                 root.refresh();
+                root.pauseOthers(modelData);
             }
             function onTrackArtistChanged() {
                 root.refresh();

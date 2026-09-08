@@ -146,12 +146,6 @@ BarBlock {
                     onActivated: MiscState.showCpuProcs = false
                 }
 
-                MouseArea {
-                    anchors.fill: parent
-                    z: -1
-                    onClicked: MiscState.showCpuProcs = false
-                }
-
                 ColumnLayout {
                     id: procCol
                     anchors.fill: parent

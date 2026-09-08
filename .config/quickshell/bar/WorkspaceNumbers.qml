@@ -100,8 +100,8 @@ RowLayout {
                 color: rootBlock.isActive
                     ? Themes.activeTextColor
                     : rootBlock.isUrgent ? "#ff5555"
-                    : rootBlock.isEmpty ? Qt.rgba(1, 1, 1, 0.35)
-                    : Themes.inactiveTextColor
+                    : rootBlock.isEmpty ? Themes.barDim
+                    : Themes.barMuted
                 dim: false
                 font {
                     bold: rootBlock.isActive

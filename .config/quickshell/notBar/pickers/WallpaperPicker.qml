@@ -30,14 +30,18 @@ PanelWindow {
         search.forceActiveFocus();
     }
 
-    // name-filtered dataset — star filter narrows the grid to favorites only
+    // name-filtered dataset — star filter narrows the grid to favorites only,
+    // tone filter narrows to light/dark/unknown
     property bool favFilter: false
+    property string toneFilter: "all"
 
     readonly property var results: {
         var q = search.text.trim().toLowerCase();
         var list = WallpaperService.wallpaperList;
         if (root.favFilter)
             list = list.filter(p => WallpaperService.isFavorite(p));
+        if (root.toneFilter !== "all")
+            list = list.filter(p => WallpaperService.toneFor(p) === root.toneFilter);
         if (q.length === 0)
             return list;
         return list.filter(p => p.toLowerCase().includes(q));
@@ -105,6 +109,66 @@ PanelWindow {
             cursorShape: Qt.PointingHandCursor
             hoverEnabled: true
             onClicked: chip.toggled()
+        }
+    }
+
+    // physical toggle for the light/dark banner toggle — a sliding switch
+    // instead of a glyph-only chip; on = dark text (knob + label highlight)
+    component ToneSwitch: RowLayout {
+        id: toneSwitch
+
+        property string label: ""
+        property bool on: false
+        signal toggled()
+
+        spacing: 5
+        Layout.alignment: Qt.AlignVCenter
+
+        Text {
+            text: toneSwitch.label
+            color: toneSwitch.on
+                ? "#50fa7b"
+                : toneSwitchMa.containsMouse ? Themes.fg : Qt.rgba(1, 1, 1, 0.55)
+            font { pixelSize: 8; letterSpacing: 0.5; family: "ZedMono Nerd Font" }
+
+            Behavior on color { ColorAnimation { duration: 110 } }
+        }
+
+        Rectangle {
+            id: track
+
+            implicitWidth: 26
+            implicitHeight: 14
+            radius: 7
+            color: toneSwitch.on
+                ? Qt.rgba(0.31, 0.98, 0.48, 0.22)
+                : toneSwitchMa.containsMouse ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(1, 1, 1, 0.1)
+            border.width: 1
+            border.color: toneSwitch.on ? "#50fa7b" : Qt.rgba(1, 1, 1, 0.25)
+
+            Behavior on color { ColorAnimation { duration: 110 } }
+            Behavior on border.color { ColorAnimation { duration: 110 } }
+
+            Rectangle {
+                width: 10
+                height: 10
+                radius: 5
+                color: toneSwitch.on ? "#50fa7b" : Qt.rgba(1, 1, 1, 0.75)
+                x: toneSwitch.on ? track.width - width - 2 : 2
+                y: (track.height - height) / 2
+
+                Behavior on x { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
+                Behavior on color { ColorAnimation { duration: 110 } }
+            }
+        }
+
+        MouseArea {
+            id: toneSwitchMa
+
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: toneSwitch.toggled()
         }
     }
 
@@ -329,6 +393,34 @@ PanelWindow {
                                         onToggled: WallpaperService.rotationFavoritesOnly = !WallpaperService.rotationFavoritesOnly
                                     }
 
+                                    // text-tone — sliding switch flips light ↔ dark text
+                                    ToneSwitch {
+                                        label: WallpaperService.textTone === "dark" ? "dark text" : "light text"
+                                        on: WallpaperService.textTone === "dark"
+                                        onToggled: WallpaperService.textTone =
+                                            WallpaperService.textTone === "light" ? "dark" : "light"
+                                    }
+
+                                    // bar-text tone — auto (keeps the current wallpaper-follow
+                                    // behaviour) or an explicit light/dark pin for the bar glyphs
+                                    WallChip {
+                                        label: "bar auto"
+                                        on: WallpaperService.barTextTone === "auto"
+                                        onToggled: WallpaperService.barTextTone = "auto"
+                                    }
+
+                                    WallChip {
+                                        label: "bar light"
+                                        on: WallpaperService.barTextTone === "light"
+                                        onToggled: WallpaperService.barTextTone = "light"
+                                    }
+
+                                    WallChip {
+                                        label: "bar dark"
+                                        on: WallpaperService.barTextTone === "dark"
+                                        onToggled: WallpaperService.barTextTone = "dark"
+                                    }
+
                                     Item { Layout.fillWidth: true }
                                 }
                             }
@@ -340,6 +432,56 @@ PanelWindow {
                         Layout.fillWidth: true
                         implicitHeight: 1
                         color: Qt.rgba(1, 1, 1, 0.1)
+                    }
+
+                    // ── tone filter row ──
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Repeater {
+                            model: ["all", "light", "dark", "unknown"]
+
+                            Rectangle {
+                                required property string modelData
+                                property bool active: root.toneFilter === modelData
+                                implicitWidth: toneLbl.implicitWidth + 14
+                                implicitHeight: 18
+                                radius: 9
+                                color: active
+                                    ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12)
+                                    : toneMa.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
+                                border.width: 1
+                                border.color: active ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.55)
+                                    : toneMa.containsMouse ? Qt.rgba(1, 1, 1, 0.18) : "transparent"
+
+                                Text {
+                                    id: toneLbl
+                                    anchors.centerIn: parent
+                                    text: {
+                                        if (modelData === "all")
+                                            return "\uf0b2 all";
+                                        if (modelData === "light")
+                                            return "\uf185 " + WallpaperService.countTone("light") + " light";
+                                        if (modelData === "dark")
+                                            return "\uf186 " + WallpaperService.countTone("dark") + " dark";
+                                        return "? unknown";
+                                    }
+                                    color: active ? Themes.fg : Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.6)
+                                    font { pixelSize: 8; letterSpacing: 0.5; family: "ZedMono Nerd Font" }
+                                }
+
+                                MouseArea {
+                                    id: toneMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.toneFilter = modelData
+                                }
+                            }
+                        }
+
+                        Item { Layout.fillWidth: true }
                     }
 
                     // ── wallpaper grid ──
@@ -443,6 +585,71 @@ PanelWindow {
                         onClicked: root.applyWallpaper(cellWrap.path_)
                     }
 
+                    // hover tone-move chips — "→light" / "→dark" at the bottom
+                    // of each thumbnail so you can re-sort wallpapers inline.
+                    // They sit above cellMa so clicks go through to the move
+                    // handler rather than applying the wallpaper.
+                    RowLayout {
+                        visible: cellMa.containsMouse
+                        anchors.bottom: parent.bottom
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.margins: 4
+                        spacing: 3
+
+                        Rectangle {
+                            visible: WallpaperService.toneFor(cellWrap.path_) !== "light"
+                            implicitWidth: moveLightLbl.implicitWidth + 10
+                            implicitHeight: 16
+                            radius: 8
+                            color: moveLightMa.containsMouse ? Qt.rgba(255, 237, 150, 0.2) : Qt.rgba(0, 0, 0, 0.55)
+                            border.width: 1
+                            border.color: moveLightMa.containsMouse ? Qt.rgba(255, 237, 150, 0.7) : "transparent"
+
+                            Text {
+                                id: moveLightLbl
+                                anchors.centerIn: parent
+                                text: "\uf185 \u2192 light"
+                                color: moveLightMa.containsMouse ? "#ffedd6" : Qt.rgba(1, 1, 1, 0.7)
+                                font { pixelSize: 7; letterSpacing: 0.3; family: "ZedMono Nerd Font" }
+                            }
+
+                            MouseArea {
+                                id: moveLightMa
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: WallpaperService.moveToTone(cellWrap.path_, "light")
+                            }
+                        }
+
+                        Rectangle {
+                            visible: WallpaperService.toneFor(cellWrap.path_) !== "dark"
+                            implicitWidth: moveDarkLbl.implicitWidth + 10
+                            implicitHeight: 16
+                            radius: 8
+                            color: moveDarkMa.containsMouse ? Qt.rgba(130, 170, 255, 0.2) : Qt.rgba(0, 0, 0, 0.55)
+                            border.width: 1
+                            border.color: moveDarkMa.containsMouse ? Qt.rgba(130, 170, 255, 0.7) : "transparent"
+
+                            Text {
+                                id: moveDarkLbl
+                                anchors.centerIn: parent
+                                text: "\uf186 \u2192 dark"
+                                color: moveDarkMa.containsMouse ? "#aaccff" : Qt.rgba(1, 1, 1, 0.7)
+                                font { pixelSize: 7; letterSpacing: 0.3; family: "ZedMono Nerd Font" }
+                            }
+
+                            MouseArea {
+                                id: moveDarkMa
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: WallpaperService.moveToTone(cellWrap.path_, "dark")
+                            }
+                        }
+                    }
+
                     // favorite star — top-right, above the click zone so it toggles the
                     // star without applying the wallpaper. seen while the tile is
                     // hovered (or always when already a favorite); the star's own
@@ -480,7 +687,7 @@ PanelWindow {
                 Text {
                     anchors.centerIn: parent
                     visible: WallpaperService.wallpaperList.length === 0
-                    text: "no wallpapers — drop images into ~/.config/quickshell/wallpapers"
+                    text: "no wallpapers — drop images into wallpapers/ or wallpapers/light/ + wallpapers/dark/"
                     color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.35)
                     font { pixelSize: 11; letterSpacing: 0.5; family: "ZedMono Nerd Font" }
                     horizontalAlignment: Text.AlignHCenter

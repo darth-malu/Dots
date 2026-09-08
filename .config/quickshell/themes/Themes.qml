@@ -8,7 +8,7 @@ Singleton {
 
     // ── Color scheme selection ──────────────────────────────────────────
     // 0 = Purple (Dracula-ish, default), 1 = Gron teal/cyan,
-    // 2 = Nord arctic blue, 3 = Rose warm pink, 4 = Amber warm gold
+    // 2 = Gruvbox retro warm, 3 = Rose warm pink, 4 = Amber warm gold
     readonly property int scheme: MiscState.themeScheme
     function pick(p, g, n, r, a): color {
         var v = scheme === 0 ? p : scheme === 1 ? g : scheme === 2 ? n : scheme === 3 ? r : a;
@@ -16,28 +16,28 @@ Singleton {
     }
 
     // Core identity tokens (themed)
-    readonly property color accent2: pick("#8be9fd", "#48bfe3", "#81a1c1", "#f2b0cd", "#f5c86a")  // cyan secondary
-    readonly property color pink: pick("#ff79c6", "#e5a8cf", "#b48ead", "#ff6b9d", "#e8788a")
-    readonly property color fg: pick("#f8f8f2", "#eef4f7", "#eceff4", "#f6eaf1", "#f0e8df")
-    readonly property color dim: pick("#b8bfcb", "#aebbc4", "#b7c1cc", "#b8a8b4", "#c4b8a8")
-    readonly property color muted: pick("#6272a4", "#5f6f7d", "#4c566a", "#8a647a", "#8a7a5c")
-    readonly property color cardBg: pick("#21222c", "#1f2b31", "#2e3440", "#2a1f27", "#26201a")
-    readonly property color cardBgHover: pick("#2a2c3a", "#28343b", "#3b4252", "#372a32", "#32281f")
-    readonly property color panelBg: pick("#282a36", "#24313a", "#2e3440", "#2f222c", "#2b2419")
-    readonly property color separator: pick("#343746", "#2e3f47", "#3b4252", "#3a2d33", "#382f22")
-    readonly property color borderColor: pick("#313244", "#293a43", "#3b4252", "#3a2b32", "#382e20")
-    readonly property color borderMuted: pick("#44475a", "#3a4a52", "#4c5a6e", "#57434e", "#574a35")
-    readonly property color barSolidBg: pick("#181825", "#1b252c", "#20252e", "#191217", "#16130d")  // solid/full bar slab background
-    readonly property color accentSoft: pick("#e2d6fb", "#c9eaf5", "#d8dee9", "#f5d5e5", "#f5ddc0")  // light accent (active glyphs/hover text)
-    readonly property color mutedSoft: pick("#8b93b8", "#7d93a0", "#8ea3bd", "#a98fa0", "#b49a7a")   // muted lavender inactive -> teal-grey
-    readonly property color mauve: pick("#c6a0f6", "#5fc3d9", "#81a1c1", "#d98bb0", "#e8b06a")       // medium-tier accent (mauve -> teal)
-    readonly property color brightnessAccent: pick("#f1fa8c", "#d0e56a", "#ebcb8b", "#ffcf6b", "#a8cc5c")  // brightness slider (sun yellow -> warm teal-green)
+    readonly property color accent2: pick("#8be9fd", "#48bfe3", "#8ec07c", "#f2b0cd", "#f5c86a")  // cyan secondary
+    readonly property color pink: pick("#ff79c6", "#e5a8cf", "#b16286", "#ff6b9d", "#e8788a")
+    readonly property color fg: pick("#f8f8f2", "#eef4f7", "#ebdbb2", "#f6eaf1", "#f0e8df")
+    readonly property color dim: pick("#b8bfcb", "#aebbc4", "#a89984", "#b8a8b4", "#c4b8a8")
+    readonly property color muted: pick("#6272a4", "#5f6f7d", "#928374", "#8a647a", "#8a7a5c")
+    readonly property color cardBg: pick("#21222c", "#1f2b31", "#282828", "#2a1f27", "#26201a")
+    readonly property color cardBgHover: pick("#2a2c3a", "#28343b", "#3c3836", "#372a32", "#32281f")
+    readonly property color panelBg: pick("#282a36", "#24313a", "#282828", "#2f222c", "#2b2419")
+    readonly property color separator: pick("#343746", "#2e3f47", "#3c3836", "#3a2d33", "#382f22")
+    readonly property color borderColor: pick("#313244", "#293a43", "#3c3836", "#3a2b32", "#382e20")
+    readonly property color borderMuted: pick("#44475a", "#3a4a52", "#504945", "#57434e", "#574a35")
+    readonly property color barSolidBg: pick("#181825", "#1b252c", "#1d2021", "#191217", "#16130d")  // solid/full bar slab background
+    readonly property color accentSoft: pick("#e2d6fb", "#c9eaf5", "#ebdbb2", "#f5d5e5", "#f5ddc0")  // light accent (active glyphs/hover text)
+    readonly property color mutedSoft: pick("#8b93b8", "#7d93a0", "#a89984", "#a98fa0", "#b49a7a")   // muted lavender inactive -> teal-grey
+    readonly property color mauve: pick("#c6a0f6", "#5fc3d9", "#8ec07c", "#d98bb0", "#e8b06a")       // medium-tier accent (mauve -> teal)
+    readonly property color brightnessAccent: pick("#f1fa8c", "#d0e56a", "#fabd2f", "#ffcf6b", "#a8cc5c")  // brightness slider (sun yellow -> warm teal-green)
 
     // Audio sliders — distinct hue for the input sink so sink volume reads
     // apart from the output slider (which stays on the primary accent). In
     // Gron the default cyan is too close to the teal accent, so it becomes a
     // distinct green for visible variance.
-    readonly property color audioInputAccent: pick("#8be9fd", "#2ec4a5", "#88c0d0", "#f2b0cd", "#85c47c")
+    readonly property color audioInputAccent: pick("#8be9fd", "#2ec4a5", "#8ec07c", "#f2b0cd", "#85c47c")
 
     // Semantic status tokens (shared across schemes)
     readonly property color green: "#50fa7b"
@@ -51,6 +51,28 @@ Singleton {
 
     // Popup/card background — solid (opaque) or glass variant
     readonly property color popupCardBg: MiscState.popupSolidBg ? panelBg : Qt.rgba(panelBg.r, panelBg.g, panelBg.b, 0.82)
+
+    // ── desktop overlay text (clock, notes) ──
+    // two-way toggle: "light" = dark text on light wallpaper, "dark" = light text
+    readonly property bool _desktopLightWall: WallpaperService.textTone === "dark"
+    readonly property color desktopText: root._desktopLightWall ? "#15151b" : "#f4f4f8"
+    readonly property color desktopMuted: root._desktopLightWall ? "#4a4a55" : Qt.rgba(1, 1, 1, 0.65)
+    readonly property color desktopOutline: root._desktopLightWall
+        ? Qt.rgba(1, 1, 1, 0.30)
+        : Qt.rgba(0, 0, 0, 0.65)
+
+    // ── bar text — wallpaper-aware ──
+    // bar text must be legible on any wallpaper. Tone is user-selectable from
+    // the wallpaper rofi: "light"/"dark" pin the text explicitly, "auto" (the
+    // default) follows the wallpaper's folder tone (light/ dark/ dirs).
+    readonly property bool _barLightWall: WallpaperService.barTextTone === "dark"
+        ? true
+        : WallpaperService.barTextTone === "light"
+            ? false
+            : WallpaperService.toneFor(WallpaperService.current) === "light"
+    readonly property color barText: root._barLightWall ? "#1a1a24" : root.fg
+    readonly property color barMuted: root._barLightWall ? "#5a5a68" : root.muted
+    readonly property color barDim: root._barLightWall ? "#8a8a96" : root.dim
 
     property color barBg: 'transparent'
 
@@ -83,7 +105,7 @@ Singleton {
     readonly property color toxicGreen: "#88FF00"
 
     // MPRIS
-    readonly property color mprisTextColor: pick("#FAAB8DED", "#cde6f0", "#d8dee9", "#f5d5e5", "#f5ddc0")
+    readonly property color mprisTextColor: pick("#FAAB8DED", "#cde6f0", "#ebdbb2", "#f5d5e5", "#f5ddc0")
 
     readonly property color mprisVolumeColor: root.pink
 
@@ -162,7 +184,7 @@ Singleton {
     property color surface: Qt.rgba(255, 255, 255, 0.15)
     property color overlay: Qt.rgba(255, 255, 255, 0.7)
 
-    property color accent: pick("#bd93f9", "#3fa7c5", "#88c0d0", "#e57aa7", "#f0a640")
+    property color accent: pick("#bd93f9", "#3fa7c5", "#fe8019", "#e57aa7", "#f0a640")
 
     property color buttonEnabled: accent
     property color buttonEnabledHover: Qt.lighter(accent, 0.9)

@@ -49,6 +49,8 @@ Singleton {
             property bool showVolumeOut: true
             property bool showVolumeIn: true
             property bool showAppVolume: false
+            property bool showClock: true
+            property bool showResources: true
             property int themeScheme: 0
             property bool wifiRadioWanted: true
             property bool btRadioWanted: true
@@ -65,6 +67,8 @@ Singleton {
             property int slideshowMinutes: 30
             property var favorites: []
             property bool rotationFavoritesOnly: false
+            property string textTone: "light" // "light" | "dark" — desktop overlay text (toggle)
+            property string barTextTone: "auto" // "auto" | "light" | "dark" — bar text tone (picker) = "dark" means dark text on light
         }
     }
 }

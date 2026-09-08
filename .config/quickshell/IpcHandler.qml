@@ -206,6 +206,17 @@ Item {
     }
 
     IpcHandler {
+        target: 'notes'
+        function add(): void {
+            NotesState.addNote();
+        }
+
+        function clear(): void {
+            NotesState.clear();
+        }
+    }
+
+    IpcHandler {
         target: 'wallpaper'
         function toggle(): void {
             WallpaperService.enabled = !WallpaperService.enabled;

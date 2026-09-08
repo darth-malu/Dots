@@ -10,7 +10,7 @@ Loader {
     required property var host
 
     Layout.alignment: Qt.AlignVCenter
-    active: ResourcesState.resourcesVisible
+    active: ResourcesState.resourcesVisible && MiscState.showResources
 
     visible: active
 

@@ -4,7 +4,7 @@ local mainMod = "SUPER"
 -- Media
 hl.bind(mainMod .. "+ Control + I", hl.dsp.exec_cmd("qs ipc call mpris toggleMpris"))
 hl.bind("XF86AudioNext", hl.dsp.exec_cmd("qs ipc call mpris next"), { locked = true })
-hl.bind("XF86AudioPause", hl.dsp.exec_cmd("qs ipc call mpris togglePlaying"), { locked = true })
+hl.bind("XF86AudioPause", hl.dsp.exec_cmd("qs ipc call mpris pauseAll"), { locked = true })
 hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("qs ipc call mpris togglePlaying"), { locked = true })
 hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("qs ipc call mpris previous"), { locked = true })
 hl.bind(mod .. "+ XF86AudioPlay", hl.dsp.exec_cmd("qs ipc call mpris toggleMprisArt"), { locked = true })

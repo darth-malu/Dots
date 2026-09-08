@@ -99,7 +99,7 @@ RowLayout {
     // clock lives in this row, right where quicksettings used to sit
     ClockWidget {
         host: root.host
-        visible: root.clockInside
+        visible: root.clockInside && MiscState.showClock
         Layout.alignment: Qt.AlignVCenter
     }
 

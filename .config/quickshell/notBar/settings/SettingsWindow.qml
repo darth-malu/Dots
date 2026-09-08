@@ -263,6 +263,210 @@ Item {
         }
     }
 
+    // ── live Hyprland integer option stepper ──
+    // reads the current value with `hyprctl getoption` and applies changes
+    // instantly with `hyprctl keyword` (session-only — lua config is untouched)
+    component HyprStepRow: RowLayout {
+        id: hsr
+
+        required property string icon
+        required property string label
+        required property string option   // e.g. "general:gaps_in"
+        property int minValue: 0
+        property int maxValue: 200
+        property int stepValue: 1
+        property int value: 0
+
+        function refresh() {
+            getProc.running = false;
+            getProc.command = ["hyprctl", "getoption", option];
+            getProc.running = true;
+        }
+        function apply() {
+            Quickshell.execDetached(["hyprctl", "keyword", option, String(value)]);
+        }
+        function nudge(dir) {
+            value = Math.max(minValue, Math.min(maxValue, value + dir * stepValue));
+            apply();
+        }
+
+        Process {
+            id: getProc
+            running: false
+            stdout: SplitParser {
+                onRead: data => {
+                    const m = data.trim().match(/-?\d+/);
+                    if (m)
+                        hsr.value = parseInt(m[0], 10);
+                }
+            }
+        }
+
+        spacing: 12
+        Layout.fillWidth: true
+        Layout.preferredHeight: 34
+
+        Text {
+            text: hsr.icon
+            color: Themes.accent
+            font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+            Layout.preferredWidth: 20
+            horizontalAlignment: Text.AlignHCenter
+        }
+
+        Text {
+            text: hsr.label
+            color: Themes.fg
+            font { pixelSize: 12; family: "Quicksand"; bold: true }
+            Layout.alignment: Qt.AlignVCenter
+        }
+
+        Item { Layout.fillWidth: true }
+
+        StepBtn {
+            glyph: "\uf068"
+            Layout.alignment: Qt.AlignVCenter
+            onStepped: hsr.nudge(-1)
+        }
+
+        Rectangle {
+            implicitWidth: 44
+            implicitHeight: 24
+            radius: 7
+            color: Themes.cardBg
+            border.width: 1
+            border.color: Themes.borderColor
+
+            Text {
+                anchors.centerIn: parent
+                text: hsr.value
+                color: Themes.accent
+                font { pixelSize: 11; bold: true; family: "ZedMono Nerd Font" }
+            }
+        }
+
+        StepBtn {
+            glyph: "\uf067"
+            Layout.alignment: Qt.AlignVCenter
+            onStepped: hsr.nudge(1)
+        }
+    }
+
+    // ── live Hyprland border-color picker (material palette popup) ──
+    component HyprColorRow: RowLayout {
+        id: hcr
+
+        required property string icon
+        required property string label
+        required property string option   // e.g. "general:col.active_border"
+        property color value: Themes.accent
+
+        function applyColor(hex) {
+            value = hex;
+            Quickshell.execDetached(["hyprctl", "keyword", option, "0x" + hex.replace("#", "")]);
+        }
+
+        spacing: 12
+        Layout.fillWidth: true
+        Layout.preferredHeight: 38
+
+        Text {
+            text: hcr.icon
+            color: Themes.accent
+            font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+            Layout.preferredWidth: 20
+            horizontalAlignment: Text.AlignHCenter
+        }
+
+        Text {
+            text: hcr.label
+            color: Themes.fg
+            font { pixelSize: 12; family: "Quicksand"; bold: true }
+            Layout.alignment: Qt.AlignVCenter
+        }
+
+        Text {
+            text: "live"
+            color: Themes.muted
+            font { pixelSize: 9; family: "ZedMono Nerd Font" }
+            Layout.alignment: Qt.AlignVCenter
+        }
+
+        Item { Layout.fillWidth: true }
+
+        Rectangle {
+            id: hcrSwatch
+
+            Layout.preferredWidth: 34
+            Layout.preferredHeight: 22
+            radius: 6
+            color: hcr.value
+            border.width: 1
+            border.color: hcrMa.containsMouse ? Themes.accent : Themes.borderColor
+
+            MouseArea {
+                id: hcrMa
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: hcrPopup.open()
+            }
+
+            Popup {
+                id: hcrPopup
+                x: -40
+                y: -hcrPopupCol.implicitHeight - 12
+                width: 200
+                closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
+
+                background: Rectangle {
+                    radius: 8
+                    color: Themes.cardBg
+                    border.width: 1
+                    border.color: Themes.borderColor
+                }
+
+                contentItem: GridLayout {
+                    id: hcrPopupCol
+                    columns: 8
+                    columnSpacing: 4
+                    rowSpacing: 4
+                    anchors.margins: 8
+                    Layout.margins: 8
+
+                    Repeater {
+                        model: [
+                            "#f44336", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5",
+                            "#2196f3", "#03a9f4", "#00bcd4", "#009688", "#4caf50",
+                            "#8bc34a", "#cddc39", "#ffeb3b", "#ffc107", "#ff9800",
+                            "#ff5722", "#795548", "#9e9e9e", "#607d8b", "#00abf5",
+                            "#50fa7b", "#ff5555", "#ffb86c", "#ffffff",
+                            "#000000", "#0a0f0f", "#dce8e6", "#bae2ff"
+                        ]
+                        delegate: Rectangle {
+                            required property var modelData
+
+                            Layout.preferredWidth: 20
+                            Layout.preferredHeight: 20
+                            radius: 5
+                            color: modelData
+
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    hcr.applyColor(modelData);
+                                    hcrPopup.close();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     function fmtMs(ms) {
         if (ms >= 1000) {
             const s = Math.round(ms / 100) / 10;
@@ -285,6 +489,8 @@ Item {
         { icon: "\uf0a2", label: "Notifications" },
         { icon: "\uf1eb", label: "Connections" },
         { icon: "\uf2db", label: "Performance" },
+        { icon: "\uf108", label: "Desktop" },
+        { icon: "\uf120", label: "Hyprland" },
         { icon: "\uf059", label: "Help" },
     ]
 
@@ -501,6 +707,8 @@ Item {
                                     : root.currentCategory === 3 ? notificationsPage
                                     : root.currentCategory === 4 ? connectionsPage
                                     : root.currentCategory === 5 ? performancePage
+                                    : root.currentCategory === 6 ? desktopPage
+                                    : root.currentCategory === 7 ? hyprlandPage
                                     : helpPage
                                 }
                             }
@@ -543,16 +751,6 @@ Item {
                             caption: BarState.frameOn ? "accent" : "off"
                             checked: BarState.frameOn
                             onFlipped: BarState.frameOn = !BarState.frameOn
-                        }
-
-                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
-
-                        SettingRow {
-                            icon: "\uf017"
-                            label: "Desktop clock"
-                            caption: WallpaperService.desktopClock ? "on" : "off"
-                            checked: WallpaperService.desktopClock
-                            onFlipped: WallpaperService.desktopClock = !WallpaperService.desktopClock
                         }
 
                         Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
@@ -1114,7 +1312,7 @@ Item {
                                         model: [
                                             { key: 0, label: "Purple" },
                                             { key: 1, label: "Gron" },
-                                            { key: 2, label: "Nord" },
+                                            { key: 2, label: "Gruvbox" },
                                             { key: 3, label: "Rose" },
                                             { key: 4, label: "Amber" }
                                         ]
@@ -1236,7 +1434,9 @@ Item {
                                 { icon: "\uf1eb", label: "Wi-Fi", key: "showWifi" },
                                 { icon: "\uf1e6", label: "Ethernet", key: "showEthernet" },
                                 { icon: "\uf240", label: "Battery", key: "showBattery" },
-                                { icon: "\uf0a2", label: "Notifications", key: "showNotifTray" }
+                                { icon: "\uf0a2", label: "Notifications", key: "showNotifTray" },
+                                { icon: "\uf017", label: "Clock", key: "showClock" },
+                                { icon: "\uf1c0", label: "Performance", key: "showResources" }
                             ]
 
                             delegate: ColumnLayout {
@@ -1257,7 +1457,7 @@ Item {
 
                                 // separator between module rows
                                 Rectangle {
-                                    visible: modCell.index < 6
+                                    visible: modCell.index < 8
                                     Layout.fillWidth: true
                                     height: 1
                                     color: Themes.separator
@@ -2207,6 +2407,558 @@ Item {
                             wrapMode: Text.WordWrap
                         }
                     }
+                }
+            }
+        }
+
+        // ═══ DESKTOP ═══
+        Component {
+            id: desktopPage
+
+            ColumnLayout {
+                id: dsPage
+                spacing: 12
+
+                Card {
+                    title: "Desktop"
+                    icon: "\uf108"
+                    accent: Themes.accent
+
+                    ColumnLayout {
+                        spacing: 0
+                        Layout.fillWidth: true
+
+                        SettingRow {
+                            icon: "\uf017"
+                            label: "Clock on desktop"
+                            caption: WallpaperService.desktopClock ? "on" : "off"
+                            checked: WallpaperService.desktopClock
+                            onFlipped: WallpaperService.desktopClock = !WallpaperService.desktopClock
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
+
+                        // text tone picker — auto follows the wallpaper, or force light/dark
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 38
+                            spacing: 12
+
+                            Text {
+                                text: "\uf15c"
+                                color: Themes.accent
+                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                Layout.preferredWidth: 20
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            Text {
+                                text: "Overlay text"
+                                color: Themes.fg
+                                font { pixelSize: 12; family: "Quicksand"; bold: true }
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+
+                            Text {
+                                text: "dark · light on wall"
+                                color: Themes.muted
+                                font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                Layout.alignment: Qt.AlignVCenter
+                                Layout.rightMargin: 8
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Rectangle {
+                                id: toneDropdown
+
+                                Layout.alignment: Qt.AlignVCenter
+                                width: 130
+                                height: 24
+                                radius: 6
+                                color: toneDropMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : Themes.cardBg
+                                border.width: 1
+                                border.color: toneDropOpen ? Themes.accent : Themes.borderColor
+
+                                property bool toneDropOpen: false
+                                property var toneOptions: [
+                                    { val: "light", label: "light" },
+                                    { val: "dark", label: "dark" }
+                                ]
+
+                                function curLabel() {
+                                    for (var i = 0; i < toneOptions.length; i++)
+                                        if (toneOptions[i].val === WallpaperService.textTone)
+                                            return toneOptions[i].label;
+                                    return "light";
+                                }
+
+                                Text {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 8
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: toneDropdown.curLabel()
+                                    color: Themes.fg
+                                    font { pixelSize: 10; bold: true; family: "Quicksand" }
+                                    elide: Text.ElideRight
+                                    width: parent.width - 24
+                                }
+
+                                Text {
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 6
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "\uf078"
+                                    color: Themes.muted
+                                    font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
+                                    rotation: toneDropdown.toneDropOpen ? 180 : 0
+
+                                    Behavior on rotation {
+                                        NumberAnimation { duration: 120; easing.type: Easing.OutQuad }
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: toneDropMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: toneDropdown.toneDropOpen = !toneDropdown.toneDropOpen
+                                }
+
+                                Popup {
+                                    id: tonePopup
+                                    y: toneDropdown.height + 4
+                                    width: toneDropdown.width
+                                    height: tonePopupCol.implicitHeight + 8
+                                    closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
+                                    onOpened: toneDropdown.toneDropOpen = true
+                                    onClosed: toneDropdown.toneDropOpen = false
+
+                                    background: Rectangle {
+                                        radius: 6
+                                        color: Themes.cardBg
+                                        border.width: 1
+                                        border.color: Themes.borderColor
+                                    }
+
+                                    contentItem: ColumnLayout {
+                                        id: tonePopupCol
+                                        spacing: 0
+
+                                        Repeater {
+                                            model: toneDropdown.toneOptions
+
+                                            Rectangle {
+                                                required property var modelData
+                                                property bool isHovered: toneItemMa.containsMouse
+                                                property bool isSelected: WallpaperService.textTone === modelData.val
+
+                                                Layout.fillWidth: true
+                                                implicitHeight: 24
+                                                radius: 4
+                                                color: isSelected ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
+
+                                                Text {
+                                                    anchors.left: parent.left
+                                                    anchors.leftMargin: 8
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    text: modelData.label
+                                                    color: isSelected ? Themes.accent : Themes.dim
+                                                    font { pixelSize: 10; family: "Quicksand" }
+                                                }
+
+                                                MouseArea {
+                                                    id: toneItemMa
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: {
+                                                        WallpaperService.textTone = modelData.val
+                                                        tonePopup.close()
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    onVisibleChanged: toneDropdown.toneDropOpen = visible
+                                }
+
+                                Connections {
+                                    target: toneDropdown
+                                    function onToneDropOpenChanged() {
+                                        if (toneDropdown.toneDropOpen && !tonePopup.visible)
+                                            tonePopup.open();
+                                        else if (!toneDropdown.toneDropOpen && tonePopup.visible)
+                                            tonePopup.close();
+                                    }
+                                }
+                            }
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
+
+                        // bar-text tone — "auto" keeps the wallpaper-follow behaviour
+                        // (default), light/dark pin the bar glyphs explicitly
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 38
+                            spacing: 12
+
+                            Text {
+                                text: "\uf1c0"
+                                color: Themes.accent
+                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                                Layout.preferredWidth: 20
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            Text {
+                                text: "Bar text"
+                                color: Themes.fg
+                                font { pixelSize: 12; family: "Quicksand"; bold: true }
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Rectangle {
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: barToneRow.implicitWidth + 6
+                                implicitHeight: 26
+                                radius: 8
+                                color: Themes.cardBg
+                                border.width: 1
+                                border.color: Themes.borderColor
+
+                                Row {
+                                    id: barToneRow
+
+                                    anchors.centerIn: parent
+                                    spacing: 2
+
+                                    Repeater {
+                                        model: [
+                                            { key: "auto", label: "auto" },
+                                            { key: "light", label: "light" },
+                                            { key: "dark", label: "dark" }
+                                        ]
+
+                                        delegate: Rectangle {
+                                            id: barToneOpt
+
+                                            required property var modelData
+
+                                            readonly property bool sel: WallpaperService.barTextTone === barToneOpt.modelData.key
+
+                                            width: barToneLbl.implicitWidth + 20
+                                            height: 22
+                                            radius: 6
+                                            color: sel ? Themes.accent : barToneMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : "transparent"
+
+                                            Behavior on color {
+                                                ColorAnimation { duration: 120 }
+                                            }
+
+                                            Text {
+                                                id: barToneLbl
+
+                                                anchors.centerIn: parent
+                                                text: barToneOpt.modelData.label
+                                                color: barToneOpt.sel ? "#181825" : barToneMa.containsMouse ? Themes.fg : Themes.dim
+                                                font { pixelSize: 10; bold: true; family: "Quicksand" }
+
+                                                Behavior on color {
+                                                    ColorAnimation { duration: 120 }
+                                                }
+                                            }
+
+                                            MouseArea {
+                                                id: barToneMa
+
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: WallpaperService.barTextTone = barToneOpt.modelData.key
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Card {
+                    title: "Sticky notes"
+                    icon: "\uf372"
+                    accent: Themes.orange
+
+                    ColumnLayout {
+                        spacing: 0
+                        Layout.fillWidth: true
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 38
+                            spacing: 8
+
+                            Text {
+                                text: "\uf0a9"
+                                color: Themes.orange
+                                font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
+                                Layout.preferredWidth: 20
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: NotesState.model.count === 0
+                                    ? "no notes yet"
+                                    : NotesState.model.count === 1 ? "1 note on the desktop" : NotesState.model.count + " notes on the desktop"
+                                color: Themes.dim
+                                font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                elide: Text.ElideRight
+                            }
+
+                            Rectangle {
+                                id: addNoteBtn
+                                implicitWidth: addNoteTxt.implicitWidth + 16
+                                implicitHeight: 22
+                                radius: 6
+                                color: addNoteMa.containsMouse
+                                    ? Qt.rgba(Themes.orange.r, Themes.orange.g, Themes.orange.b, 0.2)
+                                    : Themes.separator
+                                border.width: 1
+                                border.color: addNoteMa.containsMouse ? Themes.orange : "transparent"
+
+                                Text {
+                                    id: addNoteTxt
+                                    anchors.centerIn: parent
+                                    text: "\uf067 new note"
+                                    color: addNoteMa.containsMouse ? Themes.orange : Themes.dim
+                                    font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                                }
+
+                                MouseArea {
+                                    id: addNoteMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: NotesState.addNote()
+                                }
+                            }
+
+                            Rectangle {
+                                visible: NotesState.model.count > 0
+                                id: clearNoteBtn
+                                implicitWidth: clearNoteTxt.implicitWidth + 16
+                                implicitHeight: 22
+                                radius: 6
+                                color: clearNoteMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.18) : Themes.separator
+                                border.width: 1
+                                border.color: clearNoteMa.containsMouse ? "#ff5555" : "transparent"
+
+                                Text {
+                                    id: clearNoteTxt
+                                    anchors.centerIn: parent
+                                    text: "\uf2ed clear"
+                                    color: clearNoteMa.containsMouse ? "#ff5555" : Themes.dim
+                                    font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                                }
+
+                                MouseArea {
+                                    id: clearNoteMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: NotesState.clear()
+                                }
+                            }
+                        }
+
+                        Repeater {
+                            model: NotesState.model
+
+                            Rectangle {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 26
+                                radius: 6
+                                color: Qt.rgba(1, 1, 1, 0.03)
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 4
+                                    spacing: 6
+
+                                    Rectangle {
+                                        implicitWidth: 6
+                                        implicitHeight: 14
+                                        radius: 3
+                                        Layout.alignment: Qt.AlignVCenter
+                                        color: ["#ffb86c", "#8be9fd", "#ff79c6", "#50fa7b", "#bd93f9"][(modelData.color ?? 0) % 5]
+                                    }
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: (modelData.text ?? "").trim().length > 0
+                                            ? modelData.text.trim().split("\n")[0]
+                                            : "(empty note)"
+                                        elide: Text.ElideRight
+                                        color: Themes.dim
+                                        font { pixelSize: 10; family: "Quicksand" }
+                                        Layout.alignment: Qt.AlignVCenter
+                                    }
+
+                                    Rectangle {
+                                        Layout.alignment: Qt.AlignVCenter
+                                        implicitWidth: 18
+                                        implicitHeight: 18
+                                        radius: 5
+                                        color: noteDelMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.18) : "transparent"
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "\uf00d"
+                                            color: noteDelMa.containsMouse ? "#ff5555" : Themes.muted
+                                            font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
+                                        }
+
+                                        MouseArea {
+                                            id: noteDelMa
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: NotesState.removeById(modelData.id)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.topMargin: 6 }
+                    }
+                }
+            }
+        }
+
+        // ═══ HYPRLAND ═══
+        Component {
+            id: hyprlandPage
+
+            ColumnLayout {
+                id: hyPage
+
+                spacing: 12
+
+                Card {
+                    title: "Window layout"
+                    icon: "\uf120"
+                    accent: Themes.accent
+
+                    ColumnLayout {
+                        spacing: 0
+                        Layout.fillWidth: true
+
+                        HyprStepRow {
+                            id: gapsInRow
+                            icon: "\uf0b2"
+                            label: "Gaps in"
+                            option: "general:gaps_in"
+                            minValue: 0
+                            maxValue: 48
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
+
+                        HyprStepRow {
+                            id: gapsOutRow
+                            icon: "\uf0b2"
+                            label: "Gaps out"
+                            option: "general:gaps_out"
+                            minValue: 0
+                            maxValue: 64
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
+
+                        HyprStepRow {
+                            id: borderSizeRow
+                            icon: "\uf0c8"
+                            label: "Border size"
+                            option: "general:border_size"
+                            minValue: 0
+                            maxValue: 12
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
+
+                        HyprStepRow {
+                            id: roundingRow
+                            icon: "\uf1b2"
+                            label: "Corner rounding"
+                            option: "decoration:rounding"
+                            minValue: 0
+                            maxValue: 24
+                        }
+                    }
+                }
+
+                Card {
+                    title: "Borders"
+                    icon: "\uf0c8"
+                    accent: Themes.accent
+
+                    ColumnLayout {
+                        spacing: 0
+                        Layout.fillWidth: true
+
+                        HyprColorRow {
+                            id: activeBorderRow
+                            icon: "\uf096"
+                            label: "Active border"
+                            option: "general:col.active_border"
+                        }
+
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
+
+                        HyprColorRow {
+                            id: inactiveBorderRow
+                            icon: "\uf096"
+                            label: "Inactive border"
+                            option: "general:col.inactive_border"
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.topMargin: 2
+                    spacing: 6
+
+                    Text {
+                        text: "\uf05a"
+                        color: Themes.muted
+                        font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: "Changes apply live via hyprctl and reset when Hyprland (or a workspace/scheme reload) restarts"
+                        wrapMode: Text.WordWrap
+                        color: Themes.muted
+                        font { pixelSize: 9; family: "Quicksand" }
+                    }
+                }
+
+                // pull the current live values each time the page opens
+                Component.onCompleted: {
+                    gapsInRow.refresh();
+                    gapsOutRow.refresh();
+                    borderSizeRow.refresh();
+                    roundingRow.refresh();
                 }
             }
         }

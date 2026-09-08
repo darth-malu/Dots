@@ -87,8 +87,9 @@ RowLayout {
 
             property var clientIcons: []
 
-            // empty = no client icons at all
-            readonly property bool isEmpty: clientIcons.length === 0 && !isActive
+            // empty = no client icons at all (badge stays visible so switching
+            // to an empty workspace doesn't pop a block in from zero width)
+            readonly property bool isEmpty: clientIcons.length === 0
 
             property bool _alive: true
             Component.onDestruction: _alive = false
@@ -158,7 +159,7 @@ RowLayout {
                 // workspace number badge — visible in both themes
                 Rectangle {
                     id: numberContainer
-                    visible: !rootBlock.isEmpty || rootBlock.urgent
+                    visible: true
                     Layout.fillHeight: true
                     Layout.rightMargin: 4
                     implicitWidth: 18
@@ -193,7 +194,7 @@ RowLayout {
                             : rootBlock.urgent
                                 ? "#ff5555"
                                 : rootBlock.isEmpty
-                                    ? Qt.rgba(1, 1, 1, 0.35)
+                                    ? Themes.barDim
                                     : (boxy ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.6) : Themes.roundedBadgeText)
                         font {
                             pixelSize: 12

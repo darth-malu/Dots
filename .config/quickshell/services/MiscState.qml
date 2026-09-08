@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Wayland
+import Quickshell.Networking
 import qs.services
 
 Singleton {
@@ -144,6 +145,14 @@ Singleton {
     property bool showAppVolume: Prefs.prefs.showAppVolume
     onShowAppVolumeChanged: Prefs.prefs.showAppVolume = showAppVolume
 
+    // bar clock — completely hides the clock widget when off
+    property bool showClock: Prefs.prefs.showClock
+    onShowClockChanged: Prefs.prefs.showClock = showClock
+
+    // performance resource blocks (disk · memory · cpu) in the bar
+    property bool showResources: Prefs.prefs.showResources
+    onShowResourcesChanged: Prefs.prefs.showResources = showResources
+
     // bar mode — 0 transparent, 1 solid, 2 full-bleed.
     // Icons use this to pick soft (transparent) or bright (solid bg) colours.
     readonly property bool barSolid: BarState.barMode !== 0
@@ -190,7 +199,7 @@ Singleton {
                 NetworkState.setWifiEnabled(root.wifiRadioWanted);
             }
             if (root.count >= 15 || (done && Networking.wifiEnabled === root.wifiRadioWanted))
-                timer.stop();
+                radioReconcile.stop();
             root.count++;
         }
     }
@@ -205,7 +214,16 @@ Singleton {
     property string avatarUrl: "file://" + avatarPath
 
     function pickAvatar(): void {
-        Quickshell.execDetached(["sh", "-c", `file=$(PATH="$HOME/.nix-profile/bin:$PATH" zenity --file-selection --title="Choose Avatar" --file-filter="Images | *.png *.jpg *.jpeg *.webp" 2>/dev/null) && ` + `[ -n "$file" ] && mkdir -p ~/.config/quickshell/assets && cp "$file" ~/.config/quickshell/assets/avatar.png`]);
+        PickerState.avatarOpen = true;
+    }
+
+    // copy the chosen image into place (the FileView below bumps avatarUrl),
+    // then dismiss the picker
+    function applyAvatar(path): void {
+        if (!path || path.length === 0)
+            return;
+        Quickshell.execDetached(["sh", "-c", `[ -f "$1" ] && mkdir -p "$HOME/.config/quickshell/assets" && cp "$1" "$HOME/.config/quickshell/assets/avatar.png"`, "sh", path]);
+        PickerState.avatarOpen = false;
     }
 
     FileView {
