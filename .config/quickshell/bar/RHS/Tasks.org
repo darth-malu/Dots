@@ -1,16 +1,74 @@
 #+title: Tasks
 
-* Pending 
+* Completed
 + [ ] Notification Tray
-  + [ ] Should not have copy functionality
-  + [ ] Format Notification as seen in actual notifications
+  + [ ] Format Notification as seen in actual notifications in expanded view (left click)
+    NOTE: this is broken....the viewport does not expand correctly to fit new sizes
 
-+ [ ] Theme> settings
-  + [ ] Remove Amber Since its a worse version of Gruvbox...Replace it with an Everforest theme
-  + [ ] Rename Purple to Pyrple
++ [X] Theme> settings
+  + [X] Remove Amber Since its a worse version of Gruvbox...Replace it with an Everforest theme
+  + [X] Rename Purple to Pyrple
 
++ [-] Mpris module
+  + [X] While hovering over Mpris module in bar. Scroll with (ctrl + wheel) to switch players
+  + [X] Hide keybind in hyprland - toggle visibility on and off
+  + [ ] Does not persist visibility state across sessions with prefs look into it
+    Eg. hide on idle does not persist..enable mpris defaults to off always instead of my previous setting
+  + [X] Use different color for mpd - pastel
+
++ [X] Wallpaper Rofi
+  + [X] Blinking on hover eg. the dark/light toggle favorites blink breaking the UI
+  + [X] Currently picked wallpaper should persist across sessions...it seems to reset with every quickshell reload/restart
+
++ [X] Git
+  + [X] Write Instructions on how to use it and its functionality to git-use.org
+  + [X] check performance...seems rather intensive for what i want it to do.
+  + [X] Use on filechanged where possibel
+
++ [ ] Bluetooth Module
+  + [ ] Should Persist across sessions eg. if off stay of unless i explicitly turn it on again.
+  + [ ] Remove the on/off text and just have the switch
+  + [ ] Check functionality to be intact
+  + [ ] Implement scan refresh etc...normal bt user expected functionality
+
+
+* Pending
++ [ ] Wallpaper Rofi
+  + [ ] Header UI is broken...fix and modernize view...current implementation is tacky with alot of repetitions and bad design
+  + [ ] A wallpaper can be both light or dark & also favorite
+  + [ ] In stead of {all,light,dark, unknown} only have opt-in light & dark toggles where I can click to filter list and unlick to show all wallpapers. Assigned wallpapers should have the light/dark badge visible always like the favorites
+  + [ ] Move the dark/light buttons/icons to same place as the favorites but only show them on hover on the favorites icon itself not on hover the wallpaper. unless already assigned
++ [ ] Settings
+  + [ ] Hyprland
+    + [ ] Dual tone borders not working.
+    + [ ] Reset should use my default hardcoded file values to reset
+  + [ ] Move ipc handlers from help and make their own dedicated section in settings root
+  + [ ] IPC handler logic is broken
+    + [ ] Inspect logic and only have those that make sense to be toggled on/off in settings. eg activate linux
++ [ ] Notifications
+  + [ ] When notification has interactive buttons eg. settings on chrome notifications...their is no margins and the buttons break the look. Compensate for this scenario
++ [ ] Now playing
+  The Delete button should close the player not just remove it from the list of players. If not possible remove the functionality
+  + [ ] Expanded View
+    + [ ] Restore previous design
+      + [ ] Song title+artist should be in the bottom left
+      + [ ] On click to show the progress and track buttons the layout should be structured as
+        {song art/title}
+        {Progress bar}
+        The progress should be visible below the song art/title still at the bottom left.
+      + [ ] The progress bar should adhere to the bottom border instead of float.
+      + [ ] + should turn to -
+  + [ ] Compact view
+    + [ ] The progress bar should adhere to the bottom border instead of float at the center
+      Adjust track buttons to match
+    + [ ] Show playerchooser when players>1 in this view as well
+  + [ ] Binding changes
+    + [ ] Git module
+      + [ ] Do alt+left click to show performance metrics instead of middle click
++ [ ] Implement Sticky notes functionality in desktop -- with free notes format and todo
++ [ ] Git needs to be simpler...its very expensive
+  + [ ] Make settings page for it to adjust its parameters
+
+
+* TODO LATER
 + [ ] Possible to store sudo access for hdd so i dont have to manually enter it on every hdd? Use userspace tools if not -- what options are available?
-
-+ [ ] Mpris module
-  + [ ] Scroll with ctrl to switch players
-  + [ ] Hide keybind

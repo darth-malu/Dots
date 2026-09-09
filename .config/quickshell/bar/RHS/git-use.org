@@ -1,0 +1,91 @@
+#+title: Git Module — How To Use
+
+* What it is
+
+A single bar pill ([[file:../../Git.qml][Git.qml]]) that watches every configured
+repo in one go. State comes from [[file:../../services/GitState.qml][GitState.qml]]
+(a singleton — the one source of truth), persisted to =git-prefs.json=.
+
+Two kinds of repos are supported:
+
+- *worktrees* — a normal checkout (=path=, optional =upstream= remote to compare)
+- *bare repos* — a bare =dir= + the =worktree= it tracks (e.g. the =dots=
+  alias: bare dir =/home/malu/Projects/Dots= tracking =~/=), optional custom
+  =upstream= ref like =gitlab/main=
+
+* Bar pill
+
+| interaction          | action                                            |
+|----------------------+---------------------------------------------------|
+| *left click*           | open/close the monitor popup                      |
+| *right click*          | push all repos                                    |
+| *middle click*         | toggle the RHS performance modules (disk/mem/cpu) |
+| *shift + middle click* | commit all repos (message =--++AutoCommit++--)      |
+
+The glyph color = worst state across all repos:
+
+| color  | meaning                                    |
+|--------+--------------------------------------------|
+| muted  | waiting for the first probe                 |
+| green  | clean & synced                             |
+| grey   | no upstream configured                     |
+| cyan   | unpushed (ahead)                           |
+| orange | unstaged / untracked changes               |
+| yellow | staged changes                            |
+| red    | unreachable (path gone)                    |
+
+* The popup
+
+- one row per repo with state text (e.g. =staged + modified=, =↑3 unpushed=,
+  =↓1 behind=) and a colored dot
+- per-repo *commit* / *push* / *delete* buttons
+- an *Add* form (+ to the right of refresh) for new worktrees or bare repos —
+  it validates the fields and rejects duplicates;
+  the bare form has an =untracked scan= toggle (see performance below)
+- *Esc* or × closes it
+
+* How the state is computed
+
+Each refresh spawns ONE =sh= that loops over every repo and runs a single
+=git status --porcelain=v1 -sb= per repo. That one call yields both the
+change flags (staged/modified/untracked) AND the ahead/behind counts.
+A custom =upstream= (a ref that isn't git's configured =@{u}=) needs one extra
+=rev-list --left-right=.
+
+Ratings are coarse on purpose: every =M/A/D/R/C= in the index → =staged=s; every
+=M/D= in the worktree → =modified=u; =??= → =untracked=t. This keeps the probe
+tiny and the UX legible.
+
+* Refresh policy (performance)
+
+The module is deliberately *on-demand*, not a background poller:
+
+- refresh fires when the popup opens, on =refresh= button, and after
+  add/commit/push
+- while the popup is open, a slow *60s* tick keeps rows current
+- the pill keeps its last known color otherwise (zero idle CPU)
+
+Cost guardrails baked into every git call:
+
+- =-c gc.auto=0= and =-c maintenance.auto=0= stop git from self-triggering a
+  background repack (=git pack-objects= CPU hog) on big repos
+- bare repos with a huge worktree (like =dots= over =~/=) default to
+  =--untracked-files=no= so the slow =??= scan only runs if you enable
+  =untracked scan= for that repo
+- the old design spawned a git process per repo per poll; now it's a single
+  process per refresh regardless of repo count
+
+* On "use on filechanged where possible"
+
+A filesystem watcher is deliberately *not* used for most notifications. The
+default =dots= bare repo tracks =~/= — i.e. nearly everything on the system —
+so inotify/FSW events would fire on every file write and provide no signal.
+On-demand probing + the popup-open tick is the cheap, correct choice for that
+topology. (If one repo ever needs instant updates, a =FileSystemObserver= scoped
+to that single worktree — not its parent tree — is the place to add it.)
+
+* Edit the repo list
+
+Add/remove repos from the popup's =Add= form whenever possible. Otherwise they
+live in =~/.config/quickshell/git-prefs.json= (keys =regular= and =bare=).
+A default =dots= bare repo is only seeded on the very first run.

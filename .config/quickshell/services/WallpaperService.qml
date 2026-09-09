@@ -12,11 +12,18 @@ Singleton {
         Prefs.prefs.wallpaper = current;
         if (current.length > 0 && root.toneFor(current) === "unknown")
             root._probeLum(current);
+        Prefs.write();
     }
     property bool enabled: Prefs.prefs.wallpaperEnabled
-    onEnabledChanged: Prefs.prefs.wallpaperEnabled = enabled
+    onEnabledChanged: {
+        Prefs.prefs.wallpaperEnabled = enabled;
+        Prefs.write();
+    }
     property bool desktopClock: Prefs.prefs.desktopClock
-    onDesktopClockChanged: Prefs.prefs.desktopClock = desktopClock
+    onDesktopClockChanged: {
+        Prefs.prefs.desktopClock = desktopClock;
+        Prefs.write();
+    }
 
     // desktop overlay text: "light" | "dark" (two-way toggle, no auto)
     property string textTone: Prefs.prefs.textTone ?? "light"
@@ -25,10 +32,11 @@ Singleton {
         Prefs.write();
     }
 
-    // bar text: two-way wallpaper-tone toggle — "dark" (default) auto-follows
+    // bar text: three-way wallpaper-tone selector — "auto" (default) follows
     // each wallpaper's detected tone so glyphs stay legible (dark walls →
-    // light glyphs, bright walls → dark glyphs); "light" forces dark glyphs
-    property string barTextTone: Prefs.prefs.barTextTone ?? "dark"
+    // light glyphs, bright walls → dark glyphs); "light" pins to a light
+    // wallpaper (dark glyphs); "dark" pins to a dark wallpaper (light glyphs)
+    property string barTextTone: Prefs.prefs.barTextTone ?? "auto"
     onBarTextToneChanged: {
         Prefs.prefs.barTextTone = barTextTone;
         Prefs.write();
@@ -36,14 +44,23 @@ Singleton {
 
     // ── auto-rotate slideshow ──
     property bool slideshowEnabled: Prefs.prefs.slideshowEnabled
-    onSlideshowEnabledChanged: Prefs.prefs.slideshowEnabled = slideshowEnabled
+    onSlideshowEnabledChanged: {
+        Prefs.prefs.slideshowEnabled = slideshowEnabled;
+        Prefs.write();
+    }
 
     property int slideshowMinutes: Prefs.prefs.slideshowMinutes
-    onSlideshowMinutesChanged: Prefs.prefs.slideshowMinutes = slideshowMinutes
+    onSlideshowMinutesChanged: {
+        Prefs.prefs.slideshowMinutes = slideshowMinutes;
+        Prefs.write();
+    }
 
     // rotate only through starred favorites instead of the whole library
     property bool rotationFavoritesOnly: Prefs.prefs.rotationFavoritesOnly
-    onRotationFavoritesOnlyChanged: Prefs.prefs.rotationFavoritesOnly = rotationFavoritesOnly
+    onRotationFavoritesOnlyChanged: {
+        Prefs.prefs.rotationFavoritesOnly = rotationFavoritesOnly;
+        Prefs.write();
+    }
 
     // ── favorites (persisted paths) ──
     property var favorites: Prefs.prefs.favorites ?? []
@@ -131,8 +148,10 @@ Singleton {
 
     // ── light/dark awareness ──
     // known directly from the folder when the wallpaper lives in light/ dark/;
-    // otherwise probed once via a 1x1 ImageMagick average (perceptual luma)
-    property bool _autoLight: false
+    // otherwise probed once via a 1x1 ImageMagick average (perceptual luma).
+    // Results are cached PER PATH so switching wallpapers never reuses a
+    // stale classification from a previously-probed image.
+    property var _toneCache: ({})    // path -> bool (is light)
     property string _lumPath: ""
 
     readonly property bool lightWallpaper: {
@@ -141,11 +160,11 @@ Singleton {
             return true;
         if (t === "dark")
             return false;
-        return root._autoLight;
+        return root._toneCache[root.current] === true;
     }
 
     function _probeLum(path) {
-        if (!path || path.length === 0 || path === root._lumPath)
+        if (!path || path.length === 0 || root._toneCache[path] !== undefined)
             return;
         root._lumPath = path;
         lumProc.buf = "";
@@ -160,15 +179,20 @@ Singleton {
         stdout: SplitParser {
             onRead: data => {
                 const v = parseInt(data.trim(), 10);
-                if (!isNaN(v))
-                    root._autoLight = v > 128;
+                if (!isNaN(v) && root._lumPath.length > 0) {
+                    var c = Object.assign({}, root._toneCache);
+                    c[root._lumPath] = v > 128;
+                    root._toneCache = c;
+                }
             }
         }
         onExited: code => {
-            if (code !== 0) {
-                root._autoLight = false;
-                root._lumPath = "";
+            if (code !== 0 && root._lumPath.length > 0) {
+                var c = Object.assign({}, root._toneCache);
+                c[root._lumPath] = false;
+                root._toneCache = c;
             }
+            root._lumPath = "";
         }
     }
 
@@ -211,12 +235,22 @@ Singleton {
             root._refreshList();
             return;
         }
+        // keep any favorites that pointed at the old path pointed at the new
+        // one — a move relocates the file but the user's star must survive
+        const favIdx = root.favorites.indexOf(src);
+        if (favIdx >= 0) {
+            const nextFavs = root.favorites.slice();
+            nextFavs[favIdx] = dest;
+            root.favorites = nextFavs;
+            Prefs.prefs.favorites = nextFavs;
+        }
         const next = root.wallpaperList.slice();
         next[i] = dest;
         next.sort();
         root.wallpaperList = next;
         if (root.current === src)
             root.current = dest;
+        Prefs.write();
         root._warmThumbs();
     }
 

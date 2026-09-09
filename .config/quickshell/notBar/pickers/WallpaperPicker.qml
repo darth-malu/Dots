@@ -484,14 +484,17 @@ PanelWindow {
                                         WallpaperService.textTone === "light" ? "dark" : "light"
                                 }
 
-                                // bar-text tone — for the *wallpaper* domain, not
-                                // the ink: "dark" (default) keeps bar glyphs legible
-                                // on any wallpaper, "light" forces dark glyphs
+                                // bar-text tone — selects the wallpaper domain
+                                // ("auto" follows the wallpaper, light/dark pin it)
                                 ToneSwitch {
-                                    label: WallpaperService.barTextTone === "dark" ? "dark wallpaper" : "light wallpaper"
-                                    on: WallpaperService.barTextTone === "dark"
+                                    label: WallpaperService.barTextTone === "light"
+                                        ? "light wallpaper"
+                                        : WallpaperService.barTextTone === "dark"
+                                            ? "dark wallpaper"
+                                            : "auto wallpaper"
+                                    on: WallpaperService.barTextTone !== "auto"
                                     onToggled: WallpaperService.barTextTone =
-                                        WallpaperService.barTextTone === "light" ? "dark" : "light"
+                                        WallpaperService.barTextTone === "auto" ? "light" : "auto"
                                 }
                             }
                         }
@@ -662,13 +665,18 @@ PanelWindow {
                     Row {
                         id: tonePill
 
-                        visible: cellMa.containsMouse
+                        visible: cellMa.containsMouse || tonePill._childHover
                         anchors.bottom: parent.bottom
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.bottomMargin: 4
                         spacing: 3
 
                         readonly property string tone: WallpaperService.toneFor(cellWrap.path_)
+
+                        // the pill rides above cellMa, so once the cursor moves
+                        // onto a sun/moon button, cellMa.containsMouse drops and
+                        // the pill would blink — track child hover explicitly
+                        property bool _childHover: false
 
                         Rectangle {
                             implicitWidth: 22
@@ -695,6 +703,8 @@ PanelWindow {
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
+                                onEntered: tonePill._childHover = true
+                                onExited: tonePill._childHover = false
                                 onClicked: WallpaperService.moveToTone(cellWrap.path_, "light")
                             }
                         }
@@ -724,6 +734,8 @@ PanelWindow {
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
+                                onEntered: tonePill._childHover = true
+                                onExited: tonePill._childHover = false
                                 onClicked: WallpaperService.moveToTone(cellWrap.path_, "dark")
                             }
                         }

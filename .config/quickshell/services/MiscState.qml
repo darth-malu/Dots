@@ -23,7 +23,10 @@ Singleton {
 
     // tray icons visibility — persisted so the tray survives restarts
     property bool toggleSysTray: Prefs.prefs.showSysTray
-    onToggleSysTrayChanged: Prefs.prefs.showSysTray = toggleSysTray
+    onToggleSysTrayChanged: {
+        Prefs.prefs.showSysTray = toggleSysTray;
+        Prefs.write();
+    }
     property bool toggleSettings: false
 
     // true while the quicksettings popup is open (used to suppress redundant music toasts)
@@ -37,7 +40,10 @@ Singleton {
     property bool showPopup: false
     // persisted preference
     property bool popupSolidBg: Prefs.prefs.popupSolidBg
-    onPopupSolidBgChanged: Prefs.prefs.popupSolidBg = popupSolidBg
+    onPopupSolidBgChanged: {
+        Prefs.prefs.popupSolidBg = popupSolidBg;
+        Prefs.write();
+    }
 
     // popup card theming — windows stay transparent project-wide; the CARD
     // switches between opaque slab and frosted glass
@@ -66,108 +72,184 @@ Singleton {
     property bool showMemProcs: false
     // ── media / now-playing toggles (persisted) ──
     property bool showPlayerChooser: Prefs.prefs.showPlayerChooser
-    onShowPlayerChooserChanged: Prefs.prefs.showPlayerChooser = showPlayerChooser
+    onShowPlayerChooserChanged: {
+        Prefs.prefs.showPlayerChooser = showPlayerChooser;
+        Prefs.write();
+    }
 
     property bool showShuffle: Prefs.prefs.showShuffle
-    onShowShuffleChanged: Prefs.prefs.showShuffle = showShuffle
+    onShowShuffleChanged: {
+        Prefs.prefs.showShuffle = showShuffle;
+        Prefs.write();
+    }
 
     property bool showLoop: Prefs.prefs.showLoop
-    onShowLoopChanged: Prefs.prefs.showLoop = showLoop
+    onShowLoopChanged: {
+        Prefs.prefs.showLoop = showLoop;
+        Prefs.write();
+    }
 
     // ── Bar module visibility (persisted) ──
     property bool showBluetooth: Prefs.prefs.showBluetooth
-    onShowBluetoothChanged: Prefs.prefs.showBluetooth = showBluetooth
+    onShowBluetoothChanged: {
+        Prefs.prefs.showBluetooth = showBluetooth;
+        Prefs.write();
+    }
 
     property bool showWifi: Prefs.prefs.showWifi
-    onShowWifiChanged: Prefs.prefs.showWifi = showWifi
+    onShowWifiChanged: {
+        Prefs.prefs.showWifi = showWifi;
+        Prefs.write();
+    }
 
     property bool showEthernet: Prefs.prefs.showEthernet
-    onShowEthernetChanged: Prefs.prefs.showEthernet = showEthernet
+    onShowEthernetChanged: {
+        Prefs.prefs.showEthernet = showEthernet;
+        Prefs.write();
+    }
 
     property bool showMpris: Prefs.prefs.showMpris
-    onShowMprisChanged: Prefs.prefs.showMpris = showMpris
+    onShowMprisChanged: {
+        Prefs.prefs.showMpris = showMpris;
+        Prefs.write();
+    }
 
     property bool showBattery: Prefs.prefs.showBattery
-    onShowBatteryChanged: Prefs.prefs.showBattery = showBattery
+    onShowBatteryChanged: {
+        Prefs.prefs.showBattery = showBattery;
+        Prefs.write();
+    }
 
     property bool showNotifTray: Prefs.prefs.showNotifTray
-    onShowNotifTrayChanged: Prefs.prefs.showNotifTray = showNotifTray
+    onShowNotifTrayChanged: {
+        Prefs.prefs.showNotifTray = showNotifTray;
+        Prefs.write();
+    }
 
     // wifi popup — green highlighted name for the connected network
     // (false = classic white name, only the dot marks the connection)
     property bool wifiGreenName: Prefs.prefs.wifiGreenName
-    onWifiGreenNameChanged: Prefs.prefs.wifiGreenName = wifiGreenName
+    onWifiGreenNameChanged: {
+        Prefs.prefs.wifiGreenName = wifiGreenName;
+        Prefs.write();
+    }
 
     // ethernet popup — session totals always visible (false = old behaviour,
     // totals only shown together with the traffic graphs)
     property bool showNetTotals: Prefs.prefs.showNetTotals
-    onShowNetTotalsChanged: Prefs.prefs.showNetTotals = showNetTotals
+    onShowNetTotalsChanged: {
+        Prefs.prefs.showNetTotals = showNetTotals;
+        Prefs.write();
+    }
 
     // workspace module flavour — true = app icons (default), false = numbers
     property bool iconWorkspaces: Prefs.prefs.iconWorkspaces
-    onIconWorkspacesChanged: Prefs.prefs.iconWorkspaces = iconWorkspaces
+    onIconWorkspacesChanged: {
+        Prefs.prefs.iconWorkspaces = iconWorkspaces;
+        Prefs.write();
+    }
 
     // transparent active workspace number badge (parent container stays colored)
     property bool transparentWsBadge: Prefs.prefs.transparentWsBadge
-    onTransparentWsBadgeChanged: Prefs.prefs.transparentWsBadge = transparentWsBadge
+    onTransparentWsBadgeChanged: {
+        Prefs.prefs.transparentWsBadge = transparentWsBadge;
+        Prefs.write();
+    }
 
     // boxy theme — master toggle: controls workspaces, tray and notifications
     property bool boxyTheme: Prefs.prefs.boxyTheme
     onBoxyThemeChanged: {
         Prefs.prefs.boxyTheme = boxyTheme;
         notifRadius = boxyTheme ? 0 : 10;
+        Prefs.write();
     }
 
     // show workspaces module — completely hides the workspace pills
     property bool showWorkspaces: Prefs.prefs.showWorkspaces
-    onShowWorkspacesChanged: Prefs.prefs.showWorkspaces = showWorkspaces
+    onShowWorkspacesChanged: {
+        Prefs.prefs.showWorkspaces = showWorkspaces;
+        Prefs.write();
+    }
 
     // notification font family
     property string notifFont: Prefs.prefs.notifFont
-    onNotifFontChanged: Prefs.prefs.notifFont = notifFont
+    onNotifFontChanged: {
+        Prefs.prefs.notifFont = notifFont;
+        Prefs.write();
+    }
 
     // notification popup art size and border radius
     property int notifArtSize: Prefs.prefs.notifArtSize
-    onNotifArtSizeChanged: Prefs.prefs.notifArtSize = notifArtSize
+    onNotifArtSizeChanged: {
+        Prefs.prefs.notifArtSize = notifArtSize;
+        Prefs.write();
+    }
 
     property int notifRadius: Prefs.prefs.notifRadius
-    onNotifRadiusChanged: Prefs.prefs.notifRadius = notifRadius
+    onNotifRadiusChanged: {
+        Prefs.prefs.notifRadius = notifRadius;
+        Prefs.write();
+    }
 
     // bar audio modules — output (speaker) and input (mic) can be hidden
     // independently from settings
     property bool showVolumeOut: Prefs.prefs.showVolumeOut
-    onShowVolumeOutChanged: Prefs.prefs.showVolumeOut = showVolumeOut
+    onShowVolumeOutChanged: {
+        Prefs.prefs.showVolumeOut = showVolumeOut;
+        Prefs.write();
+    }
 
     property bool showVolumeIn: Prefs.prefs.showVolumeIn
-    onShowVolumeInChanged: Prefs.prefs.showVolumeIn = showVolumeIn
+    onShowVolumeInChanged: {
+        Prefs.prefs.showVolumeIn = showVolumeIn;
+        Prefs.write();
+    }
 
     // per-application audio streams list in the quicksettings volume card
     property bool showAppVolume: Prefs.prefs.showAppVolume
-    onShowAppVolumeChanged: Prefs.prefs.showAppVolume = showAppVolume
+    onShowAppVolumeChanged: {
+        Prefs.prefs.showAppVolume = showAppVolume;
+        Prefs.write();
+    }
 
     // bar clock — completely hides the clock widget when off
     property bool showClock: Prefs.prefs.showClock
-    onShowClockChanged: Prefs.prefs.showClock = showClock
+    onShowClockChanged: {
+        Prefs.prefs.showClock = showClock;
+        Prefs.write();
+    }
 
     // performance resource blocks (disk · memory · cpu) in the bar
     property bool showResources: Prefs.prefs.showResources
-    onShowResourcesChanged: Prefs.prefs.showResources = showResources
+    onShowResourcesChanged: {
+        Prefs.prefs.showResources = showResources;
+        Prefs.write();
+    }
 
     // bar mode — 0 transparent, 1 solid, 2 full-bleed.
     // Icons use this to pick soft (transparent) or bright (solid bg) colours.
     readonly property bool barSolid: BarState.barMode !== 0
 
-    // color scheme — 0 purple (default), 1 gron teal, 2 nord blue, 3 rose pink, 4 amber gold
+    // color scheme — 0 pyrple (default), 1 gron teal, 2 nord blue, 3 rose pink, 4 everforest green
     property int themeScheme: Prefs.prefs.themeScheme
-    onThemeSchemeChanged: Prefs.prefs.themeScheme = themeScheme
+    onThemeSchemeChanged: {
+        Prefs.prefs.themeScheme = themeScheme;
+        Prefs.write();
+    }
 
     // ── radio states persisted across reboots (settings → connections) ──
     // wifi radio matter — `wifiEnabled` on NetworkState is !Networking.wifiEnabled
     property bool wifiRadioWanted: Prefs.prefs.wifiRadioWanted
-    onWifiRadioWantedChanged: Prefs.prefs.wifiRadioWanted = wifiRadioWanted
+    onWifiRadioWantedChanged: {
+        Prefs.prefs.wifiRadioWanted = wifiRadioWanted;
+        Prefs.write();
+    }
 
     property bool btRadioWanted: Prefs.prefs.btRadioWanted
-    onBtRadioWantedChanged: Prefs.prefs.btRadioWanted = btRadioWanted
+    onBtRadioWantedChanged: {
+        Prefs.prefs.btRadioWanted = btRadioWanted;
+        Prefs.write();
+    }
 
     function setWifiRadio(on) {
         root.wifiRadioWanted = on;

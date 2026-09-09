@@ -1268,7 +1268,7 @@ Item {
                             }
                         }
 
-                        // segmented color-theme selector — purple (default) vs gron teal
+                        // segmented color-theme selector — pyrple (default) vs gron teal
                         RowLayout {
                             id: themeSeg
 
@@ -1312,11 +1312,11 @@ Item {
 
                                     Repeater {
                                         model: [
-                                            { key: 0, label: "Purple" },
+                                            { key: 0, label: "Pyrple" },
                                             { key: 1, label: "Gron" },
                                             { key: 2, label: "Gruvbox" },
                                             { key: 3, label: "Rose" },
-                                            { key: 4, label: "Amber" }
+                                            { key: 4, label: "Everforest" }
                                         ]
 
                                         delegate: Rectangle {
@@ -3267,7 +3267,7 @@ Item {
                     summary: "shortcuts · where settings live"
 
                     HelpLine { text: "Escape closes any popup; most tray icons open menus on left-click." }
-                    HelpLine { text: "Double-click bar: left toggles Transparent/Full; right toggles Purple/Gron theme." }
+                    HelpLine { text: "Double-click bar: left toggles Transparent/Full; right toggles Pyrple/Gron theme." }
                     HelpLine { text: "Scroll the bar to switch workspaces." }
                     HelpLine { text: "Everything you toggle here persists in ~/.config/quickshell/prefs.json and survives reloads." }
                     HelpLine { text: "Reminders live next to it in reminders.json; both files are plain JSON you can edit." }

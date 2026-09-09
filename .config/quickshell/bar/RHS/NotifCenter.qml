@@ -233,9 +233,13 @@ BarBlock {
                             }
 
                             Layout.fillWidth: true
-                            implicitHeight: histRow.expanded ? 84 : 42
-                            radius: 9
-                            color: histMouse.hovered ? Qt.rgba(1, 1, 1, 0.05) : histRow.urgent ? Qt.rgba(1, 0.33, 0.33, 0.08) : "transparent"
+                            implicitHeight: histRow.expanded ? Math.max(96, histRow.bodyText.implicitHeight + 52) : 42
+                            radius: histRow.expanded ? MiscState.notifRadius : 9
+                            color: histMouse.hovered ? Qt.rgba(1, 1, 1, 0.05)
+                                : histRow.urgent ? Qt.rgba(1, 0.33, 0.33, 0.08)
+                                : "transparent"
+                            border.width: histRow.expanded && histRow.urgent ? 1 : 0
+                            border.color: histRow.urgent ? Qt.rgba(1, 0.33, 0.33, 0.45) : "transparent"
 
                             // click anywhere on the row toggles summary ⇄ full body
                             MouseArea {
@@ -252,14 +256,23 @@ BarBlock {
                                 spacing: 9
 
                                 Rectangle {
-                                    implicitWidth: 30
-                                    implicitHeight: 30
-                                    radius: 7
+                                    id: histIconBox
+
+                                    implicitWidth: histRow.expanded ? MiscState.notifArtSize : 30
+                                    implicitHeight: histRow.expanded ? MiscState.notifArtSize : 30
+                                    radius: histRow.expanded ? Math.max(4, MiscState.notifArtSize / 5) : 7
                                     color: Themes.separator
+
+                                    Behavior on implicitWidth {
+                                        NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                                    }
+                                    Behavior on implicitHeight {
+                                        NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                                    }
 
                                     IconImage {
                                         anchors.fill: parent
-                                        anchors.margins: 4
+                                        anchors.margins: histRow.expanded ? 0 : 4
                                         visible: histRow.iconUrl != ""
                                         source: histRow.iconUrl
                                         asynchronous: true
@@ -289,21 +302,70 @@ BarBlock {
                                         font {
                                             pixelSize: 12
                                             bold: true
-                                            family: MiscState.notifFont
+                                            family: "Symbols Nerd Font Mono, " + MiscState.notifFont
                                         }
                                     }
 
                                     Text {
+                                        id: bodyText
+
                                         Layout.fillWidth: true
                                         visible: (histRow.expanded || root.query.length > 0) && histRow.modelData.body.length > 0
                                         text: histRow.modelData.body.split(String.fromCharCode(10)).join(" ")
                                         color: Themes.dim
-                                        elide: Text.ElideRight
                                         wrapMode: histRow.expanded ? Text.WrapAtWordBoundaryOrAnywhere : Text.NoWrap
-                                        maximumLineCount: histRow.expanded ? 4 : 1
+                                        maximumLineCount: histRow.expanded ? 3 : 1
                                         font {
-                                            pixelSize: 11
+                                            pixelSize: 12
+                                            weight: Font.Medium
                                             family: MiscState.notifFont
+                                        }
+                                    }
+
+                                    // action buttons — same layout as the live
+                                    // notification popups (skips the primary
+                                    // "open" action, shown as icon ⇄ text arrow)
+                                    RowLayout {
+                                        visible: histRow.expanded && histRow.modelData.actions.length > 1
+                                        Layout.fillWidth: true
+                                        Layout.topMargin: 2
+                                        spacing: 4
+
+                                        Repeater {
+                                            model: histRow.expanded ? histRow.modelData.actions.slice(1) : []
+
+                                            delegate: Rectangle {
+                                                id: histAction
+
+                                                required property var modelData
+
+                                                implicitHeight: 20
+                                                Layout.fillWidth: true
+                                                radius: 5
+                                                color: histActionMa.containsMouse ? Themes.separator : "transparent"
+
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: histAction.modelData.text
+                                                    color: histActionMa.containsMouse ? Themes.fg : Themes.dim
+                                                    elide: Text.ElideRight
+                                                    font {
+                                                        pixelSize: 9
+                                                        bold: true
+                                                        letterSpacing: 0.3
+                                                        family: MiscState.notifFont
+                                                    }
+                                                }
+
+                                                MouseArea {
+                                                    id: histActionMa
+
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: histAction.modelData.invoke()
+                                                }
+                                            }
                                         }
                                     }
                                 }

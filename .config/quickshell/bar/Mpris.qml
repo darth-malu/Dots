@@ -104,6 +104,21 @@ Item {
         }
 
         onWheel: event => {
+            // ctrl + wheel hops between available players (matches the popup
+            // switcher); plain wheel still adjusts the current player's volume
+            if (event.modifiers & Qt.ControlModifier) {
+                var players = MprisState.controlPlayers;
+                if (players.length > 1) {
+                    var cur = MprisState.player;
+                    var idx = players.indexOf(cur);
+                    var dir = event.angleDelta.y > 0 ? 1 : -1;
+                    var next = players[((idx < 0 ? 0 : idx) + dir + players.length) % players.length];
+                    MprisState.player = next;
+                }
+                event.accepted = true;
+                return;
+            }
+
             if (!(MprisState.player?.isPlaying ?? false))
                 return;
 

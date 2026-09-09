@@ -154,9 +154,11 @@ Singleton {
             return "#4285f4";
         if (s.includes("firefox") || s.includes("zen"))
             return "#ff7139";
+        if (s.includes("mpd"))
+            return "#e3a3c7";   // music player daemon — soft pastel
         if (s.includes("discord") || s.includes("music"))
             return "#5865f2";
-        if (s.includes("mpv") || s.includes("mpd") || s.includes("player"))
+        if (s.includes("mpv") || s.includes("player"))
             return "#ff5f56";
         return undefined;
     }

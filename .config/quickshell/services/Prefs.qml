@@ -69,7 +69,7 @@ Singleton {
             property var favorites: []
             property bool rotationFavoritesOnly: false
             property string textTone: "light" // "light" | "dark" — desktop overlay text (toggle)
-            property string barTextTone: "dark" // "dark" | "light" — wallpaper-tone mode for the bar
+            property string barTextTone: "auto" // "auto" | "light" | "dark" — bar text wallpaper-tone mode
 
             // ── hyprland settings keys ──
             property bool hyprGapsOutEnabled: true

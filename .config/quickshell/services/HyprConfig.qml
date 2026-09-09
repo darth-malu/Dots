@@ -57,11 +57,13 @@ Singleton {
         if (bs) root.borderSize = parseInt(bs[1], 10);
         const rnd = buf.match(/rounding\s*=\s*(\d+)/);
         if (rnd) root.rounding = parseInt(rnd[1], 10);
-        const ab = buf.match(/active_border\s*=\s*\{[^}]*"rgba\(([0-9A-Fa-f]{8})\)"/);
+        // first rgba inside active_border is the primary colour — must cross
+        // the inner `colors = { ... }` brace so the dual-tone form parses too
+        const ab = buf.match(/active_border\s*=\s*\{.*?"rgba\(([0-9A-Fa-f]{8})\)"/);
         if (ab) root.activeBorder = "#" + ab[1].slice(0, 6);
         const ib = buf.match(/inactive_border\s*=\s*"rgba\(([0-9A-Fa-f]{8})\)"/);
         if (ib) root.inactiveBorder = "#" + ib[1].slice(0, 6);
-        const dw = buf.match(/active_border\s*=\s*\{[^}]*"rgba\(([0-9A-Fa-f]{8})\)"\s*,\s*"rgba\(([0-9A-Fa-f]{8})\)"/);
+        const dw = buf.match(/active_border\s*=\s*\{[\s\S]*?"rgba\(([0-9A-Fa-f]{8})\)"\s*,\s*"rgba\(([0-9A-Fa-f]{8})\)"/);
         root.dualTone = !!dw;
         if (dw)
             root.borderTone2 = "#" + dw[2].slice(0, 6);

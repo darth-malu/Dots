@@ -51,10 +51,10 @@ BarBlock {
     // ── state → color/label mapping (shared severity scale) ──
     readonly property var sevColors: [Themes.muted           // 0 waiting for first probe
         , Themes.green           // 1 clean & synced
-        , "#8a8fa1"              // 2 no upstream configured
-        , "#8be9fd"              // 3 unpushed (ahead)
-        , "#ffb86c"              // 4 unstaged/untracked
-        , "#f5c86a"              // 5 staged
+        , Themes.sevNoUpstream   // 2 no upstream configured
+        , Themes.sevUnpushed     // 3 unpushed (ahead)
+        , Themes.orange          // 4 unstaged/untracked
+        , Themes.yellow          // 5 staged
         , Themes.red              // 6 unreachable repo
     ]
 
@@ -65,9 +65,9 @@ BarBlock {
         const sev = GitState.severityOf(s);
         if (sev === 3 && s) {
             if (s.ahead > 0 && s.behind > 0)
-                return "#ffd866";
+                return Themes.sevDiverged;
             if (s.ahead > 0)
-                return "#8be9fd";
+                return Themes.sevUnpushed;
             return Themes.pink;
         }
         return gitPill.sevColors[sev];

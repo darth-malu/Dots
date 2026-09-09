@@ -48,7 +48,10 @@ Item {
         }
 
         function toggleMpris(): void {
-            MprisState.mprisVisible = !MprisState.mprisVisible;
+            // module on/off toggle for a hyprland keybind — uses the persisted
+            // setting so the choice survives restarts (unlike the runtime
+            // auto-visibility hint, which refresh() recomputes from playback)
+            MiscState.showMpris = !MiscState.showMpris;
         }
 
         function toggleMprisArt(): void {
