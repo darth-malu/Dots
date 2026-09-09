@@ -24,6 +24,24 @@ BarBlock {
         return list;
     }
 
+    // bluez discovery — quickshell's Bt service is reactive-only, so "fresh
+    // pairs" have to be surfaced by briefly poking bluetoothctl instead
+    property bool scanning: false
+
+    function startScan() {
+        if (root.scanning || root.adapter === null)
+            return;
+        root.scanning = true;
+        scanTimer.restart();
+        Quickshell.execDetached(["sh", "-c", "timeout 8 bluetoothctl scan on >/dev/null 2>&1; true"]);
+    }
+
+    Timer {
+        id: scanTimer
+        interval: 8200
+        onTriggered: root.scanning = false
+    }
+
     onClicked: mouse => {
         if (mouse.button === Qt.LeftButton)
             NetworkState.btPopupVisible = !NetworkState.btPopupVisible;
@@ -308,67 +326,40 @@ BarBlock {
                             }
                         }
 
-                        // adapter power — segmented on/off pill, same sliding-fill
-                        // language as the power-profile selector
+                        // adapter power — textless switch (fill + knob) toggles
+                        // the radio; the knob state mirrors bluez' adapter state
                         Rectangle {
                             visible: root.adapter !== null
                             Layout.alignment: Qt.AlignVCenter
-                            property int segWidth: 24
+                            property int trackW: 34
 
-                            implicitWidth: 2 * segWidth + 5
+                            implicitWidth: trackW
                             implicitHeight: 20
                             radius: height / 2
-                            color: Qt.rgba(1, 1, 1, 0.06)
+                            color: Bt.enabled ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.25)
+                                              : Qt.rgba(1, 1, 1, 0.06)
                             border.width: 1
-                            border.color: Qt.rgba(1, 1, 1, 0.1)
+                            border.color: Bt.enabled ? Themes.accent : Qt.rgba(1, 1, 1, 0.1)
 
-                            Item {
-                                anchors.fill: parent
-                                anchors.margins: 2.5
+                            Rectangle {
+                                anchors.left: parent.left
+                                anchors.leftMargin: Bt.enabled ? parent.width - height - 2 : 2
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: parent.height - 4
+                                height: parent.height - 4
+                                radius: width / 2
+                                color: Bt.enabled ? Themes.accent : Themes.muted
 
-                                Rectangle {
-                                    width: parent.parent.segWidth
-                                    height: parent.height
-                                    radius: height / 2
-                                    color: Bt.enabled ? Themes.accent : Themes.muted
-                                    opacity: Bt.enabled ? 1 : 0.5
-                                    x: Bt.enabled ? parent.width - width : 0
-                                    z: -1
-
-                                    Behavior on x {
-                                        NumberAnimation {
-                                            duration: 150
-                                            easing.type: Easing.OutCubic
-                                        }
-                                    }
-                                    Behavior on color {
-                                        ColorAnimation {
-                                            duration: 150
-                                        }
+                                Behavior on anchors.leftMargin {
+                                    NumberAnimation {
+                                        duration: 150
+                                        easing.type: Easing.OutCubic
                                     }
                                 }
-
-                                // off on the left, on on the right — the sliding
-                                // fill sits on the RIGHT when enabled, so the dark
-                                // (active) label must be the right one to read
-                                Text {
-                                    anchors.left: parent.left
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: parent.parent.segWidth
-                                    horizontalAlignment: Text.AlignHCenter
-                                    text: "off"
-                                    color: !Bt.enabled ? Qt.rgba(0.04, 0.02, 0.08, 0.85) : Themes.muted
-                                    font { pixelSize: 8; bold: true; family: "Quicksand"; letterSpacing: 1 }
-                                }
-
-                                Text {
-                                    anchors.right: parent.right
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: parent.parent.segWidth
-                                    horizontalAlignment: Text.AlignHCenter
-                                    text: "on"
-                                    color: Bt.enabled ? Qt.rgba(0.04, 0.02, 0.08, 0.85) : Themes.muted
-                                    font { pixelSize: 8; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: 150
+                                    }
                                 }
                             }
 
@@ -376,6 +367,36 @@ BarBlock {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: MiscState.setBtRadio(!Bt.enabled);
+                            }
+                        }
+
+                        // scan-refresh — bounded bluetoothctl discovery so
+                        // unpaired devices nearby show up in the list
+                        Rectangle {
+                            Layout.alignment: Qt.AlignVCenter
+
+                            implicitWidth: 22
+                            implicitHeight: 20
+                            radius: 6
+                            color: root.scanning ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : Qt.rgba(1, 1, 1, 0.04)
+                            border.width: 1
+                            border.color: root.scanning ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.45) : Qt.rgba(1, 1, 1, 0.08)
+
+                            Behavior on color {
+                                ColorAnimation { duration: 150 }
+                            }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "\uf021"
+                                color: root.scanning ? Themes.accent : Themes.muted
+                                font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.startScan()
                             }
                         }
                     }

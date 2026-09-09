@@ -101,9 +101,12 @@ ShellRoot {
                     Layout.alignment: Qt.AlignLeft
                     Layout.leftMargin: 6
 
-                    // workspace module — icons (default) or numbers, swappable live
+                    // workspace module — icons (default) or numbers, swappable live.
+                    // width collapses to 0 when disabled so the bar space is
+                    // actually reclaimed and handed back to the ActiveWindow title
                     Loader {
                         visible: MiscState.showWorkspaces
+                        width: MiscState.showWorkspaces ? implicitWidth : 0
                         sourceComponent: MiscState.iconWorkspaces ? iconWorkspacesComp : numWorkspacesComp
                     }
                 }

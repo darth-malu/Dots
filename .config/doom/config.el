@@ -64,25 +64,6 @@
                    (lsp-headerline-breadcrumb-mode nil)
                    (lsp-deferred))))
 
-;; TODO: check env for if direnv enabled to start
-(use-package! direnv
- :config
- (direnv-mode))
-
-;; TODO: make this better bind
-(use-package! yeetube
-  :init (define-prefix-command 'my/yeetube-map)
-  :bind (("C-c y" . 'my/yeetube-map)
-          :map my/yeetube-map
-          ("RET" . 'yeetube-play)     
-          ("s" . 'yeetube-search)
-          ("b" . 'yeetube-play-saved-video)
-          ("d" . 'yeetube-download-videos)
-          ("p" . 'yeetube-mpv-toggle-pause)
-          ("v" . 'yeetube-mpv-toggle-video)
-          ("V" . 'yeetube-mpv-toggle-no-video-flag)
-          ("k" . 'yeetube-remove-saved-video)))
-
 (after! org
   (setq org-babel-js-cmd "bun"))
 

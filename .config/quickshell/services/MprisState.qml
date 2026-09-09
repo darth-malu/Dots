@@ -56,7 +56,7 @@ Singleton {
             property bool mprisCompact: true
             property bool mprisArtVisible: true
             property bool showMprisProgress: true
-            property bool hideWhenIdle: true
+            property bool hideWhenIdle: false
         }
     }
 
@@ -340,6 +340,28 @@ Singleton {
     function ignorePlayer(identity) {
         if (!root.ignored.includes(identity))
             root.ignored = [...root.ignored, identity];
+    }
+
+    // "delete" in the player chooser — actually close the player so it leaves
+    // MPRIS entirely. Prefers the standard Quit method; players that don't
+    // support it (browsers etc.) fall back to pkill on their app keyword
+    // (never browsers — too broad), and only when that's unavailable do we
+    // settle for hiding it from the picker via the ignore list.
+    function closePlayer(p) {
+        if (!p)
+            return;
+        try {
+            if (p.canQuit) {
+                p.quit();
+                return;
+            }
+        } catch (e) {}
+        const kw = root.streamKeyword(p);
+        if (kw && !root.isBrowserPlayer(p)) {
+            Quickshell.execDetached(["sh", "-c", `pkill -f -i "${kw}" 2>/dev/null; true`]);
+            return;
+        }
+        root.ignorePlayer(p.identity);
     }
 
     function unignorePlayer(identity) {

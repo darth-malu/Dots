@@ -28,7 +28,7 @@ Singleton {
             // ── misc / settings keys ──
             property bool popupSolidBg: true
             property bool showSysTray: true
-            property bool showMpris: false
+            property bool showMpris: true
             property bool showPlayerChooser: true
             property bool showShuffle: false
             property bool showLoop: false

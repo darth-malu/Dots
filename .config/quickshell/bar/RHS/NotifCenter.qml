@@ -233,7 +233,9 @@ BarBlock {
                             }
 
                             Layout.fillWidth: true
-                            implicitHeight: histRow.expanded ? Math.max(96, histRow.bodyText.implicitHeight + 52) : 42
+                            // size must leave room for the action-button row too
+                            readonly property int _actionH: (histRow.expanded && histRow.modelData.actions.length > 1) ? 22 : 0
+                            implicitHeight: histRow.expanded ? Math.max(96, histRow.bodyText.implicitHeight + 52 + histRow._actionH) : 42
                             radius: histRow.expanded ? MiscState.notifRadius : 9
                             color: histMouse.hovered ? Qt.rgba(1, 1, 1, 0.05)
                                 : histRow.urgent ? Qt.rgba(1, 0.33, 0.33, 0.08)
@@ -329,6 +331,8 @@ BarBlock {
                                         visible: histRow.expanded && histRow.modelData.actions.length > 1
                                         Layout.fillWidth: true
                                         Layout.topMargin: 2
+                                        Layout.leftMargin: 6
+                                        Layout.rightMargin: 6
                                         spacing: 4
 
                                         Repeater {

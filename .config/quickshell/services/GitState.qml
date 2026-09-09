@@ -22,6 +22,8 @@ Singleton {
 
     readonly property var regularRepos: prefs.regular ?? []
     readonly property var bareRepos: prefs.bare ?? []
+    readonly property int pollMs: prefs.pollMs
+    readonly property bool untrackedAll: prefs.untrackedAll
 
     function ensureDefaults() {
         if ((prefs.regular?.length ?? 0) === 0 && (prefs.bare?.length ?? 0) === 0) {
@@ -73,7 +75,7 @@ Singleton {
             dir: d,
             workTree: w,
             upstream: String(upstream ?? "").trim(),
-            untracked: !!untracked
+            untracked: untracked ?? prefs.untrackedAll
         }];
         gitStore.writeAdapter();
         return true;
@@ -299,14 +301,28 @@ done
             id: prefs
             property var regular: []
             property var bare: []
+            property int pollMs: 60000
+            property bool untrackedAll: false
         }
     }
 
-    // no background polling — the pill keeps the last known state; rows refresh
-    // when the popup opens/refresh button/add/commit/push. While the popup is
-    // open, a slow 60s tick keeps the rows current.
+    // ── polling / scanning tunables (persisted, driven by the Settings page) ──
+    function setPollMs(ms) {
+        const v = Math.max(5000, Math.min(300000, ms));
+        prefs.pollMs = v;
+        gitStore.writeAdapter();
+    }
+
+    function setUntrackedAll(val) {
+        prefs.untrackedAll = !!val;
+        const next = bareRepos.map(r => ({ alias: r.alias, dir: r.dir, workTree: r.workTree, upstream: r.upstream, untracked: !!val }));
+        prefs.bare = next;
+        gitStore.writeAdapter();
+    }
+
+    // while the popup is open, a slow configurable tick keeps the rows current
     Timer {
-        interval: 60000
+        interval: prefs.pollMs
         running: root.monitoring
         repeat: true
         onTriggered: root.refresh()

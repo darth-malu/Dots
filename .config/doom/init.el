@@ -109,7 +109,7 @@
  ;; (java +lsp +tree-sitter)       ; the poster child for carpal tunnel syndrome
  (markdown +grip +tree-sitter)          ; writing docs for people to ignore
  (nix +tree-sitter +lsp)               ; I hereby declare "nix geht mehr!"
- (org +noter +crypt +present +roam +pomodoro +contacts +journal +dragndrop +pandoc +pretty) ;TODO test crypt, journal, noter
+ (org +noter +crypt +present +roam +pomodoro +journal +dragndrop +pandoc +pretty) ;TODO test crypt, journal, noter
  (python +lsp +pyright +tree-sitter)            ; beautiful is better than ugly
  (sh +lsp +tree-sitter)                ; she sells {ba,z,fi}sh shells on the C xor
  (web +lsp +tree-sitter)               ; the tubes - web/css mode

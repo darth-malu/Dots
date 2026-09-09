@@ -493,6 +493,8 @@ Item {
         { icon: "\uf2db", label: "Performance" },
         { icon: "\uf108", label: "Desktop" },
         { icon: "\uf120", label: "Hyprland" },
+        { icon: "\uf0e4", label: "IPC" },
+        { icon: "\uf1d3", label: "Git" },
         { icon: "\uf059", label: "Help" },
     ]
 
@@ -711,6 +713,8 @@ Item {
                                     : root.currentCategory === 5 ? performancePage
                                     : root.currentCategory === 6 ? desktopPage
                                     : root.currentCategory === 7 ? hyprlandPage
+                                    : root.currentCategory === 8 ? ipcPage
+                                    : root.currentCategory === 9 ? gitPage
                                     : helpPage
                                 }
                             }
@@ -2757,7 +2761,35 @@ Item {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    onClicked: NotesState.addNote()
+                                    onClicked: NotesState.addNote("note")
+                                }
+                            }
+
+                            Rectangle {
+                                id: addTodoBtn
+                                implicitWidth: addTodoTxt.implicitWidth + 16
+                                implicitHeight: 22
+                                radius: 6
+                                color: addTodoMa.containsMouse
+                                    ? Qt.rgba(0.56, 0.93, 0.56, 0.18)
+                                    : Themes.separator
+                                border.width: 1
+                                border.color: addTodoMa.containsMouse ? "#50fa7b" : "transparent"
+
+                                Text {
+                                    id: addTodoTxt
+                                    anchors.centerIn: parent
+                                    text: "\uf067 todo"
+                                    color: addTodoMa.containsMouse ? "#50fa7b" : Themes.dim
+                                    font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                                }
+
+                                MouseArea {
+                                    id: addTodoMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: NotesState.addNote("todo")
                                 }
                             }
 
@@ -2810,6 +2842,14 @@ Item {
                                         radius: 3
                                         Layout.alignment: Qt.AlignVCenter
                                         color: ["#ffb86c", "#8be9fd", "#ff79c6", "#50fa7b", "#bd93f9"][(modelData.color ?? 0) % 5]
+                                    }
+
+                                    Text {
+                                        Layout.alignment: Qt.AlignVCenter
+                                        visible: (modelData.kind ?? "note") === "todo"
+                                        text: "\uf0ca"
+                                        color: "#50fa7b"
+                                        font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
                                     }
 
                                     Text {
@@ -2994,8 +3034,9 @@ Item {
                         font { pixelSize: 9; family: "Quicksand" }
                     }
 
-                    // re-read the lua files and re-sync the UI to whatever is in
-                    // them now — discards any local divergence
+                    // restore the hardcoded default values to the lua files
+                    // (~/.config/hypr/general.lua + decoration.lua) and apply
+                    // them instantly (hyprctl reload)
                     Rectangle {
                         implicitWidth: resetLbl.implicitWidth + 18
                         implicitHeight: 22
@@ -3021,13 +3062,135 @@ Item {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: HyprConfig.reload()
+                            onClicked: HyprConfig.resetToDefaults()
                         }
                     }
                 }
 
                 // pull the current values from the lua config every time the page opens
                 Component.onCompleted: HyprConfig.reload()
+            }
+        }
+
+        // ═══ IPC ═══
+        Component {
+            id: ipcPage
+
+            ColumnLayout {
+                spacing: 12
+
+                Card {
+                    title: "IPC handlers"
+                    icon: "\uf0e4"
+                    accent: Themes.accent
+
+                    // toggling a handler off removes that target's ability to
+                    // receive `qs ipc call <target> …` — keybinds calling it
+                    // then silently no-op. each row maps one IpcHandler block.
+                    ColumnLayout {
+                        spacing: 0
+                        Layout.fillWidth: true
+
+                        Repeater {
+                            model: ipcHandlers.handlerModel
+
+                            delegate: ColumnLayout {
+                                id: ipcCell
+
+                                required property var modelData
+                                required property int index
+
+                                spacing: 0
+                                Layout.fillWidth: true
+
+                                SettingRow {
+                                    icon: ipcCell.modelData.icon
+                                    label: ipcCell.modelData.label
+                                    caption: "ipc call " + ipcCell.modelData.target
+                                    checked: ipcHandlers.ipcEnabled(ipcCell.modelData.target)
+                                    onFlipped: ipcHandlers.setIpcEnabled(ipcCell.modelData.target,
+                                        !ipcHandlers.ipcEnabled(ipcCell.modelData.target))
+                                }
+
+                                // separator between handler rows
+                                Rectangle {
+                                    visible: ipcCell.index < ipcHandlers.handlerModel.length - 1
+                                    Layout.fillWidth: true
+                                    height: 1
+                                    color: Themes.separator
+                                    Layout.leftMargin: 32
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ═══ GIT ═══
+        Component {
+            id: gitPage
+
+            ColumnLayout {
+                spacing: 12
+
+                Card {
+                    title: "Git"
+                    icon: "\uf1d3"
+                    accent: Themes.sevUnpushed
+
+                    ColumnLayout {
+                        spacing: 14
+                        Layout.fillWidth: true
+                        Layout.topMargin: 4
+
+                        PollRow {
+                            icon: "\uf017"
+                            label: "Poll interval"
+                            minMs: 5000
+                            maxMs: 300000
+                            stepMs: 5000
+                            valueMs: GitState.pollMs
+                            onCommitted: ms => GitState.setPollMs(ms)
+                        }
+
+                        SettingRow {
+                            icon: "\uf1d3"
+                            label: "Untracked scan"
+                            caption: GitState.untrackedAll ? "on" : "off"
+                            checked: GitState.untrackedAll
+                            onFlipped: GitState.setUntrackedAll(!GitState.untrackedAll)
+                        }
+                    }
+                }
+
+                Card {
+                    title: "Notes"
+                    icon: "\uf05a"
+                    accent: Themes.accent2
+
+                    ColumnLayout {
+                        spacing: 4
+                        Layout.fillWidth: true
+                        Layout.topMargin: 2
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: "· Untracked scans walk the whole worktree — expensive over large trees like ~/. New bare repos inherit this setting."
+                            color: Themes.dim
+                            font { pixelSize: 11; family: "ZedMono Nerd Font" }
+                            wrapMode: Text.WordWrap
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: "· The poll interval bounds the live refresh while the Git popup is open."
+                            color: Themes.dim
+                            font { pixelSize: 11; family: "ZedMono Nerd Font" }
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+                }
             }
         }
 
@@ -3395,49 +3558,6 @@ Item {
                         font { pixelSize: 11; bold: true; family: "Quicksand" }
                     }
                     HelpLine { text: "currentDate · currentDateTime → sends notify-send" }
-                }
-
-                Card {
-                    title: "IPC handlers"
-                    icon: "\uf0e4"
-                    accent: Themes.accent
-
-                    ColumnLayout {
-                        spacing: 0
-                        Layout.fillWidth: true
-
-                        Repeater {
-                            model: ipcHandlers.handlerModel
-
-                            delegate: ColumnLayout {
-                                id: ipcCell
-
-                                required property var modelData
-                                required property int index
-
-                                spacing: 0
-                                Layout.fillWidth: true
-
-                                SettingRow {
-                                    icon: ipcCell.modelData.icon
-                                    label: ipcCell.modelData.label
-                                    caption: "ipc call " + ipcCell.modelData.target
-                                    checked: ipcHandlers.ipcEnabled(ipcCell.modelData.target)
-                                    onFlipped: ipcHandlers.setIpcEnabled(ipcCell.modelData.target,
-                                        !ipcHandlers.ipcEnabled(ipcCell.modelData.target))
-                                }
-
-                                // separator between handler rows
-                                Rectangle {
-                                    visible: ipcCell.index < ipcHandlers.handlerModel.length - 1
-                                    Layout.fillWidth: true
-                                    height: 1
-                                    color: Themes.separator
-                                    Layout.leftMargin: 32
-                                }
-                            }
-                        }
-                    }
                 }
             }
         }

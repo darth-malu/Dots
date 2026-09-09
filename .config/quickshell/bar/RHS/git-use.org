@@ -19,7 +19,7 @@ Two kinds of repos are supported:
 |----------------------+---------------------------------------------------|
 | *left click*           | open/close the monitor popup                      |
 | *right click*          | push all repos                                    |
-| *middle click*         | toggle the RHS performance modules (disk/mem/cpu) |
+| *alt+left click*      | toggle the RHS performance modules (disk/mem/cpu) |
 | *shift + middle click* | commit all repos (message =--++AutoCommit++--)      |
 
 The glyph color = worst state across all repos:
@@ -64,6 +64,11 @@ The module is deliberately *on-demand*, not a background poller:
   add/commit/push
 - while the popup is open, a slow *60s* tick keeps rows current
 - the pill keeps its last known color otherwise (zero idle CPU)
+
+The tick period is configurable from the Settings → Git page (=poll
+interval=, 5s–5min). The page also carries a global =untracked scan=
+toggle that flips the expensive =??= scan for every bare repo at once —
+new bare repos added afterwards inherit it.
 
 Cost guardrails baked into every git call:
 

@@ -2,16 +2,16 @@
 ;;; $DOOMDIR/packages.el
 
 ;; Fun
-(package! yeetube)
-(package! mpv)
+;; (package! yeetube)
+;; (package! mpv)
 ;;; ORG
 (package! olivetti)
-(package! org-super-agenda)             ;TODO:
+;; (package! org-super-agenda)             ;TODO:
 (package! org-auto-tangle)
 (package! drag-stuff)
 (package! org-fragtog)
-(package! org-roam-ui)
-(package! nov)                      ;For annotations? -org-noter
+(package! org-roam-ui)                  ;Like Obsidian
+;; (package! nov)                      ;For annotations? -org-noter
 
 ;; (package! org-transclusion)
 
@@ -20,7 +20,7 @@
 ;; (package! blacken)
 ;; (package! ein)
 ;; (package! code-cells)                   ; NOTE: use in depth - Jupyter NoteBooks replacement?
-(package! direnv)
+;; (package! direnv)
 (package! tmr)
 ;; (package! exec-path-from-shell) ; NOTE use doom env lol
 (package! qml-ts-mode
@@ -35,7 +35,7 @@
 (package! tldr)
 (package! all-the-icons) ;TODO add desc
 (package! elcord)
-(package! org-contacts)
+;; (package! org-contacts) ;;FIXME?
 ;; (package! xclip)
 ;; (package! codeium :recipe (:host github :repo "Exafunction/codeium.el"))
 ;; (package! wttrin)

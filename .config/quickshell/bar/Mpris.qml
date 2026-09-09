@@ -89,7 +89,10 @@ Item {
 
         onClicked: mouse => {
             mouse.accepted = true;
-            if (mouse.button == Qt.LeftButton)
+            // alt+left toggles compact/expanded; plain left still plays
+            if ((mouse.modifiers & Qt.AltModifier) && mouse.button == Qt.LeftButton)
+                MprisState.mprisCompact = !MprisState.mprisCompact;
+            else if (mouse.button == Qt.LeftButton)
                 MprisState.player?.togglePlaying();
             else if (mouse.button == Qt.RightButton)
                 MprisState.player?.next();
@@ -104,9 +107,9 @@ Item {
         }
 
         onWheel: event => {
-            // ctrl + wheel hops between available players (matches the popup
+            // alt + wheel hops between available players (matches the popup
             // switcher); plain wheel still adjusts the current player's volume
-            if (event.modifiers & Qt.ControlModifier) {
+            if (event.modifiers & Qt.AltModifier) {
                 var players = MprisState.controlPlayers;
                 if (players.length > 1) {
                     var cur = MprisState.player;

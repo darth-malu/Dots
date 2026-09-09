@@ -30,18 +30,26 @@ PanelWindow {
         search.forceActiveFocus();
     }
 
-    // name-filtered dataset — star filter narrows the grid to favorites only,
-    // tone filter narrows to light/dark/unknown
+    // name-filtered dataset — favorites filter narrows to stars; light/dark are
+    // opt-in toggles: click to filter that tone, unclick to widen back to all
     property bool favFilter: false
-    property string toneFilter: "all"
+    property bool lightFilter: false
+    property bool darkFilter: false
+
+    readonly property bool filterActive: root.favFilter || root.lightFilter || root.darkFilter
+
+    function _toneMatch(p) {
+        const t = WallpaperService.toneFor(p);
+        return (root.lightFilter && t === "light") || (root.darkFilter && t === "dark");
+    }
 
     readonly property var results: {
         var q = search.text.trim().toLowerCase();
         var list = WallpaperService.wallpaperList;
         if (root.favFilter)
             list = list.filter(p => WallpaperService.isFavorite(p));
-        if (root.toneFilter !== "all")
-            list = list.filter(p => WallpaperService.toneFor(p) === root.toneFilter);
+        if (root.lightFilter || root.darkFilter)
+            list = list.filter(p => root._toneMatch(p));
         if (q.length === 0)
             return list;
         return list.filter(p => p.toLowerCase().includes(q));
@@ -311,6 +319,58 @@ PanelWindow {
                     }
                 }
 
+                // light opt-in filter — click filters to light, unclick shows all
+                Rectangle {
+                    visible: root.results.length > 0 || root.lightFilter
+                    implicitWidth: lightChipText.implicitWidth + 14
+                    implicitHeight: 16
+                    radius: 8
+                    color: root.lightFilter ? Qt.rgba(255, 237, 150, 0.14) : "transparent"
+                    border.width: 1
+                    border.color: root.lightFilter ? Qt.rgba(255, 237, 150, 0.7) : Themes.rofiBorder
+
+                    Text {
+                        id: lightChipText
+                        anchors.centerIn: parent
+                        text: "\uf185 light"
+                        color: root.lightFilter ? "#ffedd6" : Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.7)
+                        font { pixelSize: 8; letterSpacing: 0.5; family: "ZedMono Nerd Font" }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        hoverEnabled: true
+                        onClicked: root.lightFilter = !root.lightFilter
+                    }
+                }
+
+                // dark opt-in filter — same semantics as the light chip
+                Rectangle {
+                    visible: root.results.length > 0 || root.darkFilter
+                    implicitWidth: darkChipText.implicitWidth + 14
+                    implicitHeight: 16
+                    radius: 8
+                    color: root.darkFilter ? Qt.rgba(130, 170, 255, 0.14) : "transparent"
+                    border.width: 1
+                    border.color: root.darkFilter ? Qt.rgba(130, 170, 255, 0.7) : Themes.rofiBorder
+
+                    Text {
+                        id: darkChipText
+                        anchors.centerIn: parent
+                        text: "\uf186 dark"
+                        color: root.darkFilter ? "#aaccff" : Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.7)
+                        font { pixelSize: 8; letterSpacing: 0.5; family: "ZedMono Nerd Font" }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        hoverEnabled: true
+                        onClicked: root.darkFilter = !root.darkFilter
+                    }
+                }
+
                 // delete the focused wallpaper (shown only when one exists)
                 Rectangle {
                     visible: root.delTarget().length > 0
@@ -507,56 +567,6 @@ PanelWindow {
                         color: Qt.rgba(1, 1, 1, 0.1)
                     }
 
-                    // ── tone filter row ──
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 6
-
-                        Repeater {
-                            model: ["all", "light", "dark", "unknown"]
-
-                            Rectangle {
-                                required property string modelData
-                                property bool active: root.toneFilter === modelData
-                                implicitWidth: toneLbl.implicitWidth + 14
-                                implicitHeight: 18
-                                radius: 9
-                                color: active
-                                    ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12)
-                                    : toneMa.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
-                                border.width: 1
-                                border.color: active ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.55)
-                                    : toneMa.containsMouse ? Qt.rgba(1, 1, 1, 0.18) : "transparent"
-
-                                Text {
-                                    id: toneLbl
-                                    anchors.centerIn: parent
-                                    text: {
-                                        if (modelData === "all")
-                                            return "\uf0b2 all";
-                                        if (modelData === "light")
-                                            return "\uf185 " + WallpaperService.countTone("light") + " light";
-                                        if (modelData === "dark")
-                                            return "\uf186 " + WallpaperService.countTone("dark") + " dark";
-                                        return "? unknown";
-                                    }
-                                    color: active ? Themes.fg : Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.6)
-                                    font { pixelSize: 8; letterSpacing: 0.5; family: "ZedMono Nerd Font" }
-                                }
-
-                                MouseArea {
-                                    id: toneMa
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.toneFilter = modelData
-                                }
-                            }
-                        }
-
-                        Item { Layout.fillWidth: true }
-                    }
-
                     // ── wallpaper grid ──
             GridView {
                 id: grid
@@ -658,119 +668,126 @@ PanelWindow {
                         onClicked: root.applyWallpaper(cellWrap.path_)
                     }
 
-                    // tone switcher — a compact sun/moon pill. The active tone lights up;
-                    // clicking the other icon re-sorts the wallpaper into that
-                    // folder so the text provider tags it correctly. Rides above
-                    // cellMa so clicks reach the move handler directly.
-                    Row {
-                        id: tonePill
-
-                        visible: cellMa.containsMouse || tonePill._childHover
-                        anchors.bottom: parent.bottom
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.bottomMargin: 4
-                        spacing: 3
+                    // favorite + tone assignment — top-right. The tone
+                    // buttons only become visible when the STAR is hovered
+                    // (never on plain tile hover); a wallpaper that is already
+                    // assigned a tone shows that button lit permanently, like
+                    // the favorite star.
+                    Item {
+                        id: toneCluster
 
                         readonly property string tone: WallpaperService.toneFor(cellWrap.path_)
+                        readonly property bool revealHover: starHover.containsMouse || lightMa.containsMouse || darkMa.containsMouse
+                        readonly property bool hasTag: favBtn.fav || toneCluster.tone !== "unknown"
 
-                        // the pill rides above cellMa, so once the cursor moves
-                        // onto a sun/moon button, cellMa.containsMouse drops and
-                        // the pill would blink — track child hover explicitly
-                        property bool _childHover: false
+                        // hidden on untouched, untagged tiles — reappears on hover
+                        // or whenever the tile carries a favorite/tone tag
+                        visible: cellMa.containsMouse || revealHover || toneCluster.hasTag
 
-                        Rectangle {
-                            implicitWidth: 22
-                            implicitHeight: 18
-                            radius: 9
-                            color: tonePill.tone === "light"
-                                ? Qt.rgba(255, 237, 150, 0.22)
-                                : Qt.rgba(0, 0, 0, 0.55)
-                            border.width: 1
-                            border.color: tonePill.tone === "light"
-                                ? Qt.rgba(255, 237, 150, 0.7)
-                                : "transparent"
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: "\uf185"
-                                color: tonePill.tone === "light"
-                                    ? "#ffedd6"
-                                    : Qt.rgba(1, 1, 1, 0.65)
-                                font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onEntered: tonePill._childHover = true
-                                onExited: tonePill._childHover = false
-                                onClicked: WallpaperService.moveToTone(cellWrap.path_, "light")
-                            }
-                        }
-
-                        Rectangle {
-                            implicitWidth: 22
-                            implicitHeight: 18
-                            radius: 9
-                            color: tonePill.tone === "dark"
-                                ? Qt.rgba(130, 170, 255, 0.22)
-                                : Qt.rgba(0, 0, 0, 0.55)
-                            border.width: 1
-                            border.color: tonePill.tone === "dark"
-                                ? Qt.rgba(130, 170, 255, 0.7)
-                                : "transparent"
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: "\uf186"
-                                color: tonePill.tone === "dark"
-                                    ? "#aaccff"
-                                    : Qt.rgba(1, 1, 1, 0.65)
-                                font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onEntered: tonePill._childHover = true
-                                onExited: tonePill._childHover = false
-                                onClicked: WallpaperService.moveToTone(cellWrap.path_, "dark")
-                            }
-                        }
-                    }
-
-                    // favorite star — top-right, above the click zone so it toggles the
-                    // star without applying the wallpaper. seen while the tile is
-                    // hovered (or always when already a favorite); the star's own
-                    // hover keeps it alive while the cursor sits on it
-                    Item {
-                        id: favBtn
-
-                        readonly property bool fav: WallpaperService.isFavorite(cellWrap.path_)
-
-                        visible: cellMa.containsMouse || favFavMa.containsMouse || favBtn.fav
                         anchors.top: parent.top
                         anchors.right: parent.right
                         anchors.topMargin: 5
                         anchors.rightMargin: 5
-                        implicitWidth: 22
+                        implicitWidth: toneRow.implicitWidth
                         implicitHeight: 22
 
-                        Text {
-                            anchors.centerIn: parent
-                            text: favBtn.fav ? "\uf005" : "\uf006"
-                            color: favBtn.fav ? "#ffb86c" : (favFavMa.containsMouse ? "#ffb86c" : "white")
-                            font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
-                        }
+                        Row {
+                            id: toneRow
 
-                        MouseArea {
-                            id: favFavMa
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: WallpaperService.toggleFavorite(cellWrap.path_)
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 3
+
+                            // light assign
+                            Rectangle {
+                                visible: toneCluster.revealHover || toneCluster.tone === "light"
+
+                                implicitWidth: 22
+                                implicitHeight: 18
+                                radius: 9
+                                color: toneCluster.tone === "light"
+                                    ? Qt.rgba(255, 237, 150, 0.22)
+                                    : Qt.rgba(0, 0, 0, 0.55)
+                                border.width: 1
+                                border.color: toneCluster.tone === "light"
+                                    ? Qt.rgba(255, 237, 150, 0.7)
+                                    : "transparent"
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "\uf185"
+                                    color: toneCluster.tone === "light"
+                                        ? "#ffedd6"
+                                        : Qt.rgba(1, 1, 1, 0.65)
+                                    font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
+                                }
+
+                                MouseArea {
+                                    id: lightMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: WallpaperService.moveToTone(cellWrap.path_, "light")
+                                }
+                            }
+
+                            // dark assign
+                            Rectangle {
+                                visible: toneCluster.revealHover || toneCluster.tone === "dark"
+
+                                implicitWidth: 22
+                                implicitHeight: 18
+                                radius: 9
+                                color: toneCluster.tone === "dark"
+                                    ? Qt.rgba(130, 170, 255, 0.22)
+                                    : Qt.rgba(0, 0, 0, 0.55)
+                                border.width: 1
+                                border.color: toneCluster.tone === "dark"
+                                    ? Qt.rgba(130, 170, 255, 0.7)
+                                    : "transparent"
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "\uf186"
+                                    color: toneCluster.tone === "dark"
+                                        ? "#aaccff"
+                                        : Qt.rgba(1, 1, 1, 0.65)
+                                    font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
+                                }
+
+                                MouseArea {
+                                    id: darkMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: WallpaperService.moveToTone(cellWrap.path_, "dark")
+                                }
+                            }
+
+                            // favorite star — its hover reveals the tone buttons
+                            Item {
+                                id: favBtn
+
+                                readonly property bool fav: WallpaperService.isFavorite(cellWrap.path_)
+
+                                implicitWidth: 22
+                                implicitHeight: 22
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: favBtn.fav ? "\uf005" : "\uf006"
+                                    color: favBtn.fav ? "#ffb86c" : (starHover.containsMouse ? "#ffb86c" : "white")
+                                    font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                }
+
+                                MouseArea {
+                                    id: starHover
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: WallpaperService.toggleFavorite(cellWrap.path_)
+                                }
+                            }
                         }
                     }
                 }

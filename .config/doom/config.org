@@ -403,14 +403,14 @@ NOTE: from Quickshell site
   ("C-c n" . sharper-main-transient))
 #+end_src
 ** direnv
-#+begin_src elisp :tangle yes
+#+begin_src elisp :tangle no
 ;; TODO: check env for if direnv enabled to start
 (use-package! direnv
  :config
  (direnv-mode))
 #+end_src
 ** yeetube
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp :tangle no
 ;; TODO: make this better bind
 (use-package! yeetube
   :init (define-prefix-command 'my/yeetube-map)

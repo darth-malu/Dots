@@ -256,7 +256,6 @@ Item {
         { target: "resources", icon: "\uf1c0", label: "Resources" },
         { target: "bar", icon: "\uf0c9", label: "Bar" },
         { target: "appLauncher", icon: "\uf0ae", label: "App launcher" },
-        { target: "activate", icon: "\uf023", label: "Activate Linux" },
         { target: "openWindows", icon: "\uf108", label: "Open windows" },
         { target: "clipHist", icon: "\uf0c5", label: "Clipboard history" },
         { target: "calc", icon: "\uf1ec", label: "Calculator" },

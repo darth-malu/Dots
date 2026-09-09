@@ -63,6 +63,10 @@ PanelWindow {
 
     readonly property color noteAccent: palette[(root.row()?.color ?? 0) % palette.length].accent
 
+    readonly property bool isTodo: (root.row()?.kind ?? "note") === "todo"
+    readonly property int todoDone: root.isTodo && root.row() ? root.row().items.filter(i => i.d).length : 0
+    readonly property int todoTotal: root.isTodo && root.row() ? root.row().items.length : 0
+
     implicitWidth: root.row()?.w ?? 240
     implicitHeight: root.row()?.h ?? 160
 
@@ -113,7 +117,7 @@ PanelWindow {
             Text {
                 id: dateLbl
                 Layout.alignment: Qt.AlignLeft
-                text: "sticky"
+                text: root.isTodo ? "todo · " + root.todoDone + "/" + root.todoTotal : "sticky"
                 color: root.noteAccent
                 font { pixelSize: 8; letterSpacing: 1; family: "ZedMono Nerd Font"; bold: true }
             }
@@ -122,6 +126,7 @@ PanelWindow {
                 id: noteTextArea
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                visible: !root.isTodo
                 text: root.row()?.text ?? ""
                 color: "#f2f2f7"
                 font { pixelSize: 11; family: "Quicksand" }
@@ -142,6 +147,144 @@ PanelWindow {
                 }
             }
 
+            // ── todo body: checklist + add-step input ──
+            ColumnLayout {
+                visible: root.isTodo
+
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: 4
+
+                ListView {
+                    id: todoList
+
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    spacing: 2
+
+                    model: root.row()?.items ?? []
+
+                    delegate: RowLayout {
+                        id: todoRow
+
+                        required property var modelData
+                        required property int index
+
+                        readonly property int noteIdx: root.indexOf(root.noteId)
+
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 24
+                        spacing: 5
+
+                        // checkbox
+                        Rectangle {
+                            Layout.alignment: Qt.AlignVCenter
+                            implicitWidth: 14
+                            implicitHeight: 14
+                            radius: 3
+                            color: checkMa.containsMouse
+                                ? Qt.rgba(root.noteAccent.r, root.noteAccent.g, root.noteAccent.b, 0.22)
+                                : Qt.rgba(1, 1, 1, 0.05)
+                            border.width: 1
+                            border.color: modelData.d ? root.noteAccent : Qt.rgba(1, 1, 1, 0.15)
+
+                            Text {
+                                anchors.centerIn: parent
+                                visible: modelData.d
+                                text: "\uf00c"
+                                color: root.noteAccent
+                                font { pixelSize: 7; bold: true; family: "Symbols Nerd Font Mono" }
+                            }
+
+                            MouseArea {
+                                id: checkMa
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: NotesState.toggleTodoItem(todoRow.noteIdx, todoRow.index, !modelData.d)
+                            }
+                        }
+
+                        TextField {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
+                            text: modelData.t
+                            color: modelData.d ? Qt.rgba(1, 1, 1, 0.35) : "#f2f2f7"
+                            font { pixelSize: 11; family: "Quicksand"; strikeout: modelData.d }
+                            selectByMouse: true
+                            padding: 2
+                            background: Rectangle { color: "transparent" }
+                            onEditingFinished: {
+                                if (todoRow.noteIdx >= 0)
+                                    NotesState.setTodoText(todoRow.noteIdx, todoRow.index, text);
+                            }
+                        }
+
+                        // per-item remove (hover only)
+                        Rectangle {
+                            Layout.alignment: Qt.AlignVCenter
+                            visible: itemDelMa.containsMouse
+                            implicitWidth: 16
+                            implicitHeight: 16
+                            radius: 4
+                            color: Qt.rgba(1, 0.33, 0.33, 0.16)
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "\uf00d"
+                                color: "#ff5555"
+                                font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
+                            }
+
+                            MouseArea {
+                                id: itemDelMa
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: NotesState.removeTodoItem(todoRow.noteIdx, todoRow.index)
+                            }
+                        }
+                    }
+                }
+
+                // add-step row
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 22
+                        radius: 4
+                        color: Qt.rgba(1, 1, 1, 0.04)
+                        border.width: 1
+                        border.color: Qt.rgba(1, 1, 1, 0.08)
+
+                        TextField {
+                            id: newTodoField
+                            anchors.fill: parent
+                            color: "#f2f2f7"
+                            font { pixelSize: 10; family: "Quicksand" }
+                            placeholderText: "add a step…"
+                            placeholderTextColor: Qt.rgba(1, 1, 1, 0.35)
+                            padding: 4
+                            background: Rectangle { color: "transparent" }
+                            onAccepted: {
+                                const t = newTodoField.text.trim();
+                                if (t.length === 0)
+                                    return;
+                                const idx = root.indexOf(root.noteId);
+                                if (idx >= 0) {
+                                    NotesState.addTodoItem(idx);
+                                    NotesState.setTodoText(idx, (root.row()?.items ?? []).length - 1, t);
+                                }
+                                newTodoField.text = "";
+                            }
+                        }
+                    }
+                }
+            }
+
             // title strip = drag handle + palette cycle + delete
             RowLayout {
                 Layout.fillWidth: true
@@ -154,6 +297,34 @@ PanelWindow {
                     color: dragMa.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
                     border.width: 1
                     border.color: dragMa.pressed ? root.noteAccent : Qt.rgba(1, 1, 1, 0.06)
+                }
+
+                Rectangle {
+                    Layout.alignment: Qt.AlignRight
+                    implicitWidth: 16
+                    implicitHeight: 16
+                    radius: 4
+                    color: kindMa.containsMouse
+                        ? Qt.rgba(root.noteAccent.r, root.noteAccent.g, root.noteAccent.b, 0.25)
+                        : Qt.rgba(1, 1, 1, 0.05)
+                    Text {
+                        anchors.centerIn: parent
+                        text: root.isTodo ? "\uf0ca" : "\uf040"
+                        color: root.noteAccent
+                        font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
+                    }
+                    MouseArea {
+                        id: kindMa
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            const idx = root.indexOf(root.noteId);
+                            const cur = root.row()?.kind ?? "note";
+                            if (idx >= 0)
+                                NotesState.setKind(idx, cur === "todo" ? "note" : "todo");
+                        }
+                    }
                 }
 
                 Rectangle {

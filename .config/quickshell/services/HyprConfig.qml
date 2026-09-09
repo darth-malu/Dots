@@ -169,6 +169,29 @@ Singleton {
         root._apply(root.generalPath, expr);
     }
 
+    // restore the hardcoded defaults above to the config files in one pass —
+    // turns the dual-tone gradient off again and re-syncs the persisted
+    // gaps-out value so re-enabling the master switch doesn't restore a weird one
+    function resetToDefaults(): void {
+        const aHex = "00ABF5", iHex = "595959";
+        root.gapsIn = 6;
+        root.gapsOut = 12;
+        root.borderSize = 1;
+        root.rounding = 4;
+        root.activeBorder = "#00abf5";
+        root.inactiveBorder = "#595959";
+        root.dualTone = false;
+        Prefs.prefs.hyprGapsOutValue = 12;
+        Prefs.write();
+        root._apply(root.generalPath,
+            "s/gaps_in\\s*=\\s*\\d+/gaps_in = 6/;"
+            + "s/gaps_out\\s*=\\s*\\d+/gaps_out = 12/;"
+            + "s/border_size\\s*=\\s*\\d+/border_size = 1/;"
+            + "s/active_border\\s*=\\s*\\{.*?\\}\\s*(?:,\\s*angle\\s*=\\s*\\d+\\s*)?\\}/active_border = { colors = { \"rgba(" + aHex + "FF)\" } }/;"
+            + "s/inactive_border\\s*=\\s*\"rgba\\([0-9A-Fa-f]{8}\\)\"/inactive_border = \"rgba(" + iHex + "FF)\"/");
+        root._apply(root.decorationPath, "s/rounding\\s*=\\s*\\d+/rounding = 4/");
+    }
+
     // master gaps-out switch: off forces gaps_out to 0, on restores the
     // last preferred value (stored in prefs) and persists the choice
     function setGapsOutEnabled(on: bool): void {

@@ -13,7 +13,7 @@ import qs.themes
 // · icon color = worst state across all repos (clean/upstream → staged →
 //   modified/untracked → unpushed → failed)
 // · left click opens the monitor popup, right = push all,
-//   middle = toggle the RHS performance modules, shift+middle = commit all
+//   alt+left = toggle the RHS performance modules, shift+middle = commit all
 // · popup lists every repo with its state, per-repo commit/push, delete, and
 //   an "add" form for new regular/bare repo locations
 BarBlock {
@@ -24,14 +24,14 @@ BarBlock {
     property bool popupOpen: false
 
     onClicked: mouse => {
-        if (mouse.button === Qt.LeftButton)
+        if ((mouse.modifiers & Qt.AltModifier) && (mouse.button === Qt.LeftButton))
+            ResourcesState.resourcesVisible = !ResourcesState.resourcesVisible;
+        else if (mouse.button === Qt.LeftButton)
             gitPill.popupOpen = !gitPill.popupOpen;
         else if (mouse.button === Qt.RightButton)
             pushAll();
         else if ((mouse.modifiers & Qt.ShiftModifier) && (mouse.button === Qt.MiddleButton))
             commitAll();
-        else if (mouse.button === Qt.MiddleButton)
-            ResourcesState.resourcesVisible = !ResourcesState.resourcesVisible;
     }
 
     function commitAll() {
@@ -428,7 +428,7 @@ BarBlock {
 
     property bool showAdd: false
     property string addMode: "regular"
-    property bool addUntracked: false
+    property bool addUntracked: GitState.untrackedAll
     property string addError: ""
 
     function doAddRegular() {
