@@ -1,31 +1,8 @@
 * Pending
-+ [x] Wallpaper Rofi
-  + [x] Border Color Picker does not work. — fixed: ring palette now a working ListModel + required-property delegate (the old inline Repeater hit "col is not defined" under Bound-component behavior); ringSwab popup applies via PickerState.setWallpaperBorder
-  + [x] delete should be an icon on hover on the wallpapers not next to the swap (same row as light/dark/favorite but aligned to left of frame and with confirmation with simple check and x that cover entire wallpaper container its launched from with inspo from the on hover volume in quick settings now playing) — trash button moved to the tile's bottom-left (top-left already holds the applied badge); clicking arms a full-tile ✓/✗ overlay (scrim + filename), Esc cancels the overlay before closing the picker
-    + [x] Have shadow for the buttons on hover for super light/white backgrounds — dark scrim pills + hairline borders behind the light/dark/star/delete buttons
-  + [x] When i assign favorite/light/dark their is a flicker and the view rearranges the layout fix it — _applyMovedFile no longer re-sorts after a move, so the tile keeps its grid slot
-  + [x] Remove . live text inside the current wallpaper frame — removed the floating "live" badge from the preview thumb
-    + [x] Also make the current wallpaper frame have rounded border that contain its contents just like the wallpaper pictures below it — preview thumb is radius-10 clipped with a border; banner is radius-12
-+ [x] Settings
-  + [x] Remove IPC section and all files related to its funcitonality — removed the Settings IPC category/page/handlers entirely; the functional qs-ipc-call catalogue (IpcHandler.qml) stays because ~30 keybinds in hypr/quickshell.lua call it
-  + [x] Themes
-    + [x] Make glass-margins as well
-    + [x] Split the glass into glass-margin, glass-full,glass-borderless — bar modes are now 0 Transparent, 1 Solid Margin, 2 Solid, 3 Glass Margin, 4 Glass Full, 5 Glass Borderless
-    + [x] Color Scheme should be before bar style in the order of appearance — settings > Style now lists Color theme before Bar style
-+ [x] Left Clicking the bar should cycle all available themes instead of just between full and transparent just like the right click does — left AND right double-click now cycle all color schemes (0..5 incl. soramane); bar style itself only changes via Settings > Style
-+ [x] QuickSettings
-  + [x] Avatar picker does not detect any pictures in dir despite having pictures at ~/Pictures look into it — cause: command passed as a JS template literal to Process fails (exit 2, no output) while the identical double-quoted string works; avatar scan now uses the quoted form (finds all 264 pictures)
-  + [x] Now playing bg should only show on track buttons on hover not all the time as in expanded view also adjust dimensions for compact view — TrackButton got hoverFillOnly; compact transport uses it (24x24) so the pill fills only on hover, expanded rows keep their bordered look
-+ [x] Bar
-  + [x] Make the git module usable and user friendly...rework from ground up.
-    + [x] I want to:
-      + [x] Add repos i want to track — one-line "Add repo": path (+ optional upstream ref + optional worktree for dots-style bare dirs); ~/Projects/Shibuya works out of the box
-        eg. add ~/Projects/Shibuya etc.
-      + [x] On add just check if files are Modified...dont check for untracked (remove this functionality projectwide) — untracked scanning removed from probe, prefs, settings page and row toggle; only staged/modified tracked changes are reported
-      + [x] If modified give option to auto commit with generic message — commit button uses "chore: auto-sync" when the optional message field is empty; `git add -u` only (tracked changes)
-      + [x] Allow user to push to remotes you probe -- Each added location can be github/gitlab etc — probe reports the origin url, rows label it (github/gitlab/...), straight "push remote" button
-      + [x] Allow user to pull from remotes — per-repo + "pull all"; fast-forward only to avoid surprise merges
-      + [x] Incase of error tell user to use other tools eg cli — actions run through a serialized Process that captures stderr; failures surface a red inline hint ("use the cli: git -C <path> push") plus a notify
++ [ ] Settings
+  + [ ] Bar
+    + [ ] Bar Width is broken -- look into it...I just want to be able to increase/decrease its width and also add reset option to restore current settings
+    + [ ] Do drop down design for the color theme
 
 * New Pending:
  + .
