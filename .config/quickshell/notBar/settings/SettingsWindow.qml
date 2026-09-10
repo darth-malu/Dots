@@ -310,8 +310,10 @@ Item {
         required property int maxV
         required property int stepV
         property int value
+        property int defaultValue: minV
         property string unit: ""
         signal committed(int v)
+        signal resetRequested
 
         function nudge(dir) {
             const v = Math.max(minV, Math.min(maxV, value + dir * stepV));
@@ -413,6 +415,36 @@ Item {
             glyph: "\uf067"
             Layout.alignment: Qt.AlignVCenter
             onStepped: isr.nudge(1)
+        }
+
+        // reset button — appears when value differs from default
+        Rectangle {
+            visible: isr.value !== isr.defaultValue
+            implicitWidth: 22
+            implicitHeight: 22
+            radius: 6
+            color: rstHover.containsMouse ? Qt.rgba(Themes.red.r, Themes.red.g, Themes.red.b, 0.18) : "transparent"
+            border.width: 1
+            border.color: rstHover.containsMouse ? Themes.red : "transparent"
+            Layout.alignment: Qt.AlignVCenter
+            Behavior on color { ColorAnimation { duration: 100 } }
+            Behavior on border.color { ColorAnimation { duration: 100 } }
+
+            HoverHandler { id: rstHover }
+            Text {
+                anchors.centerIn: parent
+                text: "\uf0e2"
+                color: rstHover.containsMouse ? Themes.red : Themes.muted
+                font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+            }
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    isr.value = isr.defaultValue;
+                    isr.committed(isr.defaultValue);
+                }
+            }
         }
     }
 
@@ -1386,12 +1418,8 @@ Item {
                                 spacing: 0
                                 Layout.fillWidth: true
 
-                                // segmented color-theme selector — pyrple (default) vs gron teal
+                                // color theme dropdown
                                 RowLayout {
-                                    id: themeSeg
-
-                                    readonly property int schemeVal: MiscState.themeScheme
-
                                     Layout.fillWidth: true
                                     Layout.preferredHeight: 38
                                     spacing: 12
@@ -1423,94 +1451,173 @@ Item {
                                     }
 
                                     Rectangle {
+                                        id: colorThemeDropdown
+
                                         Layout.alignment: Qt.AlignVCenter
-                                        implicitWidth: themeSegRow.implicitWidth + 6
-                                        implicitHeight: 26
-                                        radius: 8
-                                        color: Themes.cardBg
+                                        width: 140
+                                        height: 24
+                                        radius: 6
+                                        color: colorThemeDropMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : Themes.cardBg
                                         border.width: 1
-                                        border.color: Themes.borderColor
+                                        border.color: colorThemeDropOpen ? Themes.accent : Themes.borderColor
 
-                                        Row {
-                                            id: themeSegRow
+                                        property bool colorThemeDropOpen: false
+                                        property var colorThemeOptions: [
+                                            { key: 0, label: "Pyrple" },
+                                            { key: 1, label: "Gron" },
+                                            { key: 2, label: "Gruvbox" },
+                                            { key: 3, label: "Rose" },
+                                            { key: 4, label: "Everforest" },
+                                            { key: 5, label: "Soramane" }
+                                        ]
 
-                                            anchors.centerIn: parent
-                                            spacing: 2
+                                        function curLabel() {
+                                            for (var i = 0; i < colorThemeOptions.length; i++)
+                                                if (colorThemeOptions[i].key === MiscState.themeScheme)
+                                                    return colorThemeOptions[i].label;
+                                            return "Pyrple";
+                                        }
 
-                                            Repeater {
-                                                model: [
-                                                    {
-                                                        key: 0,
-                                                        label: "Pyrple"
-                                                    },
-                                                    {
-                                                        key: 1,
-                                                        label: "Gron"
-                                                    },
-                                                    {
-                                                        key: 2,
-                                                        label: "Gruvbox"
-                                                    },
-                                                    {
-                                                        key: 3,
-                                                        label: "Rose"
-                                                    },
-                                                    {
-                                                        key: 4,
-                                                        label: "Everforest"
-                                                    },
-                                                    {
-                                                        key: 5,
-                                                        label: "Soramane"
-                                                    }
-                                                ]
+                                        Text {
+                                            anchors.left: parent.left
+                                            anchors.leftMargin: 8
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: colorThemeDropdown.curLabel()
+                                            color: Themes.fg
+                                            font {
+                                                pixelSize: 10
+                                                bold: true
+                                                family: "Quicksand"
+                                            }
+                                            elide: Text.ElideRight
+                                            width: parent.width - 24
+                                        }
 
-                                                delegate: Rectangle {
-                                                    id: themeOpt
+                                        Text {
+                                            anchors.right: parent.right
+                                            anchors.rightMargin: 6
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: "\uf078"
+                                            color: Themes.muted
+                                            font {
+                                                pixelSize: 8
+                                                family: "Symbols Nerd Font Mono"
+                                            }
+                                            rotation: colorThemeDropdown.colorThemeDropOpen ? 180 : 0
 
-                                                    required property var modelData
+                                            Behavior on rotation {
+                                                NumberAnimation {
+                                                    duration: 120
+                                                    easing.type: Easing.OutQuad
+                                                }
+                                            }
+                                        }
 
-                                                    readonly property bool sel: themeSeg.schemeVal === themeOpt.modelData.key
+                                        MouseArea {
+                                            id: colorThemeDropMa
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: colorThemeDropdown.colorThemeDropOpen = !colorThemeDropdown.colorThemeDropOpen
+                                        }
 
-                                                    width: themeLbl.implicitWidth + 20
-                                                    height: 22
-                                                    radius: 6
-                                                    color: sel ? Themes.accent : themeOptMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : "transparent"
+                                        // dropdown list
+                                        Rectangle {
+                                            id: colorThemePopup
 
-                                                    Behavior on color {
-                                                        ColorAnimation {
-                                                            duration: 120
+                                            visible: colorThemeDropdown.colorThemeDropOpen
+                                            anchors.top: parent.bottom
+                                            anchors.topMargin: 4
+                                            x: 0
+                                            width: colorThemeDropdown.width
+                                            height: colorThemeCol.implicitHeight + 12
+                                            radius: 8
+                                            color: Themes.cardBg
+                                            border.width: 1
+                                            border.color: Themes.borderColor
+                                            z: 100
+
+                                            onVisibleChanged: {
+                                                colorThemeDropdown.colorThemeDropOpen = visible;
+                                                if (visible)
+                                                    colorThemePopupBg.forceActiveFocus();
+                                            }
+
+                                            MouseArea {
+                                                id: colorThemePopupBg
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                propagateComposedEvents: true
+                                                z: -1
+                                            }
+
+                                            Column {
+                                                id: colorThemeCol
+                                                anchors.fill: parent
+                                                anchors.margins: 6
+                                                spacing: 2
+
+                                                Repeater {
+                                                    model: colorThemeDropdown.colorThemeOptions
+
+                                                    delegate: Rectangle {
+                                                        id: themeOpt
+                                                        required property var modelData
+                                                        readonly property bool sel: MiscState.themeScheme === themeOpt.modelData.key
+                                                        width: parent.width
+                                                        height: 26
+                                                        radius: 5
+                                                        color: themeOptMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : sel ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.10) : "transparent"
+                                                        Behavior on color { ColorAnimation { duration: 100 } }
+
+                                                        Text {
+                                                            anchors.left: parent.left
+                                                            anchors.leftMargin: 8
+                                                            anchors.verticalCenter: parent.verticalCenter
+                                                            text: themeOpt.modelData.label
+                                                            color: themeOpt.sel ? Themes.accent : Themes.fg
+                                                            font {
+                                                                pixelSize: 10
+                                                                bold: true
+                                                                family: "Quicksand"
+                                                            }
+                                                            Behavior on color { ColorAnimation { duration: 100 } }
                                                         }
-                                                    }
 
-                                                    Text {
-                                                        id: themeLbl
-
-                                                        anchors.centerIn: parent
-                                                        text: themeOpt.modelData.label
-                                                        color: themeOpt.sel ? "#181825" : themeOptMa.containsMouse ? Themes.fg : Themes.dim
-                                                        font {
-                                                            pixelSize: 10
-                                                            bold: true
-                                                            family: "Quicksand"
+                                                        Text {
+                                                            visible: themeOpt.sel
+                                                            anchors.right: parent.right
+                                                            anchors.rightMargin: 8
+                                                            anchors.verticalCenter: parent.verticalCenter
+                                                            text: "\uf00c"
+                                                            color: Themes.accent
+                                                            font {
+                                                                pixelSize: 9
+                                                                family: "Symbols Nerd Font Mono"
+                                                            }
                                                         }
 
-                                                        Behavior on color {
-                                                            ColorAnimation {
-                                                                duration: 120
+                                                        MouseArea {
+                                                            id: themeOptMa
+                                                            anchors.fill: parent
+                                                            hoverEnabled: true
+                                                            cursorShape: Qt.PointingHandCursor
+                                                            onClicked: {
+                                                                MiscState.themeScheme = themeOpt.modelData.key;
+                                                                colorThemeDropdown.colorThemeDropOpen = false;
                                                             }
                                                         }
                                                     }
-
-                                                    MouseArea {
-                                                        id: themeOptMa
-
-                                                        anchors.fill: parent
-                                                        hoverEnabled: true
-                                                        cursorShape: Qt.PointingHandCursor
-                                                        onClicked: MiscState.themeScheme = themeOpt.modelData.key
-                                                    }
                                                 }
+                                            }
+                                        }
+
+                                        // close when clicking outside
+                                        Connections {
+                                            target: settingsWindow
+                                            function onVisibleChanged() {
+                                                if (!settingsWindow.visible)
+                                                    colorThemeDropdown.colorThemeDropOpen = false;
                                             }
                                         }
                                     }
@@ -1789,6 +1896,7 @@ Item {
                                         maxV: 48
                                         stepV: 2
                                         value: BarState.barHeight
+                                        defaultValue: 26
                                         unit: "px"
                                         onCommitted: v => BarState.barHeight = v
                                     }
@@ -1800,6 +1908,7 @@ Item {
                                         maxV: 3440
                                         stepV: 40
                                         value: BarState.barWidth
+                                        defaultValue: 0
                                         unit: "px"
                                         onCommitted: v => BarState.barWidth = v
                                     }
@@ -3281,218 +3390,6 @@ Item {
                                 }
                             }
                         }
-                    }
-                }
-            }
-
-            Card {
-                title: "Sticky notes"
-                icon: "\uf372"
-                accent: Themes.orange
-
-                ColumnLayout {
-                    spacing: 0
-                    Layout.fillWidth: true
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 38
-                        spacing: 8
-
-                        Text {
-                            text: "\uf0a9"
-                            color: Themes.orange
-                            font {
-                                pixelSize: 12
-                                family: "Symbols Nerd Font Mono"
-                            }
-                            Layout.preferredWidth: 20
-                            horizontalAlignment: Text.AlignHCenter
-                        }
-
-                        Text {
-                            Layout.fillWidth: true
-                            text: NotesState.model.count === 0 ? "no notes yet" : NotesState.model.count === 1 ? "1 note on the desktop" : NotesState.model.count + " notes on the desktop"
-                            color: Themes.dim
-                            font {
-                                pixelSize: 10
-                                family: "ZedMono Nerd Font"
-                            }
-                            elide: Text.ElideRight
-                        }
-
-                        Rectangle {
-                            id: addNoteBtn
-                            implicitWidth: addNoteTxt.implicitWidth + 16
-                            implicitHeight: 22
-                            radius: 6
-                            color: addNoteMa.containsMouse ? Qt.rgba(Themes.orange.r, Themes.orange.g, Themes.orange.b, 0.2) : Themes.separator
-                            border.width: 1
-                            border.color: addNoteMa.containsMouse ? Themes.orange : "transparent"
-
-                            Text {
-                                id: addNoteTxt
-                                anchors.centerIn: parent
-                                text: "\uf067 new note"
-                                color: addNoteMa.containsMouse ? Themes.orange : Themes.dim
-                                font {
-                                    pixelSize: 9
-                                    bold: true
-                                    family: "ZedMono Nerd Font"
-                                }
-                            }
-
-                            MouseArea {
-                                id: addNoteMa
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: NotesState.addNote("note")
-                            }
-                        }
-
-                        Rectangle {
-                            id: addTodoBtn
-                            implicitWidth: addTodoTxt.implicitWidth + 16
-                            implicitHeight: 22
-                            radius: 6
-                            color: addTodoMa.containsMouse ? Qt.rgba(0.56, 0.93, 0.56, 0.18) : Themes.separator
-                            border.width: 1
-                            border.color: addTodoMa.containsMouse ? "#50fa7b" : "transparent"
-
-                            Text {
-                                id: addTodoTxt
-                                anchors.centerIn: parent
-                                text: "\uf067 todo"
-                                color: addTodoMa.containsMouse ? "#50fa7b" : Themes.dim
-                                font {
-                                    pixelSize: 9
-                                    bold: true
-                                    family: "ZedMono Nerd Font"
-                                }
-                            }
-
-                            MouseArea {
-                                id: addTodoMa
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: NotesState.addNote("todo")
-                            }
-                        }
-
-                        Rectangle {
-                            id: clearNoteBtn
-                            visible: NotesState.model.count > 0
-                            implicitWidth: clearNoteTxt.implicitWidth + 16
-                            implicitHeight: 22
-                            radius: 6
-                            color: clearNoteMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.18) : Themes.separator
-                            border.width: 1
-                            border.color: clearNoteMa.containsMouse ? "#ff5555" : "transparent"
-
-                            Text {
-                                id: clearNoteTxt
-                                anchors.centerIn: parent
-                                text: "\uf2ed clear"
-                                color: clearNoteMa.containsMouse ? "#ff5555" : Themes.dim
-                                font {
-                                    pixelSize: 9
-                                    bold: true
-                                    family: "ZedMono Nerd Font"
-                                }
-                            }
-
-                            MouseArea {
-                                id: clearNoteMa
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: NotesState.clear()
-                            }
-                        }
-                    }
-
-                    Repeater {
-                        model: NotesState.model
-
-                        Rectangle {
-                            required property var modelData
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 26
-                            radius: 6
-                            color: Qt.rgba(1, 1, 1, 0.03)
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.margins: 4
-                                spacing: 6
-
-                                Rectangle {
-                                    implicitWidth: 6
-                                    implicitHeight: 14
-                                    radius: 3
-                                    Layout.alignment: Qt.AlignVCenter
-                                    color: ["#ffb86c", "#8be9fd", "#ff79c6", "#50fa7b", "#bd93f9"][(modelData.color ?? 0) % 5]
-                                }
-
-                                Text {
-                                    Layout.alignment: Qt.AlignVCenter
-                                    visible: (modelData.kind ?? "note") === "todo"
-                                    text: "\uf0ca"
-                                    color: "#50fa7b"
-                                    font {
-                                        pixelSize: 9
-                                        family: "Symbols Nerd Font Mono"
-                                    }
-                                }
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: (modelData.text ?? "").trim().length > 0 ? modelData.text.trim().split("\n")[0] : "(empty note)"
-                                    elide: Text.ElideRight
-                                    color: Themes.dim
-                                    font {
-                                        pixelSize: 10
-                                        family: "Quicksand"
-                                    }
-                                    Layout.alignment: Qt.AlignVCenter
-                                }
-
-                                Rectangle {
-                                    Layout.alignment: Qt.AlignVCenter
-                                    implicitWidth: 18
-                                    implicitHeight: 18
-                                    radius: 5
-                                    color: noteDelMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.18) : "transparent"
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "\uf00d"
-                                        color: noteDelMa.containsMouse ? "#ff5555" : Themes.muted
-                                        font {
-                                            pixelSize: 8
-                                            family: "Symbols Nerd Font Mono"
-                                        }
-                                    }
-
-                                    MouseArea {
-                                        id: noteDelMa
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: NotesState.removeById(modelData.id)
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Rectangle {
-                        Layout.fillWidth: true
-                        height: 1
-                        color: Themes.separator
-                        Layout.topMargin: 6
                     }
                 }
             }

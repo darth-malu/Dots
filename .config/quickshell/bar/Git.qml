@@ -371,7 +371,7 @@ BarBlock {
                                     Layout.fillWidth: true
                                     placeholder: "repo path"
                                     textPixelSize: 12
-                                    onReturnPressed: gitPill.doAddRepo()
+                                    onReturnPressed: gitPill.doAddRepo(repoPathField, repoWtField)
                                 }
 
                                 RowLayout {
@@ -383,11 +383,11 @@ BarBlock {
                                         Layout.fillWidth: true
                                         placeholder: "worktree (bare repos only)"
                                         textPixelSize: 12
-                                        onReturnPressed: gitPill.doAddRepo()
+                                        onReturnPressed: gitPill.doAddRepo(repoPathField, repoWtField)
                                     }
                                     MiniBtn {
                                         text: "add"
-                                        onClicked: gitPill.doAddRepo()
+                                        onClicked: gitPill.doAddRepo(repoPathField, repoWtField)
                                     }
                                 }
                             }
@@ -402,11 +402,11 @@ BarBlock {
     property string addError: ""
     property string commitMsg: ""
 
-    function doAddRepo() {
-        const ok = GitState.addRepo(repoPathField.text, repoWtField.text);
+    function doAddRepo(pathField, wtField) {
+        const ok = GitState.addRepo(pathField.text, wtField.text);
         if (ok) {
-            repoPathField.text = "";
-            repoWtField.text = "";
+            pathField.text = "";
+            wtField.text = "";
             gitPill.addError = "";
             GitState.refresh();
         } else {

@@ -68,6 +68,13 @@ Singleton {
         root.persist();
     }
 
+    function setVisible(idx, v) {
+        if (idx < 0 || idx >= notesModel.count)
+            return;
+        notesModel.setProperty(idx, "visible", v);
+        root.persist();
+    }
+
     function setKind(idx, k) {
         if (idx < 0 || idx >= notesModel.count)
             return;

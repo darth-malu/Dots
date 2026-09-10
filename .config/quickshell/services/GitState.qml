@@ -266,8 +266,13 @@ done
     }
 
     // ── serialized action runner ──
+    // one Process so stderr is captured; a failed step sets a per-repo `hint`
+    // shown in the popup + notify, and aborts the rest of that action's steps.
+    // success toasts are deferred until the follow-up probe lands so the popup
+    // already shows the fresh state before the notification pops
     property var _queue: []
     property int _group: 0
+    property string _pendingNotify: ""
 
     function queueSteps(idx, steps) {
         root._group++;
@@ -332,7 +337,11 @@ done
             const name = root.displayName(a.idx);
             const upToDate = /(everything up-to-date|already up to date|up to date)/i.test(act.out);
             const nothingToCommit = /(nothing to commit|no changes added to commit)/i.test(act.out);
-            if (exitCode === 0 || nothingToCommit) {
+            // release the runner BEFORE poking refresh so the immediate
+            // refresh isn't swallowed by `busy` (that was the source of the
+            // 2s+ lag between the toast and the popup catching up)
+            act.running = false;
+            if (exitCode === 0 || nothingToCommit || upToDate) {
                 const st = Object.assign({
                     flags: "",
                     ahead: 0,
@@ -348,13 +357,11 @@ done
                 map[key] = st;
                 root.statuses = map;
                 if (nothingToCommit)
-                    notify("Git", name + ": nothing to commit");
-                else if (upToDate && a.label === "push")
-                    notify("Git", name + ": already up to date");
-                else if (upToDate && a.label === "pull")
-                    notify("Git", name + ": already up to date");
+                    root._pendingNotify = name + ": nothing to commit";
+                else if (upToDate && (a.label === "push" || a.label === "pull"))
+                    root._pendingNotify = name + ": already up to date";
                 else if (a.ok.length > 0)
-                    notify("Git", a.ok);
+                    root._pendingNotify = a.ok;
             } else {
                 const st = Object.assign({
                     flags: "",
@@ -376,11 +383,12 @@ done
                 root._queue = root._queue.filter(x => x.group !== a.group);
             }
             act._cur = null;
-            root.pokeRefresh(2200);
+            // short delay → immediate refresh (busy already released above) +
+            // a quiet follow-up so the probe doesn't hammer the disk
+            root.pokeRefresh(150);
             // skip-mode ends once the rest of the group has been drained
             if (act._skipGroup >= 0 && !root._queue.some(x => x.group === act._skipGroup))
                 act._skipGroup = -1;
-            act.running = false;
             root._kick();
         }
     }
@@ -484,6 +492,11 @@ done
                 };
             }
             root.statuses = map;
+            // drain a deferred success toast once the fresh state is visible
+            if (root._pendingNotify !== "") {
+                notify("Git", root._pendingNotify);
+                root._pendingNotify = "";
+            }
         }
     }
 

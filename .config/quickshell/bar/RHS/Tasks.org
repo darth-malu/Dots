@@ -5,12 +5,13 @@
     + [ ] Do drop down design for the color theme
   + [ ] Desktop
     + [ ] Sticky Notes
-      + [ ] Make this a widget like the clock that I need to interact with to add sticky notes..like kde/microsoft win 7 sticky notes
+      + [ ] Make this a widget like the desktop clock (not bar clock) that I need to interact with to add sticky notes..like kde/microsoft win 7 sticky notes
       + [ ] Remove the setting from settings
 + [ ] Bar
   + [ ] GIT
     + [ ] Slow...unsynced notification and action happening. eg. pushed, committed notif shows before UI update...and everything seems slow...look into logic and make it airtight
     + [ ] Adding a git repo does not work....look into this in depth!! -- fix this.,..very important to the functionality and multiple prompts havent fixed it
+      + [ ] Clicking add button after typing location eg. ~/Projects/{Shibuya,Org} does not work
   + Empty workspace
     + with icons -> Just show the workspace numbers with same formatting as other workspaces but show the part of the container that normally has the icon as if in workspace without icons
     + with number -> Just show the workspace numbers with same formatting as other workspaces
@@ -21,6 +22,8 @@
   + [ ] The icons appears misaligned in their containers -- moon, sun , favorites...look into it
     + [ ] Move light/dark icons from same row as favorites icon to the bottom right instead but only on hover to that specific region not on the wallpaper container itself as currently
     + [ ] Remove border+bg from favorite icon but maintain the yellow color on check
++ [ ] Mpris
+  + [ ] Instead of SUPER + Play - hiding album art move that to ALT + Right CLick Then have it toggle between expanded and compact view
       
 
 * TODO IMPLEMENT THis now

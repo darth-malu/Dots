@@ -127,6 +127,10 @@ ShellRoot {
                         host: barr
                     }
 
+                    StickyNotesWidget {
+                        host: barr
+                    }
+
                     Mpris {
                         host: barr
                     }

@@ -50,8 +50,7 @@ RowLayout {
                 : boxy ? Themes.boxyActiveBorder
                 : Themes.roundedActiveBorder
 
-            color: isEmpty ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.1)
-                : boxy
+            color: boxy
                 ? (isActive ? Themes.boxyActiveBg : "transparent")
                 : (isActive ? Themes.roundedActiveBg
                     : isUrgent ? Themes.roundedUrgentBg
@@ -68,7 +67,7 @@ RowLayout {
             readonly property int pillSize: content.implicitHeight + 8
 
             implicitHeight: pillSize
-            Layout.preferredWidth: isActive || (!boxy && !isEmpty) ? pillSize : content.implicitWidth + 14
+            Layout.preferredWidth: isActive || !boxy ? pillSize : content.implicitWidth + 14
             Layout.preferredHeight: pillSize
 
             Behavior on Layout.preferredWidth {
@@ -99,7 +98,6 @@ RowLayout {
                 color: rootBlock.isActive
                     ? Themes.activeTextColor
                     : rootBlock.isUrgent ? "#ff5555"
-                    : rootBlock.isEmpty ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.75)
                     : Themes.barMuted
                 dim: false
                 font {

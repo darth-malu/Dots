@@ -189,145 +189,19 @@ PanelWindow {
             anchors.margins: 12
             spacing: 8
 
-            // ── header — icon + search + filter pills + count ──
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-
-                Text {
-                    text: "\uf03e"
-                    color: Themes.rofiAccent
-                    font {
-                        pixelSize: 13
-                        family: "Symbols Nerd Font Mono"
-                    }
-                }
-
-                TextField {
-                    id: search
-
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 24
-                    leftPadding: 8
-                    rightPadding: 8
-                    color: Themes.windowTextColor
-                    selectByMouse: true
-                    placeholderText: ""
-                    placeholderTextColor: "transparent"
-                    background: Rectangle {
-                        radius: 6
-                        color: Qt.rgba(1, 1, 1, 0.05)
-                        border.width: 1
-                        border.color: Themes.separator
-                    }
-                    Keys.onEscapePressed: root.close()
-                    property int gridCols: Math.max(1, Math.floor(grid.width / grid.cellWidth))
-                    Keys.onLeftPressed: event => {
-                        if (grid.count === 0)
-                            return;
-                        grid.currentIndex = grid.currentIndex > 0 ? grid.currentIndex - 1 : grid.count - 1;
-                        event.accepted = true;
-                    }
-                    Keys.onRightPressed: event => {
-                        if (grid.count === 0)
-                            return;
-                        grid.currentIndex = grid.currentIndex < grid.count - 1 ? grid.currentIndex + 1 : 0;
-                        event.accepted = true;
-                    }
-                    Keys.onUpPressed: event => {
-                        if (grid.count === 0)
-                            return;
-                        grid.currentIndex = Math.max(0, grid.currentIndex - search.gridCols);
-                        event.accepted = true;
-                    }
-                    Keys.onDownPressed: event => {
-                        if (grid.count === 0)
-                            return;
-                        grid.currentIndex = Math.min(grid.count - 1, grid.currentIndex + search.gridCols);
-                        event.accepted = true;
-                    }
-                    Keys.onPressed: event => {
-                        if (!(event.modifiers & Qt.ControlModifier))
-                            return;
-                        if (grid.count === 0) {
-                            event.accepted = true;
-                            return;
-                        }
-                        if (event.key === Qt.Key_J) {
-                            grid.currentIndex = Math.min(grid.count - 1, grid.currentIndex + search.gridCols);
-                            event.accepted = true;
-                        } else if (event.key === Qt.Key_K) {
-                            grid.currentIndex = Math.max(0, grid.currentIndex - search.gridCols);
-                            event.accepted = true;
-                        } else if (event.key === Qt.Key_H) {
-                            grid.currentIndex = grid.currentIndex > 0 ? grid.currentIndex - 1 : grid.count - 1;
-                            event.accepted = true;
-                        } else if (event.key === Qt.Key_L) {
-                            grid.currentIndex = grid.currentIndex < grid.count - 1 ? grid.currentIndex + 1 : 0;
-                            event.accepted = true;
-                        }
-                    }
-                    Keys.onReturnPressed: {
-                        if (grid.currentItem) {
-                            root.applyWallpaper(grid.currentItem.path_);
-                            event.accepted = true;
-                        }
-                    }
-                    Keys.onEnterPressed: {
-                        if (grid.currentItem) {
-                            root.applyWallpaper(grid.currentItem.path_);
-                            event.accepted = true;
-                        }
-                    }
-                }
-
-                FilterPill {
-                    Layout.alignment: Qt.AlignVCenter
-                    label: "\uf005 favorites"
-                    on: root.favFilter
-                    activeColor: "#50fa7b"
-                    onClicked: root.favFilter = !root.favFilter
-                }
-
-                FilterPill {
-                    Layout.alignment: Qt.AlignVCenter
-                    label: "\uf185 light"
-                    on: root.lightFilter
-                    activeColor: "#ffedd6"
-                    onClicked: root.lightFilter = !root.lightFilter
-                }
-
-                FilterPill {
-                    Layout.alignment: Qt.AlignVCenter
-                    label: "\uf186 dark"
-                    on: root.darkFilter
-                    activeColor: "#aaccff"
-                    onClicked: root.darkFilter = !root.darkFilter
-                }
-
-                Text {
-                    visible: root.results.length > 0
-                    text: root.results.length
-                    color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.4)
-                    font {
-                        pixelSize: 10
-                        family: "ZedMono Nerd Font"
-                    }
-                }
-            }
-
-            // ── current wallpaper banner — live preview + automation chips ──
+            // ── header — current wallpaper (thumb + name) on the left, search +
+            // filter pills + count on the right, and the automation chips
+            // (slideshow / ring swab) in a second row of the same card ──
             Rectangle {
-                id: currentBanner
+                id: headerCard
 
                 Layout.fillWidth: true
-                // rows: 8 (margin) + 52 (thumb) + 6 (spacing) + 20 (chips) + 8
-                // (margin) = 94 — pinned to 96 so the chip row never touches the
-                // banner edge / grid hairline again (the old exact-fit 94 let
-                // sub-pixel rounding shove the slideshow/ring/delete buttons up
-                // against the grid below = "buttons overlapping in the header")
-                Layout.preferredHeight: 96
-                Layout.minimumHeight: 96
+                // rows: 8 (margin) + 40 (thumb) + 6 (spacing) + 20 (chips) + 8
+                // (margin) = 82 — pinned so the chip row never drifts into the
+                // grid hairline below (sub-pixel rounding used to shove the
+                // slideshow/ring buttons up into the grid = overlap bug)
+                Layout.preferredHeight: 82
+                Layout.minimumHeight: 82
                 radius: 12
                 color: Qt.rgba(1, 1, 1, 0.045)
                 border.width: 1
@@ -338,38 +212,39 @@ PanelWindow {
                     anchors.margins: 8
                     spacing: 6
 
-                    // row 1 — rounded preview thumb + identity
+                    // row 1 — thumb + name · search · filter pills · count
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 12
+                        spacing: 10
 
-                        Rectangle {
-                            Layout.preferredWidth: 96
-                            Layout.preferredHeight: 52
-                            radius: 10
-                            color: "transparent"
-                            border.width: 1
-                            border.color: Qt.rgba(1, 1, 1, 0.14)
-                            clip: true
+                        // current wallpaper identity
+                        RowLayout {
+                            Layout.alignment: Qt.AlignVCenter
+                            spacing: 8
 
-                            Image {
-                                anchors.fill: parent
-                                source: WallpaperService.current.length > 0 ? WallpaperService.thumbSource(WallpaperService.current, WallpaperService.thumbVersion) : ""
-                                fillMode: Image.PreserveAspectCrop
-                                asynchronous: true
-                                sourceSize: {
-                                    const s = 192;
-                                    return Qt.size(s, s);
+                            Rectangle {
+                                Layout.preferredWidth: 60
+                                Layout.preferredHeight: 40
+                                radius: 8
+                                color: "transparent"
+                                border.width: 1
+                                border.color: Qt.rgba(1, 1, 1, 0.14)
+                                clip: true
+
+                                Image {
+                                    anchors.fill: parent
+                                    source: WallpaperService.current.length > 0 ? WallpaperService.thumbSource(WallpaperService.current, WallpaperService.thumbVersion) : ""
+                                    fillMode: Image.PreserveAspectCrop
+                                    asynchronous: true
+                                    sourceSize: {
+                                        const s = 120;
+                                        return Qt.size(s, s);
+                                    }
                                 }
                             }
-                        }
-
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            spacing: 3
 
                             Text {
-                                Layout.fillWidth: true
+                                Layout.preferredWidth: 130
                                 text: WallpaperService.current.length > 0 ? WallpaperService.current.split("/").pop() : "none"
                                 elide: Text.ElideMiddle
                                 color: Themes.fg
@@ -380,9 +255,122 @@ PanelWindow {
                                 }
                             }
                         }
+
+                        TextField {
+                            id: search
+
+                            Layout.alignment: Qt.AlignVCenter
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 24
+                            leftPadding: 8
+                            rightPadding: 8
+                            color: Themes.windowTextColor
+                            selectByMouse: true
+                            placeholderText: ""
+                            placeholderTextColor: "transparent"
+                            background: Rectangle {
+                                radius: 6
+                                color: Qt.rgba(1, 1, 1, 0.05)
+                                border.width: 1
+                                border.color: Themes.separator
+                            }
+                            Keys.onEscapePressed: root.close()
+                            property int gridCols: Math.max(1, Math.floor(grid.width / grid.cellWidth))
+                            Keys.onLeftPressed: event => {
+                                if (grid.count === 0)
+                                    return;
+                                grid.currentIndex = grid.currentIndex > 0 ? grid.currentIndex - 1 : grid.count - 1;
+                                event.accepted = true;
+                            }
+                            Keys.onRightPressed: event => {
+                                if (grid.count === 0)
+                                    return;
+                                grid.currentIndex = grid.currentIndex < grid.count - 1 ? grid.currentIndex + 1 : 0;
+                                event.accepted = true;
+                            }
+                            Keys.onUpPressed: event => {
+                                if (grid.count === 0)
+                                    return;
+                                grid.currentIndex = Math.max(0, grid.currentIndex - search.gridCols);
+                                event.accepted = true;
+                            }
+                            Keys.onDownPressed: event => {
+                                if (grid.count === 0)
+                                    return;
+                                grid.currentIndex = Math.min(grid.count - 1, grid.currentIndex + search.gridCols);
+                                event.accepted = true;
+                            }
+                            Keys.onPressed: event => {
+                                if (!(event.modifiers & Qt.ControlModifier))
+                                    return;
+                                if (grid.count === 0) {
+                                    event.accepted = true;
+                                    return;
+                                }
+                                if (event.key === Qt.Key_J) {
+                                    grid.currentIndex = Math.min(grid.count - 1, grid.currentIndex + search.gridCols);
+                                    event.accepted = true;
+                                } else if (event.key === Qt.Key_K) {
+                                    grid.currentIndex = Math.max(0, grid.currentIndex - search.gridCols);
+                                    event.accepted = true;
+                                } else if (event.key === Qt.Key_H) {
+                                    grid.currentIndex = grid.currentIndex > 0 ? grid.currentIndex - 1 : grid.count - 1;
+                                    event.accepted = true;
+                                } else if (event.key === Qt.Key_L) {
+                                    grid.currentIndex = grid.currentIndex < grid.count - 1 ? grid.currentIndex + 1 : 0;
+                                    event.accepted = true;
+                                }
+                            }
+                            Keys.onReturnPressed: {
+                                if (grid.currentItem) {
+                                    root.applyWallpaper(grid.currentItem.path_);
+                                    event.accepted = true;
+                                }
+                            }
+                            Keys.onEnterPressed: {
+                                if (grid.currentItem) {
+                                    root.applyWallpaper(grid.currentItem.path_);
+                                    event.accepted = true;
+                                }
+                            }
+                        }
+
+                        FilterPill {
+                            Layout.alignment: Qt.AlignVCenter
+                            label: "\uf005 favorites"
+                            on: root.favFilter
+                            activeColor: "#50fa7b"
+                            onClicked: root.favFilter = !root.favFilter
+                        }
+
+                        FilterPill {
+                            Layout.alignment: Qt.AlignVCenter
+                            label: "\uf185 light"
+                            on: root.lightFilter
+                            activeColor: "#ffedd6"
+                            onClicked: root.lightFilter = !root.lightFilter
+                        }
+
+                        FilterPill {
+                            Layout.alignment: Qt.AlignVCenter
+                            label: "\uf186 dark"
+                            on: root.darkFilter
+                            activeColor: "#aaccff"
+                            onClicked: root.darkFilter = !root.darkFilter
+                        }
+
+                        Text {
+                            visible: root.results.length > 0
+                            text: root.results.length
+                            color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.4)
+                            font {
+                                pixelSize: 10
+                                family: "ZedMono Nerd Font"
+                            }
+                        }
                     }
 
-                    // row 2 — slideshow + ring swab + delete
+                    // row 2 — slideshow chip + ring color swab
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 6
@@ -427,15 +415,12 @@ PanelWindow {
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                    ringPop.x = root._clampX(ringSwabMa.mapToItem(root, 0, ringSwabMa.height + 8).x, ringPop.implicitWidth);
-                                    ringPop.y = Math.max(8, ringSwabMa.mapToItem(root, 0, 0).y + ringSwabMa.height + 8);
+                                    ringPop.x = root._clampX(ringSwabMa.mapToItem(chrome, 0, ringSwabMa.height + 8).x, ringPop.implicitWidth);
+                                    ringPop.y = Math.max(8, ringSwabMa.mapToItem(chrome, 0, 0).y + ringSwabMa.height + 8);
                                     ringPop.open();
                                 }
                             }
                         }
-
-                        // deleting lives on the tiles themselves (hover row) —
-                        // the previous banner trash was dropped
                     }
                 }
             }
@@ -550,41 +535,104 @@ PanelWindow {
                         onClicked: root.applyWallpaper(cellWrap.path_)
                     }
 
-                    // favorite + tone assignment — top-right. The tone buttons
-                    // appear when the star (or the tile) is hovered; an already
-                    // assigned tone keeps its button lit, like the star.
+                    // favorite star — top-right. Shows on tile hover or when the
+                    // wallpaper is already starred; a bare glyph (no bg, no
+                    // border) so it reads quiet until hovered.
                     Item {
-                        id: toneCluster
+                        id: favCluster
 
-                        readonly property string tone: WallpaperService.toneFor(cellWrap.path_)
-                        // keeping the tone buttons visible while the whole tile is
-                        // hovered (not just the star) lets the cursor travel across
-                        // the gap to a light/dark button without them vanishing
-                        readonly property bool revealHover: cellMa.containsMouse || starHover.containsMouse || lightMa.containsMouse || darkMa.containsMouse || deleteMa.containsMouse
-                        readonly property bool hasTag: favBtn.fav || toneCluster.tone !== "unknown"
-
-                        // delay hiding so the cursor can travel from star → tone buttons
+                        readonly property bool fav: WallpaperService.isFavorite(cellWrap.path_)
                         property bool revealDelayed: false
                         Timer {
-                            id: revealTimer
+                            id: favTimer
                             interval: 300
-                            onTriggered: toneCluster.revealDelayed = false
+                            onTriggered: favCluster.revealDelayed = false
                         }
 
-                        visible: cellMa.containsMouse || toneCluster.revealDelayed || toneCluster.hasTag
+                        visible: cellMa.containsMouse || favCluster.revealDelayed || favCluster.fav
 
                         anchors.top: parent.top
                         anchors.right: parent.right
                         anchors.topMargin: 5
                         anchors.rightMargin: 5
-                        implicitWidth: toneRow.implicitWidth
+                        implicitWidth: 22
                         implicitHeight: 22
+
+                        Rectangle {
+                            id: favBtn
+
+                            implicitWidth: 22
+                            implicitHeight: 22
+                            radius: 9
+                            color: "transparent"
+                            border.width: 0
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: favCluster.fav ? "\uf005" : "\uf006"
+                                color: favCluster.fav ? "#ffb86c" : (starHover.containsMouse ? "#ffb86c" : Qt.rgba(1, 1, 1, 0.9))
+                                font {
+                                    pixelSize: 10
+                                    family: "Symbols Nerd Font Mono"
+                                }
+                            }
+
+                            MouseArea {
+                                id: starHover
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onEntered: {
+                                    favCluster.revealDelayed = true;
+                                    favTimer.stop();
+                                }
+                                onExited: favTimer.restart()
+                                onClicked: WallpaperService.toggleFavorite(cellWrap.path_)
+                            }
+                        }
+                    }
+
+                    // light/dark tone assignment — bottom-right. Unlike the
+                    // star, these only surface when hovering this small corner
+                    // region (not the whole tile); an already assigned tone
+                    // keeps its button lit, like the star.
+                    Item {
+                        id: toneCluster
+
+                        readonly property string tone: WallpaperService.toneFor(cellWrap.path_)
+                        readonly property bool revealHover: toneReveal.containsMouse || lightMa.containsMouse || darkMa.containsMouse
+                        property bool revealDelayed: false
+                        Timer {
+                            id: toneTimer
+                            interval: 300
+                            onTriggered: toneCluster.revealDelayed = false
+                        }
+
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        anchors.rightMargin: 4
+                        anchors.bottomMargin: 4
+                        implicitWidth: 54
+                        implicitHeight: 28
+
+                        // hover target: just the corner region, not the tile
+                        MouseArea {
+                            id: toneReveal
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onEntered: {
+                                grid.currentIndex = index;
+                                toneCluster.revealDelayed = true;
+                                toneTimer.stop();
+                            }
+                            onExited: toneTimer.restart()
+                        }
 
                         Row {
                             id: toneRow
 
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.centerIn: parent
                             spacing: 3
 
                             // light assign
@@ -616,11 +664,9 @@ PanelWindow {
                                     cursorShape: Qt.PointingHandCursor
                                     onEntered: {
                                         toneCluster.revealDelayed = true;
-                                        revealTimer.stop();
+                                        toneTimer.stop();
                                     }
-                                    onExited: {
-                                        revealTimer.restart();
-                                    }
+                                    onExited: toneTimer.restart()
                                     onClicked: WallpaperService.moveToTone(cellWrap.path_, "light")
                                 }
                             }
@@ -652,51 +698,10 @@ PanelWindow {
                                     cursorShape: Qt.PointingHandCursor
                                     onEntered: {
                                         toneCluster.revealDelayed = true;
-                                        revealTimer.stop();
+                                        toneTimer.stop();
                                     }
-                                    onExited: {
-                                        revealTimer.restart();
-                                    }
+                                    onExited: toneTimer.restart()
                                     onClicked: WallpaperService.moveToTone(cellWrap.path_, "dark")
-                                }
-                            }
-
-                            // favorite star — its hover reveals the tone buttons
-                            Rectangle {
-                                id: favBtn
-
-                                readonly property bool fav: WallpaperService.isFavorite(cellWrap.path_)
-
-                                implicitWidth: 22
-                                implicitHeight: 22
-                                radius: 9
-                                color: starHover.containsMouse ? Qt.rgba(0, 0, 0, 0.55) : Qt.rgba(0, 0, 0, 0.35)
-                                border.width: 1
-                                border.color: starHover.containsMouse ? Qt.rgba(1, 1, 1, 0.45) : Qt.rgba(1, 1, 1, 0.16)
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: favBtn.fav ? "\uf005" : "\uf006"
-                                    color: favBtn.fav ? "#ffb86c" : (starHover.containsMouse ? "#ffb86c" : Qt.rgba(1, 1, 1, 0.9))
-                                    font {
-                                        pixelSize: 10
-                                        family: "Symbols Nerd Font Mono"
-                                    }
-                                }
-
-                                MouseArea {
-                                    id: starHover
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onEntered: {
-                                        toneCluster.revealDelayed = true;
-                                        revealTimer.stop();
-                                    }
-                                    onExited: {
-                                        revealTimer.restart();
-                                    }
-                                    onClicked: WallpaperService.toggleFavorite(cellWrap.path_)
                                 }
                             }
                         }
