@@ -748,6 +748,14 @@ PanelWindow {
                         border.color: "#ff5555"
                         z: 2
 
+                        // clicking the scrim around the buttons cancels —
+                        // declared BEFORE the buttons so their MouseAreas
+                        // stay on top and receive the click
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: cellWrap.confirming = false
+                        }
+
                         ColumnLayout {
                             anchors.centerIn: parent
                             spacing: 8
@@ -831,12 +839,6 @@ PanelWindow {
                                     }
                                 }
                             }
-                        }
-
-                        // clicking the scrim around the buttons cancels
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: cellWrap.confirming = false
                         }
                     }
                 }

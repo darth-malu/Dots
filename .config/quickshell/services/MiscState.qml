@@ -47,8 +47,17 @@ Singleton {
 
     // popup card theming — windows stay transparent project-wide; the CARD
     // switches between opaque slab and frosted glass
+    property int popupTheme: Prefs.prefs.popupTheme
+    onPopupThemeChanged: {
+        Prefs.prefs.popupTheme = popupTheme;
+        Prefs.write();
+    }
+    property real popupOpacity: Prefs.prefs.popupOpacity / 100
+    onPopupOpacityChanged: {
+        Prefs.prefs.popupOpacity = Math.round(popupOpacity * 100);
+        Prefs.write();
+    }
     readonly property bool popupGlassy: !popupSolidBg
-    readonly property color popupCardBg: popupSolidBg ? "#282a36" : Qt.rgba(40 / 255, 42 / 255, 54 / 255, 0.82)
 
     property var trackedDates: ({})
     property int trackedDatesRev: 0

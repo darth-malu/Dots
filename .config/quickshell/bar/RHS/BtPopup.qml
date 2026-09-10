@@ -68,15 +68,8 @@ BarBlock {
         readonly property bool isBlocked: modelData?.blocked === true
         readonly property bool isPairing: modelData?.pairing === true
         readonly property bool isPaired: modelData?.paired === true
-        readonly property color stateColor: isBlocked ? "#ff5555"
-            : isConnected ? "#50fa7b"
-            : isPairing ? "#f1fa8c"
-            : Themes.muted
-        readonly property string stateWord: isBlocked ? "blocked"
-            : isConnected ? "connected"
-            : isPairing ? "pairing…"
-            : isPaired ? "paired"
-            : "available"
+        readonly property color stateColor: isBlocked ? "#ff5555" : isConnected ? "#50fa7b" : isPairing ? "#f1fa8c" : Themes.muted
+        readonly property string stateWord: isBlocked ? "blocked" : isConnected ? "connected" : isPairing ? "pairing…" : isPaired ? "paired" : "available"
 
         // bluez icon class -> nerd font glyph
         readonly property string devGlyph: {
@@ -154,7 +147,10 @@ BarBlock {
                     anchors.centerIn: parent
                     text: drow.devGlyph
                     color: drow.stateColor
-                    font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+                    font {
+                        pixelSize: 11
+                        family: "Symbols Nerd Font Mono"
+                    }
                 }
 
                 Behavior on color {
@@ -172,7 +168,11 @@ BarBlock {
                     text: drow.modelData?.name || drow.modelData?.deviceName || drow.modelData?.address || "?"
                     color: drow.isConnected ? Themes.fg : Themes.dim
                     elide: Text.ElideRight
-                    font { pixelSize: 11; bold: true; family: "Quicksand" }
+                    font {
+                        pixelSize: 11
+                        bold: true
+                        family: "Quicksand"
+                    }
                     Layout.fillWidth: true
                 }
 
@@ -187,7 +187,11 @@ BarBlock {
                     }
                     color: drow.isBlocked ? "#ff5555" : drow.isConnected ? "#50fa7b" : Themes.muted
                     elide: Text.ElideRight
-                    font { pixelSize: 9; family: "ZedMono Nerd Font"; letterSpacing: 0.5 }
+                    font {
+                        pixelSize: 9
+                        family: "ZedMono Nerd Font"
+                        letterSpacing: 0.5
+                    }
                     Layout.fillWidth: true
                 }
             }
@@ -198,10 +202,11 @@ BarBlock {
 
                 Text {
                     text: "\uf240"
-                    color: drow.modelData && drow.modelData.battery > 0.5 ? "#50fa7b"
-                        : drow.modelData && drow.modelData.battery > 0.2 ? "#f1fa8c"
-                        : "#ff5555"
-                    font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                    color: drow.modelData && drow.modelData.battery > 0.5 ? "#50fa7b" : drow.modelData && drow.modelData.battery > 0.2 ? "#f1fa8c" : "#ff5555"
+                    font {
+                        pixelSize: 10
+                        family: "Symbols Nerd Font Mono"
+                    }
                 }
 
                 // mini battery bar
@@ -215,16 +220,17 @@ BarBlock {
                         width: parent.width * Math.min(Math.max(drow.modelData?.battery ?? 0, 0), 1)
                         height: parent.height
                         radius: 1.5
-                        color: drow.modelData && drow.modelData.battery > 0.5 ? "#50fa7b"
-                            : drow.modelData && drow.modelData.battery > 0.2 ? "#f1fa8c"
-                            : "#ff5555"
+                        color: drow.modelData && drow.modelData.battery > 0.5 ? "#50fa7b" : drow.modelData && drow.modelData.battery > 0.2 ? "#f1fa8c" : "#ff5555"
                     }
                 }
 
                 Text {
                     text: Math.round((drow.modelData?.battery ?? 0) * 100) + "%"
                     color: Themes.dim
-                    font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                    font {
+                        pixelSize: 9
+                        family: "ZedMono Nerd Font"
+                    }
                 }
             }
 
@@ -237,7 +243,10 @@ BarBlock {
                 Text {
                     text: "\uf028"
                     color: Themes.muted
-                    font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+                    font {
+                        pixelSize: 9
+                        family: "Symbols Nerd Font Mono"
+                    }
                 }
 
                 Slider {
@@ -270,7 +279,7 @@ BarBlock {
                 return globalPos.x + (root.width / 2) - (width / 2);
             }
 
-            anchor.rect.y: 33
+            anchor.rect.y: root.host.height + 8
 
             implicitWidth: 300
             implicitHeight: card.implicitHeight + 28
@@ -307,7 +316,11 @@ BarBlock {
                         Text {
                             text: "bluetooth"
                             color: Themes.fg
-                            font { pixelSize: 12; bold: true; family: "Quicksand" }
+                            font {
+                                pixelSize: 12
+                                bold: true
+                                family: "Quicksand"
+                            }
                             Layout.fillWidth: true
                         }
 
@@ -322,7 +335,11 @@ BarBlock {
                                 anchors.centerIn: parent
                                 text: root.devices.filter(d => d.connected === true).length + " connected"
                                 color: "#50fa7b"
-                                font { pixelSize: 8; bold: true; family: "ZedMono Nerd Font" }
+                                font {
+                                    pixelSize: 8
+                                    bold: true
+                                    family: "ZedMono Nerd Font"
+                                }
                             }
                         }
 
@@ -336,8 +353,7 @@ BarBlock {
                             implicitWidth: trackW
                             implicitHeight: 20
                             radius: height / 2
-                            color: Bt.enabled ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.25)
-                                              : Qt.rgba(1, 1, 1, 0.06)
+                            color: Bt.enabled ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.06)
                             border.width: 1
                             border.color: Bt.enabled ? Themes.accent : Qt.rgba(1, 1, 1, 0.1)
 
@@ -366,7 +382,7 @@ BarBlock {
                             MouseArea {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: MiscState.setBtRadio(!Bt.enabled);
+                                onClicked: MiscState.setBtRadio(!Bt.enabled)
                             }
                         }
 
@@ -383,14 +399,19 @@ BarBlock {
                             border.color: root.scanning ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.45) : Qt.rgba(1, 1, 1, 0.08)
 
                             Behavior on color {
-                                ColorAnimation { duration: 150 }
+                                ColorAnimation {
+                                    duration: 150
+                                }
                             }
 
                             Text {
                                 anchors.centerIn: parent
                                 text: "\uf021"
                                 color: root.scanning ? Themes.accent : Themes.muted
-                                font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                font {
+                                    pixelSize: 10
+                                    family: "Symbols Nerd Font Mono"
+                                }
                             }
 
                             MouseArea {
@@ -419,7 +440,11 @@ BarBlock {
                         visible: root.devices.length === 0
                         text: !root.adapter ? "no bluetooth adapter found" : "no devices paired yet"
                         color: Themes.muted
-                        font { pixelSize: 10; family: "Quicksand"; italic: true }
+                        font {
+                            pixelSize: 10
+                            family: "Quicksand"
+                            italic: true
+                        }
                         Layout.alignment: Qt.AlignHCenter
                     }
                 }

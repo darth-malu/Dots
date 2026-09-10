@@ -103,7 +103,7 @@ BarBlock {
                 const scrW = root.host?.screen?.width ?? 1920;
                 return Math.max(6, Math.min(cx, scrW - width - 6));
             }
-            anchor.rect.y: 33
+            anchor.rect.y: root.host.height + 8
 
             implicitWidth: 300
             implicitHeight: qsContent.implicitHeight

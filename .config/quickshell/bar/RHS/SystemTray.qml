@@ -203,6 +203,71 @@ RowLayout {
         }
     }
 
+    // live recording pill — red dot while wf-recorder runs, click stops it
+    BarBlock {
+        id: recPill
+
+        visible: RecordingService.recording
+
+        interactive: false
+
+        implicitWidth: recGlyph.implicitWidth + 12
+        implicitHeight: recGlyph.implicitHeight + 8
+
+        radius: height / 2
+        color: recMouse.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.30) : Qt.rgba(1, 0.33, 0.33, 0.17)
+        border.width: 1
+        border.color: Qt.rgba(1, 0.33, 0.33, recMouse.containsMouse ? 0.9 : 0.55)
+
+        Behavior on border.color {
+            ColorAnimation {
+                duration: 120
+            }
+        }
+
+        Behavior on color {
+            ColorAnimation {
+                duration: 120
+            }
+        }
+
+        // breathe while actively recording
+        SequentialAnimation on opacity {
+            running: RecordingService.recording
+            loops: Animation.Infinite
+            alwaysRunToEnd: true
+            NumberAnimation {
+                to: 0.45
+                duration: 600
+                easing.type: Easing.InOutSine
+            }
+            NumberAnimation {
+                to: 1
+                duration: 600
+                easing.type: Easing.InOutSine
+            }
+        }
+
+        content: Text {
+            id: recGlyph
+
+            text: "\uf111"
+            color: "#ff5555"
+            font {
+                pixelSize: 10
+                family: "Symbols Nerd Font Mono"
+            }
+        }
+
+        MouseArea {
+            id: recMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: RecordingService.toggle()
+        }
+    }
+
     // coffee cup — appears right of quicksettings while caffeine mode is on
     Caffeine {}
     Submap {}

@@ -33,25 +33,14 @@ RowLayout {
     readonly property int pctDisplay: BatteryState.pctDisplay
 
     // green = charging · yellow = pending · red = critical · orange = low · purple = normal
-    readonly property color accentColor: isCharging ? "#50fa7b"
-        : isPendingCharge ? "#f1fa8c"
-        : isCritical ? "#ff5555"
-        : isLow ? "#ffb86c"
-        : Themes.accent
+    readonly property color accentColor: isCharging ? "#50fa7b" : isPendingCharge ? "#f1fa8c" : isCritical ? "#ff5555" : isLow ? "#ffb86c" : Themes.accent
 
-
-    readonly property string batteryGlyph:
-        isCharging ? "\uf0e7"
-        : isPendingCharge ? "\uf1e6"
-        : percentage < 0.10 ? "\uf244"
-        : percentage < 0.35 ? "\uf243"
-        : percentage < 0.60 ? "\uf242"
-        : percentage < 0.90 ? "\uf241"
-        : "\uf240"
+    readonly property string batteryGlyph: isCharging ? "\uf0e7" : isPendingCharge ? "\uf1e6" : percentage < 0.10 ? "\uf244" : percentage < 0.35 ? "\uf243" : percentage < 0.60 ? "\uf242" : percentage < 0.90 ? "\uf241" : "\uf240"
 
     MouseArea {
         id: root
-        onVisibleChanged: if (!visible) showPopup = false
+        onVisibleChanged: if (!visible)
+            showPopup = false
 
         implicitWidth: batteryBody.width + 4 + cap.width
         implicitHeight: batteryBody.height
@@ -109,8 +98,14 @@ RowLayout {
                     running: batteryBlock.isLow || batteryBlock.isCritical
                     loops: Animation.Infinite
                     alwaysRunToEnd: true
-                    ColorAnimation { to: batteryBody.blareHi; duration: 340 }
-                    ColorAnimation { to: batteryBody.blareLo; duration: 340 }
+                    ColorAnimation {
+                        to: batteryBody.blareHi
+                        duration: 340
+                    }
+                    ColorAnimation {
+                        to: batteryBody.blareLo
+                        duration: 340
+                    }
                 }
 
                 Behavior on color {
@@ -131,7 +126,11 @@ RowLayout {
                     visible: batteryBlock.isFullyCharged
                     anchors.centerIn: parent
                     text: "\uf0e7"
-                    font { pixelSize: 12; family: "Symbols Nerd Font Mono"; weight: Font.Bold }
+                    font {
+                        pixelSize: 12
+                        family: "Symbols Nerd Font Mono"
+                        weight: Font.Bold
+                    }
                     color: Themes.barText
                     style: Text.Outline
                     styleColor: Qt.rgba(0, 0, 0, 0.7)
@@ -139,12 +138,15 @@ RowLayout {
             }
 
             // ── Charge status icon — centered in the body while plugged in ──
-Text {
-                    anchors.centerIn: parent
-                    visible: batteryBlock.isCharging || batteryBlock.isPendingCharge
-                    text: batteryBlock.isPendingCharge ? "\uf1e6" : "\uf0e7"
-                    font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
-                    color: Themes.barText
+            Text {
+                anchors.centerIn: parent
+                visible: batteryBlock.isCharging || batteryBlock.isPendingCharge
+                text: batteryBlock.isPendingCharge ? "\uf1e6" : "\uf0e7"
+                font {
+                    pixelSize: 11
+                    family: "Symbols Nerd Font Mono"
+                }
+                color: Themes.barText
                 style: Text.Outline
                 styleColor: Qt.rgba(0, 0, 0, 0.65)
             }
@@ -155,18 +157,26 @@ Text {
                 visible: batteryBlock.isLow || batteryBlock.isCritical
                 text: "!"
                 color: Themes.panelBg
-                font { pixelSize: 10; weight: Font.Black; family: "ZedMono Nerd Font" }
+                font {
+                    pixelSize: 10
+                    weight: Font.Black
+                    family: "ZedMono Nerd Font"
+                }
             }
 
             // ── Percentage — inside the body, outlined for legibility over the fill ──
-Text {
-                    anchors.centerIn: parent
-                    visible: batteryBlock.showPct && !batteryBlock.isCharging && !batteryBlock.isPendingCharge && !batteryBlock.isFullyCharged
-                    text: `${batteryBlock.pctDisplay}`
-                    color: Themes.barText
+            Text {
+                anchors.centerIn: parent
+                visible: batteryBlock.showPct && !batteryBlock.isCharging && !batteryBlock.isPendingCharge && !batteryBlock.isFullyCharged
+                text: `${batteryBlock.pctDisplay}`
+                color: Themes.barText
                 style: Text.Outline
                 styleColor: Qt.rgba(0, 0, 0, 0.75)
-                font { pixelSize: 11; bold: true; family: "ZedMono Nerd Font" }
+                font {
+                    pixelSize: 11
+                    bold: true
+                    family: "ZedMono Nerd Font"
+                }
             }
         }
 
@@ -189,8 +199,14 @@ Text {
                 running: batteryBlock.isLow || batteryBlock.isCritical
                 loops: Animation.Infinite
                 alwaysRunToEnd: true
-                ColorAnimation { to: batteryBody.blareHi; duration: 340 }
-                ColorAnimation { to: batteryBody.blareLo; duration: 340 }
+                ColorAnimation {
+                    to: batteryBody.blareHi
+                    duration: 340
+                }
+                ColorAnimation {
+                    to: batteryBody.blareLo
+                    duration: 340
+                }
             }
 
             Behavior on color {
@@ -213,7 +229,7 @@ Text {
             let g = root.mapToGlobal(0, 0);
             return g.x + (root.width / 2) - (width / 2);
         }
-        anchor.rect.y: 33
+        anchor.rect.y: batteryBlock.host.height + 8
 
         implicitWidth: 300
         implicitHeight: popupCol.implicitHeight + 28
@@ -259,7 +275,10 @@ Text {
                         Text {
                             text: batteryBlock.isCritical ? "" : ""
                             color: "#ff5555"
-                            font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
+                            font {
+                                pixelSize: 13
+                                family: "Symbols Nerd Font Mono"
+                            }
                         }
 
                         Text {
@@ -274,7 +293,11 @@ Text {
                             }
                             color: batteryBlock.isCritical ? "#ff5555" : "#ffb86c"
                             wrapMode: Text.WordWrap
-                            font { pixelSize: 11; bold: true; family: "Quicksand" }
+                            font {
+                                pixelSize: 11
+                                bold: true
+                                family: "Quicksand"
+                            }
                         }
                     }
 
@@ -282,8 +305,14 @@ Text {
                         running: batteryBlock.isCritical && visible
                         loops: Animation.Infinite
                         alwaysRunToEnd: true
-                        NumberAnimation { to: 0.55; duration: 800 }
-                        NumberAnimation { to: 1; duration: 800 }
+                        NumberAnimation {
+                            to: 0.55
+                            duration: 800
+                        }
+                        NumberAnimation {
+                            to: 1
+                            duration: 800
+                        }
                     }
                 }
 
@@ -314,19 +343,29 @@ Text {
                                 return "";
                             }
                             color: Themes.fg
-                            font { pixelSize: 13; bold: true; family: "Quicksand" }
+                            font {
+                                pixelSize: 13
+                                bold: true
+                                family: "Quicksand"
+                            }
                             visible: text !== ""
                         }
                     }
 
-                    Item { Layout.fillWidth: true }
+                    Item {
+                        Layout.fillWidth: true
+                    }
 
                     // single percentage readout for the whole popup
                     Text {
                         Layout.alignment: Qt.AlignVCenter
                         text: batteryBlock.pctDisplay + "%"
                         color: batteryBlock.accentColor
-                        font { pixelSize: 14; bold: true; family: "ZedMono Nerd Font" }
+                        font {
+                            pixelSize: 14
+                            bold: true
+                            family: "ZedMono Nerd Font"
+                        }
 
                         Behavior on color {
                             ColorAnimation {
@@ -347,7 +386,10 @@ Text {
                             anchors.centerIn: parent
                             text: "\uf1fe"
                             color: BatteryState.graphEnabled ? Themes.accent : Themes.muted
-                            font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+                            font {
+                                pixelSize: 11
+                                family: "Symbols Nerd Font Mono"
+                            }
                         }
 
                         MouseArea {
@@ -364,7 +406,10 @@ Text {
                         Layout.alignment: Qt.AlignVCenter
                         text: batteryBlock.batteryGlyph
                         color: batteryBlock.accentColor
-                        font { pixelSize: 15; family: "Symbols Nerd Font Mono" }
+                        font {
+                            pixelSize: 15
+                            family: "Symbols Nerd Font Mono"
+                        }
 
                         Behavior on color {
                             ColorAnimation {
@@ -387,10 +432,17 @@ Text {
                         Text {
                             text: "history · last hour"
                             color: Themes.muted
-                            font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                            font {
+                                pixelSize: 9
+                                bold: true
+                                family: "Quicksand"
+                                letterSpacing: 1
+                            }
                         }
 
-                        Item { Layout.fillWidth: true }
+                        Item {
+                            Layout.fillWidth: true
+                        }
                     }
 
                     Rectangle {
@@ -473,7 +525,12 @@ Text {
                 Text {
                     text: "Power Profile"
                     color: Themes.muted
-                    font { pixelSize: 10; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                    font {
+                        pixelSize: 10
+                        bold: true
+                        family: "Quicksand"
+                        letterSpacing: 1
+                    }
                 }
 
                 // ── Profile selector — caelestia-style segmented pill ──
@@ -528,9 +585,18 @@ Text {
 
                             Repeater {
                                 model: [
-                                    { glyph: "\uf06c", profile: PowerProfile.PowerSaver },
-                                    { glyph: "\uf24e", profile: PowerProfile.Balanced },
-                                    { glyph: "\uf0e7", profile: PowerProfile.Performance }
+                                    {
+                                        glyph: "\uf06c",
+                                        profile: PowerProfile.PowerSaver
+                                    },
+                                    {
+                                        glyph: "\uf24e",
+                                        profile: PowerProfile.Balanced
+                                    },
+                                    {
+                                        glyph: "\uf0e7",
+                                        profile: PowerProfile.Performance
+                                    }
                                 ]
 
                                 delegate: Item {
@@ -562,9 +628,11 @@ Text {
                                         anchors.centerIn: parent
                                         text: modelData.glyph
                                         // active icons invert onto the accent fill
-                                        color: segCell.active ? Qt.rgba(0.04, 0.02, 0.08, 0.85)
-                                            : segMouse.containsMouse ? Themes.fg : Themes.dim
-                                        font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
+                                        color: segCell.active ? Qt.rgba(0.04, 0.02, 0.08, 0.85) : segMouse.containsMouse ? Themes.fg : Themes.dim
+                                        font {
+                                            pixelSize: 13
+                                            family: "Symbols Nerd Font Mono"
+                                        }
                                     }
 
                                     MouseArea {

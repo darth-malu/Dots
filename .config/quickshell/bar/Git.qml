@@ -132,7 +132,7 @@ BarBlock {
                 let g = gitPill.mapToGlobal(0, 0);
                 return Math.max(4, Math.min(g.x + gitPill.width / 2 - width / 2, gitPill.host.width - width - 4));
             }
-            anchor.rect.y: 35
+            anchor.rect.y: gitPill.host.height + 8
             visible: gitPill.popupOpen
             grabFocus: true
             color: "transparent"

@@ -8,7 +8,8 @@ import Quickshell
 
 BarBlock {
     id: root
-        onVisibleChanged: if (!visible) MiscState.showPopup = false
+    onVisibleChanged: if (!visible)
+        MiscState.showPopup = false
     required property var host
     readonly property string date: TimeService.date
     readonly property string time: TimeService.time
@@ -65,11 +66,11 @@ BarBlock {
                     anchors.centerIn: parent
                     text: "\uf252 " + TimerState.formatTime(TimerState.remainingSec)
                     // mirrors the panel's urgency palette
-                    color: !TimerState.active ? "#50fa7b"
-                        : TimerState.phase === 2 ? "#ffb86c"
-                        : TimerState.remainingSec <= 60 ? "#ff5555"
-                        : TimerState.remainingSec <= 300 ? "#f1fa8c" : Themes.accent
-                    font { pixelSize: 11; family: "ZedMono Nerd Font" }
+                    color: !TimerState.active ? "#50fa7b" : TimerState.phase === 2 ? "#ffb86c" : TimerState.remainingSec <= 60 ? "#ff5555" : TimerState.remainingSec <= 300 ? "#f1fa8c" : Themes.accent
+                    font {
+                        pixelSize: 11
+                        family: "ZedMono Nerd Font"
+                    }
                 }
 
                 MouseArea {
@@ -210,7 +211,7 @@ BarBlock {
                 return Math.max(6, Math.min(cx, scrW - width - 6));
             }
 
-            anchor.rect.y: 33
+            anchor.rect.y: root.host.height + 8
 
             // size follows the content exactly — NO Behavior here: an
             // animated implicit size makes the window commit intermediate

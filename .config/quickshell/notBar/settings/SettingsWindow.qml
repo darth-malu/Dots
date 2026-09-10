@@ -685,6 +685,10 @@ Item {
             label: "Desktop"
         },
         {
+            icon: "\uf070",
+            label: "Popups"
+        },
+        {
             icon: "\uf120",
             label: "Hyprland"
         },
@@ -707,6 +711,15 @@ Item {
     readonly property var rofiSchemeNames: ["Pyrple", "Gron", "Gruvbox", "Rose", "Everforest", "Soramane"]
     readonly property string rofiThemeName: {
         const t = MiscState.rofiTheme;
+        if (t < 0)
+            return "auto — " + root.rofiSchemeNames[MiscState.themeScheme];
+        return root.rofiSchemeNames[t];
+    }
+
+    // popup roster picker values (mirror of MiscState.popupTheme)
+    readonly property var popupSchemes: [-1, 0, 1, 2, 3, 4, 5]
+    readonly property string popupThemeName: {
+        const t = MiscState.popupTheme;
         if (t < 0)
             return "auto — " + root.rofiSchemeNames[MiscState.themeScheme];
         return root.rofiSchemeNames[t];
@@ -922,7 +935,7 @@ Item {
                                 Loader {
                                     id: pageLoader
                                     width: parent.width
-                                    sourceComponent: root.currentCategory === 0 ? barPage : root.currentCategory === 1 ? wallpaperPage : root.currentCategory === 2 ? mediaPage : root.currentCategory === 3 ? notificationsPage : root.currentCategory === 4 ? connectionsPage : root.currentCategory === 5 ? performancePage : root.currentCategory === 6 ? desktopPage : root.currentCategory === 7 ? hyprlandPage : root.currentCategory === 8 ? rofiPage : root.currentCategory === 9 ? gitPage : helpPage
+                                    sourceComponent: root.currentCategory === 0 ? barPage : root.currentCategory === 1 ? wallpaperPage : root.currentCategory === 2 ? mediaPage : root.currentCategory === 3 ? notificationsPage : root.currentCategory === 4 ? connectionsPage : root.currentCategory === 5 ? performancePage : root.currentCategory === 6 ? desktopPage : root.currentCategory === 7 ? popupsPage : root.currentCategory === 8 ? hyprlandPage : root.currentCategory === 9 ? rofiPage : root.currentCategory === 10 ? gitPage : helpPage
                                 }
                             }
                         }
@@ -1756,20 +1769,67 @@ Item {
                                     checked: MiscState.transparentWsBadge
                                     onFlipped: MiscState.transparentWsBadge = !MiscState.transparentWsBadge
                                 }
+                            }
 
-                                Rectangle {
+                            // ── bar size ──
+                            Card {
+                                title: "Bar Size"
+                                icon: "\uf2d0"
+                                accent: Themes.accent
+
+                                ColumnLayout {
+                                    spacing: 12
                                     Layout.fillWidth: true
-                                    height: 1
-                                    color: Themes.separator
-                                    Layout.leftMargin: 32
-                                }
+                                    Layout.topMargin: 4
 
-                                SettingRow {
-                                    icon: "\uf070"
-                                    label: "Popups"
-                                    caption: MiscState.popupSolidBg ? "solid" : "glass"
-                                    checked: MiscState.popupSolidBg
-                                    onFlipped: MiscState.popupSolidBg = !MiscState.popupSolidBg
+                                    IntStepRow {
+                                        icon: "\uf0c9"
+                                        label: "Bar height"
+                                        minV: 22
+                                        maxV: 48
+                                        stepV: 2
+                                        value: BarState.barHeight
+                                        unit: "px"
+                                        onCommitted: v => BarState.barHeight = v
+                                    }
+
+                                    IntStepRow {
+                                        icon: "\uf07e"
+                                        label: "Bar width"
+                                        minV: 0
+                                        maxV: 3440
+                                        stepV: 40
+                                        value: BarState.barWidth
+                                        unit: "px"
+                                        onCommitted: v => BarState.barWidth = v
+                                    }
+
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 6
+
+                                        Text {
+                                            text: "\uf204"
+                                            color: Themes.muted
+                                            font {
+                                                pixelSize: 11
+                                                family: "Symbols Nerd Font Mono"
+                                            }
+                                            Layout.preferredWidth: 20
+                                            horizontalAlignment: Text.AlignHCenter
+                                        }
+
+                                        Text {
+                                            text: "Width 0 spans the full screen; a set value centers the bar slab."
+                                            color: Themes.dim
+                                            font {
+                                                pixelSize: 9
+                                                family: "ZedMono Nerd Font"
+                                            }
+                                            wrapMode: Text.WordWrap
+                                            Layout.fillWidth: true
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -3818,6 +3878,166 @@ Item {
                 Layout.fillWidth: true
                 Layout.leftMargin: 4
                 text: "Blur applies to the launcher, calc, and every picker — the panel bg turns translucent while blur is on."
+                color: Themes.dim
+                font {
+                    pixelSize: 10
+                    family: "ZedMono Nerd Font"
+                }
+                wrapMode: Text.WordWrap
+            }
+        }
+    }
+
+    // ═══ POPUPS ═══
+    Component {
+        id: popupsPage
+
+        ColumnLayout {
+            spacing: 12
+
+            Card {
+                title: "Popups"
+                icon: "\uf070"
+                accent: Themes.pink
+
+                ColumnLayout {
+                    spacing: 14
+                    Layout.fillWidth: true
+                    Layout.topMargin: 4
+
+                    SettingRow {
+                        icon: "\uf2d0"
+                        label: "Background"
+                        caption: MiscState.popupSolidBg ? "solid" : "glass"
+                        checked: MiscState.popupSolidBg
+                        onFlipped: MiscState.popupSolidBg = !MiscState.popupSolidBg
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: Themes.separator
+                        Layout.leftMargin: 32
+                    }
+
+                    IntStepRow {
+                        icon: "\uf06e"
+                        label: "Glass opacity"
+                        minV: 30
+                        maxV: 95
+                        stepV: 5
+                        value: Math.round(MiscState.popupOpacity * 100)
+                        unit: "%"
+                        onCommitted: v => MiscState.popupOpacity = v / 100
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: Themes.separator
+                        Layout.leftMargin: 32
+                    }
+
+                    // theme roster header — Auto follows the active scheme
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+
+                        Text {
+                            text: "\uf13b"
+                            color: Themes.muted
+                            font {
+                                pixelSize: 13
+                                family: "Symbols Nerd Font Mono"
+                            }
+                            Layout.preferredWidth: 20
+                            horizontalAlignment: Text.AlignHCenter
+                        }
+
+                        Text {
+                            text: "Popup theme"
+                            color: Themes.fg
+                            font {
+                                pixelSize: 12
+                                family: "Quicksand"
+                                bold: true
+                            }
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+
+                        Item {
+                            Layout.fillWidth: true
+                        }
+
+                        Text {
+                            text: root.popupThemeName
+                            color: Themes.accent
+                            font {
+                                pixelSize: 10
+                                bold: true
+                                family: "ZedMono Nerd Font"
+                            }
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+                    }
+
+                    Row {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Repeater {
+                            model: ["Auto", "Pyrple", "Gron", "Gruvbox", "Rose", "Everforest", "Soramane"]
+
+                            delegate: Rectangle {
+                                required property int index
+                                required property string modelData
+
+                                readonly property bool active: MiscState.popupTheme === root.popupSchemes[index]
+                                readonly property bool hovered: popupPillMa.containsMouse
+
+                                implicitHeight: 26
+                                implicitWidth: popupPillLabel.implicitWidth + 16
+                                radius: 8
+                                color: active ? Qt.rgba(Themes.pink.r, Themes.pink.g, Themes.pink.b, 0.16) : hovered ? Qt.rgba(1, 1, 1, 0.05) : Qt.rgba(1, 1, 1, 0.03)
+                                border.width: 1
+                                border.color: active ? Qt.rgba(Themes.pink.r, Themes.pink.g, Themes.pink.b, 0.5) : Qt.rgba(1, 1, 1, 0.07)
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: 110
+                                    }
+                                }
+
+                                Text {
+                                    id: popupPillLabel
+                                    anchors.centerIn: parent
+                                    text: modelData
+                                    color: active ? Themes.fg : hovered ? Themes.dim : Themes.muted
+                                    font {
+                                        pixelSize: 10
+                                        bold: true
+                                        family: "Quicksand"
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: popupPillMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: MiscState.popupTheme = root.popupSchemes[index]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ── what the toggle covers ──
+            Text {
+                Layout.fillWidth: true
+                Layout.leftMargin: 4
+                text: "Applies to every popup card — quicksettings, notifications, clocks, node popups, and the rofi-family pickers. Glass shows the desktop beneath."
                 color: Themes.dim
                 font {
                     pixelSize: 10

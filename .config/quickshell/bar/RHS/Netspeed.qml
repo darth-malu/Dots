@@ -422,7 +422,7 @@ Loader {
                     return globalPos.x + (root.width / 2) - (width / 2);
                 }
 
-                anchor.rect.y: 33
+                anchor.rect.y: loaderBig.host.height + 8
 
                 implicitWidth: 268
                 implicitHeight: card.implicitHeight + 28

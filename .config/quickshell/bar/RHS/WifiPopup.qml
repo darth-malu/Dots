@@ -30,9 +30,7 @@ Item {
 
     readonly property var networks: {
         const list = [...(root.adapter?.networks.values ?? [])];
-        list.sort((a, b) => ((b.connected === true) - (a.connected === true))
-            || ((b.signalStrength ?? 0) - (a.signalStrength ?? 0))
-            || String(a.name ?? "").localeCompare(String(b.name ?? "")));
+        list.sort((a, b) => ((b.connected === true) - (a.connected === true)) || ((b.signalStrength ?? 0) - (a.signalStrength ?? 0)) || String(a.name ?? "").localeCompare(String(b.name ?? "")));
         return list;
     }
 
@@ -240,233 +238,159 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 4
 
-        RowLayout {
-            spacing: 7
-            Layout.fillWidth: true
-
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    if (!netrow.modelData)
-                        return;
-                    root.passwordNetwork = null;
-                    root.editSsid = "";
-                    if (netrow.isConnected) {
-                        netrow.modelData.disconnect();
-                    } else if (netrow.isKnown || !root.needsPsk(netrow.modelData.security)) {
-                        root.requestConnect(netrow.ssidName, "");
-                    } else {
-                        // secured and unknown: ask for the password first
-                        root.passwordNetwork = netrow.modelData;
-                        pwField.forceActiveFocus();
-                    }
-                }
-            }
-
-            SignalBars {
-                level: netrow.modelData?.signalStrength ?? 0
-                litColor: root.signalColor(netrow.modelData?.signalStrength ?? 0)
-                Layout.alignment: Qt.AlignBottom
-            }
-
-            Text {
-                text: netrow.hiddenNet ? "hidden network" : netrow.ssidName
-                color: netrow.hiddenNet ? Themes.muted : netrow.isConnected && MiscState.wifiGreenName ? "#50fa7b" : Themes.fg
-                font.italic: netrow.hiddenNet
-                elide: Text.ElideRight
-                font {
-                    pixelSize: 12
-                    family: "Quicksand"
-                    weight: Font.Medium
-                }
+            RowLayout {
+                spacing: 7
                 Layout.fillWidth: true
-            }
-
-            // wifi band tag (2.4G / 5G / 6G) from nmcli scan data — chip style
-            Rectangle {
-                visible: !netrow.hiddenNet && root.bandFor(netrow.ssidName).length > 0
-                radius: 4
-                color: Themes.separator
-                implicitWidth: bandText.implicitWidth + 10
-                implicitHeight: 14
-
-                Text {
-                    id: bandText
-                    anchors.centerIn: parent
-                    text: root.bandFor(netrow.ssidName)
-                    color: Themes.accent2
-                    font { pixelSize: 8; bold: true; family: "ZedMono Nerd Font" }
-                }
-            }
-
-            // open lock marks open (unsecured) networks; secured ones stay unmarked
-            Text {
-                text: "\uf09c"
-                visible: !netrow.hiddenNet && !root.needsPsk(netrow.modelData?.security ?? 11)
-                color: Themes.muted
-                font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
-            }
-
-            // settings editor toggle for known networks — becomes a close button while editing
-            Text {
-                visible: netrow.isKnown && netrow.ssidName.length > 0
-                text: netrow.editing ? "\uf00d" : "\uf044"
-                color: editMa.containsMouse || netrow.editing ? Themes.accent : Themes.muted
-                font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
 
                 MouseArea {
-                    id: editMa
                     anchors.fill: parent
-                    anchors.margins: -5
-                    hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
+                        if (!netrow.modelData)
+                            return;
                         root.passwordNetwork = null;
-                        root.editSsid = netrow.editing ? "" : netrow.ssidName;
+                        root.editSsid = "";
+                        if (netrow.isConnected) {
+                            netrow.modelData.disconnect();
+                        } else if (netrow.isKnown || !root.needsPsk(netrow.modelData.security)) {
+                            root.requestConnect(netrow.ssidName, "");
+                        } else {
+                            // secured and unknown: ask for the password first
+                            root.passwordNetwork = netrow.modelData;
+                            pwField.forceActiveFocus();
+                        }
                     }
                 }
-            }
 
-            // connected dot — rightmost indicator on the row
-            Rectangle {
-                visible: netrow.isConnected
-                implicitWidth: 5
-                implicitHeight: 5
-                radius: 2.5
-                color: "#50fa7b"
-            }
-        }
-
-        // ── Password entry, encapsulated right below the clicked network ──
-        Rectangle {
-            visible: root.passwordNetwork === netrow.modelData
-            Layout.fillWidth: true
-            implicitHeight: pwCol.implicitHeight + 16
-            radius: 4
-            color: Themes.separator
-
-            ColumnLayout {
-                id: pwCol
-
-                anchors.fill: parent
-                anchors.margins: 8
-                spacing: 6
+                SignalBars {
+                    level: netrow.modelData?.signalStrength ?? 0
+                    litColor: root.signalColor(netrow.modelData?.signalStrength ?? 0)
+                    Layout.alignment: Qt.AlignBottom
+                }
 
                 Text {
-                    text: `password · ${netrow.hiddenNet ? "hidden network" : netrow.ssidName}`
-                    color: Themes.accent
-                    elide: Text.ElideMiddle
-                    font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
-                    Layout.fillWidth: true
-                }
-
-                TextField {
-                    id: pwField
-
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 26
-                    echoMode: TextInput.Password
-                    placeholderText: "enter password… (⏎ to connect)"
-                    color: Themes.fg
-                    placeholderTextColor: Themes.muted
-                    font { pixelSize: 11; family: "Quicksand" }
-                    background: Rectangle {
-                        radius: 4
-                        color: Themes.panelBg
-                        border.color: pwField.activeFocus ? Themes.accent : Themes.muted
-                        border.width: 1
+                    text: netrow.hiddenNet ? "hidden network" : netrow.ssidName
+                    color: netrow.hiddenNet ? Themes.muted : netrow.isConnected && MiscState.wifiGreenName ? "#50fa7b" : Themes.fg
+                    font.italic: netrow.hiddenNet
+                    elide: Text.ElideRight
+                    font {
+                        pixelSize: 12
+                        family: "Quicksand"
+                        weight: Font.Medium
                     }
-                    leftPadding: 8
-                    rightPadding: 8
-                    topPadding: 0
-                    bottomPadding: 0
-                    verticalAlignment: Text.AlignVCenter
-                    selectByMouse: true
-
-                    Keys.onReturnPressed: netrow.submitPw()
-                    Keys.onEnterPressed: netrow.submitPw()
-                    Keys.onEscapePressed: root.passwordNetwork = null
-                }
-            }
-        }
-
-        // ── Inline settings editor (autoconnect · password · forget) ──
-        Rectangle {
-            visible: netrow.editing
-            Layout.fillWidth: true
-            implicitHeight: editorCol.implicitHeight + 16
-            radius: 8
-            color: Themes.separator
-
-            ColumnLayout {
-                id: editorCol
-                anchors.fill: parent
-                anchors.margins: 8
-                spacing: 7
-
-                RowLayout {
                     Layout.fillWidth: true
-                    spacing: 8
+                }
+
+                // wifi band tag (2.4G / 5G / 6G) from nmcli scan data — chip style
+                Rectangle {
+                    visible: !netrow.hiddenNet && root.bandFor(netrow.ssidName).length > 0
+                    radius: 4
+                    color: Themes.separator
+                    implicitWidth: bandText.implicitWidth + 10
+                    implicitHeight: 14
 
                     Text {
-                        text: "autoconnect"
-                        color: Themes.muted
-                        font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
-                        Layout.fillWidth: true
-                    }
-
-                    Rectangle {
-                        readonly property bool on: root.autoconnMap[netrow.ssidName] !== false
-                        Layout.alignment: Qt.AlignVCenter
-                        implicitWidth: 26
-                        implicitHeight: 14
-                        radius: 7
-                        color: on ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.35) : Themes.borderMuted
-
-                        Rectangle {
-                            x: parent.on ? parent.width - width - 2 : 2
-                            anchors.verticalCenter: parent.verticalCenter
-                            implicitWidth: 10
-                            implicitHeight: 10
-                            radius: 5
-                            color: parent.on ? Themes.accent : Themes.muted
-
-                            Behavior on x {
-                                NumberAnimation {
-                                    duration: 120
-                                    easing.type: Easing.OutQuad
-                                }
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.setAutoconnect(netrow.ssidName, !parent.on)
+                        id: bandText
+                        anchors.centerIn: parent
+                        text: root.bandFor(netrow.ssidName)
+                        color: Themes.accent2
+                        font {
+                            pixelSize: 8
+                            bold: true
+                            family: "ZedMono Nerd Font"
                         }
                     }
                 }
 
-                RowLayout {
-                    Layout.fillWidth: true
+                // open lock marks open (unsecured) networks; secured ones stay unmarked
+                Text {
+                    text: "\uf09c"
+                    visible: !netrow.hiddenNet && !root.needsPsk(netrow.modelData?.security ?? 11)
+                    color: Themes.muted
+                    font {
+                        pixelSize: 9
+                        family: "Symbols Nerd Font Mono"
+                    }
+                }
+
+                // settings editor toggle for known networks — becomes a close button while editing
+                Text {
+                    visible: netrow.isKnown && netrow.ssidName.length > 0
+                    text: netrow.editing ? "\uf00d" : "\uf044"
+                    color: editMa.containsMouse || netrow.editing ? Themes.accent : Themes.muted
+                    font {
+                        pixelSize: 10
+                        family: "Symbols Nerd Font Mono"
+                    }
+
+                    MouseArea {
+                        id: editMa
+                        anchors.fill: parent
+                        anchors.margins: -5
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            root.passwordNetwork = null;
+                            root.editSsid = netrow.editing ? "" : netrow.ssidName;
+                        }
+                    }
+                }
+
+                // connected dot — rightmost indicator on the row
+                Rectangle {
+                    visible: netrow.isConnected
+                    implicitWidth: 5
+                    implicitHeight: 5
+                    radius: 2.5
+                    color: "#50fa7b"
+                }
+            }
+
+            // ── Password entry, encapsulated right below the clicked network ──
+            Rectangle {
+                visible: root.passwordNetwork === netrow.modelData
+                Layout.fillWidth: true
+                implicitHeight: pwCol.implicitHeight + 16
+                radius: 4
+                color: Themes.separator
+
+                ColumnLayout {
+                    id: pwCol
+
+                    anchors.fill: parent
+                    anchors.margins: 8
                     spacing: 6
 
+                    Text {
+                        text: `password · ${netrow.hiddenNet ? "hidden network" : netrow.ssidName}`
+                        color: Themes.accent
+                        elide: Text.ElideMiddle
+                        font {
+                            pixelSize: 9
+                            bold: true
+                            family: "Quicksand"
+                            letterSpacing: 1
+                        }
+                        Layout.fillWidth: true
+                    }
+
                     TextField {
-                        id: pskEdit
+                        id: pwField
 
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 24
-                        echoMode: netrow.showPw ? TextInput.Normal : TextInput.Password
-                        placeholderText: "change password…"
-                        // cyan while displaying the network's stored password
-                        color: netrow.savedPw.length > 0 && pskEdit.text === netrow.savedPw ? Themes.accent2 : Themes.fg
+                        Layout.preferredHeight: 26
+                        echoMode: TextInput.Password
+                        placeholderText: "enter password… (⏎ to connect)"
+                        color: Themes.fg
                         placeholderTextColor: Themes.muted
-                        font { pixelSize: 10; family: "Quicksand" }
+                        font {
+                            pixelSize: 11
+                            family: "Quicksand"
+                        }
                         background: Rectangle {
-                            radius: 6
+                            radius: 4
                             color: Themes.panelBg
-                            border.color: pskEdit.activeFocus ? Themes.accent : Themes.muted
+                            border.color: pwField.activeFocus ? Themes.accent : Themes.muted
                             border.width: 1
                         }
                         leftPadding: 8
@@ -476,140 +400,253 @@ Item {
                         verticalAlignment: Text.AlignVCenter
                         selectByMouse: true
 
-                        Keys.onReturnPressed: applyBtn.applyClicked()
-                        Keys.onEnterPressed: applyBtn.applyClicked()
-                    }
-
-                    // reveal / hide the typed password — with an empty field it
-                    // pulls the CURRENT stored password from NetworkManager
-                    Rectangle {
-                        implicitWidth: 22
-                        implicitHeight: 22
-                        radius: 6
-                        color: eyeMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16) : "transparent"
-                        Text {
-                            anchors.centerIn: parent
-                            text: netrow.showPw ? "\uf070" : "\uf06e"
-                            color: netrow.showPw ? Themes.accent : Themes.muted
-                            font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
-                        }
-
-                        MouseArea {
-                            id: eyeMa
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                if (pskEdit.text.length === 0) {
-                                    if (netrow.savedPw.length > 0) {
-                                        pskEdit.text = netrow.savedPw;
-                                        netrow.showPw = true;
-                                    } else {
-                                        pwFetchProc.running = true;
-                                    }
-                                } else if (pskEdit.text === netrow.savedPw) {
-                                    // hide / clear the stored-password view
-                                    pskEdit.clear();
-                                    netrow.showPw = false;
-                                } else {
-                                    netrow.showPw = !netrow.showPw;
-                                }
-                            }
-                        }
-                    }
-
-                    // copy the stored password to the clipboard (wl-copy)
-                    Rectangle {
-                        implicitWidth: 22
-                        implicitHeight: 22
-                        radius: 6
-                        color: copyMa.containsMouse ? Qt.rgba(139 / 255, 233 / 255, 253 / 255, 0.14) : "transparent"
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "\uf0c5"
-                            color: copyMa.containsMouse ? Themes.accent2 : Themes.muted
-                            font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
-                        }
-
-                        MouseArea {
-                            id: copyMa
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: Quickshell.execDetached(["sh", "-c",
-                                `pw=$(nmcli -s -g 802-11-wireless-security.psk connection show '${root.esc(netrow.ssidName)}' | tr -d '\\n'); `
-                                + `if [ -n "$pw" ]; then printf %s "$pw" | wl-copy && notify-send -a Shell 'Password copied' '${root.esc(netrow.ssidName)}'; `
-                                + `else notify-send -a Shell 'No stored password' '${root.esc(netrow.ssidName)}'; fi`]);
-                        }
-                    }
-
-                    Rectangle {
-                        id: applyBtn
-
-                        function applyClicked() {
-                            if (root.changePsk(netrow.ssidName, pskEdit.text)) {
-                                pskEdit.clear();
-                                netrow.savedPw = "";
-                                netrow.showPw = false;
-                            }
-                        }
-
-                        implicitWidth: 22
-                        implicitHeight: 22
-                        radius: 6
-                        color: applyMa.containsMouse ? Qt.rgba(80 / 255, 250 / 255, 123 / 255, 0.16) : Themes.panelBg
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "\uf00c"
-                            color: "#50fa7b"
-                            font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
-                        }
-
-                        MouseArea {
-                            id: applyMa
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: applyBtn.applyClicked()
-                        }
-                    }
-                }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: 20
-                    radius: 6
-                    color: forgetMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.18) : Themes.panelBg
-
-                    RowLayout {
-                        anchors.centerIn: parent
-                        spacing: 5
-
-                        Text {
-                            text: "\uf1f8"
-                            color: "#ff5555"
-                            font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
-                        }
-
-                        Text {
-                            text: "forget network"
-                            color: "#ff5555"
-                            font { pixelSize: 9; bold: true; family: "Quicksand" }
-                        }
-                    }
-
-                    MouseArea {
-                        id: forgetMa
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.forgetNetwork(netrow.modelData)
+                        Keys.onReturnPressed: netrow.submitPw()
+                        Keys.onEnterPressed: netrow.submitPw()
+                        Keys.onEscapePressed: root.passwordNetwork = null
                     }
                 }
             }
-        }
+
+            // ── Inline settings editor (autoconnect · password · forget) ──
+            Rectangle {
+                visible: netrow.editing
+                Layout.fillWidth: true
+                implicitHeight: editorCol.implicitHeight + 16
+                radius: 8
+                color: Themes.separator
+
+                ColumnLayout {
+                    id: editorCol
+                    anchors.fill: parent
+                    anchors.margins: 8
+                    spacing: 7
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        Text {
+                            text: "autoconnect"
+                            color: Themes.muted
+                            font {
+                                pixelSize: 9
+                                bold: true
+                                family: "Quicksand"
+                                letterSpacing: 1
+                            }
+                            Layout.fillWidth: true
+                        }
+
+                        Rectangle {
+                            readonly property bool on: root.autoconnMap[netrow.ssidName] !== false
+                            Layout.alignment: Qt.AlignVCenter
+                            implicitWidth: 26
+                            implicitHeight: 14
+                            radius: 7
+                            color: on ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.35) : Themes.borderMuted
+
+                            Rectangle {
+                                x: parent.on ? parent.width - width - 2 : 2
+                                anchors.verticalCenter: parent.verticalCenter
+                                implicitWidth: 10
+                                implicitHeight: 10
+                                radius: 5
+                                color: parent.on ? Themes.accent : Themes.muted
+
+                                Behavior on x {
+                                    NumberAnimation {
+                                        duration: 120
+                                        easing.type: Easing.OutQuad
+                                    }
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.setAutoconnect(netrow.ssidName, !parent.on)
+                            }
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        TextField {
+                            id: pskEdit
+
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 24
+                            echoMode: netrow.showPw ? TextInput.Normal : TextInput.Password
+                            placeholderText: "change password…"
+                            // cyan while displaying the network's stored password
+                            color: netrow.savedPw.length > 0 && pskEdit.text === netrow.savedPw ? Themes.accent2 : Themes.fg
+                            placeholderTextColor: Themes.muted
+                            font {
+                                pixelSize: 10
+                                family: "Quicksand"
+                            }
+                            background: Rectangle {
+                                radius: 6
+                                color: Themes.panelBg
+                                border.color: pskEdit.activeFocus ? Themes.accent : Themes.muted
+                                border.width: 1
+                            }
+                            leftPadding: 8
+                            rightPadding: 8
+                            topPadding: 0
+                            bottomPadding: 0
+                            verticalAlignment: Text.AlignVCenter
+                            selectByMouse: true
+
+                            Keys.onReturnPressed: applyBtn.applyClicked()
+                            Keys.onEnterPressed: applyBtn.applyClicked()
+                        }
+
+                        // reveal / hide the typed password — with an empty field it
+                        // pulls the CURRENT stored password from NetworkManager
+                        Rectangle {
+                            implicitWidth: 22
+                            implicitHeight: 22
+                            radius: 6
+                            color: eyeMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16) : "transparent"
+                            Text {
+                                anchors.centerIn: parent
+                                text: netrow.showPw ? "\uf070" : "\uf06e"
+                                color: netrow.showPw ? Themes.accent : Themes.muted
+                                font {
+                                    pixelSize: 10
+                                    family: "Symbols Nerd Font Mono"
+                                }
+                            }
+
+                            MouseArea {
+                                id: eyeMa
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    if (pskEdit.text.length === 0) {
+                                        if (netrow.savedPw.length > 0) {
+                                            pskEdit.text = netrow.savedPw;
+                                            netrow.showPw = true;
+                                        } else {
+                                            pwFetchProc.running = true;
+                                        }
+                                    } else if (pskEdit.text === netrow.savedPw) {
+                                        // hide / clear the stored-password view
+                                        pskEdit.clear();
+                                        netrow.showPw = false;
+                                    } else {
+                                        netrow.showPw = !netrow.showPw;
+                                    }
+                                }
+                            }
+                        }
+
+                        // copy the stored password to the clipboard (wl-copy)
+                        Rectangle {
+                            implicitWidth: 22
+                            implicitHeight: 22
+                            radius: 6
+                            color: copyMa.containsMouse ? Qt.rgba(139 / 255, 233 / 255, 253 / 255, 0.14) : "transparent"
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "\uf0c5"
+                                color: copyMa.containsMouse ? Themes.accent2 : Themes.muted
+                                font {
+                                    pixelSize: 10
+                                    family: "Symbols Nerd Font Mono"
+                                }
+                            }
+
+                            MouseArea {
+                                id: copyMa
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Quickshell.execDetached(["sh", "-c", `pw=$(nmcli -s -g 802-11-wireless-security.psk connection show '${root.esc(netrow.ssidName)}' | tr -d '\\n'); ` + `if [ -n "$pw" ]; then printf %s "$pw" | wl-copy && notify-send -a Shell 'Password copied' '${root.esc(netrow.ssidName)}'; ` + `else notify-send -a Shell 'No stored password' '${root.esc(netrow.ssidName)}'; fi`])
+                            }
+                        }
+
+                        Rectangle {
+                            id: applyBtn
+
+                            function applyClicked() {
+                                if (root.changePsk(netrow.ssidName, pskEdit.text)) {
+                                    pskEdit.clear();
+                                    netrow.savedPw = "";
+                                    netrow.showPw = false;
+                                }
+                            }
+
+                            implicitWidth: 22
+                            implicitHeight: 22
+                            radius: 6
+                            color: applyMa.containsMouse ? Qt.rgba(80 / 255, 250 / 255, 123 / 255, 0.16) : Themes.panelBg
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "\uf00c"
+                                color: "#50fa7b"
+                                font {
+                                    pixelSize: 10
+                                    family: "Symbols Nerd Font Mono"
+                                }
+                            }
+
+                            MouseArea {
+                                id: applyMa
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: applyBtn.applyClicked()
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 20
+                        radius: 6
+                        color: forgetMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.18) : Themes.panelBg
+
+                        RowLayout {
+                            anchors.centerIn: parent
+                            spacing: 5
+
+                            Text {
+                                text: "\uf1f8"
+                                color: "#ff5555"
+                                font {
+                                    pixelSize: 10
+                                    family: "Symbols Nerd Font Mono"
+                                }
+                            }
+
+                            Text {
+                                text: "forget network"
+                                color: "#ff5555"
+                                font {
+                                    pixelSize: 9
+                                    bold: true
+                                    family: "Quicksand"
+                                }
+                            }
+                        }
+
+                        MouseArea {
+                            id: forgetMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.forgetNetwork(netrow.modelData)
+                        }
+                    }
+                }
+            }
         }
 
         // fetches the stored psk for this connection (nmcli -s shows secrets)
@@ -641,11 +678,13 @@ Item {
 
             anchor.window: root.host
             anchor.rect.x: {
-                let globalPos = root.anchorItem ? root.anchorItem.mapToGlobal(0, 0) : { x: 0 };
+                let globalPos = root.anchorItem ? root.anchorItem.mapToGlobal(0, 0) : {
+                    x: 0
+                };
                 return globalPos.x + (root.anchorItem ? root.anchorItem.width / 2 : 0) - width / 2;
             }
 
-            anchor.rect.y: 33
+            anchor.rect.y: root.host.height + 8
 
             implicitWidth: 300
             implicitHeight: card.implicitHeight + 28
@@ -681,14 +720,21 @@ Item {
                         Text {
                             text: "\uf1eb"
                             color: Themes.accent
-                            font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                            font {
+                                pixelSize: 14
+                                family: "Symbols Nerd Font Mono"
+                            }
                         }
 
                         Text {
                             visible: (root.adapter?.name ?? "").length > 0
                             text: root.adapter?.name ?? ""
                             color: Themes.fg
-                            font { pixelSize: 12; bold: true; family: "Quicksand" }
+                            font {
+                                pixelSize: 12
+                                bold: true
+                                family: "Quicksand"
+                            }
                         }
 
                         Item {
@@ -707,7 +753,10 @@ Item {
                                 anchors.centerIn: parent
                                 text: "\uf1fe"
                                 color: NetworkState.wifiGraphEnabled ? Themes.accent : Themes.muted
-                                font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+                                font {
+                                    pixelSize: 11
+                                    family: "Symbols Nerd Font Mono"
+                                }
                             }
 
                             MouseArea {
@@ -776,12 +825,30 @@ Item {
 
                                 Repeater {
                                     model: [
-                                        { label: "ssid", value: NetworkState.activeNetwork?.name ?? "-" },
-                                        { label: "band", value: root.bandFor(NetworkState.activeNetwork?.name ?? "") || "-" },
-                                        { label: "signal", value: Math.round((NetworkState.activeNetwork?.signalStrength ?? 0) * 100) + "%" },
-                                        { label: "security", value: NetworkState.activeNetwork != null ? root.secLabel(NetworkState.activeNetwork.security) : "-" },
-                                        { label: "ipv4", value: root.wifiIp.length > 0 ? root.wifiIp : "-" },
-                                        { label: "device", value: root.adapter?.name ?? "-" }
+                                        {
+                                            label: "ssid",
+                                            value: NetworkState.activeNetwork?.name ?? "-"
+                                        },
+                                        {
+                                            label: "band",
+                                            value: root.bandFor(NetworkState.activeNetwork?.name ?? "") || "-"
+                                        },
+                                        {
+                                            label: "signal",
+                                            value: Math.round((NetworkState.activeNetwork?.signalStrength ?? 0) * 100) + "%"
+                                        },
+                                        {
+                                            label: "security",
+                                            value: NetworkState.activeNetwork != null ? root.secLabel(NetworkState.activeNetwork.security) : "-"
+                                        },
+                                        {
+                                            label: "ipv4",
+                                            value: root.wifiIp.length > 0 ? root.wifiIp : "-"
+                                        },
+                                        {
+                                            label: "device",
+                                            value: root.adapter?.name ?? "-"
+                                        }
                                     ]
 
                                     RowLayout {
@@ -792,7 +859,12 @@ Item {
                                         Text {
                                             text: modelData.label
                                             color: Themes.muted
-                                            font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                                            font {
+                                                pixelSize: 9
+                                                bold: true
+                                                family: "Quicksand"
+                                                letterSpacing: 1
+                                            }
                                             Layout.preferredWidth: 56
                                         }
 
@@ -800,7 +872,11 @@ Item {
                                             text: modelData.value
                                             color: Themes.fg
                                             elide: Text.ElideRight
-                                            font { pixelSize: 12; bold: true; family: "ZedMono Nerd Font" }
+                                            font {
+                                                pixelSize: 12
+                                                bold: true
+                                                family: "ZedMono Nerd Font"
+                                            }
                                             Layout.fillWidth: true
                                         }
                                     }
@@ -828,15 +904,25 @@ Item {
                                     Text {
                                         text: `\u2193 ${root.netRoot.fmtBytes(root.netRoot.ifaceRxTotal)}`
                                         color: Themes.accent
-                                        font { pixelSize: 10; bold: true; family: "ZedMono Nerd Font" }
+                                        font {
+                                            pixelSize: 10
+                                            bold: true
+                                            family: "ZedMono Nerd Font"
+                                        }
                                     }
 
-                                    Item { Layout.fillWidth: true }
+                                    Item {
+                                        Layout.fillWidth: true
+                                    }
 
                                     Text {
                                         text: `\u2191 ${root.netRoot.fmtBytes(root.netRoot.ifaceTxTotal)}`
                                         color: Themes.pink
-                                        font { pixelSize: 10; bold: true; family: "ZedMono Nerd Font" }
+                                        font {
+                                            pixelSize: 10
+                                            bold: true
+                                            family: "ZedMono Nerd Font"
+                                        }
                                     }
                                 }
 
@@ -872,7 +958,12 @@ Item {
                             visible: root.knownNets.length > 0
                             text: `known \u00b7 ${root.knownNets.length}`
                             color: Themes.muted
-                            font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                            font {
+                                pixelSize: 9
+                                bold: true
+                                family: "Quicksand"
+                                letterSpacing: 1
+                            }
                             Layout.leftMargin: 4
                         }
 
@@ -885,7 +976,12 @@ Item {
                             visible: root.unknownNets.length > 0
                             text: `available \u00b7 ${root.unknownNets.length}`
                             color: Themes.muted
-                            font { pixelSize: 9; bold: true; family: "Quicksand"; letterSpacing: 1 }
+                            font {
+                                pixelSize: 9
+                                bold: true
+                                family: "Quicksand"
+                                letterSpacing: 1
+                            }
                             Layout.leftMargin: 4
                             Layout.topMargin: 6
                         }
@@ -900,7 +996,11 @@ Item {
                         visible: Networking.wifiEnabled && root.networks.length === 0 && root.adapter !== null
                         text: "scanning for networks\u2026"
                         color: Themes.muted
-                        font { pixelSize: 10; family: "Quicksand"; italic: true }
+                        font {
+                            pixelSize: 10
+                            family: "Quicksand"
+                            italic: true
+                        }
                         Layout.alignment: Qt.AlignHCenter
                     }
                 }
@@ -996,8 +1096,7 @@ Item {
         if (!ssid || ssid.length === 0)
             return;
         pendingSsid = ssid;
-        connProc.cmd = "nmcli --wait 15 dev wifi connect '" + esc(ssid) + "'"
-            + (psk && psk.length > 0 ? " password '" + esc(psk) + "'" : "");
+        connProc.cmd = "nmcli --wait 15 dev wifi connect '" + esc(ssid) + "'" + (psk && psk.length > 0 ? " password '" + esc(psk) + "'" : "");
         connProc.running = true;
     }
 

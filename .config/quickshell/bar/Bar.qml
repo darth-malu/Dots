@@ -5,6 +5,7 @@ import Quickshell.Hyprland
 import QtQuick.Layouts
 import "./time"
 import Quickshell.Wayland
+import Quickshell.Widgets
 import "./RHS"
 import qs.themes
 import qs.services
@@ -33,13 +34,15 @@ ShellRoot {
 
             aboveWindows: false
             color: 'transparent'
-            implicitHeight: 26
+            implicitHeight: BarState.barHeight
 
             margins {
                 // Transparent, Solid Margin and Glass Margin keep side margins;
-                // Solid, Glass Full and Glass Borderless run edge-to-edge
-                right: BarState.barMode === 0 || BarState.barMode === 1 || BarState.barMode === 3 ? 10 : 0
-                left: BarState.barMode === 0 || BarState.barMode === 1 || BarState.barMode === 3 ? 6 : 0
+                // Solid, Glass Full and Glass Borderless run edge-to-edge.
+                // A non-zero barWidth shortcuts all of that and centers a
+                // fixed-width slab on the screen.
+                right: BarState.barWidth > 0 ? Math.max(0, Math.floor((barr.width - BarState.barWidth) / 2)) : (BarState.barMode === 0 || BarState.barMode === 1 || BarState.barMode === 3 ? 10 : 0)
+                left: BarState.barWidth > 0 ? Math.max(0, Math.floor((barr.width - BarState.barWidth) / 2)) : (BarState.barMode === 0 || BarState.barMode === 1 || BarState.barMode === 3 ? 6 : 0)
                 top: 0
             }
 
@@ -71,29 +74,21 @@ ShellRoot {
             // declared BEFORE panel so every module sits on top: wheels over
             // modules with their own handlers (mpris volume, pills, sliders)
             // are consumed there first; empty bar space falls through here
-            // and steps workspaces
+            // and steps workspaces. Single clicks on empty bar space open the
+            // roster menu under the cursor — right = color theme, left = style.
             MouseArea {
-                acceptedButtons: Qt.NoButton
+                id: barActions
+
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
                 anchors.fill: parent
                 onWheel: wheel => {
                     // console.log(`[scrolldbg] bar wheel y=${wheel.angleDelta.y}`);
                     HyprlandService.stepWorkspace(wheel.angleDelta.y > 0);
                 }
-            }
-
-            // double-click empty bar space cycles all six color schemes — the same
-            // choice the right-click (and Settings → Style) offer
-            TapHandler {
-                acceptedButtons: Qt.LeftButton
-                gesturePolicy: TapHandler.ReleaseWithinBounds
-                onDoubleTapped: MiscState.themeScheme = (MiscState.themeScheme + 1) % 6
-            }
-
-            // double right-click cycles the color schemes as well
-            TapHandler {
-                acceptedButtons: Qt.RightButton
-                gesturePolicy: TapHandler.ReleaseWithinBounds
-                onDoubleTapped: MiscState.themeScheme = (MiscState.themeScheme + 1) % 6
+                onClicked: mouse => {
+                    const gx = barActions.mapToGlobal(mouse.x, 0).x;
+                    styleMenu.openAt(mouse.button === Qt.RightButton ? 0 : 1, gx);
+                }
             }
 
             RowLayout {
@@ -148,6 +143,11 @@ ShellRoot {
 
             BrightnessOsd {
                 barWindow: barr
+            }
+
+            StyleMenu {
+                id: styleMenu
+                host: barr
             }
 
             Component {

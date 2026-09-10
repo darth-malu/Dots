@@ -34,6 +34,8 @@ Singleton {
 
             // ── misc / settings keys ──
             property bool popupSolidBg: true
+            property int popupTheme: -1
+            property int popupOpacity: 82
             property bool showSysTray: true
             property bool showMpris: true
             property bool showPlayerChooser: true

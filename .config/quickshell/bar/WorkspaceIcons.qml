@@ -114,14 +114,9 @@ RowLayout {
 
             readonly property bool boxy: MiscState.boxyTheme
 
-            radius: boxy
-                ? (isEmpty ? 0 : Themes.boxyRadius)
-                : Themes.roundedRadius
+            radius: boxy ? (isEmpty ? 0 : Themes.boxyRadius) : Themes.roundedRadius
 
-            color: isEmpty ? "transparent"
-                : boxy
-                ? (isActive ? Themes.boxyActiveBg : "transparent")
-                : (isActive ? Themes.roundedActiveBg : "transparent")
+            color: isEmpty ? "transparent" : boxy ? (isActive ? Themes.boxyActiveBg : "transparent") : (isActive ? Themes.roundedActiveBg : "transparent")
 
             Behavior on color {
                 ColorAnimation {
@@ -156,19 +151,20 @@ RowLayout {
 
                 spacing: 0
 
-                // workspace number badge — visible in both themes
+                // workspace number badge — visible in both themes; an empty
+                // workspace collapses to a bare number (no container box)
                 Rectangle {
                     id: numberContainer
+
+                    readonly property bool bare: rootBlock.isEmpty
+
                     visible: true
                     Layout.fillHeight: true
-                    Layout.rightMargin: 4
-                    implicitWidth: 18
-                    implicitHeight: width
-                    radius: boxy ? Themes.boxyRadius : Themes.roundedRadius
-                    color: rootBlock.isActive
-                        ? (MiscState.transparentWsBadge ? "transparent" : (boxy ? Themes.boxyActiveBg : Themes.roundedBadgeBg))
-                        : rootBlock.urgent ? Themes.roundedUrgentBg
-                        : "transparent"
+                    Layout.rightMargin: bare ? 6 : 4
+                    implicitWidth: bare ? numText.implicitWidth + 6 : 18
+                    implicitHeight: bare ? numText.implicitHeight + 6 : width
+                    radius: bare ? 0 : (boxy ? Themes.boxyRadius : Themes.roundedRadius)
+                    color: rootBlock.isEmpty ? "transparent" : rootBlock.isActive ? (MiscState.transparentWsBadge ? "transparent" : (boxy ? Themes.boxyActiveBg : Themes.roundedBadgeBg)) : rootBlock.urgent ? Themes.roundedUrgentBg : "transparent"
 
                     Behavior on color {
                         ColorAnimation {
@@ -182,20 +178,21 @@ RowLayout {
                         running: rootBlock.urgent && !rootBlock.isActive
                         loops: Animation.Infinite
                         alwaysRunToEnd: true
-                        NumberAnimation { to: 0.45; duration: 420 }
-                        NumberAnimation { to: 1; duration: 420 }
+                        NumberAnimation {
+                            to: 0.45
+                            duration: 420
+                        }
+                        NumberAnimation {
+                            to: 1
+                            duration: 420
+                        }
                     }
 
                     Text {
+                        id: numText
                         anchors.centerIn: parent
                         text: String(rootBlock.ws?.id ?? "")
-                        color: rootBlock.isActive
-                            ? Themes.accent
-                            : rootBlock.urgent
-                                ? "#ff5555"
-                                : rootBlock.isEmpty
-                                    ? Themes.barDim
-                                    : (boxy ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.6) : Themes.roundedBadgeText)
+                        color: rootBlock.isActive ? Themes.accent : rootBlock.urgent ? "#ff5555" : rootBlock.isEmpty ? Themes.barDim : (boxy ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.6) : Themes.roundedBadgeText)
                         font {
                             pixelSize: 12
                             bold: rootBlock.isActive
@@ -228,9 +225,7 @@ RowLayout {
                             // active workspace: keep the focused app full-bright,
                             // dim the unfocused ones when more than one is open;
                             // inactive workspaces stay uniformly dimmed
-                            opacity: rootBlock.isActive
-                                ? (rootBlock.clientIcons.length > 1 && !parent.modelData.focused ? 0.65 : 1)
-                                : 0.65
+                            opacity: rootBlock.isActive ? (rootBlock.clientIcons.length > 1 && !parent.modelData.focused ? 0.65 : 1) : 0.65
 
                             Behavior on opacity {
                                 NumberAnimation {

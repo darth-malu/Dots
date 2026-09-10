@@ -61,8 +61,10 @@ Singleton {
     // green, too shouty); hotter tiers keep their existing orange/red hues
     readonly property color tempMild: pick("#b5ead7", "#a5e6cf", "#a9b665", "#bfe6d8", "#9da9a0", "#b9ecd9")
 
-    // Popup/card background — solid (opaque) or glass variant
-    readonly property color popupCardBg: MiscState.popupSolidBg ? panelBg : Qt.rgba(panelBg.r, panelBg.g, panelBg.b, 0.82)
+    // Popup/card background — solid (opaque) or glass variant; the base
+    // follows the popup roster theme (-1 = active scheme)
+    readonly property color popupBgBase: pickScheme(MiscState.popupTheme, "#282a36", "#24313a", "#282828", "#2f222c", "#2d353b", "#222a3f")
+    readonly property color popupCardBg: MiscState.popupSolidBg ? popupBgBase : Qt.rgba(popupBgBase.r, popupBgBase.g, popupBgBase.b, MiscState.popupOpacity)
 
     // ── bar text — wallpaper-aware ──
     // bar text must stay legible on any wallpaper. The three-way toggle picks

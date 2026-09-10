@@ -18,6 +18,12 @@ Singleton {
     property int barMode: prefs.barMode
     onBarModeChanged: prefs.barMode = barMode
 
+    // bar dimensions — height in px; width 0 = full-bleed, >0 = centered slab
+    property int barHeight: prefs.barHeight
+    onBarHeightChanged: prefs.barHeight = barHeight
+    property int barWidth: prefs.barWidth
+    onBarWidthChanged: prefs.barWidth = barWidth
+
     // caelestia-style desktop frame — accent outline around the screen
     property bool frameOn: prefs.frameOn
     onFrameOnChanged: prefs.frameOn = frameOn
@@ -47,6 +53,8 @@ Singleton {
             property bool solidBar: false
             // no stored value yet → derive from the old boolean (migration)
             property int barMode: prefs.solidBar ? 1 : 0
+            property int barHeight: 26
+            property int barWidth: 0
             property bool frameOn: true
         }
     }

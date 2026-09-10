@@ -17,17 +17,17 @@ BarBlock {
         if (!text || text.length === 0)
             return;
         clipProc.command = ["sh", "-c", "printf %s \"$CLIPTEXT\" | wl-copy"];
-        clipProc.environment = ({ "CLIPTEXT": text });
+        clipProc.environment = ({
+                "CLIPTEXT": text
+            });
         clipProc.running = true;
     }
 
     Process {
         id: clipProc
 
-        stdout: StdioCollector {
-        }
-        stderr: StdioCollector {
-        }
+        stdout: StdioCollector {}
+        stderr: StdioCollector {}
     }
 
     required property var host
@@ -97,20 +97,20 @@ BarBlock {
                 return g.x + (root.width / 2) - (width / 2);
             }
 
-            anchor.rect.y: 33
+            anchor.rect.y: root.host.height + 8
 
             implicitWidth: 344
             implicitHeight: centerCol.implicitHeight + 24
 
-                Rectangle {
-                    anchors.fill: parent
-                    focus: true
-                    radius: 12
-                    color: Themes.popupCardBg
-                    border.width: 1
-                    border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.3)
+            Rectangle {
+                anchors.fill: parent
+                focus: true
+                radius: 12
+                color: Themes.popupCardBg
+                border.width: 1
+                border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.3)
 
-                    Keys.onEscapePressed: NetworkState.notifCenterVisible = false
+                Keys.onEscapePressed: NetworkState.notifCenterVisible = false
 
                 ColumnLayout {
                     id: centerCol
@@ -237,9 +237,7 @@ BarBlock {
                             readonly property int _actionH: (histRow.expanded && histRow.modelData.actions.length > 1) ? 22 : 0
                             implicitHeight: histRow.expanded ? Math.max(96, histRow.bodyText.implicitHeight + 52 + histRow._actionH) : 42
                             radius: histRow.expanded ? MiscState.notifRadius : 9
-                            color: histMouse.hovered ? Qt.rgba(1, 1, 1, 0.05)
-                                : histRow.urgent ? Qt.rgba(1, 0.33, 0.33, 0.08)
-                                : "transparent"
+                            color: histMouse.hovered ? Qt.rgba(1, 1, 1, 0.05) : histRow.urgent ? Qt.rgba(1, 0.33, 0.33, 0.08) : "transparent"
                             border.width: histRow.expanded && histRow.urgent ? 1 : 0
                             border.color: histRow.urgent ? Qt.rgba(1, 0.33, 0.33, 0.45) : "transparent"
 
@@ -266,10 +264,16 @@ BarBlock {
                                     color: Themes.separator
 
                                     Behavior on implicitWidth {
-                                        NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                                        NumberAnimation {
+                                            duration: 160
+                                            easing.type: Easing.OutCubic
+                                        }
                                     }
                                     Behavior on implicitHeight {
-                                        NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                                        NumberAnimation {
+                                            duration: 160
+                                            easing.type: Easing.OutCubic
+                                        }
                                     }
 
                                     IconImage {
@@ -391,12 +395,12 @@ BarBlock {
                                     implicitWidth: 24
                                     implicitHeight: 20
                                     radius: 6
-                                    color: rowCopyMa.containsMouse || histRow.copied
-                                        ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, histRow.copied ? 0.18 : 0.12)
-                                        : "transparent"
+                                    color: rowCopyMa.containsMouse || histRow.copied ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, histRow.copied ? 0.18 : 0.12) : "transparent"
 
                                     Behavior on color {
-                                        ColorAnimation { duration: 120 }
+                                        ColorAnimation {
+                                            duration: 120
+                                        }
                                     }
 
                                     Text {
@@ -409,7 +413,9 @@ BarBlock {
                                         }
 
                                         Behavior on color {
-                                            ColorAnimation { duration: 120 }
+                                            ColorAnimation {
+                                                duration: 120
+                                            }
                                         }
                                     }
 
@@ -430,7 +436,9 @@ BarBlock {
                                         opacity: rowCopyMa.containsMouse || histRow.copied ? 1 : 0
 
                                         Behavior on opacity {
-                                            ColorAnimation { duration: 120 }
+                                            ColorAnimation {
+                                                duration: 120
+                                            }
                                         }
 
                                         Text {
@@ -459,9 +467,7 @@ BarBlock {
                                         onClicked: mouse => {
                                             const n = histRow.modelData;
                                             // right button grabs just the message body
-                                            const text = mouse.button === Qt.RightButton
-                                                ? String(n.body ?? "")
-                                                : [n.summary, n.body].filter(s => s && s.length > 0).join("\n");
+                                            const text = mouse.button === Qt.RightButton ? String(n.body ?? "") : [n.summary, n.body].filter(s => s && s.length > 0).join("\n");
                                             if (text.length === 0)
                                                 return;
                                             root.copyToClipboard(text);
