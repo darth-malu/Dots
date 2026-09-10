@@ -3,14 +3,26 @@
   + [ ] Bar
     + [ ] Bar Width is broken -- look into it...I just want to be able to increase/decrease its width and also add reset option to restore current settings
     + [ ] Do drop down design for the color theme
-+ [ ] Desktop
-  + [ ] Sticky Notes
-    + [ ] Make this a widget like the clock that I need to interact with to add sticky notes..like kde/microsoft win 7 sticky notes
-    + [ ] Remove the setting from settings
+  + [ ] Desktop
+    + [ ] Sticky Notes
+      + [ ] Make this a widget like the clock that I need to interact with to add sticky notes..like kde/microsoft win 7 sticky notes
+      + [ ] Remove the setting from settings
++ [ ] Bar
+  + [ ] GIT
+    + [ ] Slow...unsynced notification and action happening. eg. pushed, committed notif shows before UI update...and everything seems slow...look into logic and make it airtight
+    + [ ] Adding a git repo does not work....look into this in depth!! -- fix this.,..very important to the functionality and multiple prompts havent fixed it
+  + Empty workspace
+    + with icons -> Just show the workspace numbers with same formatting as other workspaces but show the part of the container that normally has the icon as if in workspace without icons
+    + with number -> Just show the workspace numbers with same formatting as other workspaces
++ [ ] Quick Settings
++ [ ] wallpaper rofi
+  + [ ] Combine Header row (with the current wallpaper) with the first row...the search etc under one section
+  + [ ] The color picker for the borders does not work....fix it
+  + [ ] The icons appears misaligned in their containers -- moon, sun , favorites...look into it
+    + [ ] Move light/dark icons from same row as favorites icon to the bottom right instead but only on hover to that specific region not on the wallpaper container itself as currently
+    + [ ] Remove border+bg from favorite icon but maintain the yellow color on check
       
 
-* New Pending:
- + .
-* TODO LATER
+* TODO IMPLEMENT THis now
 + [ ] Possible to store sudo access for hdd so i dont have to manually enter it on every hdd? Use userspace tools if not -- what options are available?
   + researched: udisksctl exists (/run/current-system/sw/bin/udisksctl) and udisks2 is dbus-activated on NixOS (add services.udisks2.enable = true) — lets you mount/unmount without sudo via D-Bus; automount on boot via fstab noauto,nofail,x-systemd.automount; the only NOPASSWD sudo path is a scoped security.sudo.extraRules entry for /run/wrappers/bin/mount/umount
