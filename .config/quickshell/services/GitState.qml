@@ -36,7 +36,15 @@ Singleton {
     readonly property int pollMs: prefs.pollMs
 
     function ensureDefaults() {
-        let mapped = [];
+        let list = prefs.repos ?? [];
+        if (list.length > 0) {
+            prefs.repos = list;
+            gitStore.writeAdapter();
+            return;
+        }
+        // migrate the v1 regular/bare split once — after that the legacy keys
+        // are neutered so a stale write can never clobber the new repos list
+        const mapped = [];
         const regs = prefs.regular ?? [];
         const bares = prefs.bare ?? [];
         for (let i = 0; i < regs.length; i++) {
@@ -53,12 +61,12 @@ Singleton {
                 upstream: String(bares[i].upstream ?? "").trim()
             });
         }
-        if (mapped.length === 0 && (prefs.repos?.length ?? 0) === 0)
-            mapped = root.defaultRepos;
-        if (mapped.length > 0) {
-            prefs.repos = mapped;
-            gitStore.writeAdapter();
-        }
+        if (mapped.length === 0)
+            mapped.push(...root.defaultRepos);
+        prefs.repos = mapped;
+        prefs.regular = [];
+        prefs.bare = [];
+        gitStore.writeAdapter();
     }
 
     // ── repo add / remove (persisted) ──
@@ -138,7 +146,7 @@ Singleton {
     // needs one extra rev-list. Untracked scanning is gone entirely. gc.auto=0 +
     // maintenance.auto=0 on every call stop git self-triggering a repack.
     readonly property string probeScript: `
-fail() { printf 'i\t%s\t\t\terr\tnone\tnone\tnone\n' "$1"; }
+fail() { printf 'i\t%s\terr\tnone\tnone\tnone\n' "$1"; }
 while [ "$#" -gt 0 ]; do
   p="$1"; wt="$2"; up="$3"; i="$4"; shift 4
   if [ -n "$wt" ]; then
@@ -252,9 +260,11 @@ done
         const m = String(msg ?? "").trim() || "chore: auto-sync";
         root.queueSteps(idx, [
             {
+                label: "commit",
                 sub: ["add", "-u", "--", "."]
             },
             {
+                label: "commit",
                 sub: ["commit", "-m", m],
                 ok: "committed " + name,
                 err: "commit failed — handle it in the cli: git -C " + root.repoPath(idx) + " commit"
@@ -266,6 +276,7 @@ done
         const name = root.displayName(idx);
         root.queueSteps(idx, [
             {
+                label: "push",
                 sub: ["push"],
                 ok: "pushed " + name,
                 err: "push failed (auth/remote?) — use the cli: git -C " + root.repoPath(idx) + " push"
@@ -277,6 +288,7 @@ done
         const name = root.displayName(idx);
         root.queueSteps(idx, [
             {
+                label: "pull",
                 sub: ["pull", "--ff-only"],
                 ok: "pulled " + name,
                 err: "pull failed (diverged?) — use the cli: git -C " + root.repoPath(idx) + " pull"
@@ -294,6 +306,7 @@ done
             root._queue.push({
                 group: root._group,
                 idx,
+                label: s.label ?? "",
                 sub: s.sub,
                 ok: s.ok ?? "",
                 err: s.err ?? ""
@@ -348,13 +361,22 @@ done
             if (!a)
                 return;
             const key = "i:" + a.idx;
-            if (exitCode === 0) {
+            const name = root.displayName(a.idx);
+            const upToDate = /(everything up-to-date|already up to date|up to date)/i.test(act.out);
+            const nothingToCommit = /(nothing to commit|no changes added to commit)/i.test(act.out);
+            if (exitCode === 0 || nothingToCommit) {
                 const st = Object.assign({}, root.statuses[key]);
                 st.hint = "";
                 const map = Object.assign({}, root.statuses);
                 map[key] = st;
                 root.statuses = map;
-                if (a.ok.length > 0)
+                if (nothingToCommit)
+                    notify("Git", name + ": nothing to commit");
+                else if (upToDate && a.label === "push")
+                    notify("Git", name + ": nothing to push (already up to date)");
+                else if (upToDate && a.label === "pull")
+                    notify("Git", name + ": nothing to pull (already up to date)");
+                else if (a.ok.length > 0)
                     notify("Git", a.ok);
             } else {
                 const st = Object.assign({}, root.statuses[key]);
