@@ -308,6 +308,7 @@ Singleton {
         onExited: code => {
             if (code !== 0)
                 return;
+            root.wallpaperList = root._acc;
             root._acc = [];
             if (root.current.length === 0 && root.wallpaperList.length > 0) {
                 root._currentIndex = 0;

@@ -12,7 +12,7 @@ import qs.themes
 
 // Avatar picker — overlay launcher in the rofi family (same DNA as the
 // wallpaper picker):
-// · scans ~/Pictures + the shell assets dir for images on every open
+// · scans the dedicated avatars dir (~/.config/quickshell/avatars) on every open
 // · type to filter, Enter applies the highlighted tile
 // · click applies · current avatar shows in the banner
 // · Esc closes
@@ -364,7 +364,7 @@ PanelWindow {
                 Text {
                     anchors.centerIn: parent
                     visible: root.pics.length === 0
-                    text: "no images found — drop pictures into ~/Pictures"
+                    text: "no images found — drop pictures into ~/.config/quickshell/avatars"
                     color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.35)
                     font {
                         pixelSize: 11
@@ -402,7 +402,7 @@ PanelWindow {
         running: false
         property string buf: ""
 
-        command: ["sh", "-c", "find \"$HOME/Pictures\" \"$HOME/.config/quickshell/assets\" \"$HOME/Pictures/Wallpapers\" -maxdepth 3 -type f \\( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' -o -iname '*.bmp' \\) 2>/dev/null | sort"]
+        command: ["sh", "-c", "find \"$HOME/.config/quickshell/avatars\" -maxdepth 2 -type f \\( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' -o -iname '*.bmp' \\) 2>/dev/null | sort"]
 
         stdout: SplitParser {
             onRead: data => avatarScan.buf += data + "\n"
