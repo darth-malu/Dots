@@ -3,6 +3,11 @@
   + [ ] Bar
     + [ ] Bar Width is broken -- look into it...I just want to be able to increase/decrease its width and also add reset option to restore current settings
     + [ ] Do drop down design for the color theme
++ [ ] Desktop
+  + [ ] Sticky Notes
+    + [ ] Make this a widget like the clock that I need to interact with to add sticky notes..like kde/microsoft win 7 sticky notes
+    + [ ] Remove the setting from settings
+      
 
 * New Pending:
  + .
