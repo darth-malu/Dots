@@ -4074,13 +4074,6 @@ Item {
                         valueMs: GitState.pollMs
                         onCommitted: ms => GitState.setPollMs(ms)
                     }
-
-                    SettingRow {
-                        icon: "\uf1d3"
-                        label: "Untracked scan"
-                        caption: "off (projectwide)"
-                        checked: false
-                    }
                 }
             }
 
@@ -4096,7 +4089,7 @@ Item {
 
                     Text {
                         Layout.fillWidth: true
-                        text: "· Untracked scans walk the whole worktree — expensive over large trees like ~/. New bare repos inherit this setting."
+                        text: "· Untracked files surface as a separate warning tier on the git pill."
                         color: Themes.dim
                         font {
                             pixelSize: 11
@@ -4259,22 +4252,22 @@ Item {
                 summary: "watch + commit + push all repos from one pill"
 
                 HelpLine {
-                    text: "The bar pill shows every configured repo at once. Left-click opens the monitor popup, right-click pushes all repos, shift+middle-click commits all, alt+left-click toggles the RHS performance modules."
+                    text: "The bar pill shows every configured repo at once. Left-click opens the monitor popup, right-click pushes all repos, shift+middle-click commits all, alt+left-click toggles the RHS performance modules. The pill spins while a probe or action is running."
                 }
                 HelpLine {
-                    text: "Repo states — grey no upstream · green clean & synced · cyan unpushed · orange unstaged/untracked · yellow staged · red unreachable path."
+                    text: "Repo states — grey no upstream · green clean & synced · cyan ahead/behind · orange untracked · yellow modified/staged · red unreachable path."
                 }
                 HelpLine {
                     text: "The popup's top field holds an optional commit message; every commit button (per-repo and bulk) uses it while it has text, otherwise commits fall back to the default message. The field starts blank each time."
                 }
                 HelpLine {
-                    text: "The + button in the popup adds a repo: a worktree (normal checkout with optional upstream) or a bare repo (bare dir + the worktree it tracks, e.g. dots over ~/). Duplicates are rejected."
+                    text: "The + button in the popup adds a repo: a normal checkout, or a bare dotfiles repo by also giving the worktree it tracks (e.g. dots over ~/). Duplicates are rejected."
                 }
                 HelpLine {
-                    text: "Settings → Git controls the popup tick period (5s–5min) and a global untracked-scan toggle. Probing is on-demand: one git process per refresh, zero background polling."
+                    text: "Settings → Git controls the popup tick period (5s–5min). Probing is on-demand: one git process per refresh, zero background polling. Untracked files are always scanned."
                 }
                 HelpLine {
-                    text: "Repos are also editable in ~/.config/quickshell/git-prefs.json (keys regular and bare); a default dots bare repo is seeded on first run."
+                    text: "Repos are also editable in ~/.config/quickshell/git-prefs.json (key repos, each entry path plus optional workTree); a dots bare repo is seeded on first run."
                 }
             }
 

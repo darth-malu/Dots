@@ -31,6 +31,11 @@ PopupWindow {
     readonly property string menuTitle: root.mode === 0 ? "Color Scheme" : "Bar Style"
 
     function openAt(m: int, gx: real): void {
+        // clicking the same bar button again toggles the popup closed
+        if (root.menuOpen && root.mode === m) {
+            root.menuOpen = false;
+            return;
+        }
         root.mode = m;
         const scrW = root.host?.screen?.width ?? 1920;
         root.xPos = Math.max(6, Math.min(gx, scrW - root.implicitWidth - 6));
@@ -69,21 +74,24 @@ PopupWindow {
         ColumnLayout {
             id: menuColumn
             anchors.fill: parent
-            anchors.margins: 6
+            anchors.leftMargin: 6
+            anchors.rightMargin: 6
+            anchors.topMargin: 6
+            anchors.bottomMargin: 6
             spacing: 2
 
             RowLayout {
                 Layout.fillWidth: true
-                Layout.leftMargin: 8
-                Layout.rightMargin: 8
-                Layout.topMargin: 4
+                Layout.leftMargin: 4
+                Layout.rightMargin: 4
+                Layout.topMargin: 2
                 Layout.bottomMargin: 2
-                spacing: 6
+                spacing: 8
 
                 Rectangle {
-                    implicitWidth: 20
-                    implicitHeight: 20
-                    radius: 5
+                    implicitWidth: 24
+                    implicitHeight: 24
+                    radius: 6
                     color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.15)
                     border.width: 1
                     border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.35)
@@ -93,23 +101,33 @@ PopupWindow {
                         text: root.mode === 0 ? "\uf1fc" : "\uf2d1"
                         color: Themes.accent
                         font {
-                            pixelSize: 9
+                            pixelSize: 11
                             family: "Symbols Nerd Font Mono"
                         }
                     }
                 }
 
-                Text {
-                    text: root.menuTitle
-                    color: Themes.fg
-                    font {
-                        pixelSize: 10
-                        bold: true
-                        family: "Quicksand"
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 1
+
+                    Text {
+                        text: root.menuTitle
+                        color: Themes.fg
+                        font.pixelSize: 12
+                        font.bold: true
+                        font.family: "Quicksand"
+                    }
+
+                    Text {
+                        text: "currently " + (root.mode === 0 ? root.themeNames[root.currentSel()] : root.styleNames[root.currentSel()])
+                        color: Themes.muted
+                        font {
+                            pixelSize: 9
+                            family: "Quicksand"
+                        }
                     }
                 }
-
-                Item { Layout.fillWidth: true }
             }
 
             Rectangle {

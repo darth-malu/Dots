@@ -151,20 +151,20 @@ RowLayout {
 
                 spacing: 0
 
-                // workspace number badge — visible in both themes; an empty
-                // workspace collapses to a bare number (no container box)
-                Rectangle {
-                    id: numberContainer
+// workspace number badge — visible in both themes; an empty
+                    // workspace collapses to a small accent-tinted badge
+                    Rectangle {
+                        id: numberContainer
 
-                    readonly property bool bare: rootBlock.isEmpty
+                        readonly property bool bare: rootBlock.isEmpty
 
-                    visible: true
-                    Layout.fillHeight: true
-                    Layout.rightMargin: bare ? 6 : 4
-                    implicitWidth: bare ? numText.implicitWidth + 6 : 18
-                    implicitHeight: bare ? numText.implicitHeight + 6 : width
-                    radius: bare ? 0 : (boxy ? Themes.boxyRadius : Themes.roundedRadius)
-                    color: rootBlock.isEmpty ? "transparent" : rootBlock.isActive ? (MiscState.transparentWsBadge ? "transparent" : (boxy ? Themes.boxyActiveBg : Themes.roundedBadgeBg)) : rootBlock.urgent ? Themes.roundedUrgentBg : "transparent"
+                        visible: true
+                        Layout.fillHeight: true
+                        Layout.rightMargin: bare ? 6 : 4
+                        implicitWidth: bare ? numText.implicitWidth + 8 : 18
+                        implicitHeight: bare ? numText.implicitHeight + 8 : width
+                        radius: boxy ? Themes.boxyRadius : Themes.roundedRadius
+                        color: rootBlock.isEmpty ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12) : rootBlock.isActive ? (MiscState.transparentWsBadge ? "transparent" : (boxy ? Themes.boxyActiveBg : Themes.roundedBadgeBg)) : rootBlock.urgent ? Themes.roundedUrgentBg : "transparent"
 
                     Behavior on color {
                         ColorAnimation {
@@ -192,7 +192,7 @@ RowLayout {
                         id: numText
                         anchors.centerIn: parent
                         text: String(rootBlock.ws?.name ?? "")
-                        color: rootBlock.isActive ? Themes.accent : rootBlock.urgent ? "#ff5555" : rootBlock.isEmpty ? Themes.barDim : (boxy ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.6) : Themes.roundedBadgeText)
+                        color: rootBlock.isActive ? Themes.accent : rootBlock.urgent ? "#ff5555" : rootBlock.isEmpty ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.8) : (boxy ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.6) : Themes.roundedBadgeText)
                         font {
                             pixelSize: 12
                             bold: rootBlock.isActive

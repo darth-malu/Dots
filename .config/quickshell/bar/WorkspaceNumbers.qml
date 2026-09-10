@@ -39,21 +39,18 @@ RowLayout {
 
             readonly property bool boxy: MiscState.boxyTheme
 
-            // empty workspaces: no bg, no border — just the bare number
+            // empty workspaces get a subtle accent tint so every workspace
+            // reads as a pill — no more floating transparent numbers
             readonly property bool isEmpty: !isActive && !isUrgent
 
-            radius: boxy
-                ? (isEmpty ? 0 : Themes.boxyRadius)
-                : Themes.roundedRadius
+            radius: boxy ? Themes.boxyRadius : Themes.roundedRadius
 
-            border.width: isEmpty ? 0 : (boxy
-                ? (Themes.boxyBorderWidth)
-                : Themes.roundedBorderWidth)
+            border.width: boxy ? Themes.boxyBorderWidth : Themes.roundedBorderWidth
             border.color: isUrgent ? "#ff5555"
                 : boxy ? Themes.boxyActiveBorder
                 : Themes.roundedActiveBorder
 
-            color: isEmpty ? "transparent"
+            color: isEmpty ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.1)
                 : boxy
                 ? (isActive ? Themes.boxyActiveBg : "transparent")
                 : (isActive ? Themes.roundedActiveBg
@@ -102,7 +99,7 @@ RowLayout {
                 color: rootBlock.isActive
                     ? Themes.activeTextColor
                     : rootBlock.isUrgent ? "#ff5555"
-                    : rootBlock.isEmpty ? Themes.barDim
+                    : rootBlock.isEmpty ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.75)
                     : Themes.barMuted
                 dim: false
                 font {

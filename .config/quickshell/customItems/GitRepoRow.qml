@@ -103,19 +103,19 @@ RowLayout {
     }
 
     MiniBtn {
-        glyph: "\uea86"
+        glyph: "\uf0c7"
         tint: Themes.accent2
         onClicked: GitState.commitRepo(row.idx, row.commitMsg)
     }
 
     MiniBtn {
-        glyph: "\uea77"
+        glyph: "\uf093"
         tint: Themes.green
         onClicked: GitState.pushRepo(row.idx)
     }
 
     MiniBtn {
-        glyph: "\uf01e"
+        glyph: "\uf019"
         tint: Themes.yellow
         onClicked: GitState.pullRepo(row.idx)
     }

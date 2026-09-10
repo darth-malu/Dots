@@ -7,16 +7,15 @@ import qs.services
 import qs.customItems
 import qs.themes
 
-// Git bar module (v2) — monitors any number of worktrees (dots-style bare
-// repos included via an optional stored worktree) with one cheap shared probe.
+// Git bar module — monitors any number of worktrees (dots-style bare repos
+// included via an optional stored worktree) with one cheap shared probe.
 //
-// · icon color = worst state across all repos (clean → no upstream → unpushed →
-//   modified / staged → unreachable)
+// · icon color = worst state across all repos (clean → no upstream → ahead/behind →
+//   untracked → modified → staged → unreachable); icon spins while work is running
 // · left click opens the monitor popup, right = push all, shift+middle = commit all
 // · popup lists every repo with per-repo commit / push / pull / delete, bulk
 //   actions, and a one-line "add a repo" form
-// · untracked files are never scanned — only tracked staged/modified changes
-// · failed actions explain themselves and point at the cli
+// · failed actions surface a short one-line hint on the row
 BarBlock {
     id: gitPill
 
@@ -54,10 +53,11 @@ BarBlock {
     readonly property var sevColors: [Themes.muted           // 0 waiting for first probe
         , Themes.green           // 1 clean & synced
         , Themes.sevNoUpstream   // 2 no upstream configured
-        , Themes.sevUnpushed     // 3 unpushed (ahead) / behind
-        , Themes.orange          // 4 modified
-        , Themes.yellow          // 5 staged
-        , Themes.red             // 6 unreachable repo
+        , Themes.sevUnpushed     // 3 ahead / behind
+        , Themes.orange          // 4 untracked files
+        , Themes.yellow          // 5 modified files
+        , Themes.yellow          // 6 staged files
+        , Themes.red             // 7 unreachable repo
     ]
 
     readonly property color pillColor: gitPill.sevColors[GitState.worstSeverity]
@@ -86,6 +86,8 @@ BarBlock {
             parts.push("staged");
         if (s.flags.includes("u"))
             parts.push("modified");
+        if (s.flags.includes("t"))
+            parts.push("untracked");
         if (parts.length === 0) {
             if (!s.upstream)
                 return "no upstream";
@@ -115,10 +117,22 @@ BarBlock {
         return "";
     }
 
-    content: BarText {
-        text: "\uf1d3"
-        pointSize: 13
+    content: Text {
+        text: GitState.busy ? "\uf110" : "\uf1d3"
         color: gitPill.pillColor
+        font {
+            pixelSize: 15
+            family: "Symbols Nerd Font Mono"
+        }
+
+        RotationAnimation on rotation {
+            running: GitState.busy
+            from: 0
+            to: 360
+            duration: 800
+            loops: Animation.Infinite
+            alwaysRunToEnd: true
+        }
     }
 
     LazyLoader {
@@ -208,10 +222,20 @@ BarBlock {
                                 Layout.fillWidth: true
                             }
 
-                            // refresh
+                            // refresh — spins while a probe/action is running
                             MiniBtn {
                                 glyph: "\uf021"
+                                active: GitState.busy
                                 onClicked: GitState.refresh()
+
+                                RotationAnimation on rotation {
+                                    running: GitState.busy
+                                    from: 0
+                                    to: 360
+                                    duration: 800
+                                    loops: Animation.Infinite
+                                    alwaysRunToEnd: true
+                                }
                             }
 
                             // add
@@ -237,6 +261,7 @@ BarBlock {
 
                             MiniBtn {
                                 text: "commit all"
+                                glyph: "\uf0c7"
                                 tint: Themes.accent2
                                 onClicked: {
                                     gitPill.commitMsg = "";
@@ -245,11 +270,13 @@ BarBlock {
                             }
                             MiniBtn {
                                 text: "push all"
+                                glyph: "\uf093"
                                 tint: Themes.green
                                 onClicked: gitPill.pushAll()
                             }
                             MiniBtn {
                                 text: "pull all"
+                                glyph: "\uf019"
                                 tint: Themes.yellow
                                 onClicked: gitPill.pullAll()
                             }
@@ -266,12 +293,14 @@ BarBlock {
 
                             Layout.fillWidth: true
                             Layout.topMargin: 2
-                            placeholder: "commit message (optional — otherwise \"chore: auto-sync\")"
+                            placeholder: "commit message (optional)"
                             onTextChanged: gitPill.commitMsg = commitMsgField.text
                         }
 
                         // ── repo rows ──
                         Repeater {
+                            id: repoRepeater
+
                             model: GitState.repos
 
                             delegate: GitRepoRow {
@@ -290,7 +319,7 @@ BarBlock {
                         Text {
                             visible: GitState.repos.length === 0
                             Layout.fillWidth: true
-                            text: "no repos tracked — add one below"
+                            text: "no repos tracked"
                             color: Themes.muted
                             font {
                                 pixelSize: 9
@@ -325,18 +354,6 @@ BarBlock {
                                     }
                                 }
 
-                                // one-line usage hint so the form explains itself
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: "path = an existing repo folder (worktree or dots-style bare) · upstream = remote ref to compare (optional) · worktree = only when the path is a bare git dir over a checkout (e.g. dots)"
-                                    color: Qt.rgba(Themes.muted.r, Themes.muted.g, Themes.muted.b, 1)
-                                    font {
-                                        pixelSize: 8
-                                        family: "ZedMono Nerd Font"
-                                    }
-                                    wrapMode: Text.WordWrap
-                                }
-
                                 Text {
                                     Layout.fillWidth: true
                                     visible: gitPill.addError !== ""
@@ -352,7 +369,7 @@ BarBlock {
                                 Field {
                                     id: repoPathField
                                     Layout.fillWidth: true
-                                    placeholder: "repo path (e.g. ~/projects/shibuya)"
+                                    placeholder: "repo path"
                                     onReturnPressed: gitPill.doAddRepo()
                                 }
 
@@ -361,30 +378,14 @@ BarBlock {
                                     spacing: 6
 
                                     Field {
-                                        id: repoUpField
-                                        Layout.fillWidth: true
-                                        placeholder: "upstream ref (optional)"
-                                        onReturnPressed: gitPill.doAddRepo()
-                                    }
-                                    Field {
                                         id: repoWtField
                                         Layout.fillWidth: true
-                                        placeholder: "worktree (only for bare, optional)"
+                                        placeholder: "worktree (bare repos only)"
                                         onReturnPressed: gitPill.doAddRepo()
                                     }
                                     MiniBtn {
                                         text: "add"
                                         onClicked: gitPill.doAddRepo()
-                                    }
-                                }
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: "only modified/staged tracked files are reported — untracked files are ignored"
-                                    color: Themes.muted
-                                    font {
-                                        pixelSize: 8
-                                        family: "ZedMono Nerd Font"
                                     }
                                 }
                             }
@@ -400,10 +401,9 @@ BarBlock {
     property string commitMsg: ""
 
     function doAddRepo() {
-        const ok = GitState.addRepo(repoPathField.text, repoUpField.text, repoWtField.text);
+        const ok = GitState.addRepo(repoPathField.text, repoWtField.text);
         if (ok) {
             repoPathField.text = "";
-            repoUpField.text = "";
             repoWtField.text = "";
             gitPill.addError = "";
             GitState.refresh();
