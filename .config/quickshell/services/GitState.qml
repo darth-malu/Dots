@@ -89,11 +89,12 @@ Singleton {
             return 0;
         if (s.error)
             return 7;
-        if (s.flags.includes("s"))
+        const flags = String(s.flags ?? "");
+        if (flags.includes("s"))
             return 6;
-        if (s.flags.includes("u"))
+        if (flags.includes("u"))
             return 5;
-        if (s.flags.includes("t"))
+        if (flags.includes("t"))
             return 4;
         if (s.upstream && (s.ahead > 0 || s.behind > 0))
             return 3;
@@ -103,9 +104,12 @@ Singleton {
     }
 
     // one shared sh pass covers every repo in a single process; per repo a
-    // single `status -sb` yields flags AND ahead/behind. untracked shows as
-    // `??` lines → "t" flag (dirs are collapsed, keeping large trees cheap).
-    // gc.auto=0 + maintenance.auto=0 stop git self-triggering a repack.
+    // single `status -sb` yields worktree flags (staged/modified/untracked,
+    // deduped — a bare repo whose worktree is ~ would otherwise flood flags).
+    // upstream/remote + ahead/behind: prefer the configured @{u}; when the
+    // branch has no tracking ref (e.g. a dotfiles repo compared against a
+    // mirror), fall back to the first remote that carries a ref of the same
+    // branch name. gc.auto=0 + maintenance.auto=0 stop git self-repacking.
     readonly property string probeScript: `
 fail() { printf 'i\t%s\terr\tnone\t\t\n' "$1"; }
 while [ "$#" -gt 0 ]; do
@@ -118,28 +122,40 @@ while [ "$#" -gt 0 ]; do
   gitx rev-parse --git-dir >/dev/null 2>&1 || { fail "$i"; continue; }
 
   st=$(gitx status --porcelain=v1 -sb --untracked-files=normal 2>/dev/null)
-  flags=""
-  ab=""
+  has_s=""; has_u=""; has_t=""
   while IFS= read -r line; do
     [ -z "$line" ] && continue
     case "$line" in
-      "##"*) case "$line" in
-                *"ahead"*|*"behind"*) ab=$(printf '%s' "$line" | awk '{ for(n=1;n<=NF;n++){ f=$n; gsub(/[^a-z]/,"",f); l=length(f); if(l>=5){ v=$(n+1); gsub(/[^0-9]/,"",v); if(substr(f,l-4)="ahead")a=v; if(substr(f,l-5)="behind")b=v } } } if(a=="")a=0; if(b=="")b=0; printf "B%s A%s", b, a }');;
-                *"..."*) ab="B0 A0";;
-              esac;;
-      "??"*) flags="\${flags}t";;
+      "##"*) ;;
+      "??"*) has_t="t";;
       *) n="\${#line}"; [ "$n" -ge 2 ] || continue
          x="\${line:0:1}"; y="\${line:1:1}"
-         case "$x" in M|A|D|R|C) flags="\${flags}s";; esac
-         case "$y" in M|D) flags="\${flags}u";; esac;;
+         case "$x" in M|A|D|R|C) has_s="s";; esac
+         case "$y" in M|D) has_u="u";; esac;;
     esac
   done <<EOF
 $st
 EOF
-  [ -n "$ab" ] || ab="none"
+
   br=$(gitx rev-parse --abbrev-ref HEAD 2>/dev/null)
-  rm=$(gitx remote get-url origin 2>/dev/null)
-  printf 'i\t%s\t%s\t%s\t%s\t%s\n' "$i" "$flags" "$ab" "$br" "$rm"
+  up=$(gitx rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null)
+  if [ -z "$up" ] && [ -n "$br" ]; then
+    for rn in $(gitx remote 2>/dev/null); do
+      if gitx rev-parse --verify -q "refs/remotes/\${rn}/\${br}" >/dev/null 2>&1; then
+        up="\${rn}/\${br}"; break
+      fi
+    done
+  fi
+  ab=""
+  rm=""
+  if [ -n "$up" ]; then
+    rv=$(gitx rev-list --count --left-right "$up"...HEAD 2>/dev/null)
+    [ -n "$rv" ] && ab="B\${rv%%	*} A\${rv##*	}"
+    rn="\${up%%/*}"
+    rm=$(gitx remote get-url "$rn" 2>/dev/null)
+  fi
+  [ -n "$ab" ] || ab="none"
+  printf 'i\t%s\t%s\t%s\t%s\t%s\n' "$i" "\${has_s}\${has_u}\${has_t}" "$ab" "$br" "$rm"
 done
 `
 
@@ -317,7 +333,16 @@ done
             const upToDate = /(everything up-to-date|already up to date|up to date)/i.test(act.out);
             const nothingToCommit = /(nothing to commit|no changes added to commit)/i.test(act.out);
             if (exitCode === 0 || nothingToCommit) {
-                const st = Object.assign({}, root.statuses[key]);
+                const st = Object.assign({
+                    flags: "",
+                    ahead: 0,
+                    behind: 0,
+                    upstream: false,
+                    error: false,
+                    branch: "",
+                    remote: "",
+                    hint: ""
+                }, root.statuses[key] ?? {});
                 st.hint = "";
                 const map = Object.assign({}, root.statuses);
                 map[key] = st;
@@ -331,7 +356,16 @@ done
                 else if (a.ok.length > 0)
                     notify("Git", a.ok);
             } else {
-                const st = Object.assign({}, root.statuses[key]);
+                const st = Object.assign({
+                    flags: "",
+                    ahead: 0,
+                    behind: 0,
+                    upstream: false,
+                    error: false,
+                    branch: "",
+                    remote: "",
+                    hint: ""
+                }, root.statuses[key] ?? {});
                 st.hint = a.err;
                 const map = Object.assign({}, root.statuses);
                 map[key] = st;

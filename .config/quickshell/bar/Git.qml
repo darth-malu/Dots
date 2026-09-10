@@ -370,6 +370,7 @@ BarBlock {
                                     id: repoPathField
                                     Layout.fillWidth: true
                                     placeholder: "repo path"
+                                    textPixelSize: 12
                                     onReturnPressed: gitPill.doAddRepo()
                                 }
 
@@ -381,6 +382,7 @@ BarBlock {
                                         id: repoWtField
                                         Layout.fillWidth: true
                                         placeholder: "worktree (bare repos only)"
+                                        textPixelSize: 12
                                         onReturnPressed: gitPill.doAddRepo()
                                     }
                                     MiniBtn {
