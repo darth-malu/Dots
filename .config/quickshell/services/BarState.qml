@@ -12,7 +12,9 @@ Singleton {
     // 0 = transparent (no bg, flush top)
     // 1 = solid margin slab (rounded, hairline border, side margins)
     // 2 = solid slab (edge-to-edge, no side margins, no border)
-    // 3 = colored glass (edge-to-edge, semi-transparent colored bg)
+    // 3 = glass margin (rounded, translucent, accent hairline, margins)
+    // 4 = glass full (edge-to-edge translucent, accent hairline)
+    // 5 = glass borderless (edge-to-edge translucent, no border)
     property int barMode: prefs.barMode
     onBarModeChanged: prefs.barMode = barMode
 

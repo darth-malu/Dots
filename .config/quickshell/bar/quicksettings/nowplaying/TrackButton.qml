@@ -9,6 +9,9 @@ Item {
     property bool active: false
     property bool flat: false
     property bool ghost: false
+    // compact-mode buttons: the fill pill only appears on hover (the border
+    // still marks the active button) instead of a permanent tint
+    property bool hoverFillOnly: false
     signal clicked
 
     implicitWidth: 28
@@ -27,6 +30,8 @@ Item {
         radius: Math.min(6, width / 4)
         visible: !parent.flat
         color: {
+            if (parent.hoverFillOnly)
+                return mouseArea.containsMouse ? Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.22) : "transparent";
             if (!parent.ghost)
                 return mouseArea.containsMouse ? Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.22) : parent.active ? Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.15) : Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.06);
             return mouseArea.containsMouse ? Qt.rgba(parent.accentColor.r, parent.accentColor.g, parent.accentColor.b, 0.22) : "transparent";

@@ -36,28 +36,29 @@ ShellRoot {
             implicitHeight: 26
 
             margins {
-                // Solid and glass modes are edge-to-edge — no side margins
-                right: BarState.barMode >= 2 ? 0 : 10
-                left: BarState.barMode >= 2 ? 0 : 6
+                // Transparent, Solid Margin and Glass Margin keep side margins;
+                // Solid, Glass Full and Glass Borderless run edge-to-edge
+                right: BarState.barMode === 0 || BarState.barMode === 1 || BarState.barMode === 3 ? 10 : 0
+                left: BarState.barMode === 0 || BarState.barMode === 1 || BarState.barMode === 3 ? 6 : 0
                 top: 0
             }
 
-            // Solid Margin slab (mode 1): rounded, hairline border, side margins.
-            // Solid slab (mode 2): true full-bleed — square corners, no border.
-            // Glass (mode 3): edge-to-edge, semi-transparent tinted panel with an
-            // accent hairline; hyprland's blur rule (rules.lua, namespace tildeBar)
-            // frosts whatever scrolls behind it. alpha tuned for that blur.
+            // bar treatments:
+            // 0 Transparent — no slab, side margins
+            // 1 Solid Margin — solid slab, rounded, hairline border, margins
+            // 2 Solid — true full-bleed solid, square, no border
+            // 3 Glass Margin — translucent tinted slab, rounded, accent hairline
+            // 4 Glass Full — edge-to-edge translucent, accent hairline
+            // 5 Glass Borderless — edge-to-edge translucent, no border
+            // glass modes rely on hyprland's blur rule (rules.lua, namespace
+            // tildeBar) frosting whatever scrolls behind; alpha tuned for that
             Rectangle {
                 visible: BarState.barMode !== 0
                 anchors.fill: parent
-                radius: BarState.barMode === 2 || BarState.barMode === 3 ? 0 : 4
-                color: BarState.barMode === 3
-                    ? Qt.rgba(Themes.barSolidBg.r, Themes.barSolidBg.g, Themes.barSolidBg.b, 0.45)
-                    : Themes.barSolidBg
-                border.width: BarState.barMode === 3 ? 1 : (BarState.barMode >= 2 ? 0 : 1)
-                border.color: BarState.barMode === 3
-                    ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.28)
-                    : Themes.borderColor
+                radius: BarState.barMode === 2 || BarState.barMode === 4 || BarState.barMode === 5 ? 0 : 4
+                color: BarState.barMode === 3 || BarState.barMode === 4 || BarState.barMode === 5 ? Qt.rgba(Themes.barSolidBg.r, Themes.barSolidBg.g, Themes.barSolidBg.b, 0.45) : Themes.barSolidBg
+                border.width: BarState.barMode === 3 || BarState.barMode === 4 ? 1 : (BarState.barMode >= 2 ? 0 : 1)
+                border.color: BarState.barMode === 3 || BarState.barMode === 4 ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.28) : Themes.borderColor
                 z: -1
             }
 
@@ -80,19 +81,19 @@ ShellRoot {
                 }
             }
 
-            // double-click empty bar space toggles between the Transparent and
-            // Solid bar treatments (the same choices as the settings selector)
+            // double-click empty bar space cycles all six color schemes — the same
+            // choice the right-click (and Settings → Style) offer
             TapHandler {
                 acceptedButtons: Qt.LeftButton
                 gesturePolicy: TapHandler.ReleaseWithinBounds
-                onDoubleTapped: BarState.barMode = BarState.barMode === 2 ? 0 : 2
+                onDoubleTapped: MiscState.themeScheme = (MiscState.themeScheme + 1) % 6
             }
 
-            // double right-click cycles the color schemes
+            // double right-click cycles the color schemes as well
             TapHandler {
                 acceptedButtons: Qt.RightButton
                 gesturePolicy: TapHandler.ReleaseWithinBounds
-                onDoubleTapped: MiscState.themeScheme = (MiscState.themeScheme + 1) % 5
+                onDoubleTapped: MiscState.themeScheme = (MiscState.themeScheme + 1) % 6
             }
 
             RowLayout {

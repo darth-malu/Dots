@@ -202,8 +202,7 @@ Singleton {
         root._mvDest = root.wallpaperDirPath + "/" + tone + "/" + path.split("/").pop();
         // plain force move: always relocates (a same-named file in the target
         // folder is replaced — allocation is a pure file move, nothing else)
-        mvProc.command = ["sh", "-c", "mkdir -p \"$1\" && mv -f \"$2\" \"$3\"", "sh",
-            root.wallpaperDirPath + "/" + tone, path, root._mvDest];
+        mvProc.command = ["sh", "-c", "mkdir -p \"$1\" && mv -f \"$2\" \"$3\"", "sh", root.wallpaperDirPath + "/" + tone, path, root._mvDest];
         mvProc.running = true;
     }
 
@@ -239,7 +238,8 @@ Singleton {
         }
         const next = root.wallpaperList.slice();
         next[i] = dest;
-        next.sort();
+        // no re-sort: keeping the item at its old index means the tile never
+        // jumps to a new grid slot when it crosses the light/dark folder line
         root.wallpaperList = next;
         if (root.current === src)
             root.current = dest;
@@ -308,7 +308,6 @@ Singleton {
         onExited: code => {
             if (code !== 0)
                 return;
-            root.wallpaperList = root._acc;
             root._acc = [];
             if (root.current.length === 0 && root.wallpaperList.length > 0) {
                 root._currentIndex = 0;

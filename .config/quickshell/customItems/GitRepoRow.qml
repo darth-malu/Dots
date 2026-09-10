@@ -4,24 +4,22 @@ import qs.services
 import qs.themes
 import qs.customItems
 
-// one git repo row in the monitor popup: status dot + name + state, with
-// per-repo commit/push and delete; bare repos additionally get the cheap
-// untracked-scan toggle (dots walks the whole home tree, so it's OFF by
-// default)
+// one git repo row in the monitor popup: status dot + name + state, per-repo
+// commit / push / pull and delete. A failed action surfaces a use-the-cli
+// hint line under the name instead of dying silently.
 RowLayout {
     id: row
 
     property string displayTitle
     property string subTitle
-    property string kind
-    property int idx
     property color dotColor
     property string stateText
-    property bool canUntoggle: false
+    property int idx
     property string commitMsg: ""
+    property string remoteText: ""
+    property string hint: ""
 
     spacing: 8
-    Layout.preferredHeight: 30
 
     Rectangle {
         implicitWidth: 8
@@ -34,11 +32,16 @@ RowLayout {
     ColumnLayout {
         Layout.alignment: Qt.AlignVCenter
         spacing: 1
+        Layout.maximumWidth: 210
 
         Text {
             text: row.displayTitle
             color: Themes.fg
-            font { pixelSize: 11; bold: true; family: "Quicksand Medium" }
+            font {
+                pixelSize: 11
+                bold: true
+                family: "Quicksand Medium"
+            }
         }
 
         Text {
@@ -46,50 +49,80 @@ RowLayout {
             text: row.subTitle
             elide: Text.ElideRight
             color: Themes.muted
-            font { pixelSize: 8; family: "ZedMono Nerd Font" }
-            Layout.maximumWidth: 190
+            font {
+                pixelSize: 8
+                family: "ZedMono Nerd Font"
+            }
+            Layout.fillWidth: true
+            Layout.maximumWidth: 210
+        }
+
+        Text {
+            visible: row.hint != ""
+            text: "\uf071  " + row.hint
+            elide: Text.ElideMiddle
+            color: Themes.red
+            font {
+                pixelSize: 8
+                family: "ZedMono Nerd Font"
+            }
+            Layout.fillWidth: true
+            Layout.maximumWidth: 210
         }
     }
 
-    Item { Layout.fillWidth: true; Layout.minimumWidth: 8 }
+    Item {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 8
+    }
+
+    Text {
+        visible: row.remoteText != ""
+        text: row.remoteText
+        elide: Text.ElideRight
+        color: Themes.muted
+        font {
+            pixelSize: 8
+            family: "ZedMono Nerd Font"
+        }
+        Layout.maximumWidth: 96
+        Layout.alignment: Qt.AlignVCenter
+    }
 
     Text {
         visible: row.stateText != ""
         text: row.stateText
-        color: row.dotColor
-        font { pixelSize: 8; family: "ZedMono Nerd Font" }
-        Layout.alignment: Qt.AlignVCenter
         elide: Text.ElideMiddle
-        Layout.maximumWidth: 92
-    }
-
-    MiniBtn {
-        visible: row.canUntoggle
-        glyph: (GitState.bareRepos[row.idx]?.untracked ?? false) ? "\uf0c2" : "\uf07c"
-        active: GitState.bareRepos[row.idx]?.untracked ?? false
-        onClicked: GitState.setBareUntracked(row.idx, !(GitState.bareRepos[row.idx]?.untracked ?? false))
+        color: row.dotColor
+        font {
+            pixelSize: 8
+            family: "ZedMono Nerd Font"
+        }
+        Layout.maximumWidth: 96
+        Layout.alignment: Qt.AlignVCenter
     }
 
     MiniBtn {
         glyph: "\uea86"
         tint: Themes.accent2
-        onClicked: GitState.commitRepo(row.kind, row.idx, row.commitMsg)
+        onClicked: GitState.commitRepo(row.idx, row.commitMsg)
     }
 
     MiniBtn {
         glyph: "\uea77"
         tint: Themes.green
-        onClicked: GitState.pushRepo(row.kind, row.idx)
+        onClicked: GitState.pushRepo(row.idx)
+    }
+
+    MiniBtn {
+        glyph: "\uf01e"
+        tint: Themes.yellow
+        onClicked: GitState.pullRepo(row.idx)
     }
 
     MiniBtn {
         glyph: "\uf1f8"
         tint: Themes.red
-        onClicked: {
-            if (row.kind === "r")
-                GitState.removeRegular(row.idx);
-            else
-                GitState.removeBare(row.idx);
-        }
+        onClicked: GitState.removeRepo(row.idx)
     }
 }

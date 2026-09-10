@@ -238,6 +238,31 @@ BarBlock {
                                     onActivated: CaffeineService.toggle()
                                 }
 
+                                // screen-recording toggle — sits right of caffeine
+                                HeaderButton {
+                                    glyph: "\uf111"
+                                    tint: RecordingService.recording ? "#ff5555" : Themes.muted
+
+                                    // breathe while actively recording
+                                    SequentialAnimation on opacity {
+                                        running: RecordingService.recording
+                                        loops: Animation.Infinite
+                                        alwaysRunToEnd: true
+                                        NumberAnimation {
+                                            to: 0.45
+                                            duration: 600
+                                            easing.type: Easing.InOutSine
+                                        }
+                                        NumberAnimation {
+                                            to: 1
+                                            duration: 600
+                                            easing.type: Easing.InOutSine
+                                        }
+                                    }
+
+                                    onActivated: RecordingService.toggle()
+                                }
+
                                 HeaderButton {
                                     glyph: "\uf013"
                                     tint: Themes.accent

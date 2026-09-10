@@ -69,7 +69,10 @@ PanelWindow {
                 Text {
                     text: "\uf007"
                     color: Themes.rofiAccent
-                    font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
+                    font {
+                        pixelSize: 13
+                        family: "Symbols Nerd Font Mono"
+                    }
                 }
 
                 TextField {
@@ -129,7 +132,10 @@ PanelWindow {
                     visible: root.results.length > 0
                     text: root.results.length
                     color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.4)
-                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                    font {
+                        pixelSize: 10
+                        family: "ZedMono Nerd Font"
+                    }
                 }
 
                 Rectangle {
@@ -144,7 +150,10 @@ PanelWindow {
                         anchors.centerIn: parent
                         text: "\uf00d"
                         color: closeMa.containsMouse ? "#ff5555" : Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.7)
-                        font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+                        font {
+                            pixelSize: 9
+                            family: "Symbols Nerd Font Mono"
+                        }
                     }
 
                     MouseArea {
@@ -194,7 +203,10 @@ PanelWindow {
                             visible: bannerAvatar.status !== Image.Ready
                             text: "\uf007"
                             color: Themes.muted
-                            font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                            font {
+                                pixelSize: 14
+                                family: "Symbols Nerd Font Mono"
+                            }
                         }
                     }
 
@@ -205,7 +217,11 @@ PanelWindow {
                         Text {
                             text: "CURRENT AVATAR"
                             color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.4)
-                            font { pixelSize: 8; letterSpacing: 2; family: "ZedMono Nerd Font" }
+                            font {
+                                pixelSize: 8
+                                letterSpacing: 2
+                                family: "ZedMono Nerd Font"
+                            }
                         }
 
                         Text {
@@ -216,7 +232,11 @@ PanelWindow {
                                 return a.split("/").pop();
                             }
                             color: Themes.fg
-                            font { pixelSize: 11; bold: true; family: "Quicksand" }
+                            font {
+                                pixelSize: 11
+                                bold: true
+                                family: "Quicksand"
+                            }
                         }
                     }
                 }
@@ -294,7 +314,10 @@ PanelWindow {
                             text: cellWrap.path_.split("/").pop()
                             color: grid.currentIndex === index ? Themes.accent : Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.8)
                             elide: Text.ElideMiddle
-                            font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                            font {
+                                pixelSize: 9
+                                family: "ZedMono Nerd Font"
+                            }
                         }
                     }
 
@@ -310,9 +333,7 @@ PanelWindow {
                         radius: 9
                         color: "transparent"
                         border.width: (grid.currentIndex === index || cellMa.containsMouse) ? 2 : 1
-                        border.color: grid.currentIndex === index
-                            ? Themes.pink
-                            : Qt.rgba(1, 1, 1, 0.14)
+                        border.color: grid.currentIndex === index ? Themes.pink : Qt.rgba(1, 1, 1, 0.14)
                     }
 
                     // hover tint
@@ -345,7 +366,11 @@ PanelWindow {
                     visible: root.pics.length === 0
                     text: "no images found — drop pictures into ~/Pictures"
                     color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.35)
-                    font { pixelSize: 11; letterSpacing: 0.5; family: "ZedMono Nerd Font" }
+                    font {
+                        pixelSize: 11
+                        letterSpacing: 0.5
+                        family: "ZedMono Nerd Font"
+                    }
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.WordWrap
                     width: parent.width - 24
@@ -356,7 +381,11 @@ PanelWindow {
                     visible: root.results.length === 0 && root.pics.length > 0
                     text: "no matches"
                     color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.35)
-                    font { pixelSize: 11; letterSpacing: 1; family: "ZedMono Nerd Font" }
+                    font {
+                        pixelSize: 11
+                        letterSpacing: 1
+                        family: "ZedMono Nerd Font"
+                    }
                 }
             }
         }
@@ -373,7 +402,7 @@ PanelWindow {
         running: false
         property string buf: ""
 
-        command: ["sh", "-c", `find "$HOME/Pictures" "$HOME/.config/quickshell/assets" "$HOME/Pictures/Wallpapers" -maxdepth 3 -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' -o -iname '*.bmp' \) 2>/dev/null | sort`]
+        command: ["sh", "-c", "find \"$HOME/Pictures\" \"$HOME/.config/quickshell/assets\" \"$HOME/Pictures/Wallpapers\" -maxdepth 3 -type f \\( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' -o -iname '*.bmp' \\) 2>/dev/null | sort"]
 
         stdout: SplitParser {
             onRead: data => avatarScan.buf += data + "\n"

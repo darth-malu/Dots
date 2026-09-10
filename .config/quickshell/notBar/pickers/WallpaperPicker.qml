@@ -40,9 +40,7 @@ PanelWindow {
 
     // user-tuned ring color for the hovered/selected tile ("" falls back to
     // the theme pink, persisted via PickerState)
-    readonly property color borderColor: PickerState.wallpaperBorder
-        ? PickerState.wallpaperBorder
-        : Themes.pink
+    readonly property color borderColor: PickerState.wallpaperBorder ? PickerState.wallpaperBorder : Themes.pink
 
     // "#aarrggbb" / "#rrggbb" color → uppercase 6-digit rgb for swatch compare
     function _hex6(c) {
@@ -80,41 +78,42 @@ PanelWindow {
         PickerState.wallpaperOpen = false;
     }
 
-    // the wallpaper the header delete button acts on: the hovered/keyboard-
-    // highlighted tile when there is one, otherwise the applied wallpaper
-    function delTarget() {
-        if (grid.currentItem && grid.currentItem.path_)
-            return grid.currentItem.path_;
-        return WallpaperService.current;
-    }
-
     // toggle pill for the banner — on = green filled, off = neutral pill
     component WallChip: Rectangle {
         id: chip
 
         property string label: ""
         property bool on: false
-        signal toggled()
+        signal toggled
 
         implicitWidth: chipText.implicitWidth + 16
         implicitHeight: 20
         radius: 10
-        color: chip.on ? Qt.rgba(0.31, 0.98, 0.48, 0.15)
-            : chipMa.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : Qt.rgba(1, 1, 1, 0.05)
+        color: chip.on ? Qt.rgba(0.31, 0.98, 0.48, 0.15) : chipMa.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : Qt.rgba(1, 1, 1, 0.05)
         border.width: 1
-        border.color: chip.on ? "#50fa7b"
-            : chipMa.containsMouse ? Qt.rgba(0.31, 0.98, 0.48, 0.5) : Qt.rgba(1, 1, 1, 0.18)
+        border.color: chip.on ? "#50fa7b" : chipMa.containsMouse ? Qt.rgba(0.31, 0.98, 0.48, 0.5) : Qt.rgba(1, 1, 1, 0.18)
 
-        Behavior on color { ColorAnimation { duration: 110 } }
-        Behavior on border.color { ColorAnimation { duration: 110 } }
+        Behavior on color {
+            ColorAnimation {
+                duration: 110
+            }
+        }
+        Behavior on border.color {
+            ColorAnimation {
+                duration: 110
+            }
+        }
 
         Text {
             id: chipText
             anchors.centerIn: parent
             text: chip.label
-            color: chip.on ? "#50fa7b"
-                : chipMa.containsMouse ? Themes.fg : Qt.rgba(1, 1, 1, 0.55)
-            font { pixelSize: 8; letterSpacing: 0.5; family: "ZedMono Nerd Font" }
+            color: chip.on ? "#50fa7b" : chipMa.containsMouse ? Themes.fg : Qt.rgba(1, 1, 1, 0.55)
+            font {
+                pixelSize: 8
+                letterSpacing: 0.5
+                family: "ZedMono Nerd Font"
+            }
         }
 
         MouseArea {
@@ -135,27 +134,25 @@ PanelWindow {
         property string label: ""
         property bool on: false
         property color activeColor: "#ffffff"
-        signal clicked()
+        signal clicked
 
         implicitWidth: pillText.implicitWidth + 18
         implicitHeight: 22
         radius: 11
-        color: pill.on
-            ? Qt.rgba(pill.activeColor.r, pill.activeColor.g, pill.activeColor.b, 0.2)
-            : pillMa.containsMouse ? Qt.rgba(1, 1, 1, 0.09) : Qt.rgba(1, 1, 1, 0.05)
+        color: pill.on ? Qt.rgba(pill.activeColor.r, pill.activeColor.g, pill.activeColor.b, 0.2) : pillMa.containsMouse ? Qt.rgba(1, 1, 1, 0.09) : Qt.rgba(1, 1, 1, 0.05)
         border.width: 1
-        border.color: pill.on
-            ? pill.activeColor
-            : pillMa.containsMouse ? Qt.rgba(1, 1, 1, 0.35) : Qt.rgba(1, 1, 1, 0.16)
+        border.color: pill.on ? pill.activeColor : pillMa.containsMouse ? Qt.rgba(1, 1, 1, 0.35) : Qt.rgba(1, 1, 1, 0.16)
 
         Text {
             id: pillText
             anchors.centerIn: parent
             text: pill.label
-            color: pill.on
-                ? pill.activeColor
-                : pillMa.containsMouse ? Themes.fg : Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.8)
-            font { pixelSize: 9; letterSpacing: 0.4; family: "ZedMono Nerd Font" }
+            color: pill.on ? pill.activeColor : pillMa.containsMouse ? Themes.fg : Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.8)
+            font {
+                pixelSize: 9
+                letterSpacing: 0.4
+                family: "ZedMono Nerd Font"
+            }
         }
 
         MouseArea {
@@ -190,7 +187,10 @@ PanelWindow {
                 Text {
                     text: "\uf03e"
                     color: Themes.rofiAccent
-                    font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
+                    font {
+                        pixelSize: 13
+                        family: "Symbols Nerd Font Mono"
+                    }
                 }
 
                 TextField {
@@ -299,7 +299,10 @@ PanelWindow {
                     visible: root.results.length > 0
                     text: root.results.length
                     color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.4)
-                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                    font {
+                        pixelSize: 10
+                        family: "ZedMono Nerd Font"
+                    }
                 }
             }
 
@@ -341,29 +344,12 @@ PanelWindow {
 
                             Image {
                                 anchors.fill: parent
-                                source: WallpaperService.current.length > 0
-                                    ? WallpaperService.thumbSource(WallpaperService.current, WallpaperService.thumbVersion)
-                                    : ""
+                                source: WallpaperService.current.length > 0 ? WallpaperService.thumbSource(WallpaperService.current, WallpaperService.thumbVersion) : ""
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
-                                sourceSize: { const s = 192; return Qt.size(s, s); }
-                            }
-
-                            Rectangle {
-                                anchors.bottom: parent.bottom
-                                anchors.right: parent.right
-                                anchors.margins: 3
-                                implicitWidth: liveTag.implicitWidth + 6
-                                implicitHeight: 12
-                                radius: 6
-                                color: Qt.rgba(0, 0, 0, 0.5)
-
-                                Text {
-                                    id: liveTag
-                                    anchors.centerIn: parent
-                                    text: "\uf111 live"
-                                    color: "#50fa7b"
-                                    font { pixelSize: 6; letterSpacing: 0.6; family: "ZedMono Nerd Font" }
+                                sourceSize: {
+                                    const s = 192;
+                                    return Qt.size(s, s);
                                 }
                             }
                         }
@@ -377,7 +363,11 @@ PanelWindow {
                                 text: WallpaperService.current.length > 0 ? WallpaperService.current.split("/").pop() : "none"
                                 elide: Text.ElideMiddle
                                 color: Themes.fg
-                                font { pixelSize: 12; bold: true; family: "Quicksand" }
+                                font {
+                                    pixelSize: 12
+                                    bold: true
+                                    family: "Quicksand"
+                                }
                             }
                         }
                     }
@@ -394,7 +384,9 @@ PanelWindow {
                             onToggled: WallpaperService.slideshowEnabled = !WallpaperService.slideshowEnabled
                         }
 
-                        Item { Layout.fillWidth: true }
+                        Item {
+                            Layout.fillWidth: true
+                        }
 
                         // ring color swab — tunes the hovered/selected tile border
                         Rectangle {
@@ -412,7 +404,10 @@ PanelWindow {
                                 anchors.centerIn: parent
                                 text: "\uf0c8"
                                 color: Qt.rgba(0, 0, 0, 0.55)
-                                font { pixelSize: 7; family: "Symbols Nerd Font Mono" }
+                                font {
+                                    pixelSize: 7
+                                    family: "Symbols Nerd Font Mono"
+                                }
                                 visible: ringSwabMa.containsMouse
                             }
 
@@ -429,35 +424,8 @@ PanelWindow {
                             }
                         }
 
-                        // delete the focused wallpaper (shown only when one exists)
-                        Rectangle {
-                            Layout.alignment: Qt.AlignVCenter
-                            visible: root.delTarget().length > 0
-                            implicitWidth: 18
-                            implicitHeight: 18
-                            radius: 9
-                            color: delMa.containsMouse ? Qt.rgba(1, 0.4, 0.4, 0.16) : "transparent"
-                            border.width: 1
-                            border.color: delMa.containsMouse ? "#ff5555" : Themes.rofiBorder
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: "\uf2ed"
-                                color: delMa.containsMouse ? "#ff5555" : Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.7)
-                                font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
-                            }
-
-                            MouseArea {
-                                id: delMa
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                hoverEnabled: true
-                                onClicked: {
-                                    confirmDel.target = root.delTarget();
-                                    confirmDel.open();
-                                }
-                            }
-                        }
+                        // deleting lives on the tiles themselves (hover row) —
+                        // the previous banner trash was dropped
                     }
                 }
             }
@@ -496,6 +464,7 @@ PanelWindow {
                     height: grid.cellHeight
 
                     readonly property string path_: modelData
+                    property bool confirming: false
 
                     ClippingRectangle {
                         anchors.fill: parent
@@ -507,7 +476,10 @@ PanelWindow {
                             source: WallpaperService.thumbSource(cellWrap.path_, WallpaperService.thumbVersion)
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
-                            sourceSize: { const s = 384; return Qt.size(s, s); }
+                            sourceSize: {
+                                const s = 384;
+                                return Qt.size(s, s);
+                            }
 
                             opacity: (cellWrap.path_ === WallpaperService.current && grid.currentIndex !== index) ? 0.85 : 1
                         }
@@ -530,11 +502,7 @@ PanelWindow {
                         radius: 9
                         color: "transparent"
                         border.width: 1
-                        border.color: grid.currentIndex === index
-                            ? root.borderColor
-                            : cellWrap.path_ === WallpaperService.current
-                                ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.55)
-                                : Qt.rgba(1, 1, 1, 0.12)
+                        border.color: grid.currentIndex === index ? root.borderColor : cellWrap.path_ === WallpaperService.current ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.55) : Qt.rgba(1, 1, 1, 0.12)
                     }
 
                     // "applied" corner badge on the current wallpaper
@@ -553,7 +521,11 @@ PanelWindow {
                             anchors.centerIn: parent
                             text: "\uf00c"
                             color: "#181825"
-                            font { pixelSize: 8; bold: true; family: "Symbols Nerd Font Mono" }
+                            font {
+                                pixelSize: 8
+                                bold: true
+                                family: "Symbols Nerd Font Mono"
+                            }
                         }
                     }
 
@@ -578,7 +550,7 @@ PanelWindow {
                         // keeping the tone buttons visible while the whole tile is
                         // hovered (not just the star) lets the cursor travel across
                         // the gap to a light/dark button without them vanishing
-                        readonly property bool revealHover: cellMa.containsMouse || starHover.containsMouse || lightMa.containsMouse || darkMa.containsMouse
+                        readonly property bool revealHover: cellMa.containsMouse || starHover.containsMouse || lightMa.containsMouse || darkMa.containsMouse || deleteMa.containsMouse
                         readonly property bool hasTag: favBtn.fav || toneCluster.tone !== "unknown"
 
                         // delay hiding so the cursor can travel from star → tone buttons
@@ -612,14 +584,19 @@ PanelWindow {
                                 implicitWidth: 22
                                 implicitHeight: 22
                                 radius: 9
-                                color: "transparent"
+                                // translucent scrim so the glyphs stay readable
+                                // over super-light wallpapers behind the tile
+                                color: lightMa.containsMouse ? Qt.rgba(0, 0, 0, 0.55) : Qt.rgba(0, 0, 0, 0.35)
+                                border.width: 1
+                                border.color: lightMa.containsMouse ? Qt.rgba(1, 1, 1, 0.45) : Qt.rgba(1, 1, 1, 0.16)
                                 Text {
                                     anchors.centerIn: parent
                                     text: "\uf185"
-                                    color: toneCluster.tone === "light"
-                                        ? "#ffedd6"
-                                        : Qt.rgba(1, 1, 1, 0.45)
-                                    font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
+                                    color: toneCluster.tone === "light" ? "#ffedd6" : Qt.rgba(1, 1, 1, 0.85)
+                                    font {
+                                        pixelSize: 8
+                                        family: "Symbols Nerd Font Mono"
+                                    }
                                 }
 
                                 MouseArea {
@@ -627,8 +604,13 @@ PanelWindow {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    onEntered: { toneCluster.revealDelayed = true; revealTimer.stop(); }
-                                    onExited: { revealTimer.restart(); }
+                                    onEntered: {
+                                        toneCluster.revealDelayed = true;
+                                        revealTimer.stop();
+                                    }
+                                    onExited: {
+                                        revealTimer.restart();
+                                    }
                                     onClicked: WallpaperService.moveToTone(cellWrap.path_, "light")
                                 }
                             }
@@ -640,14 +622,17 @@ PanelWindow {
                                 implicitWidth: 22
                                 implicitHeight: 22
                                 radius: 9
-                                color: "transparent"
+                                color: darkMa.containsMouse ? Qt.rgba(0, 0, 0, 0.55) : Qt.rgba(0, 0, 0, 0.35)
+                                border.width: 1
+                                border.color: darkMa.containsMouse ? Qt.rgba(1, 1, 1, 0.45) : Qt.rgba(1, 1, 1, 0.16)
                                 Text {
                                     anchors.centerIn: parent
                                     text: "\uf186"
-                                    color: toneCluster.tone === "dark"
-                                        ? "#aaccff"
-                                        : Qt.rgba(1, 1, 1, 0.45)
-                                    font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
+                                    color: toneCluster.tone === "dark" ? "#aaccff" : Qt.rgba(1, 1, 1, 0.85)
+                                    font {
+                                        pixelSize: 8
+                                        family: "Symbols Nerd Font Mono"
+                                    }
                                 }
 
                                 MouseArea {
@@ -655,26 +640,38 @@ PanelWindow {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    onEntered: { toneCluster.revealDelayed = true; revealTimer.stop(); }
-                                    onExited: { revealTimer.restart(); }
+                                    onEntered: {
+                                        toneCluster.revealDelayed = true;
+                                        revealTimer.stop();
+                                    }
+                                    onExited: {
+                                        revealTimer.restart();
+                                    }
                                     onClicked: WallpaperService.moveToTone(cellWrap.path_, "dark")
                                 }
                             }
 
                             // favorite star — its hover reveals the tone buttons
-                            Item {
+                            Rectangle {
                                 id: favBtn
 
                                 readonly property bool fav: WallpaperService.isFavorite(cellWrap.path_)
 
                                 implicitWidth: 22
                                 implicitHeight: 22
+                                radius: 9
+                                color: starHover.containsMouse ? Qt.rgba(0, 0, 0, 0.55) : Qt.rgba(0, 0, 0, 0.35)
+                                border.width: 1
+                                border.color: starHover.containsMouse ? Qt.rgba(1, 1, 1, 0.45) : Qt.rgba(1, 1, 1, 0.16)
 
                                 Text {
                                     anchors.centerIn: parent
                                     text: favBtn.fav ? "\uf005" : "\uf006"
-                                    color: favBtn.fav ? "#ffb86c" : (starHover.containsMouse ? "#ffb86c" : "white")
-                                    font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                                    color: favBtn.fav ? "#ffb86c" : (starHover.containsMouse ? "#ffb86c" : Qt.rgba(1, 1, 1, 0.9))
+                                    font {
+                                        pixelSize: 10
+                                        family: "Symbols Nerd Font Mono"
+                                    }
                                 }
 
                                 MouseArea {
@@ -682,11 +679,157 @@ PanelWindow {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    onEntered: { toneCluster.revealDelayed = true; revealTimer.stop(); }
-                                    onExited: { revealTimer.restart(); }
+                                    onEntered: {
+                                        toneCluster.revealDelayed = true;
+                                        revealTimer.stop();
+                                    }
+                                    onExited: {
+                                        revealTimer.restart();
+                                    }
                                     onClicked: WallpaperService.toggleFavorite(cellWrap.path_)
                                 }
                             }
+                        }
+                    }
+
+                    // ── delete — bottom-left; hovering the tile reveals it,
+                    // clicking arms a full-tile ✓/✗ confirmation ──
+                    Rectangle {
+                        id: tileDelete
+
+                        readonly property bool revealed: cellMa.containsMouse || deleteMa.containsMouse
+
+                        visible: cellWrap.confirming || tileDelete.revealed
+                        anchors.left: parent.left
+                        anchors.bottom: parent.bottom
+                        anchors.leftMargin: 5
+                        anchors.bottomMargin: 5
+                        implicitWidth: 22
+                        implicitHeight: 22
+                        radius: 9
+                        color: deleteMa.containsMouse ? Qt.rgba(0.75, 0.2, 0.2, 0.7) : Qt.rgba(0, 0, 0, 0.4)
+                        border.width: 1
+                        border.color: deleteMa.containsMouse ? "#ff5555" : Qt.rgba(1, 1, 1, 0.25)
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "\uf2ed"
+                            color: deleteMa.containsMouse ? "#ff5555" : Qt.rgba(1, 1, 1, 0.9)
+                            font {
+                                pixelSize: 10
+                                family: "Symbols Nerd Font Mono"
+                            }
+                        }
+
+                        MouseArea {
+                            id: deleteMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: cellWrap.confirming = true
+                        }
+                    }
+
+                    // confirmation overlay — covers the whole tile (volume-HUD
+                    // style scrim) with a simple ✓ / ✗; no dialog popup
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: 9
+                        visible: cellWrap.confirming
+                        color: Qt.rgba(0, 0, 0, 0.6)
+                        border.width: 1
+                        border.color: "#ff5555"
+                        z: 2
+
+                        ColumnLayout {
+                            anchors.centerIn: parent
+                            spacing: 8
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: cellWrap.path_.split("/").pop()
+                                elide: Text.ElideMiddle
+                                Layout.maximumWidth: 130
+                                width: 130
+                                horizontalAlignment: Text.AlignHCenter
+                                color: Qt.rgba(1, 1, 1, 0.85)
+                                font {
+                                    pixelSize: 9
+                                    family: "ZedMono Nerd Font"
+                                }
+                            }
+
+                            Row {
+                                Layout.alignment: Qt.AlignHCenter
+                                spacing: 10
+
+                                // confirm — deletes the file
+                                Rectangle {
+                                    implicitWidth: 34
+                                    implicitHeight: 34
+                                    radius: 17
+                                    color: okMa.containsMouse ? "#6ee07a" : Qt.rgba(0, 0, 0, 0.45)
+                                    border.width: 1
+                                    border.color: okMa.containsMouse ? "#50fa7b" : Qt.rgba(1, 1, 1, 0.35)
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "\uf00c"
+                                        color: okMa.containsMouse ? "#122414" : "#50fa7b"
+                                        font {
+                                            pixelSize: 13
+                                            bold: true
+                                            family: "Symbols Nerd Font Mono"
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: okMa
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            WallpaperService.removeWallpaper(cellWrap.path_);
+                                            cellWrap.confirming = false;
+                                        }
+                                    }
+                                }
+
+                                // cancel — closes the overlay
+                                Rectangle {
+                                    implicitWidth: 34
+                                    implicitHeight: 34
+                                    radius: 17
+                                    color: noMa.containsMouse ? "#e05757" : Qt.rgba(0, 0, 0, 0.45)
+                                    border.width: 1
+                                    border.color: noMa.containsMouse ? "#ff5555" : Qt.rgba(1, 1, 1, 0.35)
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "\uf00d"
+                                        color: noMa.containsMouse ? "#2a0e0e" : Qt.rgba(1, 1, 1, 0.9)
+                                        font {
+                                            pixelSize: 13
+                                            bold: true
+                                            family: "Symbols Nerd Font Mono"
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: noMa
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: cellWrap.confirming = false
+                                    }
+                                }
+                            }
+                        }
+
+                        // clicking the scrim around the buttons cancels
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: cellWrap.confirming = false
                         }
                     }
                 }
@@ -696,7 +839,11 @@ PanelWindow {
                     visible: WallpaperService.wallpaperList.length === 0
                     text: "no wallpapers — drop images into wallpapers/ or wallpapers/light/ + wallpapers/dark/"
                     color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.35)
-                    font { pixelSize: 11; letterSpacing: 0.5; family: "ZedMono Nerd Font" }
+                    font {
+                        pixelSize: 11
+                        letterSpacing: 0.5
+                        family: "ZedMono Nerd Font"
+                    }
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.WordWrap
                     width: parent.width - 24
@@ -705,13 +852,13 @@ PanelWindow {
                 Text {
                     anchors.centerIn: parent
                     visible: root.results.length === 0 && WallpaperService.wallpaperList.length > 0
-                    text: root.favFilter
-                        ? (WallpaperService.favorites.length === 0
-                            ? "no favorites yet — hover a tile and star it first"
-                            : "no favorites match this filter")
-                        : "no matches"
+                    text: root.favFilter ? (WallpaperService.favorites.length === 0 ? "no favorites yet — hover a tile and star it first" : "no favorites match this filter") : "no matches"
                     color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.35)
-                    font { pixelSize: 11; letterSpacing: 1; family: "ZedMono Nerd Font" }
+                    font {
+                        pixelSize: 11
+                        letterSpacing: 1
+                        family: "ZedMono Nerd Font"
+                    }
                 }
             }
         }
@@ -742,7 +889,11 @@ PanelWindow {
             Text {
                 text: "ring color"
                 color: Themes.muted
-                font { pixelSize: 8; letterSpacing: 1; family: "ZedMono Nerd Font" }
+                font {
+                    pixelSize: 8
+                    letterSpacing: 1
+                    family: "ZedMono Nerd Font"
+                }
             }
 
             GridLayout {
@@ -754,14 +905,30 @@ PanelWindow {
                 ListModel {
                     id: ringColors
 
-                    ListElement { col: "#f5c2e7" }
-                    ListElement { col: "#89b4fa" }
-                    ListElement { col: "#ff5555" }
-                    ListElement { col: "#ffb86c" }
-                    ListElement { col: "#f9e2af" }
-                    ListElement { col: "#50fa7b" }
-                    ListElement { col: "#94e2d5" }
-                    ListElement { col: "#ffffff" }
+                    ListElement {
+                        col: "#f5c2e7"
+                    }
+                    ListElement {
+                        col: "#89b4fa"
+                    }
+                    ListElement {
+                        col: "#ff5555"
+                    }
+                    ListElement {
+                        col: "#ffb86c"
+                    }
+                    ListElement {
+                        col: "#f9e2af"
+                    }
+                    ListElement {
+                        col: "#50fa7b"
+                    }
+                    ListElement {
+                        col: "#94e2d5"
+                    }
+                    ListElement {
+                        col: "#ffffff"
+                    }
                 }
 
                 Repeater {
@@ -785,7 +952,11 @@ PanelWindow {
                             visible: root._hex6(root.borderColor) === root._hex6(col)
                             text: "\uf00c"
                             color: Qt.rgba(1, 1, 1, 0.95)
-                            font { pixelSize: 9; bold: true; family: "Symbols Nerd Font Mono" }
+                            font {
+                                pixelSize: 9
+                                bold: true
+                                family: "Symbols Nerd Font Mono"
+                            }
                         }
 
                         MouseArea {
@@ -812,7 +983,10 @@ PanelWindow {
                     anchors.centerIn: parent
                     text: "reset to theme default"
                     color: Themes.dim
-                    font { pixelSize: 8; family: "Quicksand" }
+                    font {
+                        pixelSize: 8
+                        family: "Quicksand"
+                    }
                 }
 
                 MouseArea {
@@ -829,122 +1003,19 @@ PanelWindow {
         }
     }
 
-    // ── delete confirmation — the header trash opens it, Esc cancels ──
-    Popup {
-        id: confirmDel
-
-        property string target: ""
-
-        modal: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-
-        onOpened: {
-            confirmDel.x = Math.round((root.width - confirmDel.width) / 2);
-            confirmDel.y = Math.round((root.height - confirmDel.height) / 2);
-        }
-
-        background: Rectangle {
-            radius: 14
-            color: Themes.cardBg
-            border.width: 1
-            border.color: Themes.borderColor
-        }
-
-        contentItem: ColumnLayout {
-            spacing: 12
-            implicitWidth: 280
-
-            Text {
-                Layout.fillWidth: true
-                horizontalAlignment: Text.AlignHCenter
-                text: "\uf2ed"
-                color: "#ff5555"
-                font { pixelSize: 22; family: "Symbols Nerd Font Mono" }
-            }
-
-            Text {
-                Layout.fillWidth: true
-                horizontalAlignment: Text.AlignHCenter
-                text: "delete this wallpaper?"
-                color: Themes.fg
-                font { pixelSize: 13; bold: true; family: "Quicksand" }
-            }
-
-            Text {
-                Layout.fillWidth: true
-                horizontalAlignment: Text.AlignHCenter
-                text: confirmDel.target.split("/").pop()
-                elide: Text.ElideMiddle
-                color: Themes.muted
-                font { pixelSize: 10; family: "ZedMono Nerd Font" }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                Item { Layout.fillWidth: true }
-
-                Rectangle {
-                    Layout.alignment: Qt.AlignVCenter
-                    implicitWidth: cancelLbl.implicitWidth + 24
-                    implicitHeight: 26
-                    radius: 9
-                    color: cancelMa.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.04)
-                    border.width: 1
-                    border.color: cancelMa.containsMouse ? Themes.borderColor : "transparent"
-
-                    Text {
-                        id: cancelLbl
-                        anchors.centerIn: parent
-                        text: "cancel"
-                        color: Themes.mutedSoft
-                        font { pixelSize: 10; family: "Quicksand" }
-                    }
-
-                    MouseArea {
-                        id: cancelMa
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: confirmDel.close()
-                    }
-                }
-
-                Rectangle {
-                    Layout.alignment: Qt.AlignVCenter
-                    implicitWidth: confirmLbl.implicitWidth + 24
-                    implicitHeight: 26
-                    radius: 9
-                    color: confirmMa.containsMouse ? "#e63c3c" : "#ff5555"
-
-                    Text {
-                        id: confirmLbl
-                        anchors.centerIn: parent
-                        text: "delete"
-                        color: "#1a1a1a"
-                        font { pixelSize: 10; bold: true; family: "Quicksand" }
-                    }
-
-                    MouseArea {
-                        id: confirmMa
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            WallpaperService.removeWallpaper(confirmDel.target);
-                            confirmDel.target = "";
-                            confirmDel.close();
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     Shortcut {
         sequence: "Escape"
         enabled: root.visible
-        onActivated: root.close()
+        onActivated: {
+            // an armed ✓/✗ overlay takes Esc before the whole picker closes
+            const kids = grid.contentItem?.children ?? [];
+            for (let i = 0; i < kids.length; i++) {
+                if (kids[i].confirming) {
+                    kids[i].confirming = false;
+                    return;
+                }
+            }
+            root.close();
+        }
     }
 }

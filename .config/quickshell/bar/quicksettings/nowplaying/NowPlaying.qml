@@ -377,20 +377,26 @@ ClippingRectangle {
                     }
                     TrackButton {
                         text: "\uf048"
-                        flat: true
                         accentColor: Themes.accent2
+                        hoverFillOnly: true
+                        Layout.preferredWidth: 24
+                        Layout.preferredHeight: 24
                         onClicked: MprisState.cardPlayer?.previous()
                     }
                     TrackButton {
                         text: MprisState.cardPlayer?.isPlaying ? "\uf04c" : "\uf04b"
-                        flat: true
                         accentColor: Themes.accent
+                        hoverFillOnly: true
+                        Layout.preferredWidth: 24
+                        Layout.preferredHeight: 24
                         onClicked: MprisState.cardPlayer?.togglePlaying()
                     }
                     TrackButton {
                         text: "\uf050"
-                        flat: true
                         accentColor: Themes.pink
+                        hoverFillOnly: true
+                        Layout.preferredWidth: 24
+                        Layout.preferredHeight: 24
                         onClicked: MprisState.cardPlayer?.next()
                     }
                     Item {

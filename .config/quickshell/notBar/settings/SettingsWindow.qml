@@ -573,10 +573,6 @@ Item {
             label: "Hyprland"
         },
         {
-            icon: "\uf0e4",
-            label: "IPC"
-        },
-        {
             icon: "\uf1d3",
             label: "Git"
         },
@@ -796,7 +792,7 @@ Item {
                                 Loader {
                                     id: pageLoader
                                     width: parent.width
-                                    sourceComponent: root.currentCategory === 0 ? barPage : root.currentCategory === 1 ? wallpaperPage : root.currentCategory === 2 ? mediaPage : root.currentCategory === 3 ? notificationsPage : root.currentCategory === 4 ? connectionsPage : root.currentCategory === 5 ? performancePage : root.currentCategory === 6 ? desktopPage : root.currentCategory === 7 ? hyprlandPage : root.currentCategory === 8 ? ipcPage : root.currentCategory === 9 ? gitPage : helpPage
+                                    sourceComponent: root.currentCategory === 0 ? barPage : root.currentCategory === 1 ? wallpaperPage : root.currentCategory === 2 ? mediaPage : root.currentCategory === 3 ? notificationsPage : root.currentCategory === 4 ? connectionsPage : root.currentCategory === 5 ? performancePage : root.currentCategory === 6 ? desktopPage : root.currentCategory === 7 ? hyprlandPage : root.currentCategory === 8 ? gitPage : helpPage
                                 }
                             }
                         }
@@ -1247,193 +1243,6 @@ Item {
                                 spacing: 0
                                 Layout.fillWidth: true
 
-                                // bar style dropdown — like the notification font picker
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: 38
-                                    spacing: 12
-
-                                    Text {
-                                        text: "\ueac1"
-                                        color: Themes.accent
-                                        font {
-                                            pixelSize: 14
-                                            family: "Symbols Nerd Font Mono"
-                                        }
-                                        Layout.preferredWidth: 20
-                                        horizontalAlignment: Text.AlignHCenter
-                                    }
-
-                                    Text {
-                                        text: "Bar style"
-                                        color: Themes.fg
-                                        font {
-                                            pixelSize: 12
-                                            family: "Quicksand"
-                                            bold: true
-                                        }
-                                        Layout.alignment: Qt.AlignVCenter
-                                    }
-
-                                    Item {
-                                        Layout.fillWidth: true
-                                    }
-
-                                    Rectangle {
-                                        id: barStyleDropdown
-
-                                        Layout.alignment: Qt.AlignVCenter
-                                        width: 140
-                                        height: 24
-                                        radius: 6
-                                        color: barStyleDropMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : Themes.cardBg
-                                        border.width: 1
-                                        border.color: barStyleDropOpen ? Themes.accent : Themes.borderColor
-
-                                        property bool barStyleDropOpen: false
-                                        property var barStyleOptions: [
-                                            {
-                                                key: 0,
-                                                label: "Transparent"
-                                            },
-                                            {
-                                                key: 1,
-                                                label: "Solid Margin"
-                                            },
-                                            {
-                                                key: 2,
-                                                label: "Solid"
-                                            },
-                                            {
-                                                key: 3,
-                                                label: "Glass"
-                                            }
-                                        ]
-
-                                        function curLabel() {
-                                            for (var i = 0; i < barStyleOptions.length; i++)
-                                                if (barStyleOptions[i].key === BarState.barMode)
-                                                    return barStyleOptions[i].label;
-                                            return "Transparent";
-                                        }
-
-                                        Text {
-                                            anchors.left: parent.left
-                                            anchors.leftMargin: 8
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            text: barStyleDropdown.curLabel()
-                                            color: Themes.fg
-                                            font {
-                                                pixelSize: 10
-                                                bold: true
-                                                family: "Quicksand"
-                                            }
-                                            elide: Text.ElideRight
-                                            width: parent.width - 24
-                                        }
-
-                                        Text {
-                                            anchors.right: parent.right
-                                            anchors.rightMargin: 6
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            text: "\uf078"
-                                            color: Themes.muted
-                                            font {
-                                                pixelSize: 8
-                                                family: "Symbols Nerd Font Mono"
-                                            }
-                                            rotation: barStyleDropdown.barStyleDropOpen ? 180 : 0
-
-                                            Behavior on rotation {
-                                                NumberAnimation {
-                                                    duration: 120
-                                                    easing.type: Easing.OutQuad
-                                                }
-                                            }
-                                        }
-
-                                        MouseArea {
-                                            id: barStyleDropMa
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: barStyleDropdown.barStyleDropOpen = !barStyleDropdown.barStyleDropOpen
-                                        }
-
-                                        Popup {
-                                            id: barStylePopup
-                                            y: barStyleDropdown.height + 4
-                                            width: barStyleDropdown.width
-                                            height: barStylePopupCol.implicitHeight + 8
-                                            closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
-                                            onOpened: barStyleDropdown.barStyleDropOpen = true
-                                            onClosed: barStyleDropdown.barStyleDropOpen = false
-
-                                            background: Rectangle {
-                                                radius: 6
-                                                color: Themes.cardBg
-                                                border.width: 1
-                                                border.color: Themes.borderColor
-                                            }
-
-                                            contentItem: ColumnLayout {
-                                                id: barStylePopupCol
-                                                spacing: 0
-
-                                                Repeater {
-                                                    model: barStyleDropdown.barStyleOptions
-
-                                                    Rectangle {
-                                                        required property var modelData
-                                                        property bool isHovered: barStyleItemMa.containsMouse
-                                                        property bool isSelected: BarState.barMode === modelData.key
-
-                                                        Layout.fillWidth: true
-                                                        implicitHeight: 24
-                                                        radius: 4
-                                                        color: isSelected ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
-
-                                                        Text {
-                                                            anchors.left: parent.left
-                                                            anchors.leftMargin: 8
-                                                            anchors.verticalCenter: parent.verticalCenter
-                                                            text: modelData.label
-                                                            color: isSelected ? Themes.accent : Themes.dim
-                                                            font {
-                                                                pixelSize: 10
-                                                                family: "Quicksand"
-                                                            }
-                                                        }
-
-                                                        MouseArea {
-                                                            id: barStyleItemMa
-                                                            anchors.fill: parent
-                                                            hoverEnabled: true
-                                                            cursorShape: Qt.PointingHandCursor
-                                                            onClicked: {
-                                                                BarState.barMode = modelData.key;
-                                                                barStylePopup.close();
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-
-                                            onVisibleChanged: barStyleDropdown.barStyleDropOpen = visible
-                                        }
-
-                                        Connections {
-                                            target: barStyleDropdown
-                                            function onBarStyleDropOpenChanged() {
-                                                if (barStyleDropdown.barStyleDropOpen && !barStylePopup.visible)
-                                                    barStylePopup.open();
-                                                else if (!barStyleDropdown.barStyleDropOpen && barStylePopup.visible)
-                                                    barStylePopup.close();
-                                            }
-                                        }
-                                    }
-                                }
-
                                 // segmented color-theme selector — pyrple (default) vs gron teal
                                 RowLayout {
                                     id: themeSeg
@@ -1559,6 +1368,200 @@ Item {
                                                         onClicked: MiscState.themeScheme = themeOpt.modelData.key
                                                     }
                                                 }
+                                            }
+                                        }
+                                    }
+                                }
+                                // bar style dropdown — like the notification font picker
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 38
+                                    spacing: 12
+
+                                    Text {
+                                        text: "\ueac1"
+                                        color: Themes.accent
+                                        font {
+                                            pixelSize: 14
+                                            family: "Symbols Nerd Font Mono"
+                                        }
+                                        Layout.preferredWidth: 20
+                                        horizontalAlignment: Text.AlignHCenter
+                                    }
+
+                                    Text {
+                                        text: "Bar style"
+                                        color: Themes.fg
+                                        font {
+                                            pixelSize: 12
+                                            family: "Quicksand"
+                                            bold: true
+                                        }
+                                        Layout.alignment: Qt.AlignVCenter
+                                    }
+
+                                    Item {
+                                        Layout.fillWidth: true
+                                    }
+
+                                    Rectangle {
+                                        id: barStyleDropdown
+
+                                        Layout.alignment: Qt.AlignVCenter
+                                        width: 140
+                                        height: 24
+                                        radius: 6
+                                        color: barStyleDropMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : Themes.cardBg
+                                        border.width: 1
+                                        border.color: barStyleDropOpen ? Themes.accent : Themes.borderColor
+
+                                        property bool barStyleDropOpen: false
+                                        property var barStyleOptions: [
+                                            {
+                                                key: 0,
+                                                label: "Transparent"
+                                            },
+                                            {
+                                                key: 1,
+                                                label: "Solid Margin"
+                                            },
+                                            {
+                                                key: 2,
+                                                label: "Solid"
+                                            },
+                                            {
+                                                key: 3,
+                                                label: "Glass Margin"
+                                            },
+                                            {
+                                                key: 4,
+                                                label: "Glass Full"
+                                            },
+                                            {
+                                                key: 5,
+                                                label: "Glass Borderless"
+                                            }
+                                        ]
+
+                                        function curLabel() {
+                                            for (var i = 0; i < barStyleOptions.length; i++)
+                                                if (barStyleOptions[i].key === BarState.barMode)
+                                                    return barStyleOptions[i].label;
+                                            return "Transparent";
+                                        }
+
+                                        Text {
+                                            anchors.left: parent.left
+                                            anchors.leftMargin: 8
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: barStyleDropdown.curLabel()
+                                            color: Themes.fg
+                                            font {
+                                                pixelSize: 10
+                                                bold: true
+                                                family: "Quicksand"
+                                            }
+                                            elide: Text.ElideRight
+                                            width: parent.width - 24
+                                        }
+
+                                        Text {
+                                            anchors.right: parent.right
+                                            anchors.rightMargin: 6
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: "\uf078"
+                                            color: Themes.muted
+                                            font {
+                                                pixelSize: 8
+                                                family: "Symbols Nerd Font Mono"
+                                            }
+                                            rotation: barStyleDropdown.barStyleDropOpen ? 180 : 0
+
+                                            Behavior on rotation {
+                                                NumberAnimation {
+                                                    duration: 120
+                                                    easing.type: Easing.OutQuad
+                                                }
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            id: barStyleDropMa
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: barStyleDropdown.barStyleDropOpen = !barStyleDropdown.barStyleDropOpen
+                                        }
+
+                                        Popup {
+                                            id: barStylePopup
+                                            y: barStyleDropdown.height + 4
+                                            width: barStyleDropdown.width
+                                            height: barStylePopupCol.implicitHeight + 8
+                                            closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
+                                            onOpened: barStyleDropdown.barStyleDropOpen = true
+                                            onClosed: barStyleDropdown.barStyleDropOpen = false
+
+                                            background: Rectangle {
+                                                radius: 6
+                                                color: Themes.cardBg
+                                                border.width: 1
+                                                border.color: Themes.borderColor
+                                            }
+
+                                            contentItem: ColumnLayout {
+                                                id: barStylePopupCol
+                                                spacing: 0
+
+                                                Repeater {
+                                                    model: barStyleDropdown.barStyleOptions
+
+                                                    Rectangle {
+                                                        required property var modelData
+                                                        property bool isHovered: barStyleItemMa.containsMouse
+                                                        property bool isSelected: BarState.barMode === modelData.key
+
+                                                        Layout.fillWidth: true
+                                                        implicitHeight: 24
+                                                        radius: 4
+                                                        color: isSelected ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
+
+                                                        Text {
+                                                            anchors.left: parent.left
+                                                            anchors.leftMargin: 8
+                                                            anchors.verticalCenter: parent.verticalCenter
+                                                            text: modelData.label
+                                                            color: isSelected ? Themes.accent : Themes.dim
+                                                            font {
+                                                                pixelSize: 10
+                                                                family: "Quicksand"
+                                                            }
+                                                        }
+
+                                                        MouseArea {
+                                                            id: barStyleItemMa
+                                                            anchors.fill: parent
+                                                            hoverEnabled: true
+                                                            cursorShape: Qt.PointingHandCursor
+                                                            onClicked: {
+                                                                BarState.barMode = modelData.key;
+                                                                barStylePopup.close();
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            onVisibleChanged: barStyleDropdown.barStyleDropOpen = visible
+                                        }
+
+                                        Connections {
+                                            target: barStyleDropdown
+                                            function onBarStyleDropOpenChanged() {
+                                                if (barStyleDropdown.barStyleDropOpen && !barStylePopup.visible)
+                                                    barStylePopup.open();
+                                                else if (!barStyleDropdown.barStyleDropOpen && barStylePopup.visible)
+                                                    barStylePopup.close();
                                             }
                                         }
                                     }
@@ -3524,460 +3527,6 @@ Item {
         }
     }
 
-    // ═══ IPC ═══
-    Component {
-        id: ipcPage
-
-        ColumnLayout {
-            spacing: 12
-
-            Card {
-                title: "IPC handlers"
-                icon: "\uf0e4"
-                accent: Themes.accent
-
-                // toggling a handler off removes that target's ability to
-                // receive `qs ipc call <target> …` — keybinds calling it
-                // then silently no-op. each row maps one IpcHandler block.
-                ColumnLayout {
-                    spacing: 0
-                    Layout.fillWidth: true
-
-                    Repeater {
-                        model: ipcHandlers.handlerModel
-
-                        delegate: ColumnLayout {
-                            id: ipcCell
-
-                            required property var modelData
-                            required property int index
-
-                            spacing: 0
-                            Layout.fillWidth: true
-
-                            SettingRow {
-                                icon: ipcCell.modelData.icon
-                                label: ipcCell.modelData.label
-                                caption: "ipc call " + ipcCell.modelData.target
-                                checked: ipcHandlers.ipcEnabled(ipcCell.modelData.target)
-                                onFlipped: ipcHandlers.setIpcEnabled(ipcCell.modelData.target, !ipcHandlers.ipcEnabled(ipcCell.modelData.target))
-                            }
-
-                            // separator between handler rows
-                            Rectangle {
-                                visible: ipcCell.index < ipcHandlers.handlerModel.length - 1
-                                Layout.fillWidth: true
-                                height: 1
-                                color: Themes.separator
-                                Layout.leftMargin: 32
-                            }
-                        }
-                    }
-                }
-            }
-
-            Card {
-                id: ipcConsole
-                title: "Test console"
-                icon: "\uf120"
-                accent: Themes.accent2
-
-                // hand-picked doc targets for the hint line under the function field
-                readonly property var ipcFnHints: {
-                    "mpris": "togglePlaying · previous · next · pauseAll · raise · toggleMpris · toggleMprisArt · songArt",
-                    "pipewire": "mute",
-                    "notifications": "dismissAll · showLast",
-                    "brightness": "get · set <pct> · adjust <delta>",
-                    "netspeed": "toggleNet",
-                    "resources": "toggleResources",
-                    "bar": "toggleBar",
-                    "appLauncher": "toggle",
-                    "activate": "toggle",
-                    "openWindows": "toggle",
-                    "clipHist": "toggle",
-                    "calc": "toggle",
-                    "SysTray": "toggle",
-                    "emoji": "toggle",
-                    "color": "toggle · screenPick",
-                    "wallpaperPicker": "toggle · open",
-                    "logout": "toggle · open",
-                    "wallpaper": "toggle · next · prev · set <path> · current · toggleClock",
-                    "notes": "add · clear",
-                    "timer": "start <sec> · toggle · reset · add <min> · status",
-                    "powerTimer": "rebootIn <min> · shutdownIn <min> · cancel",
-                    "speedtest": "start · cancel · status",
-                    "idleInhibitor": "isEnabled · toggle · enable · disable",
-                    "calendar": "toggle · year · compact · probe · rem · timer · state",
-                    "reminders": "add <text> <date> <time> · list · remove <id> · done <id>",
-                    "lock": "lock",
-                    "Time": "currentDate · currentDateTime"
-                }
-
-                // entries for the target dropdown come straight from the handler list
-                readonly property var ipcTargetOptions: ipcTargets()
-                function ipcTargets(): var {
-                    const opts = [];
-                    for (var i = 0; i < ipcHandlers.handlerModel.length; i++)
-                        opts.push({
-                            target: ipcHandlers.handlerModel[i].target,
-                            label: ipcHandlers.handlerModel[i].label
-                        });
-                    return opts;
-                }
-
-                function ipcRun(): void {
-                    const tgt = ipcTargetField.text.trim();
-                    if (tgt.length === 0) {
-                        ipcOutModel.append({
-                            txt: "choose a target first — from the dropdown or typed directly",
-                            kind: "info"
-                        });
-                        return;
-                    }
-                    if (ipcProc.running)
-                        return;
-                    const fn = ipcFnField.text.trim();
-                    const args = ipcArgsField.text.trim().split(/[,;\s]+/).filter(s => s.length > 0);
-                    const cmd = ["qs", "-p", Quickshell.env("HOME") + "/.config/quickshell", "ipc", "call", tgt];
-                    if (fn.length > 0)
-                        cmd.push(fn);
-                    for (var i = 0; i < args.length; i++)
-                        cmd.push(args[i]);
-                    ipcOutModel.clear();
-                    ipcOutModel.append({
-                        txt: "$ qs -p ~/.config/quickshell ipc call " + cmd.slice(5).join(" "),
-                        kind: "cmd"
-                    });
-                    ipcProc.command = cmd;
-                    ipcProc.running = true;
-                }
-
-                function ipcClear(): void {
-                    ipcProc.running = false;
-                    ipcOutModel.clear();
-                    ipcStatusText.text = "";
-                }
-
-                function ipcAppendLine(data: string, kind: string): void {
-                    if ((data ?? "").trim().length === 0)
-                        return;
-                    ipcOutModel.append({
-                        txt: data.trim(),
-                        kind: kind
-                    });
-                }
-
-                function ipcHint(): string {
-                    const t = ipcTargetField.text.trim().toLowerCase();
-                    if (ipcFnHints.hasOwnProperty(t))
-                        return "function — " + ipcFnHints[t];
-                    return "no functions listed yet for this target — see the Help page's IPC handlers topic for the full catalogue";
-                }
-
-                ColumnLayout {
-                    spacing: 10
-                    Layout.fillWidth: true
-                    Layout.topMargin: 2
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: "Exercise the running instance live. Pick a target (or type one), give a function and its args, hit run — output prints below. Handlers switched off in the list above silently ignore their calls; the console is the quick way to test that."
-                        color: Themes.dim
-                        wrapMode: Text.WordWrap
-                        font {
-                            pixelSize: 11
-                            family: "ZedMono Nerd Font"
-                        }
-                    }
-
-                    // target picker — dropdown + free-text field combined
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 8
-
-                        Rectangle {
-                            id: ipcTargetDropdown
-
-                            Layout.alignment: Qt.AlignVCenter
-                            width: 200
-                            height: 24
-                            radius: 6
-                            color: ipcTargetDropMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : Themes.cardBg
-                            border.width: 1
-                            border.color: ipcTargetDropOpen ? Themes.accent : Themes.borderColor
-
-                            property bool ipcTargetDropOpen: false
-
-                            function curLabel(): string {
-                                const t = ipcTargetField.text.trim();
-                                for (var i = 0; i < ipcTargetOptions.length; i++)
-                                    if (ipcTargetOptions[i].target === t)
-                                        return ipcTargetOptions[i].label;
-                                return t.length > 0 ? "“" + t + "”" : "choose a target…";
-                            }
-
-                            Text {
-                                anchors.left: parent.left
-                                anchors.leftMargin: 8
-                                anchors.right: parent.right
-                                anchors.rightMargin: 20
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: ipcTargetDropdown.curLabel()
-                                color: Themes.fg
-                                elide: Text.ElideRight
-                                font {
-                                    pixelSize: 10
-                                    family: "Quicksand"
-                                }
-                            }
-
-                            Text {
-                                anchors.right: parent.right
-                                anchors.rightMargin: 6
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: "\uf078"
-                                color: Themes.muted
-                                font {
-                                    pixelSize: 8
-                                    family: "Symbols Nerd Font Mono"
-                                }
-                                rotation: ipcTargetDropdown.ipcTargetDropOpen ? 180 : 0
-
-                                Behavior on rotation {
-                                    NumberAnimation {
-                                        duration: 120
-                                        easing.type: Easing.OutQuad
-                                    }
-                                }
-                            }
-
-                            MouseArea {
-                                id: ipcTargetDropMa
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: ipcTargetDropdown.ipcTargetDropOpen = !ipcTargetDropdown.ipcTargetDropOpen
-                            }
-
-                            Popup {
-                                id: ipcTargetPopup
-                                y: ipcTargetDropdown.height + 4
-                                width: 240
-                                height: Math.min(ipcTargetOptions.length * 24 + 8, 340)
-                                closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
-                                onOpened: ipcTargetDropdown.ipcTargetDropOpen = true
-                                onClosed: ipcTargetDropdown.ipcTargetDropOpen = false
-
-                                background: Rectangle {
-                                    radius: 6
-                                    color: Themes.cardBg
-                                    border.width: 1
-                                    border.color: Themes.borderColor
-                                }
-
-                                contentItem: ListView {
-                                    clip: true
-                                    spacing: 0
-                                    model: ipcTargetOptions
-
-                                    delegate: Rectangle {
-                                        required property var modelData
-                                        property bool isHovered: ipcItemMa.containsMouse
-                                        property bool isSelected: ipcTargetField.text.trim() === modelData.target
-
-                                        width: ListView.view.width
-                                        implicitHeight: 24
-                                        radius: 4
-                                        color: isSelected ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
-
-                                        Text {
-                                            anchors.left: parent.left
-                                            anchors.leftMargin: 8
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            text: modelData.label + "    " + modelData.target
-                                            color: isSelected ? Themes.accent : Themes.dim
-                                            font {
-                                                pixelSize: 10
-                                                family: "Quicksand"
-                                            }
-                                            elide: Text.ElideRight
-                                        }
-
-                                        MouseArea {
-                                            id: ipcItemMa
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: {
-                                                ipcTargetField.text = modelData.target;
-                                                ipcTargetPopup.close();
-                                                ipcFnField.forceActiveFocus();
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        Field {
-                            id: ipcTargetField
-                            Layout.fillWidth: true
-                            Layout.alignment: Qt.AlignVCenter
-                            placeholder: "target"
-                            text: "mpris"
-                            font {
-                                pixelSize: 10
-                                family: "ZedMono Nerd Font"
-                            }
-                            onReturnPressed: ipcConsole.ipcRun()
-                        }
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 8
-
-                        Field {
-                            id: ipcFnField
-                            Layout.fillWidth: true
-                            Layout.alignment: Qt.AlignVCenter
-                            placeholder: "function  e.g. togglePlaying"
-                            font {
-                                pixelSize: 10
-                                family: "ZedMono Nerd Font"
-                            }
-                            onReturnPressed: ipcConsole.ipcRun()
-                        }
-
-                        Field {
-                            id: ipcArgsField
-                            Layout.fillWidth: true
-                            Layout.alignment: Qt.AlignVCenter
-                            placeholder: "args (comma or space separated)"
-                            font {
-                                pixelSize: 10
-                                family: "ZedMono Nerd Font"
-                            }
-                            onReturnPressed: ipcConsole.ipcRun()
-                        }
-                    }
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: ipcConsole.ipcHint()
-                        color: Themes.muted
-                        wrapMode: Text.WordWrap
-                        font {
-                            pixelSize: 10
-                            italic: true
-                            family: "ZedMono Nerd Font"
-                        }
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 6
-
-                        MiniBtn {
-                            text: "run"
-                            glyph: "\uf04b"
-                            tint: Themes.accent
-                            active: ipcProc.running
-                            onClicked: ipcConsole.ipcRun()
-                        }
-
-                        MiniBtn {
-                            text: "clear"
-                            glyph: "\uf12a"
-                            onClicked: ipcConsole.ipcClear()
-                        }
-
-                        Text {
-                            id: ipcStatusText
-                            Layout.fillWidth: true
-                            Layout.alignment: Qt.AlignVCenter
-                            visible: text.length > 0
-                            color: Themes.dim
-                            elide: Text.ElideRight
-                            font {
-                                pixelSize: 10
-                                family: "ZedMono Nerd Font"
-                            }
-                        }
-                    }
-
-                    // live output pane
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 130
-                        radius: 6
-                        color: Qt.rgba(0, 0, 0, 0.28)
-                        clip: true
-
-                        Text {
-                            anchors.centerIn: parent
-                            visible: ipcOutModel.count === 0
-                            text: "output appears here — a call produces no output lines when the handler simply toggles something"
-                            color: Qt.rgba(Themes.muted.r, Themes.muted.g, Themes.muted.b, 0.7)
-                            wrapMode: Text.WordWrap
-                            horizontalAlignment: Text.AlignHCenter
-                            width: parent.width - 24
-                            font {
-                                pixelSize: 10
-                                family: "ZedMono Nerd Font"
-                            }
-                        }
-
-                        ListView {
-                            id: ipcOutView
-                            anchors.fill: parent
-                            anchors.margins: 6
-                            clip: true
-                            spacing: 3
-                            model: ListModel {
-                                id: ipcOutModel
-                            }
-
-                            delegate: Text {
-                                width: ipcOutView.width - 2
-                                text: model.txt
-                                color: model.kind === "err" ? Themes.red : model.kind === "cmd" ? Themes.accent : model.kind === "info" ? Themes.muted : Themes.fg
-                                wrapMode: Text.Wrap
-                                font {
-                                    pixelSize: 10
-                                    family: "ZedMono Nerd Font"
-                                }
-                            }
-
-                            onContentHeightChanged: positionViewAtEnd()
-                        }
-                    }
-                }
-
-                // Process isn't a QQuickItem — layouts only accept items,
-                // so it lives in a wrapper Item's data (takes no space)
-                Item {
-                    Process {
-                        id: ipcProc
-                        running: false
-
-                        stdout: SplitParser {
-                            onRead: data => ipcConsole.ipcAppendLine(data, "std")
-                        }
-                        stderr: SplitParser {
-                            onRead: data => ipcConsole.ipcAppendLine(data, "err")
-                        }
-
-                        onExited: (exitCode, exitStatus) => {
-                            ipcStatusText.text = "exit " + exitCode;
-                            ipcOutView.positionViewAtEnd();
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     // ═══ GIT ═══
     Component {
         id: gitPage
@@ -4008,9 +3557,8 @@ Item {
                     SettingRow {
                         icon: "\uf1d3"
                         label: "Untracked scan"
-                        caption: GitState.untrackedAll ? "on" : "off"
-                        checked: GitState.untrackedAll
-                        onFlipped: GitState.setUntrackedAll(!GitState.untrackedAll)
+                        caption: "off (projectwide)"
+                        checked: false
                     }
                 }
             }
@@ -4247,7 +3795,7 @@ Item {
                     text: "Escape closes any popup; most tray icons open menus on left-click."
                 }
                 HelpLine {
-                    text: "Double-click bar: left toggles Transparent/Solid; right toggles Pyrple/Gron theme."
+                    text: "Double-click the bar (left or right) cycles all color schemes; style stays as set in Style."
                 }
                 HelpLine {
                     text: "Scroll the bar to switch workspaces."
