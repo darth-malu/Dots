@@ -5,6 +5,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Wayland._BackgroundEffect
 import qs.services
 import qs.themes
 
@@ -26,6 +27,15 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
+    // frosted glass behind the panel (visible via the translucent launcherBg)
+    BackgroundEffect.blurRegion: MiscState.rofiBlur ? panelBlur : null
+
+    Region {
+        id: panelBlur
+        item: root.contentItem
+        radius: Themes.rofiBlurRadius
+    }
+
     // emoji chars most-recently used
     property var recentEmojis: PickerState.recentEmojis
 
@@ -34,8 +44,7 @@ PanelWindow {
 
     function copyEmoji(char) {
         PickerState.pushRecentEmoji(char);
-        Quickshell.execDetached(["sh", "-c",
-            `printf '%s' '${char}' | wl-copy && notify-send -a Emoji -t 1500 '${char}  copied to clipboard'`]);
+        Quickshell.execDetached(["sh", "-c", `printf '%s' '${char}' | wl-copy && notify-send -a Emoji -t 1500 '${char}  copied to clipboard'`]);
         close();
     }
 
@@ -68,7 +77,10 @@ PanelWindow {
                 Text {
                     text: "\uf118"
                     color: Themes.rofiAccent
-                    font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
+                    font {
+                        pixelSize: 13
+                        family: "Symbols Nerd Font Mono"
+                    }
                 }
 
                 TextField {
@@ -145,12 +157,15 @@ PanelWindow {
                     }
                 }
 
-            Text {
-                visible: root.results.length > 0
-                text: root.results.length
-                color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.4)
-                font { pixelSize: 10; family: "ZedMono Nerd Font" }
-            }
+                Text {
+                    visible: root.results.length > 0
+                    text: root.results.length
+                    color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.4)
+                    font {
+                        pixelSize: 10
+                        family: "ZedMono Nerd Font"
+                    }
+                }
             }
 
             // ── recents strip — only when it has content and no active query ──
@@ -162,7 +177,11 @@ PanelWindow {
                 Text {
                     text: "RECENT"
                     color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.45)
-                    font { pixelSize: 8; letterSpacing: 2; family: "ZedMono Nerd Font" }
+                    font {
+                        pixelSize: 8
+                        letterSpacing: 2
+                        family: "ZedMono Nerd Font"
+                    }
                 }
 
                 RowLayout {
@@ -271,7 +290,11 @@ PanelWindow {
                     visible: grid.count === 0
                     text: "no matches"
                     color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.35)
-                    font { pixelSize: 11; letterSpacing: 1; family: "ZedMono Nerd Font" }
+                    font {
+                        pixelSize: 11
+                        letterSpacing: 1
+                        family: "ZedMono Nerd Font"
+                    }
                 }
             }
         }

@@ -80,6 +80,12 @@ Singleton {
             // ── hyprland settings keys ──
             property bool hyprGapsOutEnabled: true
             property int hyprGapsOutValue: 12
+
+            // ── rofi / launcher keys ──
+            property bool rofiBlur: true
+            property int rofiOpacity: 66 // percent — panel bg opacity when blur is on
+            property int rofiRadius: 24
+            property int rofiTheme: -1 // -1 = auto (follow active scheme), else 0..5
         }
     }
 

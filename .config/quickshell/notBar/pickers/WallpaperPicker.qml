@@ -5,6 +5,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Wayland._BackgroundEffect
 import Quickshell.Widgets
 import qs.services
 import qs.themes
@@ -25,6 +26,15 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+
+    // frosted glass behind the panel (visible via the translucent launcherBg)
+    BackgroundEffect.blurRegion: MiscState.rofiBlur ? panelBlur : null
+
+    Region {
+        id: panelBlur
+        item: root.contentItem
+        radius: Themes.rofiBlurRadius
+    }
 
     // re-scan the wallpaper dir every time the picker opens
     onVisibleChanged: if (visible) {
@@ -692,9 +702,10 @@ PanelWindow {
                         }
                     }
 
-                    // ── delete — bottom-left; hovering the tile reveals it,
-                    // clicking arms a full-tile ✓/✗ confirmation ──
-                    Rectangle {
+                    // ── delete — bottom-left; hovering the tile reveals it, clicking arms a
+                    // full-tile ✓/✗ confirmation. Plain glyph only (no pill, no
+                    // border) so it reads as a quiet action until hovered ──
+                    Item {
                         id: tileDelete
 
                         readonly property bool revealed: cellMa.containsMouse || deleteMa.containsMouse
@@ -702,21 +713,17 @@ PanelWindow {
                         visible: cellWrap.confirming || tileDelete.revealed
                         anchors.left: parent.left
                         anchors.bottom: parent.bottom
-                        anchors.leftMargin: 5
-                        anchors.bottomMargin: 5
+                        anchors.leftMargin: 4
+                        anchors.bottomMargin: 4
                         implicitWidth: 22
                         implicitHeight: 22
-                        radius: 9
-                        color: deleteMa.containsMouse ? Qt.rgba(0.75, 0.2, 0.2, 0.7) : Qt.rgba(0, 0, 0, 0.4)
-                        border.width: 1
-                        border.color: deleteMa.containsMouse ? "#ff5555" : Qt.rgba(1, 1, 1, 0.25)
 
                         Text {
                             anchors.centerIn: parent
-                            text: "\uf2ed"
-                            color: deleteMa.containsMouse ? "#ff5555" : Qt.rgba(1, 1, 1, 0.9)
+                            text: "\uf1f8"
+                            color: deleteMa.containsMouse ? "#ff6666" : Qt.rgba(1, 1, 1, 0.85)
                             font {
-                                pixelSize: 10
+                                pixelSize: 11
                                 family: "Symbols Nerd Font Mono"
                             }
                         }

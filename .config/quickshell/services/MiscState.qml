@@ -237,6 +237,30 @@ Singleton {
         Prefs.write();
     }
 
+    // ── rofi / launcher look (settings → launcher) ──
+    property bool rofiBlur: Prefs.prefs.rofiBlur
+    onRofiBlurChanged: {
+        Prefs.prefs.rofiBlur = rofiBlur;
+        Prefs.write();
+    }
+    // stored as percent int; exposed as a 0..1 factor for the rgba math
+    property real rofiOpacity: Prefs.prefs.rofiOpacity / 100
+    onRofiOpacityChanged: {
+        Prefs.prefs.rofiOpacity = Math.round(rofiOpacity * 100);
+        Prefs.write();
+    }
+    property int rofiRadius: Prefs.prefs.rofiRadius
+    onRofiRadiusChanged: {
+        Prefs.prefs.rofiRadius = rofiRadius;
+        Prefs.write();
+    }
+    // -1 = auto (follow the active scheme), else an explicit scheme index 0..5
+    property int rofiTheme: Prefs.prefs.rofiTheme
+    onRofiThemeChanged: {
+        Prefs.prefs.rofiTheme = rofiTheme;
+        Prefs.write();
+    }
+
     // ── radio states persisted across reboots (settings → connections) ──
     // wifi radio matter — `wifiEnabled` on NetworkState is !Networking.wifiEnabled
     property bool wifiRadioWanted: Prefs.prefs.wifiRadioWanted

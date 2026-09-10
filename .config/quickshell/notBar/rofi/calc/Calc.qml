@@ -5,6 +5,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Wayland._BackgroundEffect
 import qs.services
 import qs.themes
 
@@ -23,6 +24,15 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+
+    // frosted glass behind the panel (visible via the translucent launcherBg)
+    BackgroundEffect.blurRegion: MiscState.rofiBlur ? panelBlur : null
+
+    Region {
+        id: panelBlur
+        item: root.contentItem
+        radius: Themes.rofiBlurRadius
+    }
 
     // ── expression state ──
     property string expression: ""
@@ -113,17 +123,26 @@ PanelWindow {
         let i = 0;
         while (i < s.length) {
             const c = s[i];
-            if (c === " " || c === "\u00d7" || c === "\u00f7") { i++; continue; }
+            if (c === " " || c === "\u00d7" || c === "\u00f7") {
+                i++;
+                continue;
+            }
             if ((c >= "0" && c <= "9") || c === ".") {
                 let j = i;
                 while (j < s.length && ((s[j] >= "0" && s[j] <= "9") || s[j] === "."))
                     j++;
-                out.push({ t: "num", v: parseFloat(s.slice(i, j)) });
+                out.push({
+                    t: "num",
+                    v: parseFloat(s.slice(i, j))
+                });
                 i = j;
                 continue;
             }
             if ("+-*/%^()".includes(c)) {
-                out.push({ t: "op", v: c });
+                out.push({
+                    t: "op",
+                    v: c
+                });
                 i++;
                 continue;
             }
@@ -132,14 +151,23 @@ PanelWindow {
         return out;
     }
 
-    function peek() { return _toks[_pos]; }
-    function next() { const t = _toks[_pos]; _pos++; return t; }
+    function peek() {
+        return _toks[_pos];
+    }
+    function next() {
+        const t = _toks[_pos];
+        _pos++;
+        return t;
+    }
 
     function parseFactor() {
         const t = peek();
         if (!t)
             throw Error();
-        if (t.t === "num") { _pos++; return t.v; }
+        if (t.t === "num") {
+            _pos++;
+            return t.v;
+        }
         if (t.t === "op" && (t.v === "+" || t.v === "-")) {
             _pos++;
             return (t.v === "-" ? -1 : 1) * parseFactor();
@@ -172,8 +200,10 @@ PanelWindow {
             const t = peek();
             if (!t || t.t !== "op")
                 break;
-            if (t.v === "*") { _pos++; v *= parsePower(); }
-            else if (t.v === "/") {
+            if (t.v === "*") {
+                _pos++;
+                v *= parsePower();
+            } else if (t.v === "/") {
                 _pos++;
                 const d = parsePower();
                 if (d === 0)
@@ -197,9 +227,13 @@ PanelWindow {
             const t = peek();
             if (!t || t.t !== "op")
                 break;
-            if (t.v === "+") { _pos++; v += parseTerm(); }
-            else if (t.v === "-") { _pos++; v -= parseTerm(); }
-            else
+            if (t.v === "+") {
+                _pos++;
+                v += parseTerm();
+            } else if (t.v === "-") {
+                _pos++;
+                v -= parseTerm();
+            } else
                 break;
         }
         return v;
@@ -230,7 +264,10 @@ PanelWindow {
                 Text {
                     text: "\uf1ec"
                     color: root.exprValid ? Themes.rofiAccent : Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.4)
-                    font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
+                    font {
+                        pixelSize: 13
+                        family: "Symbols Nerd Font Mono"
+                    }
                 }
 
                 TextField {
@@ -240,7 +277,10 @@ PanelWindow {
                     color: Themes.windowTextColor
                     selectByMouse: true
                     horizontalAlignment: TextInput.AlignRight
-                    font { pixelSize: 18; family: "ZedMono Nerd Font" }
+                    font {
+                        pixelSize: 18
+                        family: "ZedMono Nerd Font"
+                    }
                     background: Rectangle {
                         color: Qt.rgba(1, 1, 1, 0.05)
                         implicitHeight: 30
@@ -272,13 +312,20 @@ PanelWindow {
                     border.color: copyMa.containsMouse ? Themes.rofiAccent : Qt.rgba(1, 1, 1, 0.1)
                     opacity: root.exprValid ? 1 : 0.4
 
-                    Behavior on opacity { NumberAnimation { duration: 120 } }
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 120
+                        }
+                    }
 
                     Text {
                         anchors.centerIn: parent
                         text: "\uf0c5"
                         color: Themes.rofiAccent
-                        font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+                        font {
+                            pixelSize: 11
+                            family: "Symbols Nerd Font Mono"
+                        }
                     }
 
                     MouseArea {
@@ -302,7 +349,10 @@ PanelWindow {
                     return root.exprValid ? "= " + root.resultText : "= invalid";
                 }
                 color: root.exprValid ? "#50fa7b" : "#ff5555"
-                font { pixelSize: 11; family: "ZedMono Nerd Font" }
+                font {
+                    pixelSize: 11
+                    family: "ZedMono Nerd Font"
+                }
                 elide: Text.ElideRight
             }
 
@@ -332,76 +382,91 @@ PanelWindow {
                     expressionField.forceActiveFocus();
                 }
 
-                component Key: Rectangle {
-                    id: key
-
-                    property string label: ""
-                    property string tok: label
-                    property bool accent: false
-                    property var keypadAction
-
-                    Layout.fillWidth: true
-                    implicitHeight: 38
-                    radius: 7
-                    color: keyMa.containsMouse
-                        ? (accent ? Qt.rgba(Themes.rofiAccent.r, Themes.rofiAccent.g, Themes.rofiAccent.b, 0.35) : Qt.rgba(1, 1, 1, 0.1))
-                        : (accent ? Qt.rgba(Themes.rofiAccent.r, Themes.rofiAccent.g, Themes.rofiAccent.b, 0.22) : Qt.rgba(1, 1, 1, 0.05))
-                    border.width: 1
-                    border.color: keyMa.containsMouse
-                        ? (accent ? Themes.rofiAccent : Qt.rgba(1, 1, 1, 0.18))
-                        : Qt.rgba(1, 1, 1, 0.08)
-
-                    scale: keyMa.pressed ? 0.93 : 1
-                    Behavior on scale { NumberAnimation { duration: 80 } }
-                    Behavior on color { ColorAnimation { duration: 120 } }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: key.label
-                        color: key.accent ? Themes.accent : Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 1)
-                        font { pixelSize: 15; family: "Symbols Nerd Font Mono" }
-                    }
-
-                    MouseArea {
-                        id: keyMa
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            if (key.keypadAction)
-                                key.keypadAction();
-                            else
-                                keypad.press(key.tok);
-                            expressionField.forceActiveFocus();
-                        }
-                    }
+                Key {
+                    label: "7"
+                    tok: "7"
+                }
+                Key {
+                    label: "8"
+                    tok: "8"
+                }
+                Key {
+                    label: "9"
+                    tok: "9"
+                }
+                Key {
+                    label: "÷"
+                    tok: "/"
                 }
 
-                Key { label: "7"; tok: "7" }
-                Key { label: "8"; tok: "8" }
-                Key { label: "9"; tok: "9" }
-                Key { label: "÷"; tok: "/" }
+                Key {
+                    label: "4"
+                    tok: "4"
+                }
+                Key {
+                    label: "5"
+                    tok: "5"
+                }
+                Key {
+                    label: "6"
+                    tok: "6"
+                }
+                Key {
+                    label: "×"
+                    tok: "*"
+                }
 
-                Key { label: "4"; tok: "4" }
-                Key { label: "5"; tok: "5" }
-                Key { label: "6"; tok: "6" }
-                Key { label: "×"; tok: "*" }
+                Key {
+                    label: "1"
+                    tok: "1"
+                }
+                Key {
+                    label: "2"
+                    tok: "2"
+                }
+                Key {
+                    label: "3"
+                    tok: "3"
+                }
+                Key {
+                    label: "−"
+                    tok: "-"
+                }
 
-                Key { label: "1"; tok: "1" }
-                Key { label: "2"; tok: "2" }
-                Key { label: "3"; tok: "3" }
-                Key { label: "−"; tok: "-" }
+                Key {
+                    label: "0"
+                    tok: "0"
+                }
+                Key {
+                    label: "."
+                    tok: "."
+                }
+                Key {
+                    label: "⌫"
+                    keypadAction: () => keypad.backspace()
+                }
+                Key {
+                    label: "+"
+                    tok: "+"
+                }
 
-                Key { label: "0"; tok: "0" }
-                Key { label: "."; tok: "." }
-                Key { label: "⌫"; keypadAction: () => keypad.backspace() }
-                Key { label: "+"; tok: "+" }
-
-                Key { label: "("; tok: "(" }
-                Key { label: ")"; tok: ")" }
-                Key { label: "C"; keypadAction: () => keypad.clear() }
-                Key { label: "="; accent: true; keypadAction: () => keypad.equals() }
+                Key {
+                    label: "("
+                    tok: "("
+                }
+                Key {
+                    label: ")"
+                    tok: ")"
+                }
+                Key {
+                    label: "C"
+                    keypadAction: () => keypad.clear()
+                }
+                Key {
+                    label: "="
+                    accent: true
+                    keypadAction: () => keypad.equals()
+                }
             }
 
             // ── hint ──
@@ -409,8 +474,65 @@ PanelWindow {
                 Layout.fillWidth: true
                 text: "enter copy · = chain · esc close"
                 color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.35)
-                font { pixelSize: 8; letterSpacing: 1; family: "ZedMono Nerd Font" }
+                font {
+                    pixelSize: 8
+                    letterSpacing: 1
+                    family: "ZedMono Nerd Font"
+                }
                 horizontalAlignment: Text.AlignHCenter
+            }
+        }
+    }
+
+    component Key: Rectangle {
+        id: key
+
+        property string label: ""
+        property string tok: label
+        property bool accent: false
+        property var keypadAction
+
+        Layout.fillWidth: true
+        implicitHeight: 38
+        radius: 7
+        color: keyMa.containsMouse ? (accent ? Qt.rgba(Themes.rofiAccent.r, Themes.rofiAccent.g, Themes.rofiAccent.b, 0.35) : Qt.rgba(1, 1, 1, 0.1)) : (accent ? Qt.rgba(Themes.rofiAccent.r, Themes.rofiAccent.g, Themes.rofiAccent.b, 0.22) : Qt.rgba(1, 1, 1, 0.05))
+        border.width: 1
+        border.color: keyMa.containsMouse ? (accent ? Themes.rofiAccent : Qt.rgba(1, 1, 1, 0.18)) : Qt.rgba(1, 1, 1, 0.08)
+
+        scale: keyMa.pressed ? 0.93 : 1
+        Behavior on scale {
+            NumberAnimation {
+                duration: 80
+            }
+        }
+        Behavior on color {
+            ColorAnimation {
+                duration: 120
+            }
+        }
+
+        Text {
+            anchors.centerIn: parent
+            text: key.label
+            color: key.accent ? Themes.accent : Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 1)
+            font {
+                pixelSize: 15
+                family: "Symbols Nerd Font Mono"
+            }
+        }
+
+        MouseArea {
+            id: keyMa
+
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: {
+                if (key.keypadAction)
+                    key.keypadAction();
+                else
+                    keypad.press(key.tok);
+                expressionField.forceActiveFocus();
             }
         }
     }

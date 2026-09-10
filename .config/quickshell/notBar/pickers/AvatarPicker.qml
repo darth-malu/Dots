@@ -6,6 +6,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import Quickshell.Wayland._BackgroundEffect
 import Quickshell.Widgets
 import qs.services
 import qs.themes
@@ -26,6 +27,15 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+
+    // frosted glass behind the panel (visible via the translucent launcherBg)
+    BackgroundEffect.blurRegion: MiscState.rofiBlur ? panelBlur : null
+
+    Region {
+        id: panelBlur
+        item: root.contentItem
+        radius: Themes.rofiBlurRadius
+    }
 
     property var pics: []
 

@@ -300,6 +300,122 @@ Item {
         }
     }
 
+    // ── generic int stepper row: glyph · label · [−] value[unit] [+] ──
+    component IntStepRow: RowLayout {
+        id: isr
+
+        required property string icon
+        required property string label
+        required property int minV
+        required property int maxV
+        required property int stepV
+        property int value
+        property string unit: ""
+        signal committed(int v)
+
+        function nudge(dir) {
+            const v = Math.max(minV, Math.min(maxV, value + dir * stepV));
+            if (v === value)
+                return;
+            value = v;
+            committed(v);
+        }
+
+        spacing: 12
+        Layout.fillWidth: true
+        Layout.preferredHeight: 34
+
+        Text {
+            text: isr.icon
+            color: Themes.accent
+            font {
+                pixelSize: 14
+                family: "Symbols Nerd Font Mono"
+            }
+            Layout.preferredWidth: 20
+            horizontalAlignment: Text.AlignHCenter
+        }
+
+        Text {
+            text: isr.label
+            color: Themes.fg
+            font {
+                pixelSize: 12
+                family: "Quicksand"
+                bold: true
+            }
+            Layout.alignment: Qt.AlignVCenter
+        }
+
+        Item {
+            Layout.fillWidth: true
+        }
+
+        StepBtn {
+            glyph: "\uf068"
+            Layout.alignment: Qt.AlignVCenter
+            onStepped: isr.nudge(-1)
+        }
+
+        // value readout with unit suffix — scroll over it to adjust
+        Rectangle {
+            id: valBox3
+
+            implicitWidth: 70
+            implicitHeight: 24
+            radius: 7
+            color: valHover3.containsMouse ? Themes.cardBgHover : Themes.cardBg
+            border.width: 1
+            border.color: valHover3.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.5) : Themes.borderColor
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: 110
+                }
+            }
+            Behavior on border.color {
+                ColorAnimation {
+                    duration: 110
+                }
+            }
+
+            HoverHandler {
+                id: valHover3
+            }
+
+            WheelHandler {
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                onWheel: ev => {
+                    isr.nudge(ev.angleDelta.y > 0 ? 1 : -1);
+                    ev.accepted = true;
+                }
+            }
+
+            Text {
+                anchors.centerIn: parent
+                text: `${isr.value}${isr.unit}`
+                color: valHover3.containsMouse ? Themes.fg : Themes.accent
+                font {
+                    pixelSize: 11
+                    bold: true
+                    family: "ZedMono Nerd Font"
+                }
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 110
+                    }
+                }
+            }
+        }
+
+        StepBtn {
+            glyph: "\uf067"
+            Layout.alignment: Qt.AlignVCenter
+            onStepped: isr.nudge(1)
+        }
+    }
+
     // ── persistent Hyprland integer option stepper ──
     // reads the value from (and writes back to) the user's lua config via the
     // HyprConfig service, then `hyprctl reload` applies it instantly. The row
@@ -573,6 +689,10 @@ Item {
             label: "Hyprland"
         },
         {
+            icon: "\uf2d0",
+            label: "Launcher"
+        },
+        {
             icon: "\uf1d3",
             label: "Git"
         },
@@ -581,6 +701,16 @@ Item {
             label: "Help"
         },
     ]
+
+    // launcher roster picker values (mirror of MiscState.rofiTheme)
+    readonly property var rofiSchemes: [-1, 0, 1, 2, 3, 4, 5]
+    readonly property var rofiSchemeNames: ["Pyrple", "Gron", "Gruvbox", "Rose", "Everforest", "Soramane"]
+    readonly property string rofiThemeName: {
+        const t = MiscState.rofiTheme;
+        if (t < 0)
+            return "auto — " + root.rofiSchemeNames[MiscState.themeScheme];
+        return root.rofiSchemeNames[t];
+    }
 
     readonly property string hostName: QuickState.hostName
 
@@ -792,7 +922,7 @@ Item {
                                 Loader {
                                     id: pageLoader
                                     width: parent.width
-                                    sourceComponent: root.currentCategory === 0 ? barPage : root.currentCategory === 1 ? wallpaperPage : root.currentCategory === 2 ? mediaPage : root.currentCategory === 3 ? notificationsPage : root.currentCategory === 4 ? connectionsPage : root.currentCategory === 5 ? performancePage : root.currentCategory === 6 ? desktopPage : root.currentCategory === 7 ? hyprlandPage : root.currentCategory === 8 ? gitPage : helpPage
+                                    sourceComponent: root.currentCategory === 0 ? barPage : root.currentCategory === 1 ? wallpaperPage : root.currentCategory === 2 ? mediaPage : root.currentCategory === 3 ? notificationsPage : root.currentCategory === 4 ? connectionsPage : root.currentCategory === 5 ? performancePage : root.currentCategory === 6 ? desktopPage : root.currentCategory === 7 ? hyprlandPage : root.currentCategory === 8 ? rofiPage : root.currentCategory === 9 ? gitPage : helpPage
                                 }
                             }
                         }
@@ -3524,6 +3654,177 @@ Item {
 
             // pull the current values from the lua config every time the page opens
             Component.onCompleted: HyprConfig.reload()
+        }
+    }
+
+    // ═══ LAUNCHER (ROFIS) ═══
+    Component {
+        id: rofiPage
+
+        ColumnLayout {
+            spacing: 12
+
+            Card {
+                title: "Launcher"
+                icon: "\uf2d0"
+                accent: Themes.rofiAccent
+
+                ColumnLayout {
+                    spacing: 14
+                    Layout.fillWidth: true
+                    Layout.topMargin: 4
+
+                    SettingRow {
+                        icon: "\uf0c9"
+                        label: "Backdrop blur"
+                        caption: MiscState.rofiBlur ? "frosted" : "none"
+                        checked: MiscState.rofiBlur
+                        onFlipped: MiscState.rofiBlur = !MiscState.rofiBlur
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: Themes.separator
+                        Layout.leftMargin: 32
+                    }
+
+                    IntStepRow {
+                        icon: "\uf06e"
+                        label: "Panel opacity"
+                        minV: 35
+                        maxV: 95
+                        stepV: 5
+                        value: Math.round(MiscState.rofiOpacity * 100)
+                        unit: "%"
+                        onCommitted: v => MiscState.rofiOpacity = v / 100
+                    }
+
+                    IntStepRow {
+                        icon: "\uf0b0"
+                        label: "Blur radius"
+                        minV: 4
+                        maxV: 48
+                        stepV: 2
+                        value: MiscState.rofiRadius
+                        unit: "px"
+                        onCommitted: v => MiscState.rofiRadius = v
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: Themes.separator
+                        Layout.leftMargin: 32
+                    }
+
+                    // theme roster header — Auto follows the active scheme
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+
+                        Text {
+                            text: "\uf13b"
+                            color: Themes.muted
+                            font {
+                                pixelSize: 13
+                                family: "Symbols Nerd Font Mono"
+                            }
+                            Layout.preferredWidth: 20
+                            horizontalAlignment: Text.AlignHCenter
+                        }
+
+                        Text {
+                            text: "Rofi theme"
+                            color: Themes.fg
+                            font {
+                                pixelSize: 12
+                                family: "Quicksand"
+                                bold: true
+                            }
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+
+                        Item {
+                            Layout.fillWidth: true
+                        }
+
+                        Text {
+                            text: root.rofiThemeName
+                            color: Themes.accent
+                            font {
+                                pixelSize: 10
+                                bold: true
+                                family: "ZedMono Nerd Font"
+                            }
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+                    }
+
+                    Row {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Repeater {
+                            model: ["Auto", "Pyrple", "Gron", "Gruvbox", "Rose", "Everforest", "Soramane"]
+
+                            delegate: Rectangle {
+                                required property int index
+                                required property string modelData
+
+                                readonly property bool active: MiscState.rofiTheme === root.rofiSchemes[index]
+                                readonly property bool hovered: themePillMa.containsMouse
+
+                                implicitHeight: 26
+                                implicitWidth: themePillLabel.implicitWidth + 16
+                                radius: 8
+                                color: active ? Qt.rgba(Themes.rofiAccent.r, Themes.rofiAccent.g, Themes.rofiAccent.b, 0.16) : hovered ? Qt.rgba(1, 1, 1, 0.05) : Qt.rgba(1, 1, 1, 0.03)
+                                border.width: 1
+                                border.color: active ? Qt.rgba(Themes.rofiAccent.r, Themes.rofiAccent.g, Themes.rofiAccent.b, 0.5) : Qt.rgba(1, 1, 1, 0.07)
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: 110
+                                    }
+                                }
+
+                                Text {
+                                    id: themePillLabel
+                                    anchors.centerIn: parent
+                                    text: modelData
+                                    color: active ? Themes.fg : hovered ? Themes.dim : Themes.muted
+                                    font {
+                                        pixelSize: 10
+                                        bold: true
+                                        family: "Quicksand"
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: themePillMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: MiscState.rofiTheme = root.rofiSchemes[index]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ── bring the whole launcher family onto one canvas ──
+            Text {
+                Layout.fillWidth: true
+                Layout.leftMargin: 4
+                text: "Blur applies to the launcher, calc, and every picker — the panel bg turns translucent while blur is on."
+                color: Themes.dim
+                font {
+                    pixelSize: 10
+                    family: "ZedMono Nerd Font"
+                }
+                wrapMode: Text.WordWrap
+            }
         }
     }
 

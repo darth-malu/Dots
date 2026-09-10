@@ -323,7 +323,7 @@ ClippingRectangle {
                 Layout.fillHeight: true
                 Layout.topMargin: 4
                 Layout.leftMargin: 4
-                Layout.rightMargin: 30
+                Layout.rightMargin: 12
                 spacing: 2
 
                 // title + artist
@@ -365,11 +365,11 @@ ClippingRectangle {
                 }
 
                 // transport controls — always on screen in compact mode;
-                // bottomOffset clears the horizontal bar anchored below
+                // the seek strip sits below them at the card's floor
                 RowLayout {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 24
-                    Layout.bottomMargin: 16
+                    Layout.bottomMargin: 3
                     spacing: 4
 
                     Item {
@@ -403,82 +403,76 @@ ClippingRectangle {
                         Layout.fillWidth: true
                     }
                 }
-            }
-        }
 
-        // progress bar — spans the art's right border to the container's
-        // right edge; hovering enlarges it for easier seeking
-        Item {
-            id: compactProgress
+                // progress bar — part of the layout flow so it can't slip
+                // under the card clip; pins the seek strip to the bottom,
+                // hovering enlarges it for easier seeking
+                Item {
+                    id: compactProgress
 
-            anchors {
-                left: compactArt.right
-                leftMargin: 6
-                right: parent.right
-                rightMargin: 6
-                bottom: parent.bottom
-                bottomMargin: 4
-            }
-            height: 14
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 16
 
-            readonly property real ratio: {
-                card.progressTick;
-                const p = MprisState.cardPlayer;
-                if (!p || !(p.length > 0))
-                    return 0;
-                const len = p.length;
-                const raw = p.position ?? 0;
-                if (raw == null || len <= 0 || isNaN(raw) || isNaN(len))
-                    return 0;
-                return Math.max(0, Math.min(raw / len, 1));
-            }
-
-            Rectangle {
-                anchors {
-                    left: parent.left
-                    right: parent.right
-                    bottom: parent.bottom
-                }
-                height: compactProgressMa.containsMouse ? 9 : 3
-                radius: height / 2
-                color: Qt.rgba(1, 1, 1, 0.12)
-
-                Behavior on height {
-                    NumberAnimation {
-                        duration: 160
-                        easing.type: Easing.OutCubic
+                    readonly property real ratio: {
+                        card.progressTick;
+                        const p = MprisState.cardPlayer;
+                        if (!p || !(p.length > 0))
+                            return 0;
+                        const len = p.length;
+                        const raw = p.position ?? 0;
+                        if (raw == null || len <= 0 || isNaN(raw) || isNaN(len))
+                            return 0;
+                        return Math.max(0, Math.min(raw / len, 1));
                     }
-                }
 
-                Rectangle {
-                    anchors {
-                        left: parent.left
-                        bottom: parent.bottom
-                    }
-                    width: parent.width * compactProgress.ratio
-                    height: parent.height
-                    radius: height / 2
-                    color: card.dominantColor
+                    Rectangle {
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            bottom: parent.bottom
+                        }
+                        height: compactProgressMa.containsMouse ? 9 : 3
+                        radius: height / 2
+                        color: Qt.rgba(1, 1, 1, 0.12)
 
-                    Behavior on width {
-                        NumberAnimation {
-                            duration: 200
-                            easing.type: Easing.Linear
+                        Behavior on height {
+                            NumberAnimation {
+                                duration: 160
+                                easing.type: Easing.OutCubic
+                            }
+                        }
+
+                        Rectangle {
+                            anchors {
+                                left: parent.left
+                                bottom: parent.bottom
+                            }
+                            width: parent.width * compactProgress.ratio
+                            height: parent.height
+                            radius: height / 2
+                            color: card.dominantColor
+
+                            Behavior on width {
+                                NumberAnimation {
+                                    duration: 200
+                                    easing.type: Easing.Linear
+                                }
+                            }
                         }
                     }
-                }
-            }
 
-            MouseArea {
-                id: compactProgressMa
+                    MouseArea {
+                        id: compactProgressMa
 
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: mouse => {
-                    const p = MprisState.cardPlayer;
-                    if (p && p.length > 0)
-                        p.position = (mouse.x / width) * p.length;
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: mouse => {
+                            const p = MprisState.cardPlayer;
+                            if (p && p.length > 0)
+                                p.position = (mouse.x / width) * p.length;
+                        }
+                    }
                 }
             }
         }
@@ -486,7 +480,6 @@ ClippingRectangle {
         ChooserCog {
             // peek until the card is hovered (or the chooser is open)
             visible: compactHover.hovered || card.chooserOpen
-            // left = expand to the art view, right = player chooser
             onClicked: card.compactNowPlaying = false
             onOpenChooser: card.chooserOpen = !card.chooserOpen
             anchors {
@@ -602,9 +595,25 @@ ClippingRectangle {
                 visible: expandedArtImage.status !== Image.Ready
             }
 
+            // gradient scrim — light halo up top for the controls, solid
+            // floor at the bottom so the text + pill stay legible without
+            // drowning the whole album in black
             Rectangle {
                 anchors.fill: parent
-                color: Qt.rgba(0, 0, 0, 0.5)
+                gradient: Gradient {
+                    GradientStop {
+                        position: 0.0
+                        color: Qt.rgba(0, 0, 0, 0.18)
+                    }
+                    GradientStop {
+                        position: 0.45
+                        color: "transparent"
+                    }
+                    GradientStop {
+                        position: 1.0
+                        color: Qt.rgba(0, 0, 0, 0.72)
+                    }
+                }
             }
         }
 
@@ -623,7 +632,7 @@ ClippingRectangle {
                     right: parent.right
                     bottom: parent.bottom
                 }
-                height: 12
+                height: 14
 
                 readonly property real ratio: {
                     card.progressTick;
@@ -691,9 +700,9 @@ ClippingRectangle {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                anchors.leftMargin: 10
+                anchors.leftMargin: 12
                 anchors.rightMargin: 40
-                anchors.bottomMargin: 14
+                anchors.bottomMargin: 18
                 spacing: 6
 
                 // ── title + artist — always visible, bottom left ──
@@ -732,37 +741,55 @@ ClippingRectangle {
                         maxWidth: 420
                     }
                 }
+            }
 
-                // ── transport — revealed, slides in BELOW the text (between
-                // the title/artist and the bottom progress strip) ──
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 32
-                    visible: card.expControlsRevealed
-                    opacity: card.expControlsRevealed ? 1 : 0
-                    spacing: 8
+            // ── transport — revealed by tapping the track text; a dark glass
+            // pill floats above the progress strip so the buttons stay legible
+            // over any art ──
+            Rectangle {
+                id: expTransportPill
 
-                    Behavior on opacity {
+                visible: card.expControlsRevealed
+                opacity: card.expControlsRevealed ? 1 : 0
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 180
+                        easing.type: Easing.OutCubic
+                    }
+                }
+
+                transform: Translate {
+                    y: card.expControlsRevealed ? 0 : 12
+
+                    Behavior on y {
                         NumberAnimation {
                             duration: 180
                             easing.type: Easing.OutCubic
                         }
                     }
+                }
 
-                    transform: Translate {
-                        y: card.expControlsRevealed ? 0 : 14
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                    bottom: parent.bottom
+                    bottomMargin: 18
+                }
+                implicitWidth: expTransportRow.implicitWidth + 22
+                implicitHeight: expTransportRow.implicitHeight + 10
+                radius: 15
+                color: Qt.rgba(0, 0, 0, 0.5)
+                border.width: 1
+                border.color: Qt.rgba(1, 1, 1, 0.15)
 
-                        Behavior on y {
-                            NumberAnimation {
-                                duration: 180
-                                easing.type: Easing.OutCubic
-                            }
-                        }
-                    }
+                RowLayout {
+                    id: expTransportRow
 
-                    Item {
-                        Layout.fillWidth: true
-                    }
+                    anchors.fill: parent
+                    anchors.leftMargin: 11
+                    anchors.rightMargin: 11
+                    spacing: 8
+
                     TrackButton {
                         text: "\uf074"
                         visible: MiscState.showShuffle
@@ -806,9 +833,6 @@ ClippingRectangle {
                             else
                                 p.loopState = MprisLoopState.None;
                         }
-                    }
-                    Item {
-                        Layout.fillWidth: true
                     }
                 }
             }

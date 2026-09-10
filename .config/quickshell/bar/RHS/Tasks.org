@@ -26,6 +26,9 @@
       + [x] Allow user to push to remotes you probe -- Each added location can be github/gitlab etc — probe reports the origin url, rows label it (github/gitlab/...), straight "push remote" button
       + [x] Allow user to pull from remotes — per-repo + "pull all"; fast-forward only to avoid surprise merges
       + [x] Incase of error tell user to use other tools eg cli — actions run through a serialized Process that captures stderr; failures surface a red inline hint ("use the cli: git -C <path> push") plus a notify
+
+* New Pending:
+ + .
 * TODO LATER
 + [ ] Possible to store sudo access for hdd so i dont have to manually enter it on every hdd? Use userspace tools if not -- what options are available?
   + researched: udisksctl exists (/run/current-system/sw/bin/udisksctl) and udisks2 is dbus-activated on NixOS (add services.udisks2.enable = true) — lets you mount/unmount without sudo via D-Bus; automount on boot via fstab noauto,nofail,x-systemd.automount; the only NOPASSWD sudo path is a scoped security.sudo.extraRules entry for /run/wrappers/bin/mount/umount

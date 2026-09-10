@@ -1,5 +1,6 @@
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Wayland._BackgroundEffect
 import Quickshell.Widgets
 import Quickshell.Hyprland
 import QtQuick.Layouts
@@ -46,9 +47,16 @@ PanelWindow {
             tl.wayland.activate();
     }
 
-    // BackgroundEffect.blurRegion: Region {
-    //     item: launcher.contentItem
-    // }
+    // Backdrop blur — frosted glass behind the panel. The compositor blurs
+    // whatever sits under the surface; it only becomes visible because
+    // Themes.launcherBg drops to rofiOpacity while blur is enabled.
+    BackgroundEffect.blurRegion: MiscState.rofiBlur ? launcherBlur : null
+
+    Region {
+        id: launcherBlur
+        item: launcher.contentItem
+        radius: Themes.rofiBlurRadius
+    }
 
     property Item content
     required property var modelIngest
@@ -245,8 +253,9 @@ PanelWindow {
                     const wasWindows = RofiState.toggleOpenWindows;
                     if (wasWindows)
                         focusToplevel(current.modelData);
-                        // closes the panel itself
-                    else {
+                    else
+                    // closes the panel itself
+                    {
                         if (RofiState.toggleAppLauncher)
                             current.modelData.execute();
                         else if (RofiState.toggleClipHist)

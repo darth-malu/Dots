@@ -15,6 +15,12 @@ Singleton {
         var v = scheme === 0 ? p : scheme === 1 ? g : scheme === 2 ? n : scheme === 3 ? r : scheme === 4 ? a : s;
         return v || g;
     }
+    // explicit-scheme picker for the launcher roster (MiscState.rofiTheme):
+    // pass -1 to fall back to the currently active scheme
+    function pickScheme(sel, p, g, n, r, a, s): color {
+        var i = sel >= 0 ? sel : root.scheme;
+        return i === 0 ? p : i === 1 ? g : i === 2 ? n : i === 3 ? r : i === 4 ? a : (s || g);
+    }
 
     // Core identity tokens (themed)
     readonly property color accent2: pick("#8be9fd", "#48bfe3", "#8ec07c", "#f2b0cd", "#83c092", "#a6d8ff")  // cyan secondary → everforest aqua / soramane pale sky
@@ -114,12 +120,28 @@ Singleton {
 
     readonly property color mprisIndicatorColor: root.green
 
-    // Rofi / Launcher
-    readonly property color launcherBg: Qt.rgba(12 / 255, 44 / 255, 44 / 255, 0.9)
-    readonly property color rofiBorder: Qt.rgba(63 / 255, 167 / 255, 197 / 255, 0.42)
-    readonly property color rofiAccent: Qt.rgba(63 / 255, 167 / 255, 197 / 255, 0.82)
-    readonly property color rofiHighlightBg: Qt.rgba(72 / 255, 191 / 255, 227 / 255, 0.2)
-    readonly property color rofiDelegateText: Qt.rgba(196 / 255, 203 / 255, 212 / 255, 1)
+    // Rofi / Launcher — scheme-aware glass rosters. Every panel (launcher,
+    // calc, pickers) reads these shared tokens. The bg respects the blur
+    // pref: with backdrop blur enabled it drops to rofiOpacity so the
+    // wallpaper shows through; disabled it stays ≥ 0.85 to keep text legible.
+    readonly property color rofiBgBase: pickScheme(MiscState.rofiTheme, "#282a36", // pyrple
+    "#0f2f2f", // gron — the classic teal glass
+    "#1d2021", // gruvbox
+    "#2a1c26", // rose
+    "#27322c", // everforest
+    "#18223e") // soramane
+    readonly property real rofiBgOpacity: MiscState.rofiBlur ? MiscState.rofiOpacity : Math.max(MiscState.rofiOpacity, 0.85)
+    readonly property color launcherBg: Qt.rgba(rofiBgBase.r, rofiBgBase.g, rofiBgBase.b, rofiBgOpacity)
+    readonly property color rofiBorder: pickScheme(MiscState.rofiTheme, Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.42), Qt.rgba(63 / 255, 167 / 255, 197 / 255, 0.42), Qt.rgba(254 / 255, 128 / 255, 25 / 255, 0.42), Qt.rgba(229 / 255, 122 / 255, 167 / 255, 0.42), Qt.rgba(167 / 255, 192 / 255, 128 / 255, 0.42), Qt.rgba(138 / 255, 180 / 255, 255 / 255, 0.42))
+    readonly property color rofiAccent: pickScheme(MiscState.rofiTheme, Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.82), Qt.rgba(63 / 255, 167 / 255, 197 / 255, 0.82), Qt.rgba(254 / 255, 128 / 255, 25 / 255, 0.82), Qt.rgba(229 / 255, 122 / 255, 167 / 255, 0.82), Qt.rgba(167 / 255, 192 / 255, 128 / 255, 0.82), Qt.rgba(138 / 255, 180 / 255, 255 / 255, 0.82))
+    readonly property color rofiHighlightBg: pickScheme(MiscState.rofiTheme, Qt.rgba(189 / 255, 147 / 255, 249 / 255, 0.2), Qt.rgba(72 / 255, 191 / 255, 227 / 255, 0.2), Qt.rgba(254 / 255, 128 / 255, 25 / 255, 0.2), Qt.rgba(229 / 255, 122 / 255, 167 / 255, 0.2), Qt.rgba(167 / 255, 192 / 255, 128 / 255, 0.2), Qt.rgba(138 / 255, 180 / 255, 255 / 255, 0.2))
+    readonly property color rofiDelegateText: pickScheme(MiscState.rofiTheme, "#f8f8f2", // pyrple
+    "#c4cbd4", // gron
+    "#ebdbb2", // gruvbox
+    "#f6eaf1", // rose
+    "#d3c6aa", // everforest
+    "#eaf3ff") // soramane
+    readonly property int rofiBlurRadius: MiscState.rofiRadius
     readonly property font rofiFont: Qt.font({
         family: "Mononoki Nerd Font",
         pointSize: 11

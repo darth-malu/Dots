@@ -6,6 +6,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import Quickshell.Wayland._BackgroundEffect
 import qs.services
 import qs.themes
 
@@ -24,6 +25,15 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+
+    // frosted glass behind the panel (visible via the translucent launcherBg)
+    BackgroundEffect.blurRegion: MiscState.rofiBlur ? panelBlur : null
+
+    Region {
+        id: panelBlur
+        item: root.contentItem
+        radius: Themes.rofiBlurRadius
+    }
 
     // ── HSV state model ──
     property real hue: 0.79
@@ -99,8 +109,7 @@ PanelWindow {
     }
 
     function copyText(text, label) {
-        Quickshell.execDetached(["sh", "-c",
-            `printf '%s' '${text}' | wl-copy && notify-send -a Color -t 1500 'copied ${label || text}'`]);
+        Quickshell.execDetached(["sh", "-c", `printf '%s' '${text}' | wl-copy && notify-send -a Color -t 1500 'copied ${label || text}'`]);
         PickerState.pushRecentColor(normalizeHex(hexString(true)));
     }
 
@@ -162,13 +171,34 @@ PanelWindow {
 
             gradient: Gradient {
                 orientation: Gradient.Horizontal
-                GradientStop { position: 0.00; color: "#ff0000" }
-                GradientStop { position: 0.17; color: "#ffff00" }
-                GradientStop { position: 0.33; color: "#00ff00" }
-                GradientStop { position: 0.50; color: "#00ffff" }
-                GradientStop { position: 0.67; color: "#0000ff" }
-                GradientStop { position: 0.83; color: "#ff00ff" }
-                GradientStop { position: 1.00; color: "#ff0000" }
+                GradientStop {
+                    position: 0.00
+                    color: "#ff0000"
+                }
+                GradientStop {
+                    position: 0.17
+                    color: "#ffff00"
+                }
+                GradientStop {
+                    position: 0.33
+                    color: "#00ff00"
+                }
+                GradientStop {
+                    position: 0.50
+                    color: "#00ffff"
+                }
+                GradientStop {
+                    position: 0.67
+                    color: "#0000ff"
+                }
+                GradientStop {
+                    position: 0.83
+                    color: "#ff00ff"
+                }
+                GradientStop {
+                    position: 1.00
+                    color: "#ff0000"
+                }
             }
         }
 
@@ -254,10 +284,15 @@ PanelWindow {
                 Text {
                     text: "\uf043"
                     color: Themes.rofiAccent
-                    font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
+                    font {
+                        pixelSize: 13
+                        family: "Symbols Nerd Font Mono"
+                    }
                 }
 
-                Item { Layout.fillWidth: true }
+                Item {
+                    Layout.fillWidth: true
+                }
 
                 // live preview chip
                 Rectangle {
@@ -273,14 +308,21 @@ PanelWindow {
                         anchors.centerIn: parent
                         text: Math.round(root.alpha * 100) + "%"
                         color: root.val > 0.5 ? Themes.panelBg : Themes.fg
-                        font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                        font {
+                            pixelSize: 9
+                            bold: true
+                            family: "ZedMono Nerd Font"
+                        }
                     }
                 }
 
                 Text {
                     text: "\uf00d"
                     color: closeMa.containsMouse ? "#ff5555" : Themes.muted
-                    font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+                    font {
+                        pixelSize: 11
+                        family: "Symbols Nerd Font Mono"
+                    }
 
                     MouseArea {
                         id: closeMa
@@ -422,7 +464,10 @@ PanelWindow {
                         anchors.centerIn: parent
                         text: "\uf1fb"
                         color: Themes.accent
-                        font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+                        font {
+                            pixelSize: 11
+                            family: "Symbols Nerd Font Mono"
+                        }
                     }
 
                     MouseArea {
@@ -446,81 +491,6 @@ PanelWindow {
                 Layout.fillWidth: true
                 spacing: 5
 
-                component CopyButton: Rectangle {
-                    id: cb
-
-                    signal clicked()
-
-                    Layout.preferredWidth: 28
-                    Layout.preferredHeight: 24
-                    radius: 6
-                    color: cbMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.18) : Qt.rgba(1, 1, 1, 0.05)
-                    border.width: 1
-                    border.color: cbMa.containsMouse ? Themes.accent : Qt.rgba(1, 1, 1, 0.12)
-
-                    scale: cbMa.pressed ? 0.92 : 1
-
-                    Behavior on scale {
-                        NumberAnimation { duration: 80 }
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "\uf0c5"
-                        color: cbMa.containsMouse ? Themes.accentSoft : Themes.mutedSoft
-                        font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
-                    }
-
-                    MouseArea {
-                        id: cbMa
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: cb.clicked()
-                    }
-                }
-
-                component FormatRow: RowLayout {
-                    id: fr
-
-                    property string label
-                    property string value
-
-                    spacing: 7
-
-                    Text {
-                        text: fr.label
-                        color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.55)
-                        font { pixelSize: 8; letterSpacing: 1.5; bold: true; family: "ZedMono Nerd Font" }
-                        Layout.preferredWidth: 30
-                    }
-
-                    Rectangle {
-                        Layout.fillWidth: true
-                        implicitHeight: 26
-                        radius: 6
-                        color: Qt.rgba(1, 1, 1, 0.05)
-                        border.width: 1
-                        border.color: Qt.rgba(1, 1, 1, 0.08)
-
-                        Text {
-                            anchors.left: parent.left
-                            anchors.leftMargin: 8
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: fr.value
-                            color: Themes.windowTextColor
-                            font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                            elide: Text.ElideRight
-                        }
-                    }
-
-                    CopyButton {
-                        onClicked: root.copyText(fr.value)
-                    }
-                }
-
                 // HEX gets an editable field; the rest are read-only rows
                 RowLayout {
                     spacing: 7
@@ -528,7 +498,12 @@ PanelWindow {
                     Text {
                         text: "HEX"
                         color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.55)
-                        font { pixelSize: 8; letterSpacing: 1.5; bold: true; family: "ZedMono Nerd Font" }
+                        font {
+                            pixelSize: 8
+                            letterSpacing: 1.5
+                            bold: true
+                            family: "ZedMono Nerd Font"
+                        }
                         Layout.preferredWidth: 30
                     }
 
@@ -540,7 +515,10 @@ PanelWindow {
                         // text is managed imperatively by syncHexField() — a
                         // declarative binding here loops with onTextChanged
                         color: root.validHex(text) || text.length === 0 ? Themes.windowTextColor : "#ff5555"
-                        font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                        font {
+                            pixelSize: 10
+                            family: "ZedMono Nerd Font"
+                        }
                         selectByMouse: true
                         maximumLength: 9
                         verticalAlignment: TextInput.AlignVCenter
@@ -609,7 +587,9 @@ PanelWindow {
                 scale: copyMa.pressed ? 0.97 : 1
 
                 Behavior on scale {
-                    NumberAnimation { duration: 80 }
+                    NumberAnimation {
+                        duration: 80
+                    }
                 }
 
                 RowLayout {
@@ -619,13 +599,20 @@ PanelWindow {
                     Text {
                         text: "\uf0c5"
                         color: Themes.accent
-                        font { pixelSize: 11; family: "Symbols Nerd Font Mono" }
+                        font {
+                            pixelSize: 11
+                            family: "Symbols Nerd Font Mono"
+                        }
                     }
 
                     Text {
                         text: "copy " + root.hexString(root.alpha < 1)
                         color: Themes.fg
-                        font { pixelSize: 11; bold: true; family: "Quicksand" }
+                        font {
+                            pixelSize: 11
+                            bold: true
+                            family: "Quicksand"
+                        }
                     }
                 }
 
@@ -647,7 +634,11 @@ PanelWindow {
                 Text {
                     text: "MATERIAL COLORS"
                     color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.45)
-                    font { pixelSize: 8; letterSpacing: 2; family: "ZedMono Nerd Font" }
+                    font {
+                        pixelSize: 8
+                        letterSpacing: 2
+                        family: "ZedMono Nerd Font"
+                    }
                 }
 
                 GridLayout {
@@ -657,13 +648,7 @@ PanelWindow {
                     rowSpacing: 4
 
                     Repeater {
-                        model: [
-                            "#f44336", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5", "#2196f3", "#03a9f4", "#00bcd4", "#009688", "#4caf50", "#8bc34a", "#cddc39", "#ffeb3b",
-                            "#ffc107", "#ff9800", "#ff5722", "#795548", "#9e9e9e", "#607d8b", "#ffffff", "#000000",
-                            "#d32f2f", "#c2185b", "#7b1fa2", "#512da8", "#303f9f", "#1976d2", "#0288d1", "#00796b", "#388e3c", "#689f38", "#afb42b", "#fbc02d", "#ffa000",
-                            "#f57c00", "#e64a19", "#5d4037", "#757575", "#455a64", "#eceff1", "#e3f2fd",
-                            "#c62828", "#ad1457", "#6a1b9a", "#4527a0", "#283593", "#1565c0", "#0277bd", "#00838f", "#00695c", "#2e7d32", "#558b2f", "#f9a825", "#ef6c00"
-                        ]
+                        model: ["#f44336", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5", "#2196f3", "#03a9f4", "#00bcd4", "#009688", "#4caf50", "#8bc34a", "#cddc39", "#ffeb3b", "#ffc107", "#ff9800", "#ff5722", "#795548", "#9e9e9e", "#607d8b", "#ffffff", "#000000", "#d32f2f", "#c2185b", "#7b1fa2", "#512da8", "#303f9f", "#1976d2", "#0288d1", "#00796b", "#388e3c", "#689f38", "#afb42b", "#fbc02d", "#ffa000", "#f57c00", "#e64a19", "#5d4037", "#757575", "#455a64", "#eceff1", "#e3f2fd", "#c62828", "#ad1457", "#6a1b9a", "#4527a0", "#283593", "#1565c0", "#0277bd", "#00838f", "#00695c", "#2e7d32", "#558b2f", "#f9a825", "#ef6c00"]
 
                         delegate: Rectangle {
                             id: matSwatch
@@ -704,7 +689,11 @@ PanelWindow {
                 Text {
                     text: "RECENT"
                     color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.45)
-                    font { pixelSize: 8; letterSpacing: 2; family: "ZedMono Nerd Font" }
+                    font {
+                        pixelSize: 8
+                        letterSpacing: 2
+                        family: "ZedMono Nerd Font"
+                    }
                 }
 
                 RowLayout {
@@ -741,6 +730,94 @@ PanelWindow {
                     }
                 }
             }
+        }
+    }
+
+    component CopyButton: Rectangle {
+        id: cb
+
+        signal clicked
+
+        Layout.preferredWidth: 28
+        Layout.preferredHeight: 24
+        radius: 6
+        color: cbMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.18) : Qt.rgba(1, 1, 1, 0.05)
+        border.width: 1
+        border.color: cbMa.containsMouse ? Themes.accent : Qt.rgba(1, 1, 1, 0.12)
+
+        scale: cbMa.pressed ? 0.92 : 1
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: 80
+            }
+        }
+
+        Text {
+            anchors.centerIn: parent
+            text: "\uf0c5"
+            color: cbMa.containsMouse ? Themes.accentSoft : Themes.mutedSoft
+            font {
+                pixelSize: 10
+                family: "Symbols Nerd Font Mono"
+            }
+        }
+
+        MouseArea {
+            id: cbMa
+
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: cb.clicked()
+        }
+    }
+
+    component FormatRow: RowLayout {
+        id: fr
+
+        property string label
+        property string value
+
+        spacing: 7
+
+        Text {
+            text: fr.label
+            color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.55)
+            font {
+                pixelSize: 8
+                letterSpacing: 1.5
+                bold: true
+                family: "ZedMono Nerd Font"
+            }
+            Layout.preferredWidth: 30
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 26
+            radius: 6
+            color: Qt.rgba(1, 1, 1, 0.05)
+            border.width: 1
+            border.color: Qt.rgba(1, 1, 1, 0.08)
+
+            Text {
+                anchors.left: parent.left
+                anchors.leftMargin: 8
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                text: fr.value
+                color: Themes.windowTextColor
+                font {
+                    pixelSize: 10
+                    family: "ZedMono Nerd Font"
+                }
+                elide: Text.ElideRight
+            }
+        }
+
+        CopyButton {
+            onClicked: root.copyText(fr.value)
         }
     }
 }
