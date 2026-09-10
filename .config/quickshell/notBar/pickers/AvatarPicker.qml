@@ -181,6 +181,7 @@ PanelWindow {
                         color: "transparent"
 
                         Image {
+                            id: bannerAvatar
                             anchors.fill: parent
                             source: MiscState.avatarUrl
                             fillMode: Image.PreserveAspectCrop
@@ -190,7 +191,7 @@ PanelWindow {
 
                         Text {
                             anchors.centerIn: parent
-                            visible: parent.children[1].status !== Image.Ready
+                            visible: bannerAvatar.status !== Image.Ready
                             text: "\uf007"
                             color: Themes.muted
                             font { pixelSize: 14; family: "Symbols Nerd Font Mono" }

@@ -1,6 +1,7 @@
 pragma Singleton
 import Quickshell
 import Quickshell.Io
+import QtQuick
 
 Singleton {
     id: root
@@ -9,8 +10,8 @@ Singleton {
     onEnableBarChanged: prefs.enableBar = enableBar
 
     // 0 = transparent (no bg, flush top)
-    // 1 = solid slab (rounded, hairline border, side margins)
-    // 2 = full-bleed slab (edge-to-edge, no side margins, no border)
+    // 1 = solid margin slab (rounded, hairline border, side margins)
+    // 2 = solid slab (edge-to-edge, no side margins, no border)
     // 3 = colored glass (edge-to-edge, semi-transparent colored bg)
     property int barMode: prefs.barMode
     onBarModeChanged: prefs.barMode = barMode
@@ -27,6 +28,11 @@ Singleton {
         id: prefStore
 
         path: Quickshell.env("HOME") + "/.config/quickshell/bar-prefs.json"
+        // Blocking sync load (matching GitState): with the async default the
+        // window would build in transparent mode first and flip to the stored
+        // mode on arrival — a visible re-layout/artifact on qs restart.
+        preload: false
+        blockLoading: true
         watchChanges: false
         onAdapterUpdated: writeAdapter()
 
@@ -42,4 +48,6 @@ Singleton {
             property bool frameOn: true
         }
     }
+
+    Component.onCompleted: prefStore.reload()
 }

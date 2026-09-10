@@ -1,87 +1,37 @@
-#+title: Tasks
-
-* Completed
-+ [X] Notification Tray
-  + [X] Format Notification as seen in actual notifications in expanded view (left click)
-
-+ [X] Theme> settings
-  + [X] Remove Amber Since its a worse version of Gruvbox...Replace it with an Everforest theme
-  + [X] Rename Purple to Pyrple
-
-+ [X] Mpris module
-  + [X] While hovering over Mpris module in bar. Scroll with (alt + wheel) to switch players
-    + [X] Instead of ctrl do Alt
-    + [X] Also make binding for Alt + play to hide/show mpris module
-    + [X] Alt + Click the module to toggle between compact/expanded
-  + [X] Defaults should be:
-    + [X] Hide on idle: false
-    + [X] Enable Mpris: true
-    + [X] Compact: true
-  + [X] Hide keybind in hyprland - toggle visibility on and off
-  + [X] Does not persist visibility state across sessions with prefs look into it
-    (persistence verified & showMpris defaults to true now)
-  + [X] Use different color for mpd - pastel pyprle
-
-+ [X] Wallpaper Rofi
-  + [X] Blinking on hover eg. the dark/light toggle favorites blink breaking the UI
-  + [X] Currently picked wallpaper should persist across sessions...it seems to reset with every quickshell reload/restart
-
-+ [X] Git
-  + [X] Write Instructions on how to use it and its functionality to git-use.org
-  + [X] check performance...seems rather intensive for what i want it to do.
-  + [X] Use on filechanged where possibel
-
-+ [X] Bluetooth Module
-  + [X] Should Persist across sessions eg. if off stay of unless i explicitly turn it on again.
-  + [X] Remove the on/off text and just have the switch
-  + [X] Check functionality to be intact
-  + [X] Implement scan refresh etc...normal bt user expected functionality
-    NOTE: quickshell's BT API is reactive-only, so the popup runs a bounded
-    bluetoothctl scan (`timeout 8 bluetoothctl scan on`) via a header refresh
-    button; discovered devices surface reactively
-
 
 * Pending
-+ [X] Wallpaper Rofi
-  + [X] Header UI is broken...fix and modernize view...current implementation is tacky with alot of repetitions and bad design
-  + [X] A wallpaper can be both light or dark & also favorite
-  + [X] In stead of {all,light,dark, unknown} only have opt-in light & dark toggles where I can click to filter list and unlick to show all wallpapers. Assigned wallpapers should have the light/dark badge visible always like the favorites
-  + [X] Move the dark/light buttons/icons to same place as the favorites but only show them on hover on the favorites icon itself not on hover the wallpaper. unless already assigned
-+ [X] Settings
-  + [X] Hyprland
-    + [X] Dual tone borders not working. (parse fix + live verify; needs shell restart to take effect)
-    + [X] Reset should use my default hardcoded file values to reset
-  + [X] Move ipc handlers from help and make their own dedicated section in settings root
-  + [X] IPC handler logic is broken
-    + [X] Inspect logic and only have those that make sense to be toggled on/off in settings. eg activate linux
-  + [X] Workspaces
-    + [X] On disable -> visibility of...currently the space is not reclaimed (width now collapses to 0)
-+ [X] Notifications
-  + [X] When notification has interactive buttons eg. settings on chrome notifications...their is no margins and the buttons break the look. Compensate for this scenario
-+ [X] Now playing
-  The Delete button should close the player not just remove it from the list of players. If not possible remove the functionality
-  + [X] Expanded View
-    + [X] Restore previous design
-      + [X] Song title+artist should be in the bottom left
-      + [X] On click to show the progress and track buttons the layout should be structured as
-        {song art/title}
-        {Progress bar}
-        The progress should be visible below the song art/title still at the bottom left.
-      + [X] The progress bar should adhere to the bottom border instead of float.
-      + [X] + should turn to -
-  + [X] Compact view
-    + [X] The progress bar should adhere to the bottom border instead of float at the center
-      Adjust track buttons to match
-    + [X] Show playerchooser when players>1 in this view as well
-  + [X] Binding changes
-    + [X] Git module
-      + [X] Do alt+left click to show performance metrics instead of middle click
-+ [X] Implement Sticky notes functionality in desktop -- with free notes format and todo
-  (free-note and todo modes per note; persist kind/items; Settings adds both kinds)
-+ [X] Git needs to be simpler...its very expensive
-  + [X] Make settings page for it to adjust its parameters
-  (Settings → Git: poll interval + global untracked-scan toggle; defaults persisted)
-
-
++ [ ] Wallpaper Rofi
+  + [x] Remove border around dark/light icons..show them on hover on favorites but they should be visible afterwards provides im hovering over either one of them.
+  + [x] Use colors to show if checked or not
+  + [x] Remove filter by name placeholder
+  + [x] Remove x to close
+  + [x] Remove applied text
+  + [x] why auto wallpaper and slideshow...ui-ux is bad..unify and fix where apporpriate
+  + [x] Remove clock and only have it in settings>desktop
+  + [x] The row with the color swap and delete should be in the same container as the currentyly selected wallpaper
+  + [x] Hover to show light/dark is still broken...remove the border (focus...remove the background around the region) — done: buttons are borderless/transparent containers and stay visible while the whole tile is hovered
+  + [x] Use colors instead of background to show if slected — done: selection shows via icon color (light #ffedd6 / dark #aaccff)
+  + [x] On hover the favorites...i cant click the light/dark since they disappear immediately after i leave the favorite area...fix it so they dont disappear immediately... — done: reveal stays active across the whole tile (revealHover incl. tile hover) + longer 300ms hide delay
+  + [ ] Buttons are overlapping in the header section...fix it definitively please — fixed: banner locked to 96px (min clamped) so the chips row can't ride up into the grid hairline; awaiting warm visual confirm
++ [x] Mpris module --bar
+  + [x] Use pastel pyrple hue for progress bar...the pink is gaudy — brand fallback + dim ring + mute glyph now use the theme's pastel purple (mauve)
++ [x] Git module functionality and ui is not sane and usable...revamp
+  + [x] Req:
+    + [x] Allow commit message — per-repo + bulk via the popup's top field (argv, never shell-interpolated)
+    + [x] Add bare repos, normal repos for tracking — verified live: Dots bare (+dotfile worktree ~) probes clean; ~/Projects/Shibuya is a valid worktree and now reports clean/synced (the old "no avail" was pre-refactor plumbing)
+    + [x] Explain how to use in Help in settings — new "Git monitor" topic covers the pill, colors, commit message, add forms, perf knobs
++ [x] Settings
+  + [x] IPC
+    + [x] UI-UX bad and dont work...revamp/redesign to enable user to test qs ipcs — new Test console card: target dropdown + free-text field, function + args, live output pane; also surfaces full function catalogue as a hint line
++ [ ] Bar
+  + [x] check bar themes. — reviewed all 5 schemes' bar tokens (barSolidBg/border/glass/accent) — every one resolves per-scheme; pending a warm visual pass
+  + [x] Make Glass better...its too transparent currently...and not so good looking — now a 55%-opacity matte panel with an accent hairline edge (reads as frosted rather than a faint wash)
+    + [x] Add bluring tastefully. — done: hyprland layer rule blurs the bar's `tildeBar` namespace (ignore_alpha 0.2 in rules.lua); glass alpha retuned 0.55→0.45 so the frost reads through the tint
+  + [x] Check no artifacting when starting as full mode (esp on qs restart) — fixed: bar-prefs now load with a blocking sync read like GitState, so barMode (Transparent/Solid/Glass) is correct from frame one — no transparent→full flip on restart
+  + [x] Rename Full -> SOlid and solid to Solid Margin — settings selector now Transparent / Solid Margin / Solid / Glass; bar, state comments and help text updated
+  + [x] Blutooth Module
+    + [x] Check states persistence and sanity of code logic — Bt.qml is a clean stateless computed singleton; radio persistence lives in MiscState (wifiRadioWanted / btRadioWanted → prefs.json) with a 1s boot reconcile timer — logic is sane
+    
+    
 * TODO LATER
 + [ ] Possible to store sudo access for hdd so i dont have to manually enter it on every hdd? Use userspace tools if not -- what options are available?

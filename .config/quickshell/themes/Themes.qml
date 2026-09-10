@@ -57,15 +57,6 @@ Singleton {
     // Popup/card background — solid (opaque) or glass variant
     readonly property color popupCardBg: MiscState.popupSolidBg ? panelBg : Qt.rgba(panelBg.r, panelBg.g, panelBg.b, 0.82)
 
-    // ── desktop overlay text (clock, notes) ──
-    // two-way toggle: "light" = dark text on light wallpaper, "dark" = light text
-    readonly property bool _desktopLightWall: WallpaperService.textTone === "dark"
-    readonly property color desktopText: root._desktopLightWall ? "#15151b" : "#f4f4f8"
-    readonly property color desktopMuted: root._desktopLightWall ? "#4a4a55" : Qt.rgba(1, 1, 1, 0.65)
-    readonly property color desktopOutline: root._desktopLightWall
-        ? Qt.rgba(1, 1, 1, 0.30)
-        : Qt.rgba(0, 0, 0, 0.65)
-
     // ── bar text — wallpaper-aware ──
     // bar text must stay legible on any wallpaper. The three-way toggle picks
     // the wallpaper domain: "auto" (default) follows each wallpaper's detected

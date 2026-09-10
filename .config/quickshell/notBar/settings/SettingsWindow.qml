@@ -1156,8 +1156,8 @@ Item {
                                 property bool barStyleDropOpen: false
                                 property var barStyleOptions: [
                                     { key: 0, label: "Transparent" },
-                                    { key: 1, label: "Solid" },
-                                    { key: 2, label: "Full" },
+                                    { key: 1, label: "Solid Margin" },
+                                    { key: 2, label: "Solid" },
                                     { key: 3, label: "Glass" }
                                 ]
 
@@ -2453,166 +2453,7 @@ Item {
 
                         Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
 
-                        // text tone picker — auto follows the wallpaper, or force light/dark
-                        RowLayout {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 38
-                            spacing: 12
 
-                            Text {
-                                text: "\uf15c"
-                                color: Themes.accent
-                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
-                                Layout.preferredWidth: 20
-                                horizontalAlignment: Text.AlignHCenter
-                            }
-
-                            Text {
-                                text: "Overlay text"
-                                color: Themes.fg
-                                font { pixelSize: 12; family: "Quicksand"; bold: true }
-                                Layout.alignment: Qt.AlignVCenter
-                            }
-
-                            Text {
-                                text: "dark · light on wall"
-                                color: Themes.muted
-                                font { pixelSize: 10; family: "ZedMono Nerd Font" }
-                                Layout.alignment: Qt.AlignVCenter
-                                Layout.rightMargin: 8
-                            }
-
-                            Item { Layout.fillWidth: true }
-
-                            Rectangle {
-                                id: toneDropdown
-
-                                Layout.alignment: Qt.AlignVCenter
-                                width: 130
-                                height: 24
-                                radius: 6
-                                color: toneDropMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : Themes.cardBg
-                                border.width: 1
-                                border.color: toneDropOpen ? Themes.accent : Themes.borderColor
-
-                                property bool toneDropOpen: false
-                                property var toneOptions: [
-                                    { val: "light", label: "light" },
-                                    { val: "dark", label: "dark" }
-                                ]
-
-                                function curLabel() {
-                                    for (var i = 0; i < toneOptions.length; i++)
-                                        if (toneOptions[i].val === WallpaperService.textTone)
-                                            return toneOptions[i].label;
-                                    return "light";
-                                }
-
-                                Text {
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: 8
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: toneDropdown.curLabel()
-                                    color: Themes.fg
-                                    font { pixelSize: 10; bold: true; family: "Quicksand" }
-                                    elide: Text.ElideRight
-                                    width: parent.width - 24
-                                }
-
-                                Text {
-                                    anchors.right: parent.right
-                                    anchors.rightMargin: 6
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: "\uf078"
-                                    color: Themes.muted
-                                    font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
-                                    rotation: toneDropdown.toneDropOpen ? 180 : 0
-
-                                    Behavior on rotation {
-                                        NumberAnimation { duration: 120; easing.type: Easing.OutQuad }
-                                    }
-                                }
-
-                                MouseArea {
-                                    id: toneDropMa
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: toneDropdown.toneDropOpen = !toneDropdown.toneDropOpen
-                                }
-
-                                Popup {
-                                    id: tonePopup
-                                    y: toneDropdown.height + 4
-                                    width: toneDropdown.width
-                                    height: tonePopupCol.implicitHeight + 8
-                                    closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
-                                    onOpened: toneDropdown.toneDropOpen = true
-                                    onClosed: toneDropdown.toneDropOpen = false
-
-                                    background: Rectangle {
-                                        radius: 6
-                                        color: Themes.cardBg
-                                        border.width: 1
-                                        border.color: Themes.borderColor
-                                    }
-
-                                    contentItem: ColumnLayout {
-                                        id: tonePopupCol
-                                        spacing: 0
-
-                                        Repeater {
-                                            model: toneDropdown.toneOptions
-
-                                            Rectangle {
-                                                required property var modelData
-                                                property bool isHovered: toneItemMa.containsMouse
-                                                property bool isSelected: WallpaperService.textTone === modelData.val
-
-                                                Layout.fillWidth: true
-                                                implicitHeight: 24
-                                                radius: 4
-                                                color: isSelected ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
-
-                                                Text {
-                                                    anchors.left: parent.left
-                                                    anchors.leftMargin: 8
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                    text: modelData.label
-                                                    color: isSelected ? Themes.accent : Themes.dim
-                                                    font { pixelSize: 10; family: "Quicksand" }
-                                                }
-
-                                                MouseArea {
-                                                    id: toneItemMa
-                                                    anchors.fill: parent
-                                                    hoverEnabled: true
-                                                    cursorShape: Qt.PointingHandCursor
-                                                    onClicked: {
-                                                        WallpaperService.textTone = modelData.val
-                                                        tonePopup.close()
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    onVisibleChanged: toneDropdown.toneDropOpen = visible
-                                }
-
-                                Connections {
-                                    target: toneDropdown
-                                    function onToneDropOpenChanged() {
-                                        if (toneDropdown.toneDropOpen && !tonePopup.visible)
-                                            tonePopup.open();
-                                        else if (!toneDropdown.toneDropOpen && tonePopup.visible)
-                                            tonePopup.close();
-                                    }
-                                }
-                            }
-                        }
-
-                        Rectangle { Layout.fillWidth: true; height: 1; color: Themes.separator; Layout.leftMargin: 32 }
 
                         // bar-text tone — "auto" keeps the wallpaper-follow behaviour
                         // (default), light/dark pin the bar glyphs explicitly
@@ -3124,6 +2965,359 @@ Item {
                         }
                     }
                 }
+
+                Card {
+                    id: ipcConsole
+                    title: "Test console"
+                    icon: "\uf120"
+                    accent: Themes.accent2
+
+                    // hand-picked doc targets for the hint line under the function field
+                    readonly property var ipcFnHints: {
+                        "mpris": "togglePlaying · previous · next · pauseAll · raise · toggleMpris · toggleMprisArt · songArt",
+                        "pipewire": "mute",
+                        "notifications": "dismissAll · showLast",
+                        "brightness": "get · set <pct> · adjust <delta>",
+                        "netspeed": "toggleNet",
+                        "resources": "toggleResources",
+                        "bar": "toggleBar",
+                        "appLauncher": "toggle",
+                        "activate": "toggle",
+                        "openWindows": "toggle",
+                        "clipHist": "toggle",
+                        "calc": "toggle",
+                        "SysTray": "toggle",
+                        "emoji": "toggle",
+                        "color": "toggle · screenPick",
+                        "wallpaperPicker": "toggle · open",
+                        "logout": "toggle · open",
+                        "wallpaper": "toggle · next · prev · set <path> · current · toggleClock",
+                        "notes": "add · clear",
+                        "timer": "start <sec> · toggle · reset · add <min> · status",
+                        "powerTimer": "rebootIn <min> · shutdownIn <min> · cancel",
+                        "speedtest": "start · cancel · status",
+                        "idleInhibitor": "isEnabled · toggle · enable · disable",
+                        "calendar": "toggle · year · compact · probe · rem · timer · state",
+                        "reminders": "add <text> <date> <time> · list · remove <id> · done <id>",
+                        "lock": "lock",
+                        "Time": "currentDate · currentDateTime"
+                    }
+
+                    // entries for the target dropdown come straight from the handler list
+                    readonly property var ipcTargetOptions: ipcTargets()
+                    function ipcTargets(): var {
+                        const opts = [];
+                        for (var i = 0; i < ipcHandlers.handlerModel.length; i++)
+                            opts.push({ target: ipcHandlers.handlerModel[i].target, label: ipcHandlers.handlerModel[i].label });
+                        return opts;
+                    }
+
+                    function ipcRun(): void {
+                        const tgt = ipcTargetField.text.trim();
+                        if (tgt.length === 0) {
+                            ipcOutModel.append({ txt: "choose a target first — from the dropdown or typed directly", kind: "info" });
+                            return;
+                        }
+                        if (ipcProc.running) return;
+                        const fn = ipcFnField.text.trim();
+                        const args = ipcArgsField.text.trim().split(/[,;\s]+/).filter(s => s.length > 0);
+                        const cmd = ["qs", "-p", Quickshell.env("HOME") + "/.config/quickshell", "ipc", "call", tgt];
+                        if (fn.length > 0) cmd.push(fn);
+                        for (var i = 0; i < args.length; i++) cmd.push(args[i]);
+                        ipcOutModel.clear();
+                        ipcOutModel.append({ txt: "$ qs -p ~/.config/quickshell ipc call " + cmd.slice(5).join(" "), kind: "cmd" });
+                        ipcProc.command = cmd;
+                        ipcProc.running = true;
+                    }
+
+                    function ipcClear(): void {
+                        ipcProc.running = false;
+                        ipcOutModel.clear();
+                        ipcStatusText.text = "";
+                    }
+
+                    function ipcAppendLine(data: string, kind: string): void {
+                        if ((data ?? "").trim().length === 0) return;
+                        ipcOutModel.append({ txt: data.trim(), kind: kind });
+                    }
+
+                    function ipcHint(): string {
+                        const t = ipcTargetField.text.trim().toLowerCase();
+                        if (ipcFnHints.hasOwnProperty(t))
+                            return "function — " + ipcFnHints[t];
+                        return "no functions listed yet for this target — see the Help page's IPC handlers topic for the full catalogue";
+                    }
+
+                    ColumnLayout {
+                        spacing: 10
+                        Layout.fillWidth: true
+                        Layout.topMargin: 2
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: "Exercise the running instance live. Pick a target (or type one), give a function and its args, hit run — output prints below. Handlers switched off in the list above silently ignore their calls; the console is the quick way to test that."
+                            color: Themes.dim
+                            wrapMode: Text.WordWrap
+                            font { pixelSize: 11; family: "ZedMono Nerd Font" }
+                        }
+
+                        // target picker — dropdown + free-text field combined
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Rectangle {
+                                id: ipcTargetDropdown
+
+                                Layout.alignment: Qt.AlignVCenter
+                                width: 200
+                                height: 24
+                                radius: 6
+                                color: ipcTargetDropMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : Themes.cardBg
+                                border.width: 1
+                                border.color: ipcTargetDropOpen ? Themes.accent : Themes.borderColor
+
+                                property bool ipcTargetDropOpen: false
+
+                                function curLabel(): string {
+                                    const t = ipcTargetField.text.trim();
+                                    for (var i = 0; i < ipcTargetOptions.length; i++)
+                                        if (ipcTargetOptions[i].target === t)
+                                            return ipcTargetOptions[i].label;
+                                    return t.length > 0 ? "“" + t + "”" : "choose a target…";
+                                }
+
+                                Text {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 8
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 20
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: ipcTargetDropdown.curLabel()
+                                    color: Themes.fg
+                                    elide: Text.ElideRight
+                                    font { pixelSize: 10; family: "Quicksand" }
+                                }
+
+                                Text {
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 6
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "\uf078"
+                                    color: Themes.muted
+                                    font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
+                                    rotation: ipcTargetDropdown.ipcTargetDropOpen ? 180 : 0
+
+                                    Behavior on rotation {
+                                        NumberAnimation { duration: 120; easing.type: Easing.OutQuad }
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: ipcTargetDropMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: ipcTargetDropdown.ipcTargetDropOpen = !ipcTargetDropdown.ipcTargetDropOpen
+                                }
+
+                                Popup {
+                                    id: ipcTargetPopup
+                                    y: ipcTargetDropdown.height + 4
+                                    width: 240
+                                    height: Math.min(ipcTargetOptions.length * 24 + 8, 340)
+                                    closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
+                                    onOpened: ipcTargetDropdown.ipcTargetDropOpen = true
+                                    onClosed: ipcTargetDropdown.ipcTargetDropOpen = false
+
+                                    background: Rectangle {
+                                        radius: 6
+                                        color: Themes.cardBg
+                                        border.width: 1
+                                        border.color: Themes.borderColor
+                                    }
+
+                                    contentItem: ListView {
+                                        clip: true
+                                        spacing: 0
+                                        model: ipcTargetOptions
+
+                                        delegate: Rectangle {
+                                            required property var modelData
+                                            property bool isHovered: ipcItemMa.containsMouse
+                                            property bool isSelected: ipcTargetField.text.trim() === modelData.target
+
+                                            width: ListView.view.width
+                                            implicitHeight: 24
+                                            radius: 4
+                                            color: isSelected ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
+
+                                            Text {
+                                                anchors.left: parent.left
+                                                anchors.leftMargin: 8
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                text: modelData.label + "    " + modelData.target
+                                                color: isSelected ? Themes.accent : Themes.dim
+                                                font { pixelSize: 10; family: "Quicksand" }
+                                                elide: Text.ElideRight
+                                            }
+
+                                            MouseArea {
+                                                id: ipcItemMa
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: {
+                                                    ipcTargetField.text = modelData.target;
+                                                    ipcTargetPopup.close();
+                                                    ipcFnField.forceActiveFocus();
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Field {
+                                id: ipcTargetField
+                                Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
+                                placeholder: "target"
+                                text: "mpris"
+                                font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                onReturnPressed: ipcConsole.ipcRun()
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Field {
+                                id: ipcFnField
+                                Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
+                                placeholder: "function  e.g. togglePlaying"
+                                font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                onReturnPressed: ipcConsole.ipcRun()
+                            }
+
+                            Field {
+                                id: ipcArgsField
+                                Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
+                                placeholder: "args (comma or space separated)"
+                                font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                onReturnPressed: ipcConsole.ipcRun()
+                            }
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: ipcConsole.ipcHint()
+                            color: Themes.muted
+                            wrapMode: Text.WordWrap
+                            font { pixelSize: 10; italic: true; family: "ZedMono Nerd Font" }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
+
+                            MiniBtn {
+                                text: "run"
+                                glyph: "\uf04b"
+                                tint: Themes.accent
+                                active: ipcProc.running
+                                onClicked: ipcConsole.ipcRun()
+                            }
+
+                            MiniBtn {
+                                text: "clear"
+                                glyph: "\uf12a"
+                                onClicked: ipcConsole.ipcClear()
+                            }
+
+                            Text {
+                                id: ipcStatusText
+                                Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
+                                visible: text.length > 0
+                                color: Themes.dim
+                                elide: Text.ElideRight
+                                font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                            }
+                        }
+
+                        // live output pane
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 130
+                            radius: 6
+                            color: Qt.rgba(0, 0, 0, 0.28)
+                            clip: true
+
+                            Text {
+                                anchors.centerIn: parent
+                                visible: ipcOutModel.count === 0
+                                text: "output appears here — a call produces no output lines when the handler simply toggles something"
+                                color: Qt.rgba(Themes.muted.r, Themes.muted.g, Themes.muted.b, 0.7)
+                                wrapMode: Text.WordWrap
+                                horizontalAlignment: Text.AlignHCenter
+                                width: parent.width - 24
+                                font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                            }
+
+                            ListView {
+                                id: ipcOutView
+                                anchors.fill: parent
+                                anchors.margins: 6
+                                clip: true
+                                spacing: 3
+                                model: ListModel {
+                                    id: ipcOutModel
+                                }
+
+                                delegate: Text {
+                                    width: ipcOutView.width - 2
+                                    text: model.txt
+                                    color: model.kind === "err"
+                                        ? Themes.red
+                                        : model.kind === "cmd"
+                                            ? Themes.accent
+                                            : model.kind === "info"
+                                                ? Themes.muted
+                                                : Themes.fg
+                                    wrapMode: Text.Wrap
+                                    font { pixelSize: 10; family: "ZedMono Nerd Font" }
+                                }
+
+                                onContentHeightChanged: positionViewAtEnd()
+                            }
+                        }
+                    }
+
+                    // Process isn't a QQuickItem — layouts only accept items,
+                    // so it lives in a wrapper Item's data (takes no space)
+                    Item {
+                        Process {
+                            id: ipcProc
+                            running: false
+
+                            stdout: SplitParser {
+                                onRead: data => ipcConsole.ipcAppendLine(data, "std")
+                            }
+                            stderr: SplitParser {
+                                onRead: data => ipcConsole.ipcAppendLine(data, "err")
+                            }
+
+                            onExited: (exitCode, exitStatus) => {
+                                ipcStatusText.text = "exit " + exitCode;
+                                ipcOutView.positionViewAtEnd();
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -3406,6 +3600,19 @@ Item {
                 }
 
                 HelpTopic {
+                    glyph: "\uf1d3"
+                    title: "Git monitor"
+                    summary: "watch + commit + push all repos from one pill"
+
+                    HelpLine { text: "The bar pill shows every configured repo at once. Left-click opens the monitor popup, right-click pushes all repos, shift+middle-click commits all, alt+left-click toggles the RHS performance modules." }
+                    HelpLine { text: "Repo states — grey no upstream · green clean & synced · cyan unpushed · orange unstaged/untracked · yellow staged · red unreachable path." }
+                    HelpLine { text: "The popup's top field holds an optional commit message; every commit button (per-repo and bulk) uses it while it has text, otherwise commits fall back to the default message. The field starts blank each time." }
+                    HelpLine { text: "The + button in the popup adds a repo: a worktree (normal checkout with optional upstream) or a bare repo (bare dir + the worktree it tracks, e.g. dots over ~/). Duplicates are rejected." }
+                    HelpLine { text: "Settings → Git controls the popup tick period (5s–5min) and a global untracked-scan toggle. Probing is on-demand: one git process per refresh, zero background polling." }
+                    HelpLine { text: "Repos are also editable in ~/.config/quickshell/git-prefs.json (keys regular and bare); a default dots bare repo is seeded on first run." }
+                }
+
+                HelpTopic {
                     glyph: "\uf2f2"
                     title: "Power timers"
                     summary: "armed reboot / shutdown countdowns"
@@ -3430,7 +3637,7 @@ Item {
                     summary: "shortcuts · where settings live"
 
                     HelpLine { text: "Escape closes any popup; most tray icons open menus on left-click." }
-                    HelpLine { text: "Double-click bar: left toggles Transparent/Full; right toggles Pyrple/Gron theme." }
+                    HelpLine { text: "Double-click bar: left toggles Transparent/Solid; right toggles Pyrple/Gron theme." }
                     HelpLine { text: "Scroll the bar to switch workspaces." }
                     HelpLine { text: "Everything you toggle here persists in ~/.config/quickshell/prefs.json and survives reloads." }
                     HelpLine { text: "Reminders live next to it in reminders.json; both files are plain JSON you can edit." }

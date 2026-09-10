@@ -20,7 +20,18 @@ Two kinds of repos are supported:
 | *left click*           | open/close the monitor popup                      |
 | *right click*          | push all repos                                    |
 | *alt+left click*      | toggle the RHS performance modules (disk/mem/cpu) |
-| *shift + middle click* | commit all repos (message =--++AutoCommit++--)      |
+| *shift + middle click* | commit all repos                                 |
+
+* Commit messages
+
+The popup's top field carries an optional *commit message*. Every commit
+button (per-repo and bulk) uses it while it has text; when empty, commits
+fall back to the default message (=++AutoCommit++=). A commit message is only
+needed when you actually want one — there is no typing before an auto-commit.
+
+The message is passed to =git commit -m= as a single argv element (never
+shell-interpolated), so any punctuation is safe. Nothing is persisted: the
+field starts blank each time the popup opens.
 
 The glyph color = worst state across all repos:
 

@@ -38,8 +38,9 @@ Item {
     readonly property bool pillVisible: MprisState.hideWhenIdle ? showPlaying : (MprisState.player !== null)
 
     // player-brand accent — spotify/chrome/mpd/discord get their own hue for
-    // the ring + center glyph; unknown players fall back to the theme pink
-    readonly property color brand: MprisState.brandColor(MprisState.player) ?? Themes.pink
+    // the ring + center glyph; unknown players fall back to a pastel purple
+    // (the loud pink clashed with the progress ring)
+    readonly property color brand: MprisState.brandColor(MprisState.player) ?? Themes.mauve
 
     // compact pills show only the ring/icon; hovering expands the full layout
     // (the default view is a settings option)
@@ -207,7 +208,7 @@ Item {
 
                         ctx.beginPath();
                         ctx.arc(width / 2, height / 2, r, 0, Math.PI * 2);
-                        ctx.strokeStyle = Qt.rgba(1, 0.71, 0.76, 0.25);
+                        ctx.strokeStyle = Qt.rgba(Themes.mauve.r, Themes.mauve.g, Themes.mauve.b, 0.25);
                         ctx.lineWidth = 2.5;
                         ctx.stroke();
 
@@ -235,7 +236,7 @@ Item {
                         var v = Math.max(0, Math.min(MprisState.player?.volume ?? 0, 1));
                         return v <= 0.001 ? "\uf026" : "\uf028";
                     }
-                    color: (MprisState.player?.volume ?? 0) <= 0.001 ? Themes.muted : Themes.pink
+                    color: (MprisState.player?.volume ?? 0) <= 0.001 ? Themes.muted : Themes.mauve
                     font {
                         pixelSize: 9
                         family: "Symbols Nerd Font Mono"
@@ -472,7 +473,7 @@ Item {
                                 // dim track
                                 ctx.beginPath();
                                 ctx.arc(cx, cy, r, 0, Math.PI * 2);
-                                ctx.strokeStyle = Qt.rgba(1, 0.71, 0.76, 0.18);
+                                ctx.strokeStyle = Qt.rgba(Themes.mauve.r, Themes.mauve.g, Themes.mauve.b, 0.18);
                                 ctx.lineWidth = 1.5;
                                 ctx.stroke();
 

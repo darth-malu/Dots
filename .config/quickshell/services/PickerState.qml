@@ -57,6 +57,7 @@ Singleton {
 
             property var recentEmojis: []
             property var recentColors: []
+            property string wallpaperBorder: ""
         }
     }
 
@@ -80,6 +81,14 @@ Singleton {
         if (next[0] === recentColors[0] && next.length === recentColors.length)
             return;
         prefs.recentColors = next;
+        prefStore.writeAdapter();
+    }
+
+    // wallpaper-picker tile ring color ("" = use the theme default)
+    readonly property string wallpaperBorder: prefs.wallpaperBorder ?? ""
+
+    function setWallpaperBorder(hex) {
+        prefs.wallpaperBorder = String(hex ?? "").trim();
         prefStore.writeAdapter();
     }
 }

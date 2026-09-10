@@ -25,13 +25,6 @@ Singleton {
         Prefs.write();
     }
 
-    // desktop overlay text: "light" | "dark" (two-way toggle, no auto)
-    property string textTone: Prefs.prefs.textTone ?? "light"
-    onTextToneChanged: {
-        Prefs.prefs.textTone = textTone;
-        Prefs.write();
-    }
-
     // bar text: three-way wallpaper-tone selector — "auto" (default) follows
     // each wallpaper's detected tone so glyphs stay legible (dark walls →
     // light glyphs, bright walls → dark glyphs); "light" pins to a light

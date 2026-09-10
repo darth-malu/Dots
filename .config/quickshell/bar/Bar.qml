@@ -36,24 +36,28 @@ ShellRoot {
             implicitHeight: 26
 
             margins {
-                // Full and glass modes are edge-to-edge — no side margins
+                // Solid and glass modes are edge-to-edge — no side margins
                 right: BarState.barMode >= 2 ? 0 : 10
                 left: BarState.barMode >= 2 ? 0 : 6
                 top: 0
             }
 
-            // Solid slab (mode 1): rounded, hairline border, side margins.
-            // Full slab (mode 2): true full-bleed — square corners, no border.
-            // Glass (mode 3): edge-to-edge, semi-transparent colored bg.
+            // Solid Margin slab (mode 1): rounded, hairline border, side margins.
+            // Solid slab (mode 2): true full-bleed — square corners, no border.
+            // Glass (mode 3): edge-to-edge, semi-transparent tinted panel with an
+            // accent hairline; hyprland's blur rule (rules.lua, namespace tildeBar)
+            // frosts whatever scrolls behind it. alpha tuned for that blur.
             Rectangle {
                 visible: BarState.barMode !== 0
                 anchors.fill: parent
                 radius: BarState.barMode === 2 || BarState.barMode === 3 ? 0 : 4
                 color: BarState.barMode === 3
-                    ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.18)
+                    ? Qt.rgba(Themes.barSolidBg.r, Themes.barSolidBg.g, Themes.barSolidBg.b, 0.45)
                     : Themes.barSolidBg
-                border.width: BarState.barMode >= 2 ? 0 : 1
-                border.color: Themes.borderColor
+                border.width: BarState.barMode === 3 ? 1 : (BarState.barMode >= 2 ? 0 : 1)
+                border.color: BarState.barMode === 3
+                    ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.28)
+                    : Themes.borderColor
                 z: -1
             }
 
@@ -77,7 +81,7 @@ ShellRoot {
             }
 
             // double-click empty bar space toggles between the Transparent and
-            // Full bar treatments (the same choices as the settings selector)
+            // Solid bar treatments (the same choices as the settings selector)
             TapHandler {
                 acceptedButtons: Qt.LeftButton
                 gesturePolicy: TapHandler.ReleaseWithinBounds

@@ -18,6 +18,7 @@ RowLayout {
     property color dotColor
     property string stateText
     property bool canUntoggle: false
+    property string commitMsg: ""
 
     spacing: 8
     Layout.preferredHeight: 30
@@ -72,7 +73,7 @@ RowLayout {
     MiniBtn {
         glyph: "\uea86"
         tint: Themes.accent2
-        onClicked: GitState.commitRepo(row.kind, row.idx)
+        onClicked: GitState.commitRepo(row.kind, row.idx, row.commitMsg)
     }
 
     MiniBtn {

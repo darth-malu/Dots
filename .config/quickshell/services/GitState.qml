@@ -240,13 +240,22 @@ done
         return sub.length ? [...prefix, ...sub] : prefix;
     }
 
-    function commitRepo(kind, idx) {
+    // commit with an optional user message — when empty it falls back to the
+    // same "++AutoCommit++" default; the message travels as argv (never shell
+    // interpolated), so any punctuation is safe
+    function commitRepo(kind, idx, msg) {
         const base = root.gitFor(kind, idx, []);
         if (!base)
             return;
         const name = root.displayName(kind, idx);
-        const script = `"$@" add . 2>/dev/null && "$@" commit -m "++AutoCommit++" 2>/dev/null && notify-send -a quickshell "Git" "committed ${name}" || true`;
-        Quickshell.execDetached(["sh", "-c", script, "sh", ...base]);
+        const m = String(msg ?? "").trim();
+        if (m.length > 0) {
+            const script = `m="$1"; shift; "$@" add . 2>/dev/null && "$@" commit -m "$m" 2>/dev/null && notify-send -a quickshell "Git" "committed ${name}" || true`;
+            Quickshell.execDetached(["sh", "-c", script, "sh", m, ...base]);
+        } else {
+            const script = `"$@" add . 2>/dev/null && "$@" commit -m "++AutoCommit++" 2>/dev/null && notify-send -a quickshell "Git" "committed ${name}" || true`;
+            Quickshell.execDetached(["sh", "-c", script, "sh", ...base]);
+        }
         root.pokeRefresh(2500);
     }
 

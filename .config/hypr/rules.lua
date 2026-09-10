@@ -16,6 +16,17 @@ local bgNoAnim = hl.layer_rule({
 })
 bgNoAnim:set_enabled(true)
 
+-- The glass bar (mode 3) is a semi-transparent layersurface; blur what sits
+-- behind the tildeBar namespace so the 0.45 tint reads as true frosted glass
+-- instead of a flat wash over the wallpaper.
+local blurTildeBar = hl.layer_rule({
+  name           = "blur-tilde-bar",
+  match          = { namespace = "tildeBar" },
+  blur           = true,
+  ignore_alpha   = 0.2,
+})
+blurTildeBar:set_enabled(true)
+
 local suppressMaximizeRule = hl.window_rule({
   -- Ignore maximize requests from all apps. You'll probably like this.
   name           = "suppress-maximize-events",

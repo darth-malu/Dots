@@ -36,9 +36,9 @@ BarBlock {
 
     function commitAll() {
         for (let i = 0; i < GitState.regularRepos.length; i++)
-            GitState.commitRepo("r", i);
+            GitState.commitRepo("r", i, gitPill.commitMsg);
         for (let i = 0; i < GitState.bareRepos.length; i++)
-            GitState.commitRepo("b", i);
+            GitState.commitRepo("b", i, gitPill.commitMsg);
     }
 
     function pushAll() {
@@ -126,6 +126,7 @@ BarBlock {
 
             onVisibleChanged: {
                 GitState.monitoring = visible;
+                gitPill.commitMsg = "";
                 if (visible)
                     GitState.refresh();
             }
@@ -213,6 +214,18 @@ BarBlock {
                             }
                         }
 
+                        // ── optional commit message — used by every commit
+                        // button while it has text; empty falls back to the
+                        // auto default so one-line commits stay effortless ──
+                        Field {
+                            id: commitMsgField
+
+                            Layout.fillWidth: true
+                            Layout.topMargin: 4
+                            placeholder: "commit message (optional — auto otherwise)"
+                            onTextChanged: gitPill.commitMsg = commitMsgField.text
+                        }
+
                         // ── repo rows (with section headers) ──
                         Text {
                             visible: GitState.regularRepos.length > 0
@@ -239,6 +252,7 @@ BarBlock {
                                 dotColor: gitPill.stateColor("r", index)
                                 stateText: gitPill.stateLabel("r", index)
                                 canUntoggle: false
+                                commitMsg: gitPill.commitMsg
                             }
                         }
 
@@ -267,6 +281,7 @@ BarBlock {
                                 dotColor: gitPill.stateColor("b", index)
                                 stateText: gitPill.stateLabel("b", index)
                                 canUntoggle: true
+                                commitMsg: gitPill.commitMsg
                             }
                         }
 
@@ -430,6 +445,7 @@ BarBlock {
     property string addMode: "regular"
     property bool addUntracked: GitState.untrackedAll
     property string addError: ""
+    property string commitMsg: ""
 
     function doAddRegular() {
         const ok = GitState.addRegular(regPathField.text, regUpField.text);

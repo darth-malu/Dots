@@ -40,11 +40,9 @@ ClippingRectangle {
             return Qt.rgba(card.dominantColor.r, card.dominantColor.g, card.dominantColor.b, 0.12);
         return Themes.cardBg;
     }
-    // vertical footprint of the expanded controls row — 16 (seek) + 6
-    // (spacing) + 32 (transport); pulled out so the card + art view both
-    // grow in lockstep when the controls reveal
-    readonly property int expRevealH: 54
-    implicitHeight: baseCardHeight + (chooserAvailable && chooserOpen ? chooserPanel.implicitHeight : 0) + (card.expControlsRevealed ? card.expRevealH : 0)
+    // the expanded/compact transport slides in OVER the art — the card
+    // never resizes when the controls reveal
+    implicitHeight: baseCardHeight + (chooserAvailable && chooserOpen ? chooserPanel.implicitHeight : 0)
 
     // combined control — one button for both card duties, styled to
     // match the audio volume card's management cog: left-click runs the
@@ -113,8 +111,9 @@ ClippingRectangle {
 
     property int progressTick: 0
     property bool showVolumeBadge: false
-    // middle-click mute state · expanded controls gate
+    // middle-click mute state · expanded/compact controls gate
     property bool expControlsRevealed: false
+    property bool compactControlsRevealed: false
     // external players (no MPRIS volume, e.g. chrome): resolve the real per-app
     // pipewire stream node so scroll volume edits the actual settings (same
     // logic as the audio > applications list) instead of a local guess
@@ -251,8 +250,17 @@ ClippingRectangle {
         }
         height: baseCardHeight
 
-        // album art fills the card's full height; the progress bar lives in
-        // the right-hand controls column (not spanning under the art)
+        // transient top-right controls only peek while the card is hovered
+        HoverHandler { id: compactHover }
+
+        // transport controls tuck away again each time the compact view shows
+        onVisibleChanged: {
+            if (visible)
+                card.compactControlsRevealed = false;
+        }
+
+        // album art fills the card's full height; the progress bar is a
+        // separate bar anchored to the art's right edge (see below)
         RowLayout {
             anchors.fill: parent
 
@@ -314,7 +322,7 @@ ClippingRectangle {
                 }
             }
 
-            // ── Right panel — title, progress, controls ──
+            // ── Right panel — title + click-revealed transport ──
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -323,40 +331,78 @@ ClippingRectangle {
                 Layout.rightMargin: 30
                 spacing: 2
 
-                MarqueeText {
-                    Layout.fillWidth: true
-                    scrolling: MprisState.marqueeEnabled
-                    text: MprisState.cardPlayer?.trackTitle || "No track"
-                    textColor: Themes.fg
-                    fontFamily: "Quicksand"
-                    fontBold: true
-                    pixelSize: 11
-                    maxWidth: 4096
-                }
+                // title + artist — clicking toggles the transport controls
+                ColumnLayout {
+                    id: compactInfoCol
 
-                Text {
                     Layout.fillWidth: true
-                    text: MprisState.cardPlayer?.trackArtist || ""
-                    color: Themes.dim
-                    font {
-                        pixelSize: 10
-                        family: "Quicksand"
-                        bold: true
+                    spacing: 1
+
+                    TapHandler {
+                        acceptedButtons: Qt.LeftButton
+                        gesturePolicy: TapHandler.ReleaseWithinBounds
+                        cursorShape: Qt.PointingHandCursor
+                        onTapped: card.compactControlsRevealed = !card.compactControlsRevealed
                     }
-                    elide: Text.ElideRight
-                    maximumLineCount: 1
-                    visible: text.length > 0
+
+                    MarqueeText {
+                        Layout.fillWidth: true
+                        scrolling: MprisState.marqueeEnabled
+                        text: MprisState.cardPlayer?.trackTitle || "No track"
+                        textColor: Themes.fg
+                        fontFamily: "Quicksand"
+                        fontBold: true
+                        pixelSize: 11
+                        maxWidth: 4096
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: MprisState.cardPlayer?.trackArtist || ""
+                        color: Themes.dim
+                        font {
+                            pixelSize: 10
+                            family: "Quicksand"
+                            bold: true
+                        }
+                        elide: Text.ElideRight
+                        maximumLineCount: 1
+                        visible: text.length > 0
+                    }
                 }
 
-                // elastic gap keeps the controls + progress pinned to the bottom
+                // elastic gap keeps the revealed controls pinned above the bar
                 Item {
                     Layout.fillHeight: true
                 }
 
-                // transport controls — bottom of the controls section
+                // transport controls — tucked away until the title is clicked;
+                // bottomOffset clears the horizontal bar anchored below
                 RowLayout {
                     Layout.fillWidth: true
+                    Layout.preferredHeight: 24
+                    Layout.bottomMargin: 16
+                    visible: card.compactControlsRevealed
+                    opacity: card.compactControlsRevealed ? 1 : 0
                     spacing: 4
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 180
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    transform: Translate {
+                        y: card.compactControlsRevealed ? 0 : 10
+
+                        Behavior on y {
+                            NumberAnimation {
+                                duration: 180
+                                easing.type: Easing.OutCubic
+                            }
+                        }
+                    }
 
                     Item { Layout.fillWidth: true }
                     TrackButton {
@@ -379,68 +425,89 @@ ClippingRectangle {
                     }
                     Item { Layout.fillWidth: true }
                 }
+            }
+        }
 
-                // slim progress bar — inside the controls column, hugging the
-                // card's bottom border (the art to the left fills full height)
-                Item {
-                    id: compactProgress
+        // progress bar — spans the art's right border to the container's
+        // right edge; hovering enlarges it for easier seeking
+        Item {
+            id: compactProgress
 
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 12
-                    Layout.bottomMargin: 3
+            anchors {
+                left: compactArt.right
+                leftMargin: 6
+                right: parent.right
+                rightMargin: 6
+                bottom: parent.bottom
+                bottomMargin: 4
+            }
+            height: 14
 
-                    readonly property real ratio: {
-                        card.progressTick;
-                        const p = MprisState.cardPlayer;
-                        if (!p || !(p.length > 0))
-                            return 0;
-                        const len = p.length;
-                        const raw = p.position ?? 0;
-                        if (raw == null || len <= 0 || isNaN(raw) || isNaN(len))
-                            return 0;
-                        return Math.max(0, Math.min(raw / len, 1));
+            readonly property real ratio: {
+                card.progressTick;
+                const p = MprisState.cardPlayer;
+                if (!p || !(p.length > 0))
+                    return 0;
+                const len = p.length;
+                const raw = p.position ?? 0;
+                if (raw == null || len <= 0 || isNaN(raw) || isNaN(len))
+                    return 0;
+                return Math.max(0, Math.min(raw / len, 1));
+            }
+
+            Rectangle {
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    bottom: parent.bottom
+                }
+                height: compactProgressMa.containsMouse ? 9 : 3
+                radius: height / 2
+                color: Qt.rgba(1, 1, 1, 0.12)
+
+                Behavior on height {
+                    NumberAnimation {
+                        duration: 160
+                        easing.type: Easing.OutCubic
                     }
+                }
 
-                    Rectangle {
-                        anchors {
-                            left: parent.left
-                            right: parent.right
-                            bottom: parent.bottom
-                        }
-                        height: 3
-                        radius: height / 2
-                        color: Qt.rgba(1, 1, 1, 0.09)
+                Rectangle {
+                    anchors {
+                        left: parent.left
+                        bottom: parent.bottom
                     }
+                    width: parent.width * compactProgress.ratio
+                    height: parent.height
+                    radius: height / 2
+                    color: card.dominantColor
 
-                    Rectangle {
-                        anchors {
-                            left: parent.left
-                            bottom: parent.bottom
-                        }
-                        width: parent.width * compactProgress.ratio
-                        height: 3
-                        radius: height / 2
-                        color: card.dominantColor
-
-                        Behavior on width {
-                            NumberAnimation { duration: 200; easing.type: Easing.Linear }
+                    Behavior on width {
+                        NumberAnimation {
+                            duration: 200
+                            easing.type: Easing.Linear
                         }
                     }
+                }
+            }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: mouse => {
-                            const p = MprisState.cardPlayer;
-                            if (p && p.length > 0)
-                                p.position = (mouse.x / width) * p.length;
-                        }
-                    }
+            MouseArea {
+                id: compactProgressMa
+
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: mouse => {
+                    const p = MprisState.cardPlayer;
+                    if (p && p.length > 0)
+                        p.position = (mouse.x / width) * p.length;
                 }
             }
         }
 
         ChooserCog {
+            // peek until the card is hovered (or the chooser is open)
+            visible: compactHover.hovered || card.chooserOpen
             // left = expand to the art view, right = player chooser
             onClicked: card.compactNowPlaying = false
             onOpenChooser: card.chooserOpen = !card.chooserOpen
@@ -457,7 +524,7 @@ ClippingRectangle {
         Rectangle {
             id: compactSwitcher
 
-            visible: card.chooserAvailable
+            visible: card.chooserAvailable && (compactHover.hovered || card.chooserOpen)
             implicitWidth: 18
             implicitHeight: 18
             radius: 5
@@ -508,13 +575,17 @@ ClippingRectangle {
             right: parent.right
             top: parent.top
         }
-        height: baseCardHeight + (card.expControlsRevealed ? card.expRevealH : 0)
+        height: baseCardHeight
 
-        // controls always start tucked away
+        // controls start tucked away; the transport slides in OVER the art,
+        // so the card keeps this fixed size regardless of the reveal state
         onVisibleChanged: {
             if (visible)
                 card.expControlsRevealed = false;
         }
+
+        // transient top-right controls only peek while the card is hovered
+        HoverHandler { id: expandedHover }
         // implicitHeight: 100
         // implicitWidth: 100
 
@@ -589,28 +660,41 @@ ClippingRectangle {
                         right: parent.right
                         bottom: parent.bottom
                     }
-                    height: 4
-                    radius: 2
+                    height: expProgressMa.containsMouse ? 10 : 4
+                    radius: height / 2
                     color: Qt.rgba(1, 1, 1, 0.12)
-                }
 
-                Rectangle {
-                    anchors {
-                        left: parent.left
-                        bottom: parent.bottom
+                    Behavior on height {
+                        NumberAnimation {
+                            duration: 160
+                            easing.type: Easing.OutCubic
+                        }
                     }
-                    width: parent.width * expProgress.ratio
-                    height: 4
-                    radius: 2
-                    color: card.dominantColor
 
-                    Behavior on width {
-                        NumberAnimation { duration: 200; easing.type: Easing.Linear }
+                    Rectangle {
+                        anchors {
+                            left: parent.left
+                            bottom: parent.bottom
+                        }
+                        width: parent.width * expProgress.ratio
+                        height: parent.height
+                        radius: height / 2
+                        color: card.dominantColor
+
+                        Behavior on width {
+                            NumberAnimation {
+                                duration: 200
+                                easing.type: Easing.Linear
+                            }
+                        }
                     }
                 }
 
                 MouseArea {
+                    id: expProgressMa
+
                     anchors.fill: parent
+                    hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: mouse => {
                         const p = MprisState.cardPlayer;
@@ -749,6 +833,8 @@ ClippingRectangle {
         }
 
         ChooserCog {
+            // peek until the card is hovered (or the chooser is open)
+            visible: expandedHover.hovered || card.chooserOpen
             // left = collapse back to compact, right = player chooser
             onClicked: card.compactNowPlaying = true
             onOpenChooser: card.chooserOpen = !card.chooserOpen
@@ -766,7 +852,7 @@ ClippingRectangle {
         Rectangle {
             id: expSwitcher
 
-            visible: card.chooserAvailable
+            visible: card.chooserAvailable && (expandedHover.hovered || card.chooserOpen)
             implicitWidth: 18
             implicitHeight: 18
             radius: 5

@@ -49,7 +49,7 @@ BarBlock {
                 paddingg: 0
                 bottomPadding: 2
                 font: Themes.monofur
-                baseColor: Themes._barLightWall ? Themes.barText : Themes.clockColor
+                baseColor: Themes.clockColor
             }
 
             // noctalia-style bar surface: hourglass while armed, live

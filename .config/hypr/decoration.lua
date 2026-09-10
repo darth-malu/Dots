@@ -20,7 +20,7 @@ hl.config({
         noise = 0.01,
       },
 
-      rounding = 3,
+      rounding = 4,
       rounding_power = 4.0, -- 2.0::, larger is smoother, 2 is circle, 4 is squircle [2.0-10.0]
       active_opacity = 1,
       -- inactive_opacity = 0.95;
