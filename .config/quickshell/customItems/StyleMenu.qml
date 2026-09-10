@@ -28,7 +28,7 @@ PopupWindow {
     // 0 = color scheme roster, 1 = bar treatment roster
     readonly property var themeNames: ["Pyrple", "Gron", "Gruvbox", "Rose", "Everforest", "Soramane"]
     readonly property var styleNames: ["Transparent", "Solid Margin", "Solid", "Glass Margin", "Glass Full", "Glass Borderless"]
-    readonly property string menuTitle: root.mode === 0 ? "color scheme" : "bar style"
+    readonly property string menuTitle: root.mode === 0 ? "Color Scheme" : "Bar Style"
 
     function openAt(m: int, gx: real): void {
         root.mode = m;
@@ -72,26 +72,60 @@ PopupWindow {
             anchors.margins: 6
             spacing: 2
 
-            Text {
-                text: (root.mode === 0 ? "\uf1fc " : "\uf2d1 ") + root.menuTitle
-                color: Themes.muted
-                font {
-                    pixelSize: 9
-                    letterSpacing: 0.5
-                    family: "ZedMono Nerd Font"
-                }
+            RowLayout {
+                Layout.fillWidth: true
                 Layout.leftMargin: 8
-                Layout.topMargin: 2
+                Layout.rightMargin: 8
+                Layout.topMargin: 4
+                Layout.bottomMargin: 2
+                spacing: 6
+
+                Rectangle {
+                    implicitWidth: 20
+                    implicitHeight: 20
+                    radius: 5
+                    color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.15)
+                    border.width: 1
+                    border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.35)
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: root.mode === 0 ? "\uf1fc" : "\uf2d1"
+                        color: Themes.accent
+                        font {
+                            pixelSize: 9
+                            family: "Symbols Nerd Font Mono"
+                        }
+                    }
+                }
+
+                Text {
+                    text: root.menuTitle
+                    color: Themes.fg
+                    font {
+                        pixelSize: 10
+                        bold: true
+                        family: "Quicksand"
+                    }
+                }
+
+                Item { Layout.fillWidth: true }
             }
 
             Rectangle {
                 Layout.fillWidth: true
                 Layout.leftMargin: 8
                 Layout.rightMargin: 8
-                Layout.topMargin: 4
-                Layout.bottomMargin: 4
+                Layout.topMargin: 2
+                Layout.bottomMargin: 2
                 height: 1
-                color: Themes.separator
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+                    GradientStop { position: 0.0; color: "transparent" }
+                    GradientStop { position: 0.3; color: Themes.separator }
+                    GradientStop { position: 0.7; color: Themes.separator }
+                    GradientStop { position: 1.0; color: "transparent" }
+                }
             }
 
             Repeater {

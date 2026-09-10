@@ -16,7 +16,7 @@ RowLayout {
 
     property HyprlandMonitor monitor: Hyprland.monitorFor(screen)
 
-    readonly property int activeWsId: monitor?.activeWorkspace?.id ?? -1
+    readonly property string activeWsId: monitor?.activeWorkspace?.name ?? ""
     readonly property int wsRev: WorkspaceService.revision
 
     onWsRevChanged: root.refresh()
@@ -39,9 +39,9 @@ RowLayout {
                 return false;
             return true;
         });
-        list.sort((a, b) => a.id - b.id);
+        list.sort((a, b) => String(a.name ?? 0).localeCompare(String(b.name ?? 0), undefined, { numeric: true }));
 
-        const sig = list.map(w => String(w.id)).join(",");
+        const sig = list.map(w => String(w.name)).join(",");
         if (sig !== _listSig) {
             _listSig = sig;
             _listCache = list;
@@ -80,7 +80,7 @@ RowLayout {
             required property var modelData
             property HyprlandWorkspace ws: modelData
 
-            property bool isActive: root.activeWsId === (ws?.id ?? -2)
+            property bool isActive: root.activeWsId === (ws?.name ?? "")
 
             readonly property bool urgent: ws?.urgent ?? false
             readonly property bool hovered: mouseArea.containsMouse
@@ -143,7 +143,7 @@ RowLayout {
 
             onClicked: function () {
                 if (ws)
-                    HyprlandService.gotoWorkspace(ws.id);
+                    HyprlandService.gotoWorkspace(ws.name);
             }
 
             content: RowLayout {
@@ -191,7 +191,7 @@ RowLayout {
                     Text {
                         id: numText
                         anchors.centerIn: parent
-                        text: String(rootBlock.ws?.id ?? "")
+                        text: String(rootBlock.ws?.name ?? "")
                         color: rootBlock.isActive ? Themes.accent : rootBlock.urgent ? "#ff5555" : rootBlock.isEmpty ? Themes.barDim : (boxy ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.6) : Themes.roundedBadgeText)
                         font {
                             pixelSize: 12

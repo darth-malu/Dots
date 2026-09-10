@@ -15,8 +15,10 @@ RowLayout {
 
     readonly property var workspaceList: {
         const rev = wsRev;
-        const list = [...Hyprland.workspaces.values].filter(ws => ws && ws.id >= 1);
-        list.sort((a, b) => a.id - b.id);
+        // quickshell 0.3.1 no longer reports numeric workspace ids (Hyprland
+        // 0.56 goes by name) — id comes back 0/-1. Filter + sort on name.
+        const list = [...Hyprland.workspaces.values].filter(ws => ws && !(ws.name ?? "").includes("special"));
+        list.sort((a, b) => String(a.name ?? 0).localeCompare(String(b.name ?? 0), undefined, { numeric: true }));
         return list;
     }
 
@@ -84,7 +86,7 @@ RowLayout {
 
             onClicked: () => {
                 if (ws)
-                    HyprlandService.gotoWorkspace(ws.id);
+                    HyprlandService.gotoWorkspace(ws.name);
             }
 
             SequentialAnimation on opacity {
@@ -96,7 +98,7 @@ RowLayout {
             }
 
             content: BarText {
-                text: String(rootBlock.ws?.id ?? "")
+                text: String(rootBlock.ws?.name ?? "")
                 color: rootBlock.isActive
                     ? Themes.activeTextColor
                     : rootBlock.isUrgent ? "#ff5555"

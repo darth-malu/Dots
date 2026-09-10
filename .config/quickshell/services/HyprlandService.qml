@@ -67,7 +67,7 @@ Singleton {
     }
 
     function gotoWorkspace(id) {
-        dispatch(`hl.get_active_monitor():set_workspace(${parseInt(id)})`);
+        dispatch(`hl.get_active_monitor():set_workspace("${id}")`);
     }
 
     // focus a specific client. quickshell exposes Toplevel.address as bare
