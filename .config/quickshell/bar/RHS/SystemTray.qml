@@ -205,5 +205,7 @@ RowLayout {
 
     // coffee cup — appears right of quicksettings while caffeine mode is on
     Caffeine {}
+    // screen-record toggle — always visible, right next to the coffee cup
+    Recorder {}
     Submap {}
 }

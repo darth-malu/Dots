@@ -27,6 +27,16 @@ local blurTildeBar = hl.layer_rule({
 })
 blurTildeBar:set_enabled(true)
 
+-- polykit prompt: the overlay scrim is dim-but-transparent, so blur the
+-- layersurface so the frosted tint reads on top of whatever is on screen.
+local blurPolkit = hl.layer_rule({
+  name           = "blur-polkit",
+  match          = { namespace = "quickshell-polkit" },
+  blur           = true,
+  ignore_alpha   = 0.2,
+})
+blurPolkit:set_enabled(true)
+
 local suppressMaximizeRule = hl.window_rule({
   -- Ignore maximize requests from all apps. You'll probably like this.
   name           = "suppress-maximize-events",

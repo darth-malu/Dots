@@ -1,37 +1,21 @@
 
 * Pending
 + [ ] Wallpaper Rofi
-  + [x] Remove border around dark/light icons..show them on hover on favorites but they should be visible afterwards provides im hovering over either one of them.
-  + [x] Use colors to show if checked or not
-  + [x] Remove filter by name placeholder
-  + [x] Remove x to close
-  + [x] Remove applied text
-  + [x] why auto wallpaper and slideshow...ui-ux is bad..unify and fix where apporpriate
-  + [x] Remove clock and only have it in settings>desktop
-  + [x] The row with the color swap and delete should be in the same container as the currentyly selected wallpaper
-  + [x] Hover to show light/dark is still broken...remove the border (focus...remove the background around the region) — done: buttons are borderless/transparent containers and stay visible while the whole tile is hovered
-  + [x] Use colors instead of background to show if slected — done: selection shows via icon color (light #ffedd6 / dark #aaccff)
-  + [x] On hover the favorites...i cant click the light/dark since they disappear immediately after i leave the favorite area...fix it so they dont disappear immediately... — done: reveal stays active across the whole tile (revealHover incl. tile hover) + longer 300ms hide delay
-  + [ ] Buttons are overlapping in the header section...fix it definitively please — fixed: banner locked to 96px (min clamped) so the chips row can't ride up into the grid hairline; awaiting warm visual confirm
-+ [x] Mpris module --bar
-  + [x] Use pastel pyrple hue for progress bar...the pink is gaudy — brand fallback + dim ring + mute glyph now use the theme's pastel purple (mauve)
-+ [x] Git module functionality and ui is not sane and usable...revamp
-  + [x] Req:
-    + [x] Allow commit message — per-repo + bulk via the popup's top field (argv, never shell-interpolated)
-    + [x] Add bare repos, normal repos for tracking — verified live: Dots bare (+dotfile worktree ~) probes clean; ~/Projects/Shibuya is a valid worktree and now reports clean/synced (the old "no avail" was pre-refactor plumbing)
-    + [x] Explain how to use in Help in settings — new "Git monitor" topic covers the pill, colors, commit message, add forms, perf knobs
-+ [x] Settings
-  + [x] IPC
-    + [x] UI-UX bad and dont work...revamp/redesign to enable user to test qs ipcs — new Test console card: target dropdown + free-text field, function + args, live output pane; also surfaces full function catalogue as a hint line
-+ [ ] Bar
-  + [x] check bar themes. — reviewed all 5 schemes' bar tokens (barSolidBg/border/glass/accent) — every one resolves per-scheme; pending a warm visual pass
-  + [x] Make Glass better...its too transparent currently...and not so good looking — now a 55%-opacity matte panel with an accent hairline edge (reads as frosted rather than a faint wash)
-    + [x] Add bluring tastefully. — done: hyprland layer rule blurs the bar's `tildeBar` namespace (ignore_alpha 0.2 in rules.lua); glass alpha retuned 0.55→0.45 so the frost reads through the tint
-  + [x] Check no artifacting when starting as full mode (esp on qs restart) — fixed: bar-prefs now load with a blocking sync read like GitState, so barMode (Transparent/Solid/Glass) is correct from frame one — no transparent→full flip on restart
-  + [x] Rename Full -> SOlid and solid to Solid Margin — settings selector now Transparent / Solid Margin / Solid / Glass; bar, state comments and help text updated
-  + [x] Blutooth Module
-    + [x] Check states persistence and sanity of code logic — Bt.qml is a clean stateless computed singleton; radio persistence lives in MiscState (wifiRadioWanted / btRadioWanted → prefs.json) with a 1s boot reconcile timer — logic is sane
-    
+  + [ ] Border Color Picker does not work.
+  + [ ] delete should be an icon on hover on the wallpapers not next to the swap (same row as light/dark/favorite)
+    + [ ] Have shadow for the buttons on hover for super light/white backgrounds
+  + [ ] When i assign favorite/light/dark their is a flicker and the view rearranges the layout
+  + [ ] Remove . live text inside the current wallpaper frame
+    + [ ] Also make the current wallpaper frame have rounded border that contain its contents just like the wallpaper pictures below it its currently just plain rectangle
++ Settings
+  + [ ] Remove IPC section and all files related to its funcitonality
+  + [ ] Themes
+    + [ ] Make glass-margins as well
+    + [ ] Split the glass into glass-margin, glass-full,glass-borderless
+    + [ ] Color Scheme should be before bar style in the order of appearance
++ Left Clicking the bar should cycle all available themes instead of just between full and transparent just like the right click does
++ QuickSettings
+  + [ ] Avatar picker does not detect any pictures in dir despite having pictures at ~/Pictures look into it
     
 * TODO LATER
 + [ ] Possible to store sudo access for hdd so i dont have to manually enter it on every hdd? Use userspace tools if not -- what options are available?

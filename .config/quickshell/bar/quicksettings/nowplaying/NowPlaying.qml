@@ -52,7 +52,7 @@ ClippingRectangle {
         id: cog
 
         signal clicked
-        signal openChooser()
+        signal openChooser
 
         implicitWidth: 18
         implicitHeight: 18
@@ -111,9 +111,9 @@ ClippingRectangle {
 
     property int progressTick: 0
     property bool showVolumeBadge: false
-    // middle-click mute state · expanded/compact controls gate
+    // middle-click mute state · expanded controls gate (compact mode keeps
+    // its transport on screen permanently)
     property bool expControlsRevealed: false
-    property bool compactControlsRevealed: false
     // external players (no MPRIS volume, e.g. chrome): resolve the real per-app
     // pipewire stream node so scroll volume edits the actual settings (same
     // logic as the audio > applications list) instead of a local guess
@@ -124,15 +124,11 @@ ClippingRectangle {
             return null;
         return PipewireState.appStreamForPlayer(p);
     }
-    readonly property bool mutedNow: mprisVolume
-        ? MprisState.isMuted(MprisState.cardPlayer)
-        : extNode ? (extNode.audio?.muted ?? false) : false
+    readonly property bool mutedNow: mprisVolume ? MprisState.isMuted(MprisState.cardPlayer) : extNode ? (extNode.audio?.muted ?? false) : false
     // external players without a resolvable stream fall back to a locally
     // tracked percentage (only used when node lookup yields nothing)
     property real extVol: 0.5
-    readonly property int currentVolume: Math.round((mprisVolume
-        ? (MprisState.cardPlayer?.volume ?? 0)
-        : extNode ? (extNode.audio?.volume ?? 0) : extVol) * 100)
+    readonly property int currentVolume: Math.round((mprisVolume ? (MprisState.cardPlayer?.volume ?? 0) : extNode ? (extNode.audio?.volume ?? 0) : extVol) * 100)
 
     // visibility-first volume tint — hotter as it gets louder;
     // muted drops to red regardless of level
@@ -251,12 +247,8 @@ ClippingRectangle {
         height: baseCardHeight
 
         // transient top-right controls only peek while the card is hovered
-        HoverHandler { id: compactHover }
-
-        // transport controls tuck away again each time the compact view shows
-        onVisibleChanged: {
-            if (visible)
-                card.compactControlsRevealed = false;
+        HoverHandler {
+            id: compactHover
         }
 
         // album art fills the card's full height; the progress bar is a
@@ -306,7 +298,10 @@ ClippingRectangle {
                     visible: card.showVolumeBadge
                     opacity: visible ? 1 : 0
                     Behavior on opacity {
-                        NumberAnimation { duration: 140; easing.type: Easing.OutQuad }
+                        NumberAnimation {
+                            duration: 140
+                            easing.type: Easing.OutQuad
+                        }
                     }
 
                     Text {
@@ -322,7 +317,7 @@ ClippingRectangle {
                 }
             }
 
-            // ── Right panel — title + click-revealed transport ──
+            // ── Right panel — title + always-visible transport ──
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -331,19 +326,12 @@ ClippingRectangle {
                 Layout.rightMargin: 30
                 spacing: 2
 
-                // title + artist — clicking toggles the transport controls
+                // title + artist
                 ColumnLayout {
                     id: compactInfoCol
 
                     Layout.fillWidth: true
                     spacing: 1
-
-                    TapHandler {
-                        acceptedButtons: Qt.LeftButton
-                        gesturePolicy: TapHandler.ReleaseWithinBounds
-                        cursorShape: Qt.PointingHandCursor
-                        onTapped: card.compactControlsRevealed = !card.compactControlsRevealed
-                    }
 
                     MarqueeText {
                         Layout.fillWidth: true
@@ -376,35 +364,17 @@ ClippingRectangle {
                     Layout.fillHeight: true
                 }
 
-                // transport controls — tucked away until the title is clicked;
+                // transport controls — always on screen in compact mode;
                 // bottomOffset clears the horizontal bar anchored below
                 RowLayout {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 24
                     Layout.bottomMargin: 16
-                    visible: card.compactControlsRevealed
-                    opacity: card.compactControlsRevealed ? 1 : 0
                     spacing: 4
 
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: 180
-                            easing.type: Easing.OutCubic
-                        }
+                    Item {
+                        Layout.fillWidth: true
                     }
-
-                    transform: Translate {
-                        y: card.compactControlsRevealed ? 0 : 10
-
-                        Behavior on y {
-                            NumberAnimation {
-                                duration: 180
-                                easing.type: Easing.OutCubic
-                            }
-                        }
-                    }
-
-                    Item { Layout.fillWidth: true }
                     TrackButton {
                         text: "\uf048"
                         flat: true
@@ -423,7 +393,9 @@ ClippingRectangle {
                         accentColor: Themes.pink
                         onClicked: MprisState.cardPlayer?.next()
                     }
-                    Item { Layout.fillWidth: true }
+                    Item {
+                        Layout.fillWidth: true
+                    }
                 }
             }
         }
@@ -531,7 +503,9 @@ ClippingRectangle {
             color: compactSwitcherMa.containsMouse ? Qt.rgba(card.dominantColor.r, card.dominantColor.g, card.dominantColor.b, 0.18) : "transparent"
 
             Behavior on color {
-                ColorAnimation { duration: 120 }
+                ColorAnimation {
+                    duration: 120
+                }
             }
 
             Text {
@@ -585,7 +559,9 @@ ClippingRectangle {
         }
 
         // transient top-right controls only peek while the card is hovered
-        HoverHandler { id: expandedHover }
+        HoverHandler {
+            id: expandedHover
+        }
         // implicitHeight: 100
         // implicitWidth: 100
 
@@ -859,7 +835,9 @@ ClippingRectangle {
             color: expSwitcherMa.containsMouse ? Qt.rgba(card.dominantColor.r, card.dominantColor.g, card.dominantColor.b, 0.18) : "transparent"
 
             Behavior on color {
-                ColorAnimation { duration: 120 }
+                ColorAnimation {
+                    duration: 120
+                }
             }
 
             Text {
@@ -1152,5 +1130,3 @@ ClippingRectangle {
         }
     }
 }
-
-

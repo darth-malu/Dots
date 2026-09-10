@@ -2,17 +2,11 @@ require("keybinds/quickshell")
 require("keybinds/emacs")
 require("keybinds/submaps")
 
-local emacs = "app2unit -s a -- emacsclient -c || uwsm-app -s a -- emacsclient -c"
-local emacs_restart_ico = "/home/malu/Shibuya/assets/icons/icons8-emacs-color/icons8-emacs-48.png";
-local emacs_restarting = "notify-send 'restarting emacs' -i " .. emacs_restart_ico;
-local emacs_restarted = "notify-send 'restarted emacs' -i " .. emacs_restart_ico;
-local mainMod = "SUPER"
 local kitty = "app2unit -s a -- kitty -1 --instance-group kitty || uwsm-app -s a -- kitty -1 --instance-group kitty"
 local foot = "app2unit -s a -- foot"
 local yazi_kitty =
 "app2unit -s a -- kitty -1 --instance-group yazi -e yazi || uwsm-app -s a -- kitty -1 --instance-group yazi -e yazi"
 local mainMod = "SUPER"
-local mainMod_SHIFT = "SUPER + SHIFT"
 local mainMod_CTRL = "SUPER + CTRL"
 
 -- Foot

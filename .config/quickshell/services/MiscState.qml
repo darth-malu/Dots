@@ -230,7 +230,7 @@ Singleton {
     // Icons use this to pick soft (transparent) or bright (solid bg) colours.
     readonly property bool barSolid: BarState.barMode !== 0
 
-    // color scheme — 0 pyrple (default), 1 gron teal, 2 nord blue, 3 rose pink, 4 everforest green
+    // color scheme — 0 pyrple (default), 1 gron teal, 2 gruvbox, 3 rose pink, 4 everforest green, 5 soramane sky
     property int themeScheme: Prefs.prefs.themeScheme
     onThemeSchemeChanged: {
         Prefs.prefs.themeScheme = themeScheme;

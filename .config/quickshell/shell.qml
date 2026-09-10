@@ -14,12 +14,15 @@ import qs.notBar.pickers
 import qs.notBar.sticky
 import qs.notBar.lock
 import qs.notBar.background
+import qs.notBar.polkit
 import qs.logout
 
 ShellRoot {
     Bar {}
     Volume {}
-    IpcHandler { id: ipcHandlers }
+    IpcHandler {
+        id: ipcHandlers
+    }
     NotificationOverlay {}
     Activate {}
     AppLauncher {}
@@ -33,6 +36,7 @@ ShellRoot {
     WallpaperPicker {}
     AvatarPicker {}
     LockScreen {}
+    PolkitPrompt {}
     BackgroundWindow {}
     DesktopClock {}
     StickyNotes {}
@@ -85,10 +89,4 @@ ShellRoot {
 // nudge
 
 // nudge
-
-
-
-
-
-
 

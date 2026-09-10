@@ -19,6 +19,13 @@ Singleton {
         id: prefStore
 
         path: Quickshell.env("HOME") + "/.config/quickshell/prefs.json"
+        // Blocking sync load — with the async default, the wallpaper pick
+        // (and other persisted state) races the wallpaper scan at boot: the
+        // `find` usually wins, so `current` falls back to the first wallpaper
+        // in the list and clobbers the stored choice (the "resets on reload /
+        // reboot" bug). Sync load makes prefs.wallpaper correct from frame one.
+        preload: false
+        blockLoading: true
         watchChanges: false
         onAdapterUpdated: writeAdapter()
 
@@ -75,4 +82,7 @@ Singleton {
             property int hyprGapsOutValue: 12
         }
     }
+
+    // kick the blocking load once the whole adapter tree exists
+    Component.onCompleted: prefStore.reload()
 }
