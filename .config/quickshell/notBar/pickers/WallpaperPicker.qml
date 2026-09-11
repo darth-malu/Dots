@@ -535,9 +535,10 @@ PanelWindow {
                         onClicked: root.applyWallpaper(cellWrap.path_)
                     }
 
-                    // favorite star — top-right. Shows on tile hover or when the
-                    // wallpaper is already starred; a bare glyph (no bg, no
-                    // border) so it reads quiet until hovered.
+                    // favorite star — top-right. Always visible once the
+                    // wallpaper is starred; otherwise (like the tone cluster)
+                    // it only surfaces when hovering this small corner region,
+                    // never on hover over the whole wallpaper tile.
                     Item {
                         id: favCluster
 
@@ -549,8 +550,6 @@ PanelWindow {
                             onTriggered: favCluster.revealDelayed = false
                         }
 
-                        visible: cellMa.containsMouse || favCluster.revealDelayed || favCluster.fav
-
                         anchors.top: parent.top
                         anchors.right: parent.right
                         anchors.topMargin: 5
@@ -558,9 +557,27 @@ PanelWindow {
                         implicitWidth: 22
                         implicitHeight: 22
 
+                        // hover target: just this corner region, not the tile
+                        // (the container itself stays hittable even while the
+                        // glyph is hidden so entering this corner reveals it)
+                        MouseArea {
+                            id: favReveal
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onEntered: {
+                                grid.currentIndex = index;
+                                favCluster.revealDelayed = true;
+                                favTimer.stop();
+                            }
+                            onExited: favTimer.restart()
+                            onClicked: WallpaperService.toggleFavorite(cellWrap.path_)
+                        }
+
                         Rectangle {
                             id: favBtn
 
+                            visible: favCluster.fav || favCluster.revealDelayed
                             implicitWidth: 22
                             implicitHeight: 22
                             radius: 9
@@ -582,11 +599,6 @@ PanelWindow {
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                onEntered: {
-                                    favCluster.revealDelayed = true;
-                                    favTimer.stop();
-                                }
-                                onExited: favTimer.restart()
                                 onClicked: WallpaperService.toggleFavorite(cellWrap.path_)
                             }
                         }
@@ -707,13 +719,21 @@ PanelWindow {
                         }
                     }
 
-                    // ── delete — bottom-left; hovering the tile reveals it, clicking arms a
-                    // full-tile ✓/✗ confirmation. Plain glyph only (no pill, no
-                    // border) so it reads as a quiet action until hovered ──
+                    // ── delete — bottom-left; only surfaces when hovering this
+                    // small corner region (mirrors favCluster), NOT the whole
+                    // tile. Clicking arms a full-tile ✓/✗ confirmation. Plain
+                    // glyph only (no pill, no border) ──
                     Item {
                         id: tileDelete
 
-                        readonly property bool revealed: cellMa.containsMouse || deleteMa.containsMouse
+                        property bool revealDelayed: false
+                        Timer {
+                            id: delTimer
+                            interval: 300
+                            onTriggered: tileDelete.revealDelayed = false
+                        }
+
+                        readonly property bool revealed: deleteReveal.containsMouse || revealDelayed
 
                         visible: cellWrap.confirming || tileDelete.revealed
                         anchors.left: parent.left
@@ -723,21 +743,39 @@ PanelWindow {
                         implicitWidth: 22
                         implicitHeight: 22
 
-                        Text {
-                            anchors.centerIn: parent
-                            text: "\uf1f8"
-                            color: deleteMa.containsMouse ? "#ff6666" : Qt.rgba(1, 1, 1, 0.85)
-                            font {
-                                pixelSize: 11
-                                family: "Symbols Nerd Font Mono"
+                        // glyph — rendered BELOW the reveal area so the
+                        // MouseArea always receives hover without flicker
+                        Rectangle {
+                            id: delBtn
+                            visible: tileDelete.revealed
+                            anchors.fill: parent
+                            radius: 9
+                            color: "transparent"
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "\uf1f8"
+                                color: deleteReveal.containsMouse ? "#ff6666" : Qt.rgba(1, 1, 1, 0.85)
+                                font {
+                                    pixelSize: 11
+                                    family: "Symbols Nerd Font Mono"
+                                }
                             }
                         }
 
+                        // hover + click target: declared LAST so it's on
+                        // top — stable containsMouse, no mouse-steal flicker
                         MouseArea {
-                            id: deleteMa
+                            id: deleteReveal
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
+                            onEntered: {
+                                grid.currentIndex = index;
+                                tileDelete.revealDelayed = true;
+                                delTimer.stop();
+                            }
+                            onExited: delTimer.restart()
                             onClicked: cellWrap.confirming = true
                         }
                     }

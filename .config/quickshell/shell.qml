@@ -11,7 +11,6 @@ import qs.notBar.rofi.clipHist
 import qs.notBar.rofi.calc
 import qs.notBar.settings
 import qs.notBar.pickers
-import qs.notBar.sticky
 import qs.notBar.lock
 import qs.notBar.background
 import qs.notBar.polkit
@@ -39,8 +38,7 @@ ShellRoot {
     PolkitPrompt {}
     BackgroundWindow {}
     DesktopClock {}
-    StickyNotes {}
-    DesktopAddNote {}
+    DesktopQuotes {}
 }
 
 // reload-nudge

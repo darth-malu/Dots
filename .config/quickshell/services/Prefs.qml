@@ -73,6 +73,13 @@ Singleton {
             property string wallpaper: ""
             property bool wallpaperEnabled: true
             property bool desktopClock: true
+            property bool quotesEnabled: true
+            property bool quotesShowBg: false
+            property bool quotesShowFun: true
+            property bool quotesShowHypr: true
+            property int quotesIntervalMs: 9000
+            property string quotesQuoteFont: "Quicksand"
+            property string quotesAuthorFont: "Quicksand"
             property bool slideshowEnabled: false
             property int slideshowMinutes: 30
             property var favorites: []

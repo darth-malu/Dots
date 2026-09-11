@@ -95,7 +95,7 @@ RowLayout {
             Component.onDestruction: _alive = false
 
             function applyIcons() {
-                const icons = WorkspaceService.clientIconsFor(ws, root.wsRev);
+                const icons = WorkspaceService.clientIconsFor(ws, WorkspaceService.wsRevision(rootBlock.ws?.name ?? ""));
                 const sig = icons.map(i => i.source + ":" + i.count + ":" + (i.focused ? "f" : "")).join("|");
                 if (sig !== _iconSig) {
                     _iconSig = sig;
@@ -104,6 +104,15 @@ RowLayout {
                             rootBlock.clientIcons = icons;
                     });
                 }
+            }
+
+            // scoped refresh pulse — only the affected workspace's block gets
+            // its icon pass re-run (driven by WorkspaceService.refreshWorkspace);
+            // structural/list changes still come through the global revision.
+            readonly property int wsIconRev: WorkspaceService.wsRevision(rootBlock.ws?.name ?? "")
+            onWsIconRevChanged: {
+                if (rootBlock._alive)
+                    rootBlock.applyIcons();
             }
 
             Component.onCompleted: Qt.callLater(applyIcons)

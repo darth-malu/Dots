@@ -36,13 +36,22 @@ ShellRoot {
             color: 'transparent'
             implicitHeight: BarState.barHeight
 
+            // bar treatments:
+            // 0 Transparent, 1 Solid Margin, 3 Glass Margin keep side margins
+            // → a non-zero barWidth shrinks/centers the bar slab on the screen.
+            // 2 Solid, 4 Glass Full, 5 Glass Borderless run edge-to-edge and
+            // ignore barWidth entirely.
+            readonly property bool fullBleedMode: BarState.barMode === 2 || BarState.barMode === 4 || BarState.barMode === 5
+            readonly property int centeredMargin: {
+                if (BarState.barWidth <= 0)
+                    return -1; // no slab → fall back to per-mode margins below
+                const scrW = barr.screen?.width ?? 1920;
+                return Math.max(0, Math.floor((scrW - Math.min(BarState.barWidth, scrW)) / 2));
+            }
+
             margins {
-                // Transparent, Solid Margin and Glass Margin keep side margins;
-                // Solid, Glass Full and Glass Borderless run edge-to-edge.
-                // A non-zero barWidth shortcuts all of that and centers a
-                // fixed-width slab on the screen.
-                right: BarState.barWidth > 0 ? Math.max(0, Math.floor(((barr.screen?.width ?? barr.width) - BarState.barWidth) / 2)) : (BarState.barMode === 0 || BarState.barMode === 1 || BarState.barMode === 3 ? 10 : 0)
-                left: BarState.barWidth > 0 ? Math.max(0, Math.floor(((barr.screen?.width ?? barr.width) - BarState.barWidth) / 2)) : (BarState.barMode === 0 || BarState.barMode === 1 || BarState.barMode === 3 ? 6 : 0)
+                right: fullBleedMode ? 0 : (centeredMargin >= 0 ? centeredMargin : 10)
+                left: fullBleedMode ? 0 : (centeredMargin >= 0 ? centeredMargin : 6)
                 top: 0
             }
 

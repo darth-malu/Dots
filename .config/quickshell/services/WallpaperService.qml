@@ -25,6 +25,12 @@ Singleton {
         Prefs.write();
     }
 
+    property bool quotesEnabled: Prefs.prefs.quotesEnabled ?? true
+    onQuotesEnabledChanged: {
+        Prefs.prefs.quotesEnabled = quotesEnabled;
+        Prefs.write();
+    }
+
     // bar text: three-way wallpaper-tone selector — "auto" (default) follows
     // each wallpaper's detected tone so glyphs stay legible (dark walls →
     // light glyphs, bright walls → dark glyphs); "light" pins to a light

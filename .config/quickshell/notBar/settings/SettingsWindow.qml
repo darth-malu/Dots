@@ -672,6 +672,179 @@ Item {
         }
     }
 
+    // ── font-roster dropdown row: glyph · label · [current font ▾] ──
+    // mirrors the notification font picker but as a component so font
+    // settings (quote/author/...) share one look instead of inline dupes
+    component FontPickerRow: RowLayout {
+        id: fpr
+
+        required property string icon
+        required property string label
+        required property string value
+        signal picked(string font)
+
+        property var options: ["Quicksand", "ZedMono Nerd Font", "JetBrains Mono", "Nunito", "Lato"]
+
+        spacing: 12
+        Layout.fillWidth: true
+        Layout.preferredHeight: 38
+
+        Text {
+            text: fpr.icon
+            color: Themes.accent
+            font {
+                pixelSize: 14
+                family: "Symbols Nerd Font Mono"
+            }
+            Layout.preferredWidth: 20
+            horizontalAlignment: Text.AlignHCenter
+        }
+
+        Text {
+            text: fpr.label
+            color: Themes.fg
+            font {
+                pixelSize: 12
+                family: "Quicksand"
+                bold: true
+            }
+            Layout.alignment: Qt.AlignVCenter
+        }
+
+        Item {
+            Layout.fillWidth: true
+        }
+
+        Rectangle {
+            id: fontDrop
+
+            Layout.alignment: Qt.AlignVCenter
+            width: 140
+            height: 24
+            radius: 6
+            color: fontDropMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : Themes.cardBg
+            border.width: 1
+            border.color: fontDrop.dropOpen ? Themes.accent : Themes.borderColor
+
+            property bool dropOpen: false
+
+            Text {
+                anchors.left: parent.left
+                anchors.leftMargin: 8
+                anchors.verticalCenter: parent.verticalCenter
+                text: fpr.value
+                color: Themes.fg
+                font {
+                    pixelSize: 10
+                    bold: true
+                    family: "Quicksand"
+                }
+                elide: Text.ElideRight
+                width: parent.width - 24
+            }
+
+            Text {
+                anchors.right: parent.right
+                anchors.rightMargin: 6
+                anchors.verticalCenter: parent.verticalCenter
+                text: "\uf078"
+                color: Themes.muted
+                font {
+                    pixelSize: 8
+                    family: "Symbols Nerd Font Mono"
+                }
+                rotation: fontDrop.dropOpen ? 180 : 0
+
+                Behavior on rotation {
+                    NumberAnimation {
+                        duration: 120
+                        easing.type: Easing.OutQuad
+                    }
+                }
+            }
+
+            MouseArea {
+                id: fontDropMa
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: fontDrop.dropOpen = !fontDrop.dropOpen
+            }
+
+            Popup {
+                id: fontPopup
+                y: fontDrop.height + 4
+                width: fontDrop.width
+                height: fontPopupCol.implicitHeight + 8
+                closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
+                onOpened: fontDrop.dropOpen = true
+                onClosed: fontDrop.dropOpen = false
+
+                background: Rectangle {
+                    radius: 6
+                    color: Themes.cardBg
+                    border.width: 1
+                    border.color: Themes.borderColor
+                }
+
+                contentItem: ColumnLayout {
+                    id: fontPopupCol
+                    spacing: 0
+
+                    Repeater {
+                        model: fpr.options
+
+                        Rectangle {
+                            required property string modelData
+                            property bool isHovered: fontItemMa.containsMouse
+                            property bool isSelected: fpr.value === modelData
+
+                            Layout.fillWidth: true
+                            implicitHeight: 24
+                            radius: 4
+                            color: isSelected ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
+
+                            Text {
+                                anchors.left: parent.left
+                                anchors.leftMargin: 8
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: modelData
+                                color: isSelected ? Themes.accent : Themes.dim
+                                font {
+                                    pixelSize: 10
+                                    family: "Quicksand"
+                                }
+                            }
+
+                            MouseArea {
+                                id: fontItemMa
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    fpr.picked(modelData);
+                                    fontPopup.close();
+                                }
+                            }
+                        }
+                    }
+                }
+
+                onVisibleChanged: fontDrop.dropOpen = visible
+            }
+
+            Connections {
+                target: fontDrop
+                function onDropOpenChanged() {
+                    if (fontDrop.dropOpen && !fontPopup.visible)
+                        fontPopup.open();
+                    else if (!fontDrop.dropOpen && fontPopup.visible)
+                        fontPopup.close();
+                }
+            }
+        }
+    }
+
     function fmtMs(ms) {
         if (ms >= 1000) {
             const s = Math.round(ms / 100) / 10;
@@ -1915,6 +2088,12 @@ Item {
                                         value: BarState.barWidth
                                         defaultValue: 0
                                         unit: "px"
+                                        // width only applies in the margin modes
+                                        // (transparent / solid margin / glass
+                                        // margin); full-bleed modes span the
+                                        // screen edge-to-edge and ignore it
+                                        enabled: BarState.barMode !== 2 && BarState.barMode !== 4 && BarState.barMode !== 5
+                                        opacity: BarState.barMode === 2 || BarState.barMode === 4 || BarState.barMode === 5 ? 0.45 : 1
                                         onCommitted: v => BarState.barWidth = v
                                     }
 
@@ -1934,7 +2113,9 @@ Item {
                                         }
 
                                         Text {
-                                            text: "Width 0 spans the full screen; a set value centers the bar slab."
+                                            text: BarState.barMode === 2 || BarState.barMode === 4 || BarState.barMode === 5
+                                                     ? "Full-bleed mode — the bar spans the screen; width is ignored."
+                                                     : "Width 0 spans the screen; a set value shrinks/centers the bar slab."
                                             color: Themes.dim
                                             font {
                                                 pixelSize: 9
@@ -3395,6 +3576,124 @@ Item {
                                 }
                             }
                         }
+                    }
+                }
+            }
+
+            // separator between the Desktop and Quotes sections
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.leftMargin: 16
+                Layout.rightMargin: 16
+                height: 1
+                color: Themes.separator
+            }
+
+            Card {
+                title: "Quotes"
+                icon: "\uf10d"
+                accent: Themes.accent
+
+                ColumnLayout {
+                    spacing: 0
+                    Layout.fillWidth: true
+
+                    SettingRow {
+                        icon: "\uf10d"
+                        label: "Quotes on desktop"
+                        caption: WallpaperService.quotesEnabled ? "on" : "off"
+                        checked: WallpaperService.quotesEnabled
+                        onFlipped: WallpaperService.quotesEnabled = !WallpaperService.quotesEnabled
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: Themes.separator
+                        Layout.leftMargin: 32
+                    }
+
+                    SettingRow {
+                        icon: "\uf140"
+                        label: "Quote background"
+                        caption: QuotesState.showBg ? "chip" : "none"
+                        checked: QuotesState.showBg
+                        onFlipped: QuotesState.showBg = !QuotesState.showBg
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: Themes.separator
+                        Layout.leftMargin: 32
+                    }
+
+                    SettingRow {
+                        icon: "\uf11d"
+                        label: "Funny extras"
+                        caption: QuotesState.showFun ? "on" : "off"
+                        checked: QuotesState.showFun
+                        onFlipped: QuotesState.showFun = !QuotesState.showFun
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: Themes.separator
+                        Layout.leftMargin: 32
+                    }
+
+                    SettingRow {
+                        icon: "\uf00a"
+                        label: "Hyprland quotes"
+                        caption: QuotesState.showHypr ? "on" : "off"
+                        checked: QuotesState.showHypr
+                        onFlipped: QuotesState.showHypr = !QuotesState.showHypr
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: Themes.separator
+                        Layout.leftMargin: 32
+                    }
+
+                    FontPickerRow {
+                        icon: "\uf10d"
+                        label: "Quote font"
+                        value: QuotesState.quoteFont
+                        onPicked: QuotesState.quoteFont = font
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: Themes.separator
+                        Layout.leftMargin: 32
+                    }
+
+                    FontPickerRow {
+                        icon: "\uf007"
+                        label: "Author font"
+                        value: QuotesState.authorFont
+                        onPicked: QuotesState.authorFont = font
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: Themes.separator
+                        Layout.leftMargin: 32
+                    }
+
+                    PollRow {
+                        icon: "\uf2f1"
+                        label: "Quote rotation"
+                        minMs: 2000
+                        maxMs: 60000
+                        stepMs: 1000
+                        valueMs: QuotesState.intervalMs
+                        onCommitted: ms => QuotesState.intervalMs = ms
                     }
                 }
             }

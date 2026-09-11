@@ -39,8 +39,6 @@ Singleton {
 
     property bool showPopup: false
 
-    property bool showStickyPopup: false
-    // persisted preference
     property bool popupSolidBg: Prefs.prefs.popupSolidBg
     onPopupSolidBgChanged: {
         Prefs.prefs.popupSolidBg = popupSolidBg;

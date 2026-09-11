@@ -221,6 +221,46 @@ Singleton {
         });
     }
 
+    // ── per-workspace refresh ──
+    // targeted counterpart of refresh() for events whose impact is a single
+    // workspace (the active-monitor switch). Each workspace name keeps its
+    // own monotonic revision so widgets can re-evaluate just that workspace
+    // (icon pass + badge) without recomputing every workspace's icons. The
+    // name is validated against the live workspace model first: if it ever
+    // fails to resolve, we fall back to the shared `refresh()` rather than
+    // risk a consumer missing a change.
+    readonly property var _wsRevs: ({})
+    property int _wsRevSeq: 0
+
+    function _nextWsRev() {
+        return ++root._wsRevSeq;
+    }
+
+    function wsRevision(name) {
+        return root._wsRevs[String(name ?? "")] ?? 0;
+    }
+
+    function refreshWorkspace(name) {
+        const key = String(name ?? "");
+        if (key === "") {
+            root.refresh();
+            return;
+        }
+        let known = false;
+        const wsList = Hyprland.workspaces?.values ?? [];
+        for (let i = 0; i < wsList.length; i++) {
+            if (String(wsList[i]?.name ?? "") === key) {
+                known = true;
+                break;
+            }
+        }
+        if (!known) {
+            root.refresh();
+            return;
+        }
+        root._wsRevs[key] = root._nextWsRev();
+    }
+
     Connections {
         target: Hyprland
 
@@ -241,8 +281,17 @@ Singleton {
             }
 
             // shared list-refresh signal for the workspace widgets
-            if (root._listEvents.has(n))
-                root.refresh();
+            if (root._listEvents.has(n)) {
+                // active-monitor switch events carry the workspace NAME and
+                // only touch that workspace — refresh just it so unrelated
+                // workspace blocks skip their icon pass. v1 variants (bare
+                // numeric ids) and anything else keep the shared clock.
+                const p = ev.parse(2);
+                if ((n === "workspacev2" || n === "focusedmonv2") && p.length >= 2 && String(p[1] ?? "") !== "")
+                    root.refreshWorkspace(p[1]);
+                else
+                    root.refresh();
+            }
         }
     }
 }
