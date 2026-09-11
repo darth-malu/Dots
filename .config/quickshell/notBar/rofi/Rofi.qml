@@ -179,12 +179,13 @@ PanelWindow {
                 }
 
                 Text {
+                    id: counterText
                     visible: itemLauncher.count > 0
                     text: itemLauncher.count
                     color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.4)
                     font {
-                        pixelSize: 10
-                        family: "ZedMono Nerd Font"
+                        pixelSize: 13
+                        family: "Monofur Nerd Font"
                     }
                 }
             }

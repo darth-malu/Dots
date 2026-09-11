@@ -39,12 +39,16 @@ hl.config({
     },
     -- sensitivity = 0.1,
   },
+  cursor = {
+    no_hardware_cursors = true,
+  },
   xwayland = {
     force_zero_scaling = true
   },
   gestures = {
     workspace_swipe_distance = 260,     -- 300::
     workspace_swipe_create_new = false, -- new empty after last workspace
+    workspace_swipe_cancel_ratio = 0.7, --0.5:: switch if covered more than value%
     workspace_swipe_forever = true,     -- NOTE....false sucks
     --workspace_swipe_touch = true,       -- swipe from the edge of touchpad
     -- workspace_swipe_use_r = true, -- r instead of m

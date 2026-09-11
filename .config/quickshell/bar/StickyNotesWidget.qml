@@ -71,8 +71,6 @@ BarBlock {
             implicitWidth: popupCard.implicitWidth + 24
             implicitHeight: popupCard.implicitHeight + 24
 
-            Keys.onEscapePressed: MiscState.showStickyPopup = false
-
             Rectangle {
                 id: popupCard
                 focus: true
@@ -81,6 +79,7 @@ BarBlock {
                 border.width: 1
                 border.color: Themes.borderColor
                 color: Themes.popupCardBg
+                Keys.onEscapePressed: MiscState.showStickyPopup = false
 
                 width: 260
                 implicitWidth: contentCol.implicitWidth + 24

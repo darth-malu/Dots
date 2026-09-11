@@ -32,6 +32,17 @@ Singleton {
         return s.replace(/\/+$/, "");
     }
 
+    function _braceExpand(s) {
+        const m = /^(.*)\{([^}]+)\}(.*)$/.exec(s);
+        if (!m)
+            return [s];
+        const pre = m[1], opts = m[2].split(","), post = m[3];
+        const out = [];
+        for (const o of opts)
+            out.push(...root._braceExpand(pre + o + post));
+        return out;
+    }
+
     function _persist() {
         prefs.repos = root.repos.map(r => ({
             path: r.path,
@@ -41,16 +52,25 @@ Singleton {
     }
 
     function addRepo(path, workTree) {
-        const p = root._expand(path);
-        if (p.length === 0)
+        const raw = String(path ?? "").trim();
+        if (raw.length === 0)
             return false;
-        if (root.repos.some(r => r.path === p))
+        const paths = root._braceExpand(raw).map(root._expand).filter(p => p.length > 0);
+        if (paths.length === 0)
             return false;
-        const entry = { path: p };
-        const w = root._expand(workTree ?? "");
-        if (w.length > 0)
-            entry.workTree = w;
-        root.repos = root.repos.concat(entry);
+        const w = root._expand(String(workTree ?? "").trim());
+        let added = 0;
+        for (const p of paths) {
+            if (root.repos.some(r => r.path === p))
+                continue;
+            const entry = { path: p };
+            if (w.length > 0)
+                entry.workTree = w;
+            root.repos = root.repos.concat(entry);
+            added++;
+        }
+        if (added === 0)
+            return false;
         root.repoRev++;
         root._persist();
         return true;
@@ -171,7 +191,12 @@ done
     // probe on demand only — no background polling (unless the popup is open,
     // see the timer below)
     function refresh() {
-        if (root.busy || root.totalRepos === 0)
+        if (root.busy) {
+            refreshTimer.interval = 400;
+            refreshTimer.start();
+            return;
+        }
+        if (root.totalRepos === 0)
             return;
         root.tick++;
         gitProc.tick = root.tick;

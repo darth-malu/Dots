@@ -6,7 +6,7 @@ hl.config({
       -- active_border   = { colors = {"rgba(33ccffee)", "rgba(CDDC39FF)"}, angle = 45 },
       inactive_border = "rgba(595959FF)",
     },
-    gaps_in = 4, -- NOTE: space essential for gaps script
+    gaps_in = 6, -- NOTE: space essential for gaps script
     gaps_out = 12,
     border_size = 1,
     resize_on_border = true,

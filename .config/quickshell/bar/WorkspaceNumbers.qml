@@ -39,13 +39,13 @@ RowLayout {
 
             readonly property bool boxy: MiscState.boxyTheme
 
-            // empty workspaces get a subtle accent tint so every workspace
-            // reads as a pill — no more floating transparent numbers
-            readonly property bool isEmpty: !isActive && !isUrgent
-
+            // numbers only: resting workspaces are plain text — no border,
+            // no bg. Only the active pill (and the urgent flash) gets chrome.
             radius: boxy ? Themes.boxyRadius : Themes.roundedRadius
 
-            border.width: boxy ? Themes.boxyBorderWidth : Themes.roundedBorderWidth
+            border.width: (isActive || isUrgent)
+                ? (boxy ? Themes.boxyBorderWidth : Themes.roundedBorderWidth)
+                : 0
             border.color: isUrgent ? "#ff5555"
                 : boxy ? Themes.boxyActiveBorder
                 : Themes.roundedActiveBorder
@@ -61,6 +61,9 @@ RowLayout {
             }
             Behavior on border.color {
                 ColorAnimation { duration: 200; easing.type: Easing.OutQuad }
+            }
+            Behavior on border.width {
+                NumberAnimation { duration: 200; easing.type: Easing.OutQuad }
             }
 
             // boxy active = perfect square, rounded active = perfect circle

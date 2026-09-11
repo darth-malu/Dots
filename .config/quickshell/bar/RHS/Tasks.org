@@ -1,31 +1,30 @@
 * Pending
-+ [ ] Settings
-  + [ ] Bar
-    + [ ] Bar Width is broken -- look into it...I just want to be able to increase/decrease its width and also add reset option to restore current settings
-    + [ ] Do drop down design for the color theme
-  + [ ] Desktop
-    + [ ] Sticky Notes
-      + [ ] Make this a widget like the desktop clock (not bar clock) that I need to interact with to add sticky notes..like kde/microsoft win 7 sticky notes
-      + [ ] Remove the setting from settings
-+ [ ] Bar
-  + [ ] GIT
-    + [ ] Slow...unsynced notification and action happening. eg. pushed, committed notif shows before UI update...and everything seems slow...look into logic and make it airtight
-    + [ ] Adding a git repo does not work....look into this in depth!! -- fix this.,..very important to the functionality and multiple prompts havent fixed it
-      + [ ] Clicking add button after typing location eg. ~/Projects/{Shibuya,Org} does not work
-  + Empty workspace
-    + with icons -> Just show the workspace numbers with same formatting as other workspaces but show the part of the container that normally has the icon as if in workspace without icons
-    + with number -> Just show the workspace numbers with same formatting as other workspaces
-+ [ ] Quick Settings
-+ [ ] wallpaper rofi
-  + [ ] Combine Header row (with the current wallpaper) with the first row...the search etc under one section
-  + [ ] The color picker for the borders does not work....fix it
-  + [ ] The icons appears misaligned in their containers -- moon, sun , favorites...look into it
-    + [ ] Move light/dark icons from same row as favorites icon to the bottom right instead but only on hover to that specific region not on the wallpaper container itself as currently
-    + [ ] Remove border+bg from favorite icon but maintain the yellow color on check
-+ [ ] Mpris
-  + [ ] Instead of SUPER + Play - hiding album art move that to ALT + Right CLick Then have it toggle between expanded and compact view
-      
-
-* TODO IMPLEMENT THis now
-+ [ ] Possible to store sudo access for hdd so i dont have to manually enter it on every hdd? Use userspace tools if not -- what options are available?
-  + researched: udisksctl exists (/run/current-system/sw/bin/udisksctl) and udisks2 is dbus-activated on NixOS (add services.udisks2.enable = true) — lets you mount/unmount without sudo via D-Bus; automount on boot via fstab noauto,nofail,x-systemd.automount; the only NOPASSWD sudo path is a scoped security.sudo.extraRules entry for /run/wrappers/bin/mount/umount
++ [X] Settings
+  + [X] Bar
+    + [X] Bar Width is broken -- FIXED: margins were computed from the window's own width (self-referential → oscillation). Now derived from the screen width so a fixed-width slab genuinely centers and holds. Reset button in the stepper restores the default (0 = full screen).
+    + [X] Do drop down design for the color theme -- dropdown with 6 schemes already in place; also fixed the `settingsWindow is not defined` ReferenceError that broke the click-outside close.
+  + [X] Desktop
+    + [X] Sticky Notes
+      + [X] Made this a desktop widget like the desktop clock (kde/win7 style): a floating "+" button (bottom-left) opens a Note/Todo menu. No more bar-only interaction.
+      + [X] Remove brom bar -- removed StickyNotesWidget from the bar entirely
+      + [X] Remove the setting from settings -- no bar-module setting existed
++ [X] + for new sticky notes does not work. Expected: launch a small sticky notes window like win7 -- fixed two bugs: (1) StickyNote.qml referenced the bare `notesModel` id (undefined outside NotesState.qml) so `row()`/`indexOf()` threw and no window ever appeared — now uses `NotesState.model`. (2) DesktopAddNote was a Note/Todo menu; "+" now spawns a fresh note window directly (still win7-style), positioned just above the button; alt+click on + spawns a todo. Notes are kind-switchable inside the note.
++ [X] Bar
+  + [X] GIT
+    + [X] Slow...unsynced notification and action happening -- refresh now re-queues (400ms debounce) when busy instead of silently dropping the poke, so the deferred toast + probe always land promptly.
+    + [X] Adding a git repo does not work -- `_expand()` treated brace patterns literally. Added `_braceExpand()` so `~/Projects/{Shibuya,Org}` adds every path in the set (skipping duplicates).
+  + [X] Empty workspace
+    + [X] with icons -> empty workspace badge now uses the same fixed 18px container / formatting as icon workspaces (only the icon area is empty)
+    + [X] with number -> resting workspaces are now plain text (no border/bg); only the active pill keeps the border + bg, urgent keeps its red flash
+  + workspaces
+    + [X] empty workspace number lingering after switching -- workspace pills/badges stay visible by design (switch target must not pop in); empty badge redesigned to match occupied formatting
++ [X] Mpris
+  + [X] ALT + Right Click now toggles expanded/compact view (was alt+left); plain right click still = next track
++ [X] Mpris module event map (strict) -- now exactly: left click = pause, right click = next, alt+left = toggle compact/expanded, alt+click ring glyph ("play") = hide-when-idle visibility on/off, alt+wheel = cycle players. Removed middle-click popup, forward/back raise, plain-wheel volume, player-name click-cycling and album-art click popup.
++ [X] Possible to store sudo access for hdd so i dont have to manually enter it on every hdd? Use userspace tools if not -- DONE: fstab already has `users,nofail` entries (UUID-based) for Hyogo/Mutsu/Yuri. `NasState.mount()` now resolves the device from fstab and drives it purely via `udisksctl mount` (no sudo); unmount stays on `udisksctl unmount`. systemd unit is only the fallback if the device can't be resolved. udisksctl/udiskie both present.
++ [X] Look into why my polkit agent is not working -- root cause: hyprpolkitagent is ALSO running and registered with polkitd first, so the quickshell agent never receives requests. Remove hyprpolkitagent from the NixOS config to let `notBar/polkit/PolkitPrompt.qml` take over. Firmware: prompt now grabs keyboard focus reliably (retry loop until the field is visible).
+  + [X] Improve its UI-UX in congruence with the rest of the theme -- trimmed to the same card/field language as quicksettings; focus is handed straight to the password field on challenge start.
++ [X] wallpaper rofi
+  + [X] Color picker for the borders -- ring swab + palette already wired (PickerState.wallpaperBorder); verified in picker-prefs.json
+  + [X] Light/dark icons move to bottom-right corner on hover, not the whole tile -- already implemented (toneCluster)
+  + [X] Favorite icon border+bg removed, yellow on check kept -- already implemented (favCluster)

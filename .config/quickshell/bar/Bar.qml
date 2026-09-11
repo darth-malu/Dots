@@ -41,8 +41,8 @@ ShellRoot {
                 // Solid, Glass Full and Glass Borderless run edge-to-edge.
                 // A non-zero barWidth shortcuts all of that and centers a
                 // fixed-width slab on the screen.
-                right: BarState.barWidth > 0 ? Math.max(0, Math.floor((barr.width - BarState.barWidth) / 2)) : (BarState.barMode === 0 || BarState.barMode === 1 || BarState.barMode === 3 ? 10 : 0)
-                left: BarState.barWidth > 0 ? Math.max(0, Math.floor((barr.width - BarState.barWidth) / 2)) : (BarState.barMode === 0 || BarState.barMode === 1 || BarState.barMode === 3 ? 6 : 0)
+                right: BarState.barWidth > 0 ? Math.max(0, Math.floor(((barr.screen?.width ?? barr.width) - BarState.barWidth) / 2)) : (BarState.barMode === 0 || BarState.barMode === 1 || BarState.barMode === 3 ? 10 : 0)
+                left: BarState.barWidth > 0 ? Math.max(0, Math.floor(((barr.screen?.width ?? barr.width) - BarState.barWidth) / 2)) : (BarState.barMode === 0 || BarState.barMode === 1 || BarState.barMode === 3 ? 6 : 0)
                 top: 0
             }
 
@@ -124,10 +124,6 @@ ShellRoot {
                     // media moves in-line with the right cluster so the centered
                     // pill can no longer slide under the active-window title
                     Git {
-                        host: barr
-                    }
-
-                    StickyNotesWidget {
                         host: barr
                     }
 

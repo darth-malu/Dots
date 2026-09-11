@@ -156,13 +156,11 @@ RowLayout {
                     Rectangle {
                         id: numberContainer
 
-                        readonly property bool bare: rootBlock.isEmpty
-
                         visible: true
                         Layout.fillHeight: true
-                        Layout.rightMargin: bare ? 6 : 4
-                        implicitWidth: bare ? numText.implicitWidth + 8 : 18
-                        implicitHeight: bare ? numText.implicitHeight + 8 : width
+                        Layout.rightMargin: 4
+                        implicitWidth: 18
+                        implicitHeight: width
                         radius: boxy ? Themes.boxyRadius : Themes.roundedRadius
                         color: rootBlock.isEmpty ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12) : rootBlock.isActive ? (MiscState.transparentWsBadge ? "transparent" : (boxy ? Themes.boxyActiveBg : Themes.roundedBadgeBg)) : rootBlock.urgent ? Themes.roundedUrgentBg : "transparent"
 

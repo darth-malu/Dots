@@ -800,6 +800,7 @@ Item {
 
         onVisibleChanged: {
             if (visible) {
+                settingsKeyHandler.forceActiveFocus();
                 interfaceCheck.running = true;
             }
         }
@@ -817,7 +818,11 @@ Item {
             right: true
         }
 
-        contentItem {
+        // Escape closes the settings — hosted on a real Item so Keys can
+        // attach (the panel interface itself isn't an Item)
+        Item {
+            id: settingsKeyHandler
+            anchors.fill: parent
             focus: true
             Keys.onPressed: event => {
                 if (event.key === Qt.Key_Escape)
@@ -1612,14 +1617,14 @@ Item {
                                             }
                                         }
 
-                                        // close when clicking outside
-                                        Connections {
-                                            target: settingsWindow
-                                            function onVisibleChanged() {
-                                                if (!settingsWindow.visible)
-                                                    colorThemeDropdown.colorThemeDropOpen = false;
-                                            }
-                                        }
+// close when clicking outside
+                        Connections {
+                            target: window
+                            function onVisibleChanged() {
+                                if (!window.visible)
+                                    colorThemeDropdown.colorThemeDropOpen = false;
+                            }
+                        }
                                     }
                                 }
                                 // bar style dropdown — like the notification font picker

@@ -72,8 +72,19 @@ Singleton {
         return root.mountedMap[share.name] === true;
     }
 
+    function _deviceFor(target) {
+        // resolve the fstab source for a mount target so we can drive the
+        // mount purely through udisks2 (no sudo) instead of the systemd unit
+        return `$(findmnt -s -n -o SOURCE --target '${target}' 2>/dev/null | head -1)`;
+    }
+
     function mount(share) {
-        Quickshell.execDetached(["systemctl", "restart", share.unit]);
+        // udisks2 first — userspace, no password prompt, and udisks honours
+        // the fstab mount point (/media/<name>) + options. Falls back to the
+        // systemd unit when the device can't be resolved from fstab.
+        Quickshell.execDetached(["sh", "-c",
+            `dev=${root._deviceFor(share.target)}; `
+            + `[ -n "$dev" ] && udisksctl mount -b "$dev" 2>/dev/null || systemctl restart '${share.unit}'`]);
         root.kickRecheck(15);
     }
 
@@ -81,8 +92,8 @@ Singleton {
         // prefer a clean udisks unmount of whatever source backs the target,
         // fall back to stopping the systemd mount unit
         Quickshell.execDetached(["sh", "-c",
-            `src=$(findmnt -n -o SOURCE --target '${share.target}' 2>/dev/null); `
-            + `[ -n "$src" ] && udisksctl unmount -b "$src" 2>/dev/null || systemctl stop '${share.unit}'`]);
+            `dev=$(findmnt -n -o SOURCE --target '${share.target}' 2>/dev/null); `
+            + `[ -n "$dev" ] && udisksctl unmount -b "$dev" 2>/dev/null || systemctl stop '${share.unit}'`]);
         root.kickRecheck(15);
     }
 

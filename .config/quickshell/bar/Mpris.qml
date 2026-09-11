@@ -71,7 +71,7 @@ Item {
         id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
-        acceptedButtons: Qt.RightButton | Qt.LeftButton | Qt.MiddleButton | Qt.ForwardButton | Qt.BackButton
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
 
         onEntered: {
             mprisRoot._hovering = true;
@@ -90,26 +90,20 @@ Item {
 
         onClicked: mouse => {
             mouse.accepted = true;
-            // alt+left toggles compact/expanded; plain left still plays
+            // the whole event map, nothing else:
+            //   left        = pause
+            //   right       = next
+            //   alt + left  = toggle compact/expanded
             if ((mouse.modifiers & Qt.AltModifier) && mouse.button == Qt.LeftButton)
                 MprisState.mprisCompact = !MprisState.mprisCompact;
             else if (mouse.button == Qt.LeftButton)
-                MprisState.player?.togglePlaying();
+                MprisState.player?.pause();
             else if (mouse.button == Qt.RightButton)
                 MprisState.player?.next();
-            else if (mouse.button == Qt.ForwardButton) {
-                if (MprisState.player?.identity === "Music Player Daemon")
-                    HyprlandService.dispatch('hl.dsp.workspace.toggle_special("nc")');
-                else {
-                    MprisState.player?.raise();
-                }
-            } else if (mouse.button == Qt.MiddleButton)
-                mprisRoot.showPopup = !mprisRoot.showPopup;
         }
 
         onWheel: event => {
-            // alt + wheel hops between available players (matches the popup
-            // switcher); plain wheel still adjusts the current player's volume
+            // only alt + wheel: scroll the player list. plain wheel does nothing.
             if (event.modifiers & Qt.AltModifier) {
                 var players = MprisState.controlPlayers;
                 if (players.length > 1) {
@@ -120,19 +114,6 @@ Item {
                     MprisState.player = next;
                 }
                 event.accepted = true;
-                return;
-            }
-
-            if (!(MprisState.player?.isPlaying ?? false))
-                return;
-
-            if (MprisState.player?.volumeSupported) {
-                let vol = MprisState.player.volume * 100;
-                vol += event.angleDelta.y > 0 ? 4 : -4;
-                vol = Math.max(0, Math.min(vol, 100));
-                MprisState.player.volume = vol / 100;
-                mprisRoot.showVolume = true;
-                hideVolumeTimer.restart();
             }
         }
 
@@ -312,19 +293,9 @@ Item {
                         // fallback when no art
                         BarText {
                             anchors.centerIn: parent
-                            // visible: !albumArt.visible
                             visible: !(albumArtImage.status == Image.Ready) && !MprisState.isBrowserPlayer(MprisState.player)
                             text: "🎵"
                             pointSize: 10
-                        }
-
-                        // left-click art → open art popup (re-click keeps it open)
-                        MouseArea {
-                            anchors.fill: parent
-                            acceptedButtons: Qt.LeftButton
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: if (!mprisRoot.showArtPopup)
-                                mprisRoot.showArtPopup = true
                         }
                     }
 
@@ -364,23 +335,6 @@ Item {
                             NumberAnimation {
                                 duration: 200
                                 easing.type: Easing.OutCubic
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                var players = [];
-                                for (let p of Mpris.players.values)
-                                    players.push(p);
-                                if (players.length > 1) {
-                                    var idx = players.indexOf(MprisState.player);
-                                    if (idx >= 0)
-                                        MprisState.player = players[(idx + 1) % players.length];
-                                    else
-                                        MprisState.player = players[0];
-                                }
                             }
                         }
                     }
@@ -533,6 +487,23 @@ Item {
                             pointSize: 10
                             symbolSize: 10
                             paddingg: 0
+                        }
+
+                        // the "play" button (ring glyph) — alt+click toggles the
+                        // module's visibility (hide-when-idle); plain click pauses
+                        // like everywhere else on the pill
+                        MouseArea {
+                            id: playBtnMa
+                            anchors.fill: parent
+                            acceptedButtons: Qt.LeftButton
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: mouse => {
+                                mouse.accepted = true;
+                                if (mouse.modifiers & Qt.AltModifier)
+                                    MprisState.hideWhenIdle = !MprisState.hideWhenIdle;
+                                else
+                                    MprisState.player?.pause();
+                            }
                         }
                     }
                 }

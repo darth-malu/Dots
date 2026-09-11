@@ -40,6 +40,7 @@ ShellRoot {
     BackgroundWindow {}
     DesktopClock {}
     StickyNotes {}
+    DesktopAddNote {}
 }
 
 // reload-nudge

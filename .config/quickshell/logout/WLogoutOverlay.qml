@@ -65,7 +65,11 @@ Item {
 
             color: "transparent"
 
-            contentItem {
+            // keybind host — a real Item so Keys can attach (the panel
+            // interface itself isn't an Item)
+            Item {
+                id: logoutKeyHandler
+                anchors.fill: parent
                 focus: true
                 Keys.onPressed: event => {
                     if (event.key == Qt.Key_Escape)

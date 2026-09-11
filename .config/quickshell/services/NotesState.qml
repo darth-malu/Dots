@@ -22,13 +22,13 @@ Singleton {
     }
 
     // ── CRUD ──
-    function addNote(kind) {
+    function addNote(kind, xf, yf) {
         notesModel.append({
             id: "n" + Date.now() + Math.floor(Math.random() * 1000),
             text: "",
             items: [],
-            x: 0.3,
-            y: 0.25,
+            x: xf ?? 0.3,
+            y: yf ?? 0.25,
             w: 240,
             h: 160,
             color: 0,

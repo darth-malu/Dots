@@ -31,9 +31,9 @@ PanelWindow {
 
     // ---- helpers (model-backed; index changes rewires by value) ----
     function row() {
-        if (root.index < 0 || root.index >= notesModel.count)
+        if (root.index < 0 || root.index >= NotesState.model.count)
             return null;
-        return notesModel.get(root.index);
+        return NotesState.model.get(root.index);
     }
 
     function initX() {
@@ -86,8 +86,8 @@ PanelWindow {
     }
 
     function indexOf(id) {
-        for (let i = 0; i < notesModel.count; i++)
-            if (notesModel.get(i).id === id)
+        for (let i = 0; i < NotesState.model.count; i++)
+            if (NotesState.model.get(i).id === id)
                 return i;
         return -1;
     }

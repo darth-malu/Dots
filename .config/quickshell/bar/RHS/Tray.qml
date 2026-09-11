@@ -119,8 +119,6 @@ RowLayout {
                 onVisibleChanged: if (!visible)
                     delegate.menuOpen = false
 
-                Keys.onEscapePressed: delegate.menuOpen = false
-
                 QsMenuOpener {
                     id: menuOpener
                     menu: delegate.menuOpen ? delegate.item.menu : null
@@ -134,6 +132,8 @@ RowLayout {
                     border.width: 1
                     border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.3)
                     clip: true
+                    focus: true
+                    Keys.onEscapePressed: delegate.menuOpen = false
 
                     Column {
                         id: menuColumn

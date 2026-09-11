@@ -41,12 +41,18 @@ Item {
             right: true
         }
 
-        Keys.onPressed: event => {
-            if (event.key === Qt.Key_Escape)
-                root._cancel();
-            else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                root._submit();
-                event.accepted = true;
+        // keybind host — a real Item so Keys can attach (the panel
+        // interface itself isn't an Item)
+        Item {
+            anchors.fill: parent
+            focus: true
+            Keys.onPressed: event => {
+                if (event.key === Qt.Key_Escape)
+                    root._cancel();
+                else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                    root._submit();
+                    event.accepted = true;
+                }
             }
         }
 
@@ -304,6 +310,16 @@ Item {
         target: agent
         function onAuthenticationRequestStarted(): void {
             inputField.clear();
+            // the prompt window may not be visible yet — retry until it is
+            const focusPass = function (n: int): void {
+                if (inputField.visible) {
+                    inputField.forceActiveFocus();
+                    return;
+                }
+                if (n > 0)
+                    Qt.callLater(() => focusPass(n - 1));
+            };
+            focusPass(10);
         }
     }
 
