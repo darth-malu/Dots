@@ -308,7 +308,7 @@ BarBlock {
                                         font {
                                             pixelSize: 12
                                             bold: true
-                                            family: "Symbols Nerd Font Mono, " + MiscState.notifFont
+                                            family: MiscState.notifFont
                                         }
                                     }
 

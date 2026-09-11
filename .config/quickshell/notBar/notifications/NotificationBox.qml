@@ -153,7 +153,7 @@ WrapperMouseArea {
                         elide: Text.ElideRight
                         Layout.fillWidth: true
                         color: rootMouseArea.accent
-                        font.family: "Symbols Nerd Font Mono, " + MiscState.notifFont
+                        font.family: MiscState.notifFont
                         font.pixelSize: 12
                         font.weight: Font.Bold
                     }
@@ -169,7 +169,7 @@ WrapperMouseArea {
                     maximumLineCount: rootMouseArea.expanded ? 20 : (rootMouseArea.n.actions.length > 1 ? 1 : 3)
                     text: rootMouseArea.n.body
                     color: Themes.dim
-                    font.family: MiscState.notifFont + ", Symbols Nerd Font Mono"
+                    font.family: MiscState.notifFont
                     font.pixelSize: 12
                     font.weight: Font.Medium
                 }
