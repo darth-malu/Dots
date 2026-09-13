@@ -23,6 +23,7 @@ PanelWindow {
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.namespace: "quickshell-calc"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
     // frosted glass behind the panel (visible via the translucent launcherBg)

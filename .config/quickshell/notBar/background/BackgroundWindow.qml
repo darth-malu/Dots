@@ -73,18 +73,6 @@ Variants {
             }
         }
 
-        // scroll to cycle wallpapers
-        MouseArea {
-            anchors.fill: parent
-            acceptedButtons: Qt.NoButton
-            onWheel: wheel => {
-                if (wheel.angleDelta.y > 0)
-                    WallpaperService.nextWallpaper();
-                else if (wheel.angleDelta.y < 0)
-                    WallpaperService.prevWallpaper();
-            }
-        }
-
         // caelestia-style screen frame — a rounded accent outline around the
         // whole viewport, hugging the screen edges (like a window border).
         // The bar overlays the top edge; the frame's rounded corners carry

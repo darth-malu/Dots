@@ -246,6 +246,10 @@ Item {
         function toggleClock(): void {
             WallpaperService.desktopClock = !WallpaperService.desktopClock;
         }
+
+        function toggleQuotes(): void {
+            WallpaperService.quotesEnabled = !WallpaperService.quotesEnabled;
+        }
     }
 
     // ── per-handler on/off toggles (Settings → Help) ──

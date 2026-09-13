@@ -91,19 +91,21 @@ Item {
         onClicked: mouse => {
             mouse.accepted = true;
             // the whole event map, nothing else:
-            //   left        = pause
+            //   left        = toggle play/pause
             //   right       = next
             //   alt + left  = toggle compact/expanded
             if ((mouse.modifiers & Qt.AltModifier) && mouse.button == Qt.LeftButton)
                 MprisState.mprisCompact = !MprisState.mprisCompact;
-            else if (mouse.button == Qt.LeftButton)
-                MprisState.player?.pause();
-            else if (mouse.button == Qt.RightButton)
+            else if (mouse.button == Qt.LeftButton) {
+                const p = MprisState.player;
+                if (p && p.canTogglePlaying)
+                    p.togglePlaying();
+            } else if (mouse.button == Qt.RightButton)
                 MprisState.player?.next();
         }
 
         onWheel: event => {
-            // only alt + wheel: scroll the player list. plain wheel does nothing.
+            // plain wheel = volume, alt + wheel = scroll the player list
             if (event.modifiers & Qt.AltModifier) {
                 var players = MprisState.controlPlayers;
                 if (players.length > 1) {
@@ -113,6 +115,14 @@ Item {
                     var next = players[((idx < 0 ? 0 : idx) + dir + players.length) % players.length];
                     MprisState.player = next;
                 }
+                event.accepted = true;
+            } else {
+                const p = MprisState.player;
+                if (!p)
+                    return;
+                MprisState.adjustVolume(p, event.angleDelta.y > 0);
+                mprisRoot.showVolume = true;
+                hideVolumeTimer.restart();
                 event.accepted = true;
             }
         }

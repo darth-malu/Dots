@@ -12,6 +12,7 @@ ShellRoot {
 
         PanelWindow {
             id: w
+            WlrLayershell.namespace: "quickshell-activate"
             visible: MiscState.activateLinux
 
             property var modelData

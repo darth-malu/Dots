@@ -44,6 +44,7 @@ hl.bind(mainMod .. " + SHIFT + comma", hl.dsp.exec_cmd("qs ipc call calc toggle"
 -- QUICKSHELL - PICKERS
 hl.bind(mainMod .. " + period", hl.dsp.exec_cmd("qs ipc call emoji toggle"))
 hl.bind(mainMod .. " + w", hl.dsp.exec_cmd("qs ipc call wallpaperPicker toggle"))
+hl.bind(mainMod .. " + SHIFT + w", hl.dsp.exec_cmd("qs ipc call wallpaper toggleQuotes"), { locked = true })
 hl.bind(mainMod .. " + SHIFT + period", hl.dsp.exec_cmd("qs ipc call color toggle"))
 
 --

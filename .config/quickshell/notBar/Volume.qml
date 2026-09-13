@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Services.Pipewire
+import Quickshell.Wayland
 import qs.themes
 import qs.services
 
@@ -67,6 +68,7 @@ Scope {
 
     PanelWindow {
         id: osdWindow
+        WlrLayershell.namespace: "quickshell-volume"
         visible: root.shouldShowOsd && !MiscState.qsOpen
         anchors.right: true
         margins.right: screen.width / 95

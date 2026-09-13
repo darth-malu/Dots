@@ -27,6 +27,7 @@ PanelWindow {
     focusable: true
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.namespace: "quickshell-rofi"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
     // focus a Hyprland client reliably:

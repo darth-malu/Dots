@@ -36,6 +36,7 @@ Singleton {
     IdleInhibitor {
         enabled: props.enabled
         window: PanelWindow {
+            WlrLayershell.namespace: "quickshell-caffeine"
             implicitWidth: 0
             implicitHeight: 0
             anchors.right: true

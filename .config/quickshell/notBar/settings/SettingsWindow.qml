@@ -989,6 +989,7 @@ Item {
 
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.namespace: "quickshell-settings"
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
         color: "transparent"

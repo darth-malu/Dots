@@ -37,6 +37,10 @@ RowLayout {
         let list = [...Hyprland.workspaces.values].filter(ws => {
             if (!ws || ws.monitor !== monitor || (ws.name ?? "").includes("special"))
                 return false;
+            // adaptive workspaces — hide empty ones unless it's the workspace
+            // we're sitting on (switching targets must still be visible/reachable)
+            if (!(ws?.toplevels?.values?.length ?? 0) && (ws.name ?? "") !== root.activeWsId)
+                return false;
             return true;
         });
         list.sort((a, b) => String(a.name ?? 0).localeCompare(String(b.name ?? 0), undefined, { numeric: true }));

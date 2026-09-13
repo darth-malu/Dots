@@ -13,7 +13,7 @@ hl.config({
     resize_corner = 3,        -- 0:: 1-4 clockwise
     hover_icon_on_border = true,
     allow_tearing = false,    -- false:: - alternatively use immediate rule
-    no_focus_fallback = true, -- false, will not fall back to the next available window when moving focus in a direction where no window was found
+    no_focus_fallback = false, -- false, will not fall back to the next available window when moving focus in a direction where no window was found
     snap = {
       enabled = true,
       window_gap = 10,

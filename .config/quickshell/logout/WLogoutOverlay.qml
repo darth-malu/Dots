@@ -58,6 +58,7 @@ Item {
 
         PanelWindow {
             id: w
+            WlrLayershell.namespace: "quickshell-logout"
 
             required property var modelData
             screen: modelData

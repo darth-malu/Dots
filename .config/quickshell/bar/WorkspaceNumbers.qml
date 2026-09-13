@@ -17,7 +17,14 @@ RowLayout {
         const rev = wsRev;
         // quickshell 0.3.1 no longer reports numeric workspace ids (Hyprland
         // 0.56 goes by name) — id comes back 0/-1. Filter + sort on name.
-        const list = [...Hyprland.workspaces.values].filter(ws => ws && !(ws.name ?? "").includes("special"));
+        const list = [...Hyprland.workspaces.values].filter(ws => {
+            if (!ws || (ws.name ?? "").includes("special"))
+                return false;
+            // adaptive workspaces — hide empty ones unless it's the one we're on
+            if (!(ws?.toplevels?.values?.length ?? 0) && !(ws?.active ?? false))
+                return false;
+            return true;
+        });
         list.sort((a, b) => String(a.name ?? 0).localeCompare(String(b.name ?? 0), undefined, { numeric: true }));
         return list;
     }

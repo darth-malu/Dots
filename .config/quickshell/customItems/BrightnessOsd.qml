@@ -1,11 +1,13 @@
 import QtQuick
 import Quickshell
+import Quickshell.Wayland
 import qs.services
 
 // Vertical edge OSD mirroring notBar/Volume.qml — fill rises from the
 // bottom, live % sits in the deck below, tint follows the level.
 PanelWindow {
     id: osd
+    WlrLayershell.namespace: "quickshell-brightness-osd"
 
     required property var barWindow
 
