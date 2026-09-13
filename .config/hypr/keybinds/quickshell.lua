@@ -19,6 +19,9 @@ hl.bind(mod .. "Delete", hl.dsp.exec_cmd("qs ipc call logout toggle"), { locked 
 hl.bind(mod .. "HOME", hl.dsp.exec_cmd("qs ipc call bar toggleBar"), { locked = true })
 hl.bind(mod .. "ALT + HOME", hl.dsp.exec_cmd("systemctl --user restart quickshell"), { locked = true })
 
+-- SETTINGS
+hl.bind(mod .. "Prior", hl.dsp.exec_cmd("qs ipc call settings toggle"), { locked = true })
+
 -- TIME
 hl.bind(mod .. "backslash", hl.dsp.exec_cmd("qs ipc call Time currentDate"), { locked = true })
 hl.bind(mod .. "ALT + backslash", hl.dsp.exec_cmd("qs ipc call Time currentDateTime"), { locked = true })
@@ -40,7 +43,7 @@ hl.bind(mainMod .. " + SHIFT + comma", hl.dsp.exec_cmd("qs ipc call calc toggle"
 
 -- QUICKSHELL - PICKERS
 hl.bind(mainMod .. " + period", hl.dsp.exec_cmd("qs ipc call emoji toggle"))
-hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd("qs ipc call wallpaperPicker toggle"))
+hl.bind(mainMod .. " + w", hl.dsp.exec_cmd("qs ipc call wallpaperPicker toggle"))
 hl.bind(mainMod .. " + SHIFT + period", hl.dsp.exec_cmd("qs ipc call color toggle"))
 
 --

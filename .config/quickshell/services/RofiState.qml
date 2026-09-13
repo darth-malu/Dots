@@ -2,6 +2,7 @@ pragma Singleton
 import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
+import qs.services
 
 Singleton {
     id: rofiMaster
@@ -41,18 +42,23 @@ Singleton {
         return allApps.filter(app => app.name.toLowerCase().includes(lowerQuery));
     }
 
-    function toggler() {
-        // Quickshell.execDetached(["notify-send", `${clipHist}`]);
-        if (toggleClipHist)
-            // Quickshell.execDetached(["notify-send", "This works"]);
-            // TODO: -> cliphist decode
-            // -> wl-copy
-            toggleClipHist = !toggleClipHist;
-        else if (toggleAppLauncher)
-            toggleAppLauncher = !toggleAppLauncher;
-        else if (toggleOpenWindows) {
-            // Quickshell.execDetached(["notify-send", "This works"]);
-            toggleOpenWindows = !toggleOpenWindows;
-        }
+    function close() {
+        // Every rofi panel — app launcher, open windows, clipboard history,
+        // calc — is its own layer surface with WlrKeyboardFocus.Exclusive.
+        // Closing must drop ALL four flags: a leftover mapping where even ONE
+        // panel stays visible silently swallows every key event on the session
+        // until quickshell restarts. At most one should ever be open.
+        toggleAppLauncher = false;
+        toggleOpenWindows = false;
+        toggleClipHist = false;
+        toggleCalc = false;
     }
+
+    // exclusive-focus overlay patrol — opening one rofi dismisses the other
+    // rofi panels plus any picker/settings/logout overlay that could stack
+    // on top and steal keyboard focus (same pattern as PickerState below).
+    onToggleAppLauncherChanged: if (toggleAppLauncher) { toggleOpenWindows = false; toggleClipHist = false; toggleCalc = false; PickerState.closeAll(); MiscState.toggleSettings = false; MiscState.logoutOpen = false; }
+    onToggleOpenWindowsChanged: if (toggleOpenWindows) { toggleAppLauncher = false; toggleClipHist = false; toggleCalc = false; PickerState.closeAll(); MiscState.toggleSettings = false; MiscState.logoutOpen = false; }
+    onToggleClipHistChanged: if (toggleClipHist) { toggleAppLauncher = false; toggleOpenWindows = false; toggleCalc = false; PickerState.closeAll(); MiscState.toggleSettings = false; MiscState.logoutOpen = false; }
+    onToggleCalcChanged: if (toggleCalc) { toggleAppLauncher = false; toggleOpenWindows = false; toggleClipHist = false; PickerState.closeAll(); MiscState.toggleSettings = false; MiscState.logoutOpen = false; }
 }

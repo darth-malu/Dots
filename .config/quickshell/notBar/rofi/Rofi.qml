@@ -40,7 +40,7 @@ PanelWindow {
     function focusToplevel(tl) {
         if (!tl)
             return;
-        RofiState.toggler();
+        RofiState.close();
         if (tl.address)
             HyprlandService.focusWindow(tl.address);
         else if (tl.wayland)
@@ -154,9 +154,9 @@ PanelWindow {
                                     launcher.clipChosen(current.modelData);
                                 }
                                 // openWindows path closes the panel inside
-                                // focusToplevel — everything else toggles here
+                                // focusToplevel — everything else closes here
                                 if (!RofiState.toggleOpenWindows)
-                                    RofiState.toggler();
+                                    RofiState.close();
                                 search.text = "";
                                 event.accepted = true;
                             }
@@ -169,7 +169,7 @@ PanelWindow {
                                 event.accepted = true;
                             }
                         } else if (event.key === Qt.Key_Escape) {
-                            RofiState.toggler();
+                            RofiState.close();
                             search.text = "";
                             event.accepted = true;
                             // itemLauncher.positionViewAtBeginning();
@@ -261,7 +261,7 @@ PanelWindow {
                             current.modelData.execute();
                         else if (RofiState.toggleClipHist)
                             launcher.clipChosen(current.modelData);
-                        RofiState.toggler();
+                        RofiState.close();
                     }
                     search.text = "";
                 }

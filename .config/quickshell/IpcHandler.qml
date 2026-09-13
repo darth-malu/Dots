@@ -119,6 +119,21 @@ Item {
     }
 
     IpcHandler {
+        target: 'settings'
+        function toggle(): void {
+            MiscState.toggleSettings = !MiscState.toggleSettings;
+        }
+
+        function open(): void {
+            MiscState.toggleSettings = true;
+        }
+
+        function close(): void {
+            MiscState.toggleSettings = false;
+        }
+    }
+
+    IpcHandler {
         target: 'appLauncher'
         function toggle(): void {
             RofiState.toggleAppLauncher = !RofiState.toggleAppLauncher;
@@ -149,10 +164,8 @@ Item {
     IpcHandler {
         target: 'calc'
         function toggle(): void {
-            // calculators are overlay-exclusive — drop any other open rofi
-            RofiState.toggleAppLauncher = false;
-            RofiState.toggleOpenWindows = false;
-            RofiState.toggleClipHist = false;
+            // rofi panels reject exclusivity via RofiState's cross-family
+            // guards — no manual sibling-bookkeeping needed here
             RofiState.toggleCalc = !RofiState.toggleCalc;
         }
     }
@@ -244,6 +257,7 @@ Item {
         { target: "netspeed", icon: "\uf0e8", label: "Net speed" },
         { target: "resources", icon: "\uf1c0", label: "Resources" },
         { target: "bar", icon: "\uf0c9", label: "Bar" },
+        { target: "settings", icon: "\uf013", label: "Settings" },
         { target: "appLauncher", icon: "\uf0ae", label: "App launcher" },
         { target: "openWindows", icon: "\uf108", label: "Open windows" },
         { target: "clipHist", icon: "\uf0c5", label: "Clipboard history" },

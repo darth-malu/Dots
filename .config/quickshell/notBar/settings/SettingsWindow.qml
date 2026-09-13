@@ -18,6 +18,19 @@ Item {
 
     property int currentCategory: 0
 
+    // primary-screen width — the bar width slider's starting/default value.
+    // prefs store 0 as "full-bleed"; here we display and step in real pixels
+    // so the first scroll departs from the actual full width, never a
+    // literal 0px sentinel (which used to "reset to 0" before incrementing).
+    readonly property int barWidthDefault: {
+        const scr = Quickshell.screens.length > 0 ? Quickshell.screens[0].width : 1920;
+        return Math.max(600, scr);
+    }
+    readonly property int barWidthDisplay: {
+        const w = BarState.barWidth > 0 ? BarState.barWidth : root.barWidthDefault;
+        return Math.min(barWidthDefault, w);
+    }
+
     // ── shared switch pill — one control, one look, everywhere ──
     component SwitchPill: Rectangle {
         id: sp
@@ -319,7 +332,6 @@ Item {
             const v = Math.max(minV, Math.min(maxV, value + dir * stepV));
             if (v === value)
                 return;
-            value = v;
             committed(v);
         }
 
@@ -440,10 +452,7 @@ Item {
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    isr.value = isr.defaultValue;
-                    isr.committed(isr.defaultValue);
-                }
+                onClicked: isr.committed(isr.defaultValue)
             }
         }
     }
@@ -2082,11 +2091,11 @@ Item {
                                     IntStepRow {
                                         icon: "\uf07e"
                                         label: "Bar width"
-                                        minV: 0
-                                        maxV: 3440
+                                        minV: 400
+                                        maxV: root.barWidthDefault
                                         stepV: 40
-                                        value: BarState.barWidth
-                                        defaultValue: 0
+                                        value: root.barWidthDisplay
+                                        defaultValue: root.barWidthDefault
                                         unit: "px"
                                         // width only applies in the margin modes
                                         // (transparent / solid margin / glass
@@ -2094,7 +2103,9 @@ Item {
                                         // screen edge-to-edge and ignore it
                                         enabled: BarState.barMode !== 2 && BarState.barMode !== 4 && BarState.barMode !== 5
                                         opacity: BarState.barMode === 2 || BarState.barMode === 4 || BarState.barMode === 5 ? 0.45 : 1
-                                        onCommitted: v => BarState.barWidth = v
+                                        // screen-width ≡ full-bleed (persisted as 0);
+                                        // anything smaller stores the slab width
+                                        onCommitted: v => BarState.barWidth = v >= root.barWidthDefault ? 0 : v
                                     }
 
                                     RowLayout {
@@ -2115,7 +2126,7 @@ Item {
                                         Text {
                                             text: BarState.barMode === 2 || BarState.barMode === 4 || BarState.barMode === 5
                                                      ? "Full-bleed mode — the bar spans the screen; width is ignored."
-                                                     : "Width 0 spans the screen; a set value shrinks/centers the bar slab."
+                                                     : "Start at screen width — scroll down to shrink/center the slab; the reset restores full."
                                             color: Themes.dim
                                             font {
                                                 pixelSize: 9

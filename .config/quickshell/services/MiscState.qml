@@ -13,14 +13,6 @@ Singleton {
 
     property bool activateLinux: false
 
-    property bool toggleAppLauncher: false
-
-    property bool toggleOpenWindows: false
-
-    property bool toggleClipHist: false
-
-    property bool toggleRofi: false
-
     // tray icons visibility — persisted so the tray survives restarts
     property bool toggleSysTray: Prefs.prefs.showSysTray
     onToggleSysTrayChanged: {
@@ -29,11 +21,17 @@ Singleton {
     }
     property bool toggleSettings: false
 
+    // settings + logout are exclusive keyboard-focus overlays too — open one
+    // and every other overlay must stand down or typing dies (same rationale
+    // as RofiState/PickerState)
+    onToggleSettingsChanged: if (toggleSettings) { RofiState.close(); PickerState.closeAll(); root.logoutOpen = false; }
+
     // true while the quicksettings popup is open (used to suppress redundant music toasts)
     property bool qsOpen: false
 
     // fullscreen logout / timer overlay
     property bool logoutOpen: false
+    onLogoutOpenChanged: if (logoutOpen) { RofiState.close(); PickerState.closeAll(); root.toggleSettings = false; }
 
     property date currentDate: new Date()
 

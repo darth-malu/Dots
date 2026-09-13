@@ -12,3 +12,6 @@ DONE space efficiency: QS popup 364→344w, frame 12→8, gutter 36→16
 DONE settings arrangement/readability rewritten: unified SwitchPill/SettingRow rows, no descriptor clutter
 DONE removed descriptors in media>mpris
 DONE settings > Performance tab: poll-rate sliders for cpu/mem, network, disk, battery history (persisted)
+DONE settings IPC target (qs ipc call settings toggle/open/close) bound to SUPER+PAGEUP
+DONE wlogout boot-once picker: efibootmgr BootNext via pkexec + systemctl reboot, BootState service
+DONE IntStepRow no longer self-mutates value: settings steppers start at real values + reset works (width=screen, height=26)

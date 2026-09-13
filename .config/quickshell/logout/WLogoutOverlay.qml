@@ -14,7 +14,7 @@ Item {
     id: root
 
     // 0 = hidden · 2 = restart scheduler · 3 = shutdown scheduler
-    // (values mirror the button indices in `buttons` below)
+    // 4 = boot picker (values mirror the button indices in `buttons` below)
     property int timerPicker: 0
 
     // palette
@@ -31,7 +31,17 @@ Item {
         timerPicker = 0;
     }
 
-    property list<LogoutButton> buttons: [lockBtn, exitBtn, rebootBtn, shutdownBtn]
+    function toggleBootPicker() {
+        root.timerPicker = root.timerPicker === 4 ? 0 : 4;
+    }
+
+    // keep the boot-entry roster current whenever the picker / overlay opens
+    onTimerPickerChanged: {
+        if (root.timerPicker === 4)
+            BootState.refresh();
+    }
+
+    property list<LogoutButton> buttons: [lockBtn, exitBtn, rebootBtn, shutdownBtn, bootBtn]
 
     function fmtMin(mins) {
         const h = Math.floor(mins / 60);
@@ -61,6 +71,8 @@ Item {
             onVisibleChanged: {
                 if (!visible)
                     root.timerPicker = 0;
+                else
+                    BootState.refresh();
             }
 
             color: "transparent"
@@ -115,7 +127,7 @@ Item {
                             id: sheet
 
                             Layout.alignment: Qt.AlignHCenter
-                            implicitWidth: 620
+                            implicitWidth: 700
                             implicitHeight: innerCol.implicitHeight + 72
                             radius: 26
                             color: root.cardBg
@@ -178,7 +190,7 @@ Item {
                                 // ── action row ──
                                 RowLayout {
                                     Layout.alignment: Qt.AlignHCenter
-                                    spacing: 34
+                                    spacing: 26
 
                                     Repeater {
                                         model: root.buttons
@@ -190,11 +202,12 @@ Item {
                                             required property int index
 
                                             // restart / shutdown carry schedulers
-                                            readonly property bool schedulable: index >= 2
+                                            readonly property bool schedulable: index === 2 || index === 3
                                             // matching timer currently armed
-                                            readonly property bool armed: schedulable
-                                                && ((index === 2 && PowerTimer.mode === "reboot")
-                                                    || (index === 3 && PowerTimer.mode === "poweroff"))
+                                            readonly property bool armed: (index === 2 && PowerTimer.mode === "reboot")
+                                                || (index === 3 && PowerTimer.mode === "poweroff")
+                                                // boot button pulses once a BootNext is armed
+                                                || (index === 4 && BootState.next !== "")
                                             // this button's scheduler panel is open
                                             readonly property bool picked: root.timerPicker === index
 
@@ -365,7 +378,7 @@ Item {
 
                                     // ── delay slider ──
                                     ColumnLayout {
-                                        visible: root.timerPicker !== 0
+                                        visible: root.timerPicker === 2 || root.timerPicker === 3
                                         Layout.fillWidth: true
                                         spacing: 6
 
@@ -512,6 +525,238 @@ Item {
                                         }
                                     }
 
+                                    // ── "boot once" picker (EFI entries) ──
+                                    ColumnLayout {
+                                        id: bootPicker
+
+                                        visible: root.timerPicker === 4
+                                        Layout.fillWidth: true
+                                        spacing: 8
+
+                                        readonly property color tint: Themes.accent
+
+                                        // header — title · live state · reload · clear
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 8
+
+                                            Text {
+                                                text: "\uf17a"
+                                                color: bootPicker.tint
+                                                font { pixelSize: 13; family: "Symbols Nerd Font Mono" }
+                                            }
+
+                                            Text {
+                                                text: "Boot once into…"
+                                                color: bootPicker.tint
+                                                font {
+                                                    pixelSize: 10
+                                                    bold: true
+                                                    family: "Quicksand"
+                                                    letterSpacing: 2
+                                                    capitalization: Font.AllUppercase
+                                                }
+                                            }
+
+                                            Item { Layout.fillWidth: true }
+
+                                            Text {
+                                                visible: BootState.busy
+                                                text: "reading…"
+                                                color: root.faint
+                                                font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                            }
+
+                                            // armed next-boot pill
+                                            Rectangle {
+                                                visible: BootState.next !== ""
+                                                Layout.alignment: Qt.AlignVCenter
+                                                implicitWidth: nextTxt.implicitWidth + 14
+                                                implicitHeight: 22
+                                                radius: 11
+                                                color: Qt.rgba(bootPicker.tint.r, bootPicker.tint.g, bootPicker.tint.b, 0.12)
+                                                border.width: 1
+                                                border.color: Qt.rgba(bootPicker.tint.r, bootPicker.tint.g, bootPicker.tint.b, 0.5)
+
+                                                RowLayout {
+                                                    id: nextTxt
+                                                    anchors.centerIn: parent
+                                                    spacing: 5
+                                                    Text {
+                                                        text: "\uf071"
+                                                        color: bootPicker.tint
+                                                        font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
+                                                    }
+                                                    Text {
+                                                        text: "next: " + BootState.next
+                                                        color: root.fg
+                                                        font { pixelSize: 9; bold: true; family: "ZedMono Nerd Font" }
+                                                    }
+                                                }
+
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: BootState.clearNext()
+                                                }
+                                            }
+
+                                            // manual reload
+                                            Rectangle {
+                                                Layout.alignment: Qt.AlignVCenter
+                                                implicitWidth: 22
+                                                implicitHeight: 22
+                                                radius: 6
+                                                color: bootReloadHover.containsMouse ? Qt.rgba(bootPicker.tint.r, bootPicker.tint.g, bootPicker.tint.b, 0.14) : Themes.separator
+                                                border.width: 1
+                                                border.color: bootReloadHover.containsMouse ? bootPicker.tint : "transparent"
+
+                                                HoverHandler { id: bootReloadHover }
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: "\uf2f9"
+                                                    color: bootReloadHover.containsMouse ? root.fg : root.dim
+                                                    font { pixelSize: 9; family: "Symbols Nerd Font Mono" }
+
+                                                    Behavior on color { ColorAnimation { duration: 100 } }
+                                                }
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: BootState.refresh()
+                                                }
+                                            }
+                                        }
+
+                                        // entry roster
+                                        Rectangle {
+                                            Layout.fillWidth: true
+                                            implicitHeight: Math.min(232, bootList.contentHeight)
+                                            radius: 10
+                                            color: Qt.rgba(0, 0, 0, 0.18)
+                                            border.width: 1
+                                            border.color: root.line
+
+                                            readonly property color tint: bootPicker.tint
+
+                                            Flickable {
+                                                id: bootList
+
+                                                anchors.fill: parent
+                                                contentWidth: width
+                                                contentHeight: bootCol.implicitHeight
+                                                clip: true
+                                                boundsBehavior: Flickable.StopAtBounds
+
+                                                ColumnLayout {
+                                                    id: bootCol
+
+                                                    width: parent.width
+                                                    spacing: 2
+
+                                                    Text {
+                                                        Layout.fillWidth: true
+                                                        Layout.leftMargin: 12
+                                                        Layout.rightMargin: 12
+                                                        Layout.topMargin: 8
+                                                        text: BootState.error.length > 0 ? BootState.error
+                                                            : BootState.entries.length === 0 && (BootState.busy || !BootState.ready)
+                                                                ? "Reading EFI boot entries…"
+                                                                : BootState.entries.length === 0
+                                                                    ? "No EFI boot entries found (efibootmgr missing?)."
+                                                                    : ""
+                                                        visible: text.length > 0
+                                                        color: root.faint
+                                                        font { pixelSize: 9; family: "ZedMono Nerd Font" }
+                                                        wrapMode: Text.WordWrap
+                                                    }
+
+                                                    Repeater {
+                                                        model: BootState.entries
+
+                                                        delegate: Rectangle {
+                                                            required property var modelData
+
+                                                            readonly property bool isCur: BootState.current === modelData.num
+                                                            readonly property bool isNext: BootState.next === modelData.num
+                                                            readonly property bool hovered: rowHov.containsMouse
+
+                                                            Layout.fillWidth: true
+                                                            Layout.leftMargin: 6
+                                                            Layout.rightMargin: 6
+                                                            implicitHeight: 28
+                                                            radius: 7
+                                                            color: hovered ? (isNext ? Qt.rgba(bootPicker.tint.r, bootPicker.tint.g, bootPicker.tint.b, 0.18) : Qt.rgba(1, 1, 1, 0.06))
+                                                                : isNext ? Qt.rgba(bootPicker.tint.r, bootPicker.tint.g, bootPicker.tint.b, 0.12)
+                                                                : "transparent"
+
+                                                            Behavior on color { ColorAnimation { duration: 110 } }
+
+                                                            RowLayout {
+                                                                anchors.fill: parent
+                                                                anchors.leftMargin: 10
+                                                                anchors.rightMargin: 10
+                                                                spacing: 8
+
+                                                                Text {
+                                                                    text: modelData.active ? "\uf00c" : ""
+                                                                    color: Themes.accent
+                                                                    font { pixelSize: 8; family: "Symbols Nerd Font Mono" }
+                                                                    Layout.preferredWidth: 12
+                                                                    Layout.alignment: Qt.AlignVCenter
+                                                                }
+
+                                                                Text {
+                                                                    text: "Boot" + modelData.num
+                                                                    color: hovered ? root.fg : root.dim
+                                                                    font { pixelSize: 10; bold: true; family: "ZedMono Nerd Font" }
+                                                                    Layout.preferredWidth: 64
+                                                                    Layout.alignment: Qt.AlignVCenter
+                                                                }
+
+                                                                Text {
+                                                                    text: modelData.label
+                                                                    color: hovered ? root.fg : root.dim
+                                                                    font { pixelSize: 10; family: "Quicksand" }
+                                                                    Layout.fillWidth: true
+                                                                    elide: Text.ElideRight
+                                                                    Layout.alignment: Qt.AlignVCenter
+                                                                }
+
+                                                                Text {
+                                                                    text: isCur ? "current" : isNext ? "next" : ""
+                                                                    color: isCur ? root.faint : bootPicker.tint
+                                                                    font { pixelSize: 8; bold: true; family: "ZedMono Nerd Font" }
+                                                                    Layout.alignment: Qt.AlignVCenter
+                                                                }
+                                                            }
+
+                                                            MouseArea {
+                                                                id: rowHov
+                                                                anchors.fill: parent
+                                                                hoverEnabled: true
+                                                                cursorShape: Qt.PointingHandCursor
+                                                                onClicked: {
+                                                                    BootState.bootOnce(modelData.num);
+                                                                    root.close();
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: "Click an entry to arm BootNext and reboot immediately · the \"next\" pill clears an armed entry"
+                                            color: root.faint
+                                            font { pixelSize: 8; family: "ZedMono Nerd Font" }
+                                            wrapMode: Text.WordWrap
+                                        }
+                                    }
+
                                     // ── live countdown banner ──
                                     Rectangle {
                                         id: liveBanner
@@ -592,7 +837,7 @@ Item {
                         // ── footer hint ──
                         Text {
                             Layout.alignment: Qt.AlignHCenter
-                            text: "click  run    ·    right-click restart / shutdown to schedule    ·    esc  dismiss"
+                            text: "click  run    ·    right-click restart / shutdown to schedule    ·    boot once into another OS    ·    esc  dismiss"
                             color: Qt.rgba(0.38, 0.42, 0.51, 0.85)
                             font {
                                 pixelSize: 9
@@ -644,5 +889,16 @@ Item {
         text: "Shutdown"
         icon: "\uf011"
         accent: "#ff5555"
+    }
+
+    LogoutButton {
+        id: bootBtn
+        command: ""
+        keybind: Qt.Key_B
+        keybindChar: "B"
+        text: "Boot"
+        icon: "\uf17a"
+        accent: Themes.accent
+        action: root.toggleBootPicker
     }
 }

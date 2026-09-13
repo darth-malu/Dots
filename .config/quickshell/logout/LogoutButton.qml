@@ -12,6 +12,8 @@ QtObject {
 	property string keybindChar: ""
 	// hover / active accent for the circular button
 	property color accent: Themes.accent
+	// optional custom action — when set, exec() calls it instead of command
+	property var action: null
 
 	id: button
 
@@ -20,6 +22,10 @@ QtObject {
 	}
 
 	function exec() {
+		if (button.action) {
+			button.action();
+			return;
+		}
 		process.startDetached();
 		MiscState.logoutOpen = false;
 	}

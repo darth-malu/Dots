@@ -2,6 +2,7 @@ pragma Singleton
 
 import Quickshell
 import Quickshell.Io
+import qs.services
 import QtQuick
 
 // Shared state for the emoji + color pickers:
@@ -23,25 +24,39 @@ Singleton {
     }
 
     // opening one picker dismisses the others — they share the overlay layer
+    // (and any rofi/settings/logout overlay, all of which are exclusive
+    // keyboard-focus layers: stacking them is what kills typing)
     onEmojiOpenChanged: if (emojiOpen) {
         colorOpen = false;
         wallpaperOpen = false;
         avatarOpen = false;
+        RofiState.close();
+        MiscState.toggleSettings = false;
+        MiscState.logoutOpen = false;
     }
     onColorOpenChanged: if (colorOpen) {
         emojiOpen = false;
         wallpaperOpen = false;
         avatarOpen = false;
+        RofiState.close();
+        MiscState.toggleSettings = false;
+        MiscState.logoutOpen = false;
     }
     onWallpaperOpenChanged: if (wallpaperOpen) {
         emojiOpen = false;
         colorOpen = false;
         avatarOpen = false;
+        RofiState.close();
+        MiscState.toggleSettings = false;
+        MiscState.logoutOpen = false;
     }
     onAvatarOpenChanged: if (avatarOpen) {
         emojiOpen = false;
         colorOpen = false;
         wallpaperOpen = false;
+        RofiState.close();
+        MiscState.toggleSettings = false;
+        MiscState.logoutOpen = false;
     }
 
     // ── persistent store ──
