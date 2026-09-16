@@ -2,12 +2,12 @@ import QtQuick
 import qs.themes
 
 // ── SeekStrip — bottom-embedded progress/seek bar for the now-playing card ──
-// The groove is pinned to the BOTTOM edge so the strip reads as a floor line
-// that adheres to the card's bottom border. A permanent glowing head dot marks
-// the playhead; hovering/grabbing grows it into a real knob and floats a
-// cur/total time pill above it. Pass `length` (seconds) to enable the time
-// readout — without it the pill stays hidden and the strip degrades to a
-// plain progress/seek line.
+// The groove is pinned to the BOTTOM edge so the strip reads as a hard floor
+// line that adheres to the card's bottom border. At rest it's a 2px solid hair
+// from edge to edge; hovering/grabbing thickens it, reveals the knob + a
+// cur/total time pill. Pass `length` (seconds) to enable the time readout —
+// without it the pill stays hidden and the strip degrades to a plain
+// progress/seek line.
 Item {
     id: root
 
@@ -24,6 +24,10 @@ Item {
     property real dragFrac: -1
     readonly property real shown: drag.pressed ? Math.max(0, Math.min(root.dragFrac, 1)) : root.clamped
 
+    // everything reactive here keys off pointer presence over the full-width
+    // hit area — at rest the bar is nothing but the hairline
+    readonly property bool hot: drag.containsMouse || drag.pressed
+
     // mm:ss helpers for the pill — position/length arrive in seconds
     function fmt(s) {
         s = Math.max(0, Math.floor(s));
@@ -37,42 +41,38 @@ Item {
     readonly property bool headVisible: root.shown > 0.02 && root.shown < 0.995
     readonly property real headX: Math.max(0, Math.min(root.width * root.shown - head.width / 2, root.width - head.width))
 
-    // groove — the only vertical extent; never grows (stationary floor line)
+    // groove — a 2px hairline at rest; grows into a proper track on hover,
+    // but never leaves the card floor (nothing above it resizes)
     Rectangle {
         id: groove
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        height: 6
-        radius: 3
-        color: drag.containsMouse ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(1, 1, 1, 0.09)
+        height: root.hot ? 6 : 2
+        radius: 0
+        color: root.hot ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(1, 1, 1, 0.10)
 
+        Behavior on height {
+            NumberAnimation {
+                duration: 120
+            }
+        }
         Behavior on color {
             ColorAnimation {
                 duration: 120
             }
         }
-
-        // inset top highlight — turns the flat groove into a machined track
-        Rectangle {
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            height: 1
-            radius: 0.5
-            color: Qt.rgba(1, 1, 1, 0.18)
-        }
     }
 
-    // fill — bright accent wash leading from the left edge
+    // fill — solid square-edged wash running from the left edge
     Rectangle {
         id: fill
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         width: parent.width * root.shown
-        height: 6
-        radius: 3
-        color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.8)
+        height: root.hot ? 6 : 2
+        radius: 0
+        color: root.accent
 
         Behavior on width {
             enabled: !drag.pressed
@@ -80,21 +80,26 @@ Item {
                 duration: 120
             }
         }
+        Behavior on height {
+            NumberAnimation {
+                duration: 120
+            }
+        }
     }
 
-    // head dot — the playhead; a soft glowing orb at rest that grows into a
-    // grip-able knob on hover/drag so seeking is always signposted
+    // head dot — only appears with the pointer (or while dragging); grows into
+    // a grip-able knob so seeking is always signposted
     Rectangle {
         id: head
         x: root.headX
         anchors.verticalCenter: groove.verticalCenter
-        width: drag.containsMouse ? 13 : 7
+        width: root.hot ? 13 : 7
         height: width
         radius: width / 2
         color: root.accent
-        border.width: drag.containsMouse ? 1 : 0
+        border.width: drag.pressed ? 1 : 0
         border.color: Qt.rgba(0, 0, 0, 0.4)
-        visible: root.headVisible || drag.pressed
+        visible: root.hot && root.headVisible
 
         Behavior on width {
             NumberAnimation {
@@ -103,13 +108,13 @@ Item {
             }
         }
 
-        // halo — the always-present glow; keeps the head readable over art
+        // halo — soft read-glow behind the knob over art
         Rectangle {
             anchors.centerIn: parent
             width: parent.width * 2.2
             height: width
             radius: width / 2
-            color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, drag.containsMouse ? 0.3 : 0.22)
+            color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, drag.pressed ? 0.34 : 0.26)
             z: -1
         }
     }
@@ -121,7 +126,7 @@ Item {
         anchors.bottom: groove.top
         anchors.bottomMargin: 6
         x: Math.max(3, Math.min(head.x + head.width / 2 - width / 2, root.width - width - 3))
-        visible: root.length > 0 && (drag.containsMouse || drag.pressed)
+        visible: root.length > 0 && (root.hot)
         opacity: visible ? 1 : 0
         color: Qt.rgba(0, 0, 0, 0.6)
         border.width: 1

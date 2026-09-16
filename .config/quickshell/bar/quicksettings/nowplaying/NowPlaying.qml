@@ -256,11 +256,8 @@ ClippingRectangle {
         }
         height: baseCardHeight
 
-        // transient top-right controls only peek while the card is hovered
-        HoverHandler {
-            id: compactHover
-        }
-
+        // transient top-right controls only peek while the right-hand ITEMS
+        // panel (compactPanel) is hovered — never over the album art square
         // album art fills the card's full height; the progress bar is a
         // separate bar anchored to the art's right edge (see below)
         RowLayout {
@@ -329,6 +326,8 @@ ClippingRectangle {
 
             // ── Right panel — title + always-visible transport ──
             ColumnLayout {
+                id: compactPanel
+
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.topMargin: 4
@@ -338,6 +337,12 @@ ClippingRectangle {
                 // transport clear of its groove/knob
                 Layout.bottomMargin: 20
                 spacing: 2
+
+                // tracks the pointer over the items only — the top-right
+                // expand/collapse + player-picker peek exclusively here
+                HoverHandler {
+                    id: compactItemsHover
+                }
 
                 // title + artist
                 ColumnLayout {
@@ -430,7 +435,7 @@ ClippingRectangle {
                 left: parent.left
                 leftMargin: compactArt.width
                 right: parent.right
-                rightMargin: 8
+                rightMargin: 0
                 bottom: parent.bottom
             }
             accent: card.dominantColor
@@ -456,8 +461,8 @@ ClippingRectangle {
         }
 
         ChooserCog {
-            // peek until the card is hovered (or the chooser is open)
-            visible: compactHover.hovered || card.chooserOpen
+            // peek until the items panel is hovered (or the chooser is open)
+            visible: compactItemsHover.hovered || card.chooserOpen
             onClicked: MiscState.compactNowPlaying = false
             onOpenChooser: card.chooserOpen = !card.chooserOpen
             anchors {
@@ -473,7 +478,7 @@ ClippingRectangle {
         Rectangle {
             id: compactSwitcher
 
-            visible: card.chooserAvailable && (compactHover.hovered || card.chooserOpen)
+            visible: card.chooserAvailable && (compactItemsHover.hovered || card.chooserOpen)
             implicitWidth: 18
             implicitHeight: 18
             radius: 5

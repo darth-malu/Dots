@@ -330,7 +330,8 @@ Item {
                             onClicked: {
                                 mprisRoot._hovering = true;
                                 mprisRoot._details = 1;
-                                mprisRoot.showArtPopup = true;
+                                // click again while open closes it — a true toggle
+                                mprisRoot.showArtPopup = !mprisRoot.showArtPopup;
                             }
                         }
                     }
@@ -574,6 +575,14 @@ Item {
             implicitWidth: 280
             implicitHeight: Math.min(mprisPopupContent.implicitHeight + 16, 320)
 
+            // a compositor-side dismiss (grab auto-close on an outside click)
+            // forces the window hidden WITHOUT our flag changing — sync back so
+            // the loader can tear down and the next toggle opens a fresh window
+            onVisibleChanged: {
+                if (!visible)
+                    mprisRoot.showPopup = false;
+            }
+
             Rectangle {
                 id: mprisPopupRect
                 anchors.fill: parent
@@ -612,6 +621,15 @@ Item {
             color: "transparent"
             implicitWidth: 280
             implicitHeight: 280
+
+            // a compositor-side dismiss (grab auto-close on an outside click)
+            // forces the window hidden while the request flag stays true, which
+            // wedges the toggle forever — sync the flag back so the loader can
+            // tear down and reopening always creates a fresh, visible window
+            onVisibleChanged: {
+                if (!visible)
+                    mprisRoot.showArtPopup = false;
+            }
 
             // a lost player must never leave a zombie popup behind — drop the
             // request flag so the window hides for good

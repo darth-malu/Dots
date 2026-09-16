@@ -133,6 +133,7 @@ ShellRoot {
 
                     Mpris {
                         host: barr
+                        Layout.rightMargin: 3
                     }
 
                     Resources {

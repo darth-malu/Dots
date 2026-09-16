@@ -274,7 +274,7 @@ done`;
             ColumnLayout {
                 id: allDisksCol
                 anchors.fill: parent
-                anchors.margins: 12
+                anchors.margins: 8 // 12::
                 spacing: 0
 
                 // ── NAS zone — per-share mount controls + unmounted tally ──
