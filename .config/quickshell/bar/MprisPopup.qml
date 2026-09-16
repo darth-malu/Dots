@@ -302,8 +302,8 @@ ColumnLayout {
                 onClicked: mouse => {
                     if (!prow.isAlive)
                         return;
-                    // middle-click pins the player to the quicksettings card
-                    if (mouse.button === Qt.MiddleButton) {
+                    // left-click pins the player to the quicksettings card
+                    if (mouse.button === Qt.LeftButton) {
                         MprisState.pinPlayerName = MprisState.pinPlayerName === prow.modelData.dbusName ? "" : prow.modelData.dbusName;
                         return;
                     }
@@ -323,7 +323,7 @@ ColumnLayout {
     Text {
         Layout.alignment: Qt.AlignHCenter
         visible: playersContainer.sortedPlayers.length > 0
-        text: "click raises · middle-click pins to card"
+        text: "left-click pins · middle-click raises"
         color: Themes.muted
         font {
             pixelSize: 8

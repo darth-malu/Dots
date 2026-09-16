@@ -8,59 +8,27 @@
 
 * language major modes
 NOTE: if treesitter available the mode has an appended -ts-mode eg python-ts-mode
-** emacs lsp booster
-#+begin_src emacs-lisp :tangle no
-(defun lsp-booster--advice-json-parse (old-fn &rest args)
-  "Try to parse bytecode instead of json."
-  (or
-   (when (equal (following-char) ?#)
-     (let ((bytecode (read (current-buffer))))
-       (when (byte-code-function-p bytecode)
-         (funcall bytecode))))
-   (apply old-fn args)))
-(advice-add (if (progn (require 'json)
-                       (fboundp 'json-parse-buffer))
-                'json-parse-buffer
-              'json-read)
-            :around
-            #'lsp-booster--advice-json-parse)
-
-(defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
-  "Prepend emacs-lsp-booster command to lsp CMD."
-  (let ((orig-result (funcall old-fn cmd test?)))
-    (if (and (not test?)                             ;; for check lsp-server-present?
-             (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
-             lsp-use-plists
-             (not (functionp 'json-rpc-connection))  ;; native json-rpc
-             (executable-find "emacs-lsp-booster"))
-        (progn
-          (when-let ((command-from-exec-path (executable-find (car orig-result))))  ;; resolve command from exec-path (in case not found in $PATH)
-            (setcar orig-result command-from-exec-path))
-          (message "Using emacs-lsp-booster for %s!" orig-result)
-          (cons "emacs-lsp-booster" orig-result))
-      orig-result)))
-(advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)
-#+end_src
 ** python mode
 https://renzmann.github.io/posts/006_emacs_2_python/
 
 *** ipython + python-ts-mode
 #+begin_src elisp :tangle yes
-(use-package! python
-  :custom
-  (python-shell-interpreter "ipython")
-  ;; (python-shell-interpreter-args "-i --simple-prompt" ) ; --no-color-info
-  ;; (python-shell-prompt-detect-failure-warning nil)
-  ;; :config
-  ;; (setq +python-ipython-repl-args '("-i" "--simple-prompt" "--no-color-info"))
-  ;; (setq +python-jupyter-repl-args '("--simple-prompt"))
-  (lsp-pyright-langserver-command "basedpyright")
-  :hook
-  (python-ts-mode . (lambda ()
-                   (setq-local lsp-pyright-langserver-command "basedpyright") ;; pyright or basedpyright
-                   (setq-local +format-with 'black)
-                   ;; (lsp-deferred)
-                   (local-set-key (kbd "C-c r") 'python-shell-send-region))))
+(when (modulep! :lang python)
+  (use-package! python
+    :custom
+    (python-shell-interpreter "ipython")
+    ;; (python-shell-interpreter-args "-i --simple-prompt" ) ; --no-color-info
+    ;; (python-shell-prompt-detect-failure-warning nil)
+    ;; :config
+    ;; (setq +python-ipython-repl-args '("-i" "--simple-prompt" "--no-color-info"))
+    ;; (setq +python-jupyter-repl-args '("--simple-prompt"))
+    (lsp-pyright-langserver-command "basedpyright")
+    :hook
+    (python-ts-mode . (lambda ()
+                    (setq-local lsp-pyright-langserver-command "basedpyright") ;; pyright or basedpyright
+                    (setq-local +format-with 'black)
+                    ;; (lsp-deferred)
+                    (local-set-key (kbd "C-c r") 'python-shell-send-region)))))
 #+end_src
 
 *** jupyter
@@ -85,7 +53,7 @@ source: [[https://emacs-lsp.github.io/lsp-pyright/]]
 **** Machine Learning
 NOTE: No need to load babel plugins myself [[https://discourse.doomemacs.org/t/common-config-anti-patterns/119#loading-org-babel-plugins-yourself-6][because]]
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp :tangle no
 ;; (org-babel-do-load-languages 'org-babel-load-languages '((emacs-lisp . t)
 ;;                                                           (julia . t)
 ;;                                                           (python . t)
@@ -117,79 +85,6 @@ NOTE: No need to load babel plugins myself [[https://discourse.doomemacs.org/t/c
 cl-set-difference: combines LIST1 + LIST2 such that the resulting list has all elements of LIST1 but not those in LIST2
         TODO: check if (require 'cl-lib needed)
 
-** Lsp Mode
-*** lsp-mode
-#+begin_src emacs-lisp :tangle no
-(after! lsp
-  (setq lsp-enable-symbol-highlighting nil
-        lsp-enable-suggest-server-download nil))
-#+end_src
-*** lsp treemacs
-#+begin_src emacs-lisp :tangle no
-(use-package! lsp-treemacs
-  :after lsp-mode)                           ; TODO check if need lsp or lsp-mode
-#+end_src
-*** lsp ui
-UI integrations for lsp-mode
-
-https://github.com/emacs-lsp/lsp-ui
-
-By default, =lsp-mode= automatically activates =lsp-ui= unless =lsp-auto-configure= is set to nil.
-
-#+begin_src emacs-lisp :tangle no
-(after! lsp-ui
-  :custom
-  ;; (lsp-ui-doc-show 'bottom)
-  ;; (lsp-ui-doc-position 'top) ;; 'at-point
-  ;; (lsp-ui-doc-show-with-cursor t)
-  ;; (lsp-ui-doc-enable nil) ;NOTE use K
-  ;; (lsp-ui-doc-show-with-mouse t)
-
-  ;; (lsp-ui-peek-show-directory t) ; FIXME
-  ;; (lsp-ui-peek-enable t)
-
-  ;;;imenu
-  ;; (lsp-ui-imenu-auto-refresh) ; auto refresh when necessary
-  ;; (lsp-ui-imenu-refresh-delay) ;FIXME Does not exists?
-  ;; (lsp-ui-imenu-buffer-position 'left)
-
-  ;;;Sideline
-  ;; (lsp-ui-sideline-enable nil)
-
-  (lsp-ui-sideline-show-code-actions t) ;nil::
-  ;; (lsp-enable-symbol-highlighting nil) ; highlight references of symbol at point eg. print in python highlight
-  ;; (lsp-ui-sideline-show-hover nil) ; whether to show hover messages on sideline
-
-  ;; (lsp-ui-sideline-enable nil)     ;t:: TODO....try this
-  ;; (lsp-ui-sideline-show-diagnostics nil) ;hide only errors
-
-  ;;; eldoc
-  ;; (lsp-eldoc-enable-hover nil)
-
-  ;;;modeline
-  ;; (lsp-modeline-code-actions-enable nil)
-  ;; (lsp-modeline-diagnostics-enable nil)
-
-  ;;; lenses
-  ;; (lsp-lens-enable nil)
-
-  ;;;headerline
-  ;; (lsp-headerline-breadcrumb-enable t)
-
-  ;;;flycheck
-  ;; (lsp-diagnostics-provider :none) ; flycheck or flymake (if noflycheck is present); auto::
-
-  ;;;completion
-  ;; (lsp-completion-show-detail nil) ;t::
-  ;; (lsp-completion-show-kind nil)
-  ;; (lsp-completion-provider :none) ; (company mode)
-  )
-#+end_src
-
-https://emacs-lsp.github.io/lsp-ui/
-
-
-https://emacs-lsp.github.io/lsp-mode/tutorials/how-to-turn-off/
 ** c
 *** ccls - ❄️
 #+begin_src elisp :tangle yes
@@ -319,6 +214,9 @@ Configuration examples for both approaches are shown below.
 #+end_src
 
 *** Formatting with apeleia - prettier bunx
+
+TODO: see after! format [[https://c.pgdm.ch/notes/doom-emacs/][pdgm.ch]] 
+
 #+begin_src emacs-lisp :tangle no
 (after! apheleia
   (set-formatter! 'prettier-astro
@@ -377,21 +275,21 @@ Steps to get it working:
 #+end_src
 
 ** QML
-
 #+begin_src elisp :tangle yes
-(use-package! qml-ts-mode
-  :after lsp-mode
-  :config
-  (add-to-list 'lsp-language-id-configuration '(qml-ts-mode . "qml-ts"))
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-stdio-connection '("qmlls"))
-                    :activation-fn (lsp-activate-on "qml-ts")
-                    :server-id 'qmlls))
-  :hook
-  (qml-ts-mode . (lambda () 
-                   (setq-local electric-indent-chars '(?\n ?\( ?\) ?{ ?} ?\[ ?\] ?\; ?,))
-                   (lsp-headerline-breadcrumb-mode nil)
-                   (lsp-deferred))))
+(unless (modulep! :tools lsp +eglot)
+  (use-package! qml-ts-mode
+    :after lsp-mode
+    :config
+    (add-to-list 'lsp-language-id-configuration '(qml-ts-mode . "qml-ts"))
+    (lsp-register-client
+    (make-lsp-client :new-connection (lsp-stdio-connection '("qmlls"))
+                      :activation-fn (lsp-activate-on "qml-ts")
+                      :server-id 'qmlls))
+    :hook
+    (qml-ts-mode . (lambda () 
+                    (setq-local electric-indent-chars '(?\n ?\( ?\) ?{ ?} ?\[ ?\] ?\; ?,))
+                    (lsp-headerline-breadcrumb-mode nil)
+                    (lsp-deferred)))))
 #+end_src
 
 NOTE: from Quickshell site
@@ -403,33 +301,142 @@ NOTE: from Quickshell site
   ("C-c n" . sharper-main-transient))
 #+end_src
 ** direnv
-#+begin_src elisp :tangle no
+#+begin_src elisp :tangle yes
 ;; TODO: check env for if direnv enabled to start
-(use-package! direnv
- :config
- (direnv-mode))
+(after! direnv
+  (use-package! direnv
+  :config
+  (direnv-mode)))
 #+end_src
 ** yeetube
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle yes
 ;; TODO: make this better bind
-(use-package! yeetube
-  :init (define-prefix-command 'my/yeetube-map)
-  :bind (("C-c y" . 'my/yeetube-map)
-          :map my/yeetube-map
-          ("RET" . 'yeetube-play)     
-          ("s" . 'yeetube-search)
-          ("b" . 'yeetube-play-saved-video)
-          ("d" . 'yeetube-download-videos)
-          ("p" . 'yeetube-mpv-toggle-pause)
-          ("v" . 'yeetube-mpv-toggle-video)
-          ("V" . 'yeetube-mpv-toggle-no-video-flag)
-          ("k" . 'yeetube-remove-saved-video)))
+(after! yeetube
+  (use-package! yeetube
+    :init (define-prefix-command 'my/yeetube-map)
+    :bind (("C-c y" . 'my/yeetube-map)
+            :map my/yeetube-map
+            ("RET" . 'yeetube-play)     
+            ("s" . 'yeetube-search)
+            ("b" . 'yeetube-play-saved-video)
+            ("d" . 'yeetube-download-videos)
+            ("p" . 'yeetube-mpv-toggle-pause)
+            ("v" . 'yeetube-mpv-toggle-video)
+            ("V" . 'yeetube-mpv-toggle-no-video-flag)
+            ("k" . 'yeetube-remove-saved-video))))
 #+end_src
 ** org-babel
 #+begin_src emacs-lisp :tangle yes
 (after! org
   (setq org-babel-js-cmd "bun"))
 #+end_src
+** DEPRECATED
+*** emacs lsp booster
+#+begin_src emacs-lisp :tangle no
+(defun lsp-booster--advice-json-parse (old-fn &rest args)
+  "Try to parse bytecode instead of json."
+  (or
+   (when (equal (following-char) ?#)
+     (let ((bytecode (read (current-buffer))))
+       (when (byte-code-function-p bytecode)
+         (funcall bytecode))))
+   (apply old-fn args)))
+(advice-add (if (progn (require 'json)
+                       (fboundp 'json-parse-buffer))
+                'json-parse-buffer
+              'json-read)
+            :around
+            #'lsp-booster--advice-json-parse)
+
+(defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
+  "Prepend emacs-lsp-booster command to lsp CMD."
+  (let ((orig-result (funcall old-fn cmd test?)))
+    (if (and (not test?)                             ;; for check lsp-server-present?
+             (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
+             lsp-use-plists
+             (not (functionp 'json-rpc-connection))  ;; native json-rpc
+             (executable-find "emacs-lsp-booster"))
+        (progn
+          (when-let ((command-from-exec-path (executable-find (car orig-result))))  ;; resolve command from exec-path (in case not found in $PATH)
+            (setcar orig-result command-from-exec-path))
+          (message "Using emacs-lsp-booster for %s!" orig-result)
+          (cons "emacs-lsp-booster" orig-result))
+      orig-result)))
+(advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)
+#+end_src
+*** Lsp Mode
+**** lsp-mode
+#+begin_src emacs-lisp :tangle no
+(after! lsp
+  (setq lsp-enable-symbol-highlighting nil
+        lsp-enable-suggest-server-download nil))
+#+end_src
+**** lsp treemacs
+#+begin_src emacs-lisp :tangle no
+(use-package! lsp-treemacs
+  :after lsp-mode)                           ; TODO check if need lsp or lsp-mode
+#+end_src
+**** lsp ui
+UI integrations for lsp-mode
+
+https://github.com/emacs-lsp/lsp-ui
+
+By default, =lsp-mode= automatically activates =lsp-ui= unless =lsp-auto-configure= is set to nil.
+
+#+begin_src emacs-lisp :tangle no
+(after! lsp-ui
+  :custom
+  ;; (lsp-ui-doc-show 'bottom)
+  ;; (lsp-ui-doc-position 'top) ;; 'at-point
+  ;; (lsp-ui-doc-show-with-cursor t)
+  ;; (lsp-ui-doc-enable nil) ;NOTE use K
+  ;; (lsp-ui-doc-show-with-mouse t)
+
+  ;; (lsp-ui-peek-show-directory t) ; FIXME
+  ;; (lsp-ui-peek-enable t)
+
+  ;;;imenu
+  ;; (lsp-ui-imenu-auto-refresh) ; auto refresh when necessary
+  ;; (lsp-ui-imenu-refresh-delay) ;FIXME Does not exists?
+  ;; (lsp-ui-imenu-buffer-position 'left)
+
+  ;;;Sideline
+  ;; (lsp-ui-sideline-enable nil)
+
+  (lsp-ui-sideline-show-code-actions t) ;nil::
+  ;; (lsp-enable-symbol-highlighting nil) ; highlight references of symbol at point eg. print in python highlight
+  ;; (lsp-ui-sideline-show-hover nil) ; whether to show hover messages on sideline
+
+  ;; (lsp-ui-sideline-enable nil)     ;t:: TODO....try this
+  ;; (lsp-ui-sideline-show-diagnostics nil) ;hide only errors
+
+  ;;; eldoc
+  ;; (lsp-eldoc-enable-hover nil)
+
+  ;;;modeline
+  ;; (lsp-modeline-code-actions-enable nil)
+  ;; (lsp-modeline-diagnostics-enable nil)
+
+  ;;; lenses
+  ;; (lsp-lens-enable nil)
+
+  ;;;headerline
+  ;; (lsp-headerline-breadcrumb-enable t)
+
+  ;;;flycheck
+  ;; (lsp-diagnostics-provider :none) ; flycheck or flymake (if noflycheck is present); auto::
+
+  ;;;completion
+  ;; (lsp-completion-show-detail nil) ;t::
+  ;; (lsp-completion-show-kind nil)
+  ;; (lsp-completion-provider :none) ; (company mode)
+  )
+#+end_src
+
+https://emacs-lsp.github.io/lsp-ui/
+
+
+https://emacs-lsp.github.io/lsp-mode/tutorials/how-to-turn-off/
 * DOOM functionality
 ** Inbuilt stuff
 *** abbrev
@@ -699,6 +706,7 @@ CLOCK: [2026-09-04 Fri 10:42]
 
           :map doom-leader-map
           ("to" . hl-todo-occur)
+          ("o_" . dirvish)
           ("I" . ielm)
           ("[" . previous-buffer)
           ("]" . next-buffer)
@@ -706,9 +714,11 @@ CLOCK: [2026-09-04 Fri 10:42]
 #+end_src
 
 ** format +onsave disabled modes
-#+begin_src emacs-lisp :tangle yes
-(customize-set-variable '+format-on-save-disabled-modes '(nxml-mode)) ;Android studio
+#+begin_src emacs-lisp :tangle no
+;; (customize-set-variable '+format-on-save-disabled-modes '(nxml-mode)) ;Android studio
+(add-to-list '+format-on-save-disabled-modes 'nxml-mode)
 #+end_src
+
 ** delete spaces, tabs, newline
 #+begin_src emacs-lisp :tangle yes
 (setq backward-delete-char-untabify-method 'all)
@@ -787,6 +797,21 @@ useful in vanilla emacs?
         elcord-use-major-mode-as-main-icon t
         ))
 #+end_src
+** aidermacs
+#+begin_src emacs-lisp :tangle no
+(use-package aidermacs
+  :bind (("C-c a" . aidermacs-transient-menu))
+  :config
+  ; Set API_KEY in .bashrc, that will automatically picked up by aider or in elisp
+  (setenv "ANTHROPIC_API_KEY" "sk-...")
+  ; defun my-get-openrouter-api-key yourself elsewhere for security reasons
+  (setenv "OPENROUTER_API_KEY" (my-get-openrouter-api-key))
+  :custom
+  ; See the Configuration section below
+  (aidermacs-default-chat-mode 'architect)
+  (aidermacs-default-model "sonnet"))
+#+end_src
+
 ** org-auto-tangle
 #+begin_src emacs-lisp :tangle yes
 (use-package! org-auto-tangle
@@ -865,11 +890,11 @@ Dictionary is set by ispell-dictionary variable. Can be changed locally with the
 *** TODO spell-fu
 always activating in org mode...keep it as hook in [[ORG]]
 #+begin_src emacs-lisp :tangle yes
-;; (after! spell-fu
-;;   (setq spell-fu-idle-delay 0.5)  ; default is 0.25
-;;   ;; (setq spell-fu-faces nil)
-;;   (setq spell-fu-ignore-modes (list 'org-mode) )
-;;   )
+(after! spell-fu
+  (setq spell-fu-idle-delay 0.5)  ; default is 0.25
+  ;; (setq spell-fu-faces nil)
+  (setq spell-fu-ignore-modes (list 'org-mode) )
+  )
 
 (use-package! spell-fu
   :defer t
@@ -2094,7 +2119,7 @@ NOTE: not needed in doom...it auto [[https://discourse.doomemacs.org/t/common-co
 #+end_src
 * Clipboard | xclip wayland
 FIXME: does not work
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle yes
 (use-package! xclip
   :config
   (setq xclip-program "wl-copy")

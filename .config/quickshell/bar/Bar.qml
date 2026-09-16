@@ -24,7 +24,7 @@ ShellRoot {
             WlrLayershell.namespace: "tildeBar"
             // OnDemand lets tray/quicksettings popups hold their grabs —
             // with None they get dismissed as soon as focus moves elsewhere
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+            // WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand  //TODO: see if issue
             required property var modelData
             visible: root.enableBar
 
@@ -80,26 +80,6 @@ ShellRoot {
                 right: true
             }
 
-            // declared BEFORE panel so every module sits on top: wheels over
-            // modules with their own handlers (mpris volume, pills, sliders)
-            // are consumed there first; empty bar space falls through here
-            // and steps workspaces. Single clicks on empty bar space open the
-            // roster menu under the cursor — right = color theme, left = style.
-            MouseArea {
-                id: barActions
-
-                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                anchors.fill: parent
-                onWheel: wheel => {
-                    // console.log(`[scrolldbg] bar wheel y=${wheel.angleDelta.y}`);
-                    HyprlandService.stepWorkspace(wheel.angleDelta.y > 0);
-                }
-                onClicked: mouse => {
-                    const gx = barActions.mapToGlobal(mouse.x, 0).x;
-                    styleMenu.openAt(mouse.button === Qt.RightButton ? 0 : 1, gx);
-                }
-            }
-
             RowLayout {
                 id: panel
                 anchors.fill: parent
@@ -120,9 +100,27 @@ ShellRoot {
                     }
                 }
 
-                // lives flat in the panel (not the left block) so it stretches
-                // into the leftover space and elides against the RHS boundary
-                ActiveWindow {}
+                MouseArea {
+                    id: barActions
+
+                    implicitHeight: BarState.barHeight
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 20
+
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    // anchors.fill: parent
+                    onWheel: wheel => {
+                        // console.log(`[scrolldbg] bar wheel y=${wheel.angleDelta.y}`);
+                        HyprlandService.stepWorkspace(wheel.angleDelta.y > 0);
+                    }
+                    onClicked: mouse => {
+                        const gx = barActions.mapToGlobal(mouse.x, 0).x;
+                        styleMenu.openAt(mouse.button === Qt.RightButton ? 0 : 1, gx);
+                    }
+                    ActiveWindow {
+                        id: activeText
+                    }
+                }
 
                 RowLayout {
                     id: rightBlock
@@ -133,6 +131,7 @@ ShellRoot {
                     // media moves in-line with the right cluster so the centered
                     // pill can no longer slide under the active-window title
                     Git {
+                        visible: false
                         host: barr
                     }
 

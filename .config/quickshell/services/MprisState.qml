@@ -411,19 +411,28 @@ Singleton {
             root.player = fallback;
             root.lastPlayer = fallback;
         } else {
-            // nothing playing — still remember an idle (paused) player so
-            // songart / now-playing keep working right after shell startup
-            let idle = null;
-            for (let p of Mpris.players.values) {
-                if (!root.isIgnored(p)) {
-                    idle = p;
-                    break;
+            // nothing playing — stick with the player that was just paused so
+            // the pill keeps showing ITS paused state instead of hopping to
+            // whichever idle player registered first (pause mpd while chrome
+            // idles → stay on mpd, not chrome)
+            let target = null;
+            const prev = root.lastPlayer;
+            if (prev && root.controlPlayers.includes(prev))
+                target = prev;
+            // last resort — remember an idle (paused) player so songart /
+            // now-playing still work right after shell startup
+            if (!target) {
+                for (let p of Mpris.players.values) {
+                    if (!root.isIgnored(p)) {
+                        target = p;
+                        break;
+                    }
                 }
             }
-            root.lastPlayer = idle;
+            root.lastPlayer = target;
             // when we're not hiding on idle, keep the pill showing the last
             // available player instead of collapsing to nothing
-            root.player = root.hideWhenIdle ? null : idle;
+            root.player = root.hideWhenIdle ? null : target;
         }
     }
 

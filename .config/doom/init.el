@@ -1,7 +1,7 @@
 ;;; init.el -*- lexical-binding: t; -*-
 ;;      directory (for easy access to its source code).
 (doom!
- :input
+ ;; :input
  ;;bidi              ; (tfel ot) thgir etirw uoy gnipleh
  ;;chinese
  ;;japanese
@@ -9,7 +9,7 @@
 
  :completion
  ;; (company +tng +childframe)           ; the ultimate code completion backend ;NOTE deprecated in favor of corfu
- (corfu +orderless) ; complete with cap(f), cape and a flying feather!
+ (corfu +dabbrev +orderless) ; complete with cap(f), cape and a flying feather!
  ;; (helm +childframe +icons +fuzzy )              ; the *other* search engine for love and life
  ;; ido               ; the other *other* search engine...
  ;; (ivy +childframe +icons) ; a search engine for love and life
@@ -30,12 +30,12 @@
  ;; neotree           ; a project drawer, like NERDTree for vim
  ophints           ; highlight the region an operation acts on ; TODO read further
  (popup +all +defaults)   ; tame sudden yet inevitable temporary windows
- tabs              ; a tab bar for Emacs
+ ;; tabs              ; a tab bar for Emacs
  (treemacs)          ; a project drawer, like neotree but cooler TODO test further ; NOTE:  +lsp not with eglot
  ;; unicode           ; extended unicode support for various languages NOTE can cause issues with ligatures
  (vc-gutter +pretty) ; vcs diff in the fringe
  ;; vi-tilde-fringe   ; fringe tildes to mark beyond EOB
- (window-select +numbers)     ; visually switch windows
+ (window-select +switch-window +numbers)     ; visually switch windows
  workspaces        ; tab emulation, persistence & separate workspaces ;persp-mode
  ;; (smooth-scroll +interpolate)
  ;;zen               ; distraction-free coding or writing
@@ -58,7 +58,7 @@
  (dired +icons)             ; making dired pretty [functional]
  electric          ; smarter, keyword-based electric-indent
  eww               ; the internet is gross
- (ibuffer +icons)  ; interactive buffer management
+ ibuffer  ; interactive buffer management
  (undo +tree)      ; persistent, smarter undo for your inevitable mistakes
  vc                ; version-control and Emacs, sitting in a tree
 
@@ -76,14 +76,14 @@
  :tools
  ;; editorconfig      ; let someone else argue about tabs vs spaces TODO test this
  (eval +overlay)     ; run code, run (also, repls)
- (lookup +dictionary +offline)              ; navigate your code and its documentation
+ (lookup +docsets +dictionary +offline)              ; navigate your code and its documentation
  (lsp +eglot +booster)               ; M-x vscode ; NOTE: peek does not work with eglot, booster only eglot for now
  magit
  ;; make              ; run make tasks from Emacs
  pdf               ; pdf enhancements
  ;; rgb ; create color str NOTE: deprecated??
  tree-sitter       ; syntax and parsing, sitting in a tree...
- direnv
+ ;; direnv
  ;; (docker +tree-sitter +lsp)
  ;; (pass +auth)
 
@@ -100,22 +100,22 @@
  ;; ( debugger +lsp)          ; FIXME stepping through code, to help you add bugs
 
  :os
- (:if (featurep :system 'macos) macos)  ; improve compatibility with macOS
+ ;; (:if (featurep :system 'macos) macos)  ; improve compatibility with macOS
  (tty +osc)               ; improve the terminal Emacs experience
 
  :lang
- (cc +lsp +tree-sitter)         ; C > C++ == 1
+ (cc +lsp +tree-sitter)         ; C > C++ == 1 :TODO: see if +lsp needed
  ;; (csharp +dotnet +lsp +tree-sitter)            ; unity, .NET, and mono shenanigans
  ;; (java +lsp +tree-sitter)       ; the poster child for carpal tunnel syndrome
  (markdown +grip +tree-sitter)          ; writing docs for people to ignore
  (nix +tree-sitter +lsp)               ; I hereby declare "nix geht mehr!"
  (org +noter +crypt +present +roam +pomodoro +journal +dragndrop +pandoc +pretty) ;TODO test crypt, journal, noter
- (python +lsp +pyright +tree-sitter)            ; beautiful is better than ugly
+ ;; (python +lsp +pyright +tree-sitter)            ; beautiful is better than ugly
  (sh +lsp +tree-sitter)                ; she sells {ba,z,fi}sh shells on the C xor
- (web +lsp +tree-sitter)               ; the tubes - web/css mode
+ ;; (web +lsp +tree-sitter)               ; the tubes - web/css mode
  (javascript +lsp +tree-sitter)        ; all(hope(abandon(ye(who(enter(here))))))
  data              ; config/data formats - csv/xml
- (latex +lsp +fold +cdlatex)             ; writing papers in Emacs has never been so fun
+ ;; (latex +lsp +fold +cdlatex)             ; writing papers in Emacs has never been so fun
  (lua +lsp +tree-sitter)               ; one-based indices? one-based indices
  emacs-lisp        ; drown in parentheses
  (json +lsp +tree-sitter)              ; At least it ain't XML
@@ -180,11 +180,11 @@
  ;; twitter ; TODO never works?
  ;; emms
  ;; everywhere        ; *leave* Emacs!? You must be joking
- irc               ; how neckbeards socialize
- (rss +org)        ; emacs as an RSS reader
+ ;; irc               ; how neckbeards socialize
+ ;; (rss +org)        ; emacs as an RSS reader
 
  :config
- literate
+ literate                               ;CONFIG as org eitc
  (default +bindings +gnupg +smartparens))
 
 

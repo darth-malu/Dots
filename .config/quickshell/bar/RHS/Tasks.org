@@ -1,3 +1,5 @@
+#+startup: content indent
+
 * Pending
 + [X] Settings
   + [X] Bar
@@ -40,3 +42,20 @@
 + [X] Settings steppers: real starting values + working reset (2026-09-12) -- Fixed `IntStepRow` mutating its own `value` on nudge/reset, which destroyed the binding so the width slider displayed a literal "0px" on first scroll. `nudge()` / reset now only emit `committed(v)`; the row's `value` stays bound to `BarState` as single source of truth. The Bar width row now renders real pixels: stored `0` (full-bleed sentinel) is shown as the primary-screen width (`barWidthDefault`, `Quickshell.screens[0].width`, min 600), `minV: 400`, `maxV`/`defaultValue` = screen width, and committing screen-width (or above, via +40 step from a scrolled-down position) maps back to `0` so centering's full-bleed path is preserved. Scrolling from the default now departs from the actual full width instead of jumping to 0 first; the `⭯ reset` pill restores it. Height row (default 26) gains the same working reset via the shared fix. Verified: qmlformat parse clean; manual interaction pending live reload.
 + [X] Settings popup IPC + SUPER+PAGEUP (2026-09-12) -- Added a `settings` target to `IpcHandler.qml` (`toggle`/`open`/`close` → `MiscState.toggleSettings`) and registered it in `handlerModel` (`\uf013 Settings`). Bound `mod .. PageUP` to `qs ipc call settings toggle` in `hypr/keybinds/quickshell.lua` (`-- SETTINGS` block). Requires quickshell restart to register the IPC target; keybinds apply via `hyprctl reload`.
 + [X] WLogout: efibootmgr boot-once (BootNext) picker (2026-09-12) -- New `services/BootState.qml` constructor (exposed via `qs.services`): parses `efibootmgr --unicode` into `entries` (number + `*` active + label, hex-sorted), tracks `current`, `next` (BootNext), `ready`/`error`, `busy`; `refresh()` and `bootOnce(num)` (`pkexec efibootmgr -n <num>` → then `systemctl reboot`, BootNext re-read from output, auto `refresh()`) plus `clearNext()` (`pkexec efibootmgr -N`). WLogout overlay: 5th action `bootBtn` (`\uf17a`, `TtKey_B`) with `onExec` (added to `LogoutButton.qml`); toggling `timerPicker` to `4` opens a boot picker — header "SCHEDULE NEXT REBOOT", live-status, armed next-boot pill (click to clear), ↻ reload, hex-sorted roster with `▶ current`/`▸ next` badges, hint "left-click = boot once into this entry · B = back". Standing circle gets a pulsing `armed` dot when `BootState.next` is set, schedule-zone delay slider hidden for the picker; roster refreshes when the overlay opens or the picker is shown. BootNext + the following `pkexec` (via PolkitPrompt agent) + `systemctl reboot` chain; parsing verified against live `efibootmgr` output. Sheet widened 620→700 so five actions fit, action spacing 34→26.
+* Sales Performance
+#+BEGIN_SRC gnuplot :results file :output sales.png
+  set terminal pngcairo size 800,500 enhanced font 'Sans,12'
+  set output 'sales.png'
+  set title "Monthly Revenue (2026)"
+  set xlabel "Month"
+  set ylabel "Revenue ($k)"
+  set grid
+  
+  plot '-' using 1:2 with linespoints lw 2 pt 7 title '2026'
+  1  12
+  2  15
+  3  19
+  4  24
+  5  30
+  e
+#+END_SRC

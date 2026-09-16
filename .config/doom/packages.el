@@ -22,6 +22,9 @@
 ;; (package! code-cells)                   ; NOTE: use in depth - Jupyter NoteBooks replacement?
 ;; (package! direnv)
 (package! tmr)
+(package! aidermacs)
+(package! gnuplot)
+
 ;; (package! exec-path-from-shell) ; NOTE use doom env lol
 (package! qml-ts-mode
   :recipe (:host github :repo "xhcoding/qml-ts-mode" :files ("*.el")))
@@ -36,7 +39,7 @@
 (package! all-the-icons) ;TODO add desc
 (package! elcord)
 ;; (package! org-contacts) ;;FIXME?
-;; (package! xclip)
+(package! xclip)
 ;; (package! codeium :recipe (:host github :repo "Exafunction/codeium.el"))
 ;; (package! wttrin)
 ;; (package! wttrin :recipe (:local-repo "lisp/wttrin"))

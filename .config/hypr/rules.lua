@@ -10,9 +10,9 @@
 -- (re)map shows a flash of the static background underneath during workspace
 -- transitions (hyprpaper, being a once-committed opaque surface, never did).
 local bgNoAnim = hl.layer_rule({
-  name           = "no-anim-quickshell-bg",
-  match          = { namespace = "^quickshell-bg$" },
-  no_anim        = true,
+  name    = "no-anim-quickshell-bg",
+  match   = { namespace = "^quickshell-bg$" },
+  no_anim = true,
 })
 bgNoAnim:set_enabled(true)
 
@@ -20,20 +20,20 @@ bgNoAnim:set_enabled(true)
 -- behind the tildeBar namespace so the 0.45 tint reads as true frosted glass
 -- instead of a flat wash over the wallpaper.
 local blurTildeBar = hl.layer_rule({
-  name           = "blur-tilde-bar",
-  match          = { namespace = "tildeBar" },
-  blur           = true,
-  ignore_alpha   = 0.2,
+  name         = "blur-tilde-bar",
+  match        = { namespace = "tildeBar" },
+  blur         = true,
+  ignore_alpha = 0.2,
 })
 blurTildeBar:set_enabled(true)
 
 -- polykit prompt: the overlay scrim is dim-but-transparent, so blur the
 -- layersurface so the frosted tint reads on top of whatever is on screen.
 local blurPolkit = hl.layer_rule({
-  name           = "blur-polkit",
-  match          = { namespace = "quickshell-polkit" },
-  blur           = true,
-  ignore_alpha   = 0.2,
+  name         = "blur-polkit",
+  match        = { namespace = "quickshell-polkit" },
+  blur         = true,
+  ignore_alpha = 0.2,
 })
 blurPolkit:set_enabled(true)
 
@@ -139,7 +139,7 @@ hl.workspace_rule({ workspace = "special:easy", "easyeffects" })
 hl.workspace_rule({
   workspace = "special:nc",
   on_created_empty =
-  "app2unit -s a kitty -e ncmpcpp || uwsm-app -s a ncmpcpp" --TODO: see if this works as is
+  "app2unit -s a kitty -e ncmpcpp || uwsm-app -s a ncmpcpp || app2unit -s a foot" --TODO: see if this works as is
 })
 hl.workspace_rule({
   workspace = "special:magic",

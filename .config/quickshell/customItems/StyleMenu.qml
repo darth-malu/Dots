@@ -26,8 +26,8 @@ PopupWindow {
     anchor.rect.y: root.host.height + 8
 
     // 0 = color scheme roster, 1 = bar treatment roster
-    readonly property var themeNames: ["Pyrple", "Gron", "Gruvbox", "Rose", "Everforest", "Soramane"]
-    readonly property var styleNames: ["Transparent", "Solid Margin", "Solid", "Glass Margin", "Glass Full", "Glass Borderless"]
+    readonly property var themeNames: ["Pyrple", "Gron", "Gruvbox", "Rose", "Everforest", "Bleu"]
+    readonly property var styleNames: ["Transparent", "Solid +", "Solid", "Glass +", "Glass", "Glass !border"]
     readonly property string menuTitle: root.mode === 0 ? "Color Scheme" : "Bar Style"
 
     function openAt(m: int, gx: real): void {
@@ -60,29 +60,30 @@ PopupWindow {
         onActivated: root.menuOpen = false
     }
 
-    implicitWidth: 200
-    implicitHeight: menuColumn.implicitHeight
+    implicitWidth: 150
+    implicitHeight: menuColumn.implicitHeight + 56
 
     Rectangle {
         id: menuCard
         anchors.fill: parent
         radius: 10
         color: Themes.popupCardBg
-        border.width: 1
+        border.width: 2
         border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.3)
+        implicitHeight: menuColumn.implicitHeight
 
         ColumnLayout {
             id: menuColumn
             anchors.fill: parent
-            anchors.leftMargin: 6
+            anchors.leftMargin: 4
             anchors.rightMargin: 6
-            anchors.topMargin: 6
-            anchors.bottomMargin: 6
+            // anchors.topMargin: 6
+            // anchors.bottomMargin: 6
             spacing: 2
 
             RowLayout {
                 Layout.fillWidth: true
-                Layout.leftMargin: 4
+                // Layout.leftMargin: 4
                 Layout.rightMargin: 4
                 Layout.topMargin: 2
                 Layout.bottomMargin: 2
@@ -97,6 +98,7 @@ PopupWindow {
                     border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.35)
 
                     Text {
+                        id: modeIcon
                         anchors.centerIn: parent
                         text: root.mode === 0 ? "\uf1fc" : "\uf2d1"
                         color: Themes.accent
@@ -120,6 +122,7 @@ PopupWindow {
                     }
 
                     Text {
+                        visible: false
                         text: "currently " + (root.mode === 0 ? root.themeNames[root.currentSel()] : root.styleNames[root.currentSel()])
                         color: Themes.muted
                         font {
@@ -139,10 +142,22 @@ PopupWindow {
                 height: 1
                 gradient: Gradient {
                     orientation: Gradient.Horizontal
-                    GradientStop { position: 0.0; color: "transparent" }
-                    GradientStop { position: 0.3; color: Themes.separator }
-                    GradientStop { position: 0.7; color: Themes.separator }
-                    GradientStop { position: 1.0; color: "transparent" }
+                    GradientStop {
+                        position: 0.0
+                        color: "transparent"
+                    }
+                    GradientStop {
+                        position: 0.3
+                        color: Themes.separator
+                    }
+                    GradientStop {
+                        position: 0.7
+                        color: Themes.separator
+                    }
+                    GradientStop {
+                        position: 1.0
+                        color: "transparent"
+                    }
                 }
             }
 
@@ -159,7 +174,8 @@ PopupWindow {
                     readonly property bool hovered: rowMa.containsMouse
 
                     Layout.fillWidth: true
-                    implicitHeight: 28
+                    Layout.bottomMargin: 0
+                    implicitHeight: 24
                     radius: 7
                     color: active ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16) : hovered ? Qt.rgba(1, 1, 1, 0.07) : "transparent"
 

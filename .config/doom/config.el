@@ -1,30 +1,21 @@
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
-(use-package! python
-  :custom
-  (python-shell-interpreter "ipython")
-  ;; (python-shell-interpreter-args "-i --simple-prompt" ) ; --no-color-info
-  ;; (python-shell-prompt-detect-failure-warning nil)
-  ;; :config
-  ;; (setq +python-ipython-repl-args '("-i" "--simple-prompt" "--no-color-info"))
-  ;; (setq +python-jupyter-repl-args '("--simple-prompt"))
-  (lsp-pyright-langserver-command "basedpyright")
-  :hook
-  (python-ts-mode . (lambda ()
-                   (setq-local lsp-pyright-langserver-command "basedpyright") ;; pyright or basedpyright
-                   (setq-local +format-with 'black)
-                   ;; (lsp-deferred)
-                   (local-set-key (kbd "C-c r") 'python-shell-send-region))))
-
-;; (org-babel-do-load-languages 'org-babel-load-languages '((emacs-lisp . t)
-;;                                                           (julia . t)
-;;                                                           (python . t)
-;;                                                           (jupyter . t)))
-
-
-(setq org-babel-default-header-args:jupyter-python '((:async . "yes")
-                                                    (:session . "py")
-                                                    (:kernel . "python3")))
+(when (modulep! :lang python)
+  (use-package! python
+    :custom
+    (python-shell-interpreter "ipython")
+    ;; (python-shell-interpreter-args "-i --simple-prompt" ) ; --no-color-info
+    ;; (python-shell-prompt-detect-failure-warning nil)
+    ;; :config
+    ;; (setq +python-ipython-repl-args '("-i" "--simple-prompt" "--no-color-info"))
+    ;; (setq +python-jupyter-repl-args '("--simple-prompt"))
+    (lsp-pyright-langserver-command "basedpyright")
+    :hook
+    (python-ts-mode . (lambda ()
+                    (setq-local lsp-pyright-langserver-command "basedpyright") ;; pyright or basedpyright
+                    (setq-local +format-with 'black)
+                    ;; (lsp-deferred)
+                    (local-set-key (kbd "C-c r") 'python-shell-send-region)))))
 
 (after! ccls
   (setq ccls-initialization-options '(:index (:comments 2) :completion (:detailedLabel t)))
@@ -50,19 +41,41 @@
   (setq lsp-tailwindcss-add-on-mode t)) ;nil::
 (add-hook 'before-save-hook 'lsp-tailwindcss-rustywind-before-save)
 
-(use-package! qml-ts-mode
-  :after lsp-mode
+(unless (modulep! :tools lsp +eglot)
+  (use-package! qml-ts-mode
+    :after lsp-mode
+    :config
+    (add-to-list 'lsp-language-id-configuration '(qml-ts-mode . "qml-ts"))
+    (lsp-register-client
+    (make-lsp-client :new-connection (lsp-stdio-connection '("qmlls"))
+                      :activation-fn (lsp-activate-on "qml-ts")
+                      :server-id 'qmlls))
+    :hook
+    (qml-ts-mode . (lambda () 
+                    (setq-local electric-indent-chars '(?\n ?\( ?\) ?{ ?} ?\[ ?\] ?\; ?,))
+                    (lsp-headerline-breadcrumb-mode nil)
+                    (lsp-deferred)))))
+
+;; TODO: check env for if direnv enabled to start
+(after! direnv
+  (use-package! direnv
   :config
-  (add-to-list 'lsp-language-id-configuration '(qml-ts-mode . "qml-ts"))
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-stdio-connection '("qmlls"))
-                    :activation-fn (lsp-activate-on "qml-ts")
-                    :server-id 'qmlls))
-  :hook
-  (qml-ts-mode . (lambda () 
-                   (setq-local electric-indent-chars '(?\n ?\( ?\) ?{ ?} ?\[ ?\] ?\; ?,))
-                   (lsp-headerline-breadcrumb-mode nil)
-                   (lsp-deferred))))
+  (direnv-mode)))
+
+;; TODO: make this better bind
+(after! yeetube
+  (use-package! yeetube
+    :init (define-prefix-command 'my/yeetube-map)
+    :bind (("C-c y" . 'my/yeetube-map)
+            :map my/yeetube-map
+            ("RET" . 'yeetube-play)     
+            ("s" . 'yeetube-search)
+            ("b" . 'yeetube-play-saved-video)
+            ("d" . 'yeetube-download-videos)
+            ("p" . 'yeetube-mpv-toggle-pause)
+            ("v" . 'yeetube-mpv-toggle-video)
+            ("V" . 'yeetube-mpv-toggle-no-video-flag)
+            ("k" . 'yeetube-remove-saved-video))))
 
 (after! org
   (setq org-babel-js-cmd "bun"))
@@ -219,12 +232,11 @@
 
           :map doom-leader-map
           ("to" . hl-todo-occur)
+          ("o_" . dirvish)
           ("I" . ielm)
           ("[" . previous-buffer)
           ("]" . next-buffer)
           ("SPC" . ace-window)))
-
-(customize-set-variable '+format-on-save-disabled-modes '(nxml-mode)) ;Android studio
 
 (setq backward-delete-char-untabify-method 'all)
 
@@ -262,11 +274,11 @@
          ;; persp-emacsclient-init-frame-behaviour-override #'+workspace/restore-last-session          ;+workspaces-associate-frame-fn::
   )
 
-;; (after! spell-fu
-;;   (setq spell-fu-idle-delay 0.5)  ; default is 0.25
-;;   ;; (setq spell-fu-faces nil)
-;;   (setq spell-fu-ignore-modes (list 'org-mode) )
-;;   )
+(after! spell-fu
+  (setq spell-fu-idle-delay 0.5)  ; default is 0.25
+  ;; (setq spell-fu-faces nil)
+  (setq spell-fu-ignore-modes (list 'org-mode) )
+  )
 
 (use-package! spell-fu
   :defer t
@@ -549,6 +561,15 @@
                            ;;  :prepend t
                            ;;  :empty-lines 1)
                            )))
+
+(use-package! xclip
+  :config
+  (setq xclip-program "wl-copy")
+  (setq xclip-select-enable-clipboard t)
+  (setq xclip-mode t)
+  (setq xclip-method (quote wl-copy)))
+
+(setq xclip-select-enable-clipboard t)
 
 (defun my/markdown-toggler ()
   "This function toggles markdown view mode on/off 😀"

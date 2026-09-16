@@ -307,6 +307,15 @@ Item {
                             text: "🎵"
                             pointSize: 10
                         }
+
+                        // left-click art → open enlarged art popup
+                        MouseArea {
+                            anchors.fill: parent
+                            acceptedButtons: Qt.LeftButton
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: if (!mprisRoot.showArtPopup)
+                                mprisRoot.showArtPopup = true
+                        }
                     }
 
                     // ── track title (marquee-scrolls when it doesn't fit) ──
