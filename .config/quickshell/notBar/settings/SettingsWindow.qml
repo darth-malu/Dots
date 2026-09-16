@@ -439,15 +439,28 @@ Item {
             border.width: 1
             border.color: rstHover.containsMouse ? Themes.red : "transparent"
             Layout.alignment: Qt.AlignVCenter
-            Behavior on color { ColorAnimation { duration: 100 } }
-            Behavior on border.color { ColorAnimation { duration: 100 } }
+            Behavior on color {
+                ColorAnimation {
+                    duration: 100
+                }
+            }
+            Behavior on border.color {
+                ColorAnimation {
+                    duration: 100
+                }
+            }
 
-            HoverHandler { id: rstHover }
+            HoverHandler {
+                id: rstHover
+            }
             Text {
                 anchors.centerIn: parent
                 text: "\uf0e2"
                 color: rstHover.containsMouse ? Themes.red : Themes.muted
-                font { pixelSize: 10; family: "Symbols Nerd Font Mono" }
+                font {
+                    pixelSize: 10
+                    family: "Symbols Nerd Font Mono"
+                }
             }
             MouseArea {
                 anchors.fill: parent
@@ -1227,7 +1240,7 @@ Item {
 
                         SettingRow {
                             icon: "\uf2f1"
-                            label: "Auto rotate"
+                            label: "SlideShow"
                             caption: WallpaperService.slideshowEnabled ? "slideshow" : "off"
                             checked: WallpaperService.slideshowEnabled
                             onFlipped: WallpaperService.slideshowEnabled = !WallpaperService.slideshowEnabled
@@ -1619,6 +1632,7 @@ Item {
                             ColumnLayout {
                                 spacing: 0
                                 Layout.fillWidth: true
+                                Layout.bottomMargin: 20
 
                                 // color theme dropdown
                                 RowLayout {
@@ -1627,7 +1641,7 @@ Item {
                                     spacing: 12
 
                                     Text {
-                                        text: "\ue61b"
+                                        text: ""
                                         color: Themes.accent
                                         font {
                                             pixelSize: 14
@@ -1665,12 +1679,30 @@ Item {
 
                                         property bool colorThemeDropOpen: false
                                         property var colorThemeOptions: [
-                                            { key: 0, label: "Pyrple" },
-                                            { key: 1, label: "Gron" },
-                                            { key: 2, label: "Gruvbox" },
-                                            { key: 3, label: "Rose" },
-                                            { key: 4, label: "Everforest" },
-                                            { key: 5, label: "Soramane" }
+                                            {
+                                                key: 0,
+                                                label: "Pyrple"
+                                            },
+                                            {
+                                                key: 1,
+                                                label: "Gron"
+                                            },
+                                            {
+                                                key: 2,
+                                                label: "Gruvbox"
+                                            },
+                                            {
+                                                key: 3,
+                                                label: "Rose"
+                                            },
+                                            {
+                                                key: 4,
+                                                label: "Everforest"
+                                            },
+                                            {
+                                                key: 5,
+                                                label: "Soramane"
+                                            }
                                         ]
 
                                         function curLabel() {
@@ -1770,7 +1802,11 @@ Item {
                                                         height: 26
                                                         radius: 5
                                                         color: themeOptMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : sel ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.10) : "transparent"
-                                                        Behavior on color { ColorAnimation { duration: 100 } }
+                                                        Behavior on color {
+                                                            ColorAnimation {
+                                                                duration: 100
+                                                            }
+                                                        }
 
                                                         Text {
                                                             anchors.left: parent.left
@@ -1783,7 +1819,11 @@ Item {
                                                                 bold: true
                                                                 family: "Quicksand"
                                                             }
-                                                            Behavior on color { ColorAnimation { duration: 100 } }
+                                                            Behavior on color {
+                                                                ColorAnimation {
+                                                                    duration: 100
+                                                                }
+                                                            }
                                                         }
 
                                                         Text {
@@ -1814,14 +1854,14 @@ Item {
                                             }
                                         }
 
-// close when clicking outside
-                        Connections {
-                            target: window
-                            function onVisibleChanged() {
-                                if (!window.visible)
-                                    colorThemeDropdown.colorThemeDropOpen = false;
-                            }
-                        }
+                                        // close when clicking outside
+                                        Connections {
+                                            target: window
+                                            function onVisibleChanged() {
+                                                if (!window.visible)
+                                                    colorThemeDropdown.colorThemeDropOpen = false;
+                                            }
+                                        }
                                     }
                                 }
                                 // bar style dropdown — like the notification font picker
@@ -1831,7 +1871,7 @@ Item {
                                     spacing: 12
 
                                     Text {
-                                        text: "\ueac1"
+                                        text: ""
                                         color: Themes.accent
                                         font {
                                             pixelSize: 14
@@ -2027,7 +2067,7 @@ Item {
                                 }
 
                                 SettingRow {
-                                    icon: "\uf1ce"
+                                    icon: ""
                                     label: "Workspaces"
                                     caption: MiscState.showWorkspaces ? "on" : "off"
                                     checked: MiscState.showWorkspaces
@@ -2042,7 +2082,7 @@ Item {
                                 }
 
                                 SettingRow {
-                                    icon: "\uf009"
+                                    icon: ""
                                     label: "Icons"
                                     caption: MiscState.iconWorkspaces ? "on" : "off"
                                     checked: MiscState.iconWorkspaces
@@ -2057,7 +2097,7 @@ Item {
                                 }
 
                                 SettingRow {
-                                    icon: "\uf2d1"
+                                    icon: "󱗜"
                                     label: "Boxy"
                                     caption: MiscState.boxyTheme ? "all modules" : "rounded"
                                     checked: MiscState.boxyTheme
@@ -2083,7 +2123,7 @@ Item {
                             // ── bar size ──
                             Card {
                                 title: "Bar Size"
-                                icon: "\uf2d0"
+                                // icon: "󰞗"
                                 accent: Themes.accent
 
                                 ColumnLayout {
@@ -2092,7 +2132,7 @@ Item {
                                     Layout.topMargin: 4
 
                                     IntStepRow {
-                                        icon: "\uf0c9"
+                                        icon: ""
                                         label: "Bar height"
                                         minV: 22
                                         maxV: 48
@@ -2121,35 +2161,6 @@ Item {
                                         // screen-width ≡ full-bleed (persisted as 0);
                                         // anything smaller stores the slab width
                                         onCommitted: v => BarState.barWidth = v >= root.barWidthDefault ? 0 : v
-                                    }
-
-                                    RowLayout {
-                                        Layout.fillWidth: true
-                                        spacing: 6
-
-                                        Text {
-                                            text: "\uf204"
-                                            color: Themes.muted
-                                            font {
-                                                pixelSize: 11
-                                                family: "Symbols Nerd Font Mono"
-                                            }
-                                            Layout.preferredWidth: 20
-                                            horizontalAlignment: Text.AlignHCenter
-                                        }
-
-                                        Text {
-                                            text: BarState.barMode === 2 || BarState.barMode === 4 || BarState.barMode === 5
-                                                     ? "Full-bleed mode — the bar spans the screen; width is ignored."
-                                                     : "Start at screen width — scroll down to shrink/center the slab; the reset restores full."
-                                            color: Themes.dim
-                                            font {
-                                                pixelSize: 9
-                                                family: "ZedMono Nerd Font"
-                                            }
-                                            wrapMode: Text.WordWrap
-                                            Layout.fillWidth: true
-                                        }
                                     }
                                 }
                             }
@@ -3114,41 +3125,184 @@ Item {
                         }
                     }
 
-                    // live preview — proves the pick applies instantly
+                    // media/notification font size — live here too on the preview below
+                    IntStepRow {
+                        icon: "\uf034"
+                        label: "Font size"
+                        minV: 8
+                        maxV: 24
+                        stepV: 1
+                        value: MiscState.notifFontSize
+                        defaultValue: 12
+                        unit: "px"
+                        onCommitted: MiscState.notifFontSize = v
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: Themes.separator
+                        Layout.leftMargin: 32
+                    }
+
+                    // live previews — song-art style + normal, bind to the vars you tweak
+                    Text {
+                        text: "Song-art style"
+                        color: Themes.dim
+                        font {
+                            pixelSize: 10
+                            family: "Quicksand"
+                        }
+                        Layout.topMargin: 8
+                        Layout.leftMargin: 8
+                    }
+
+                    // preview 1 — a live "now playing" notification (art + glyph rows)
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.topMargin: 4
-                        Layout.bottomMargin: 8
-                        implicitHeight: 42
-                        radius: 8
+                        Layout.bottomMargin: 6
+                        implicitHeight: 60
+                        radius: Math.max(0, Math.min(24, MiscState.notifRadius))
                         color: Qt.rgba(1, 1, 1, 0.05)
                         border.width: 1
                         border.color: Themes.borderColor
 
-                        Text {
-                            anchors.left: parent.left
+                        RowLayout {
+                            anchors.fill: parent
                             anchors.leftMargin: 10
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: "AaBbCc 123 — The quick brown fox"
-                            color: Themes.fg
-                            font {
-                                pixelSize: 13
-                                family: MiscState.notifFont
-                            }
-                            elide: Text.ElideRight
-                            width: parent.width - 90
-                        }
-
-                        Text {
-                            anchors.right: parent.right
                             anchors.rightMargin: 10
                             anchors.verticalCenter: parent.verticalCenter
-                            text: MiscState.notifFont
-                            color: Themes.borderMuted
-                            font {
-                                pixelSize: 8
-                                letterSpacing: 0.5
-                                family: "ZedMono Nerd Font"
+                            spacing: 10
+
+                            Rectangle {
+                                Layout.preferredWidth: Math.min(44, MiscState.notifArtSize)
+                                Layout.preferredHeight: Math.min(44, MiscState.notifArtSize)
+                                Layout.fillHeight: true
+                                radius: Math.max(0, Math.min(12, MiscState.notifRadius / 3))
+                                color: Qt.rgba(0.3, 0.6, 0.9, 0.35)
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 2
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 8
+
+                                    Text {
+                                        text: "\uf1ce"
+                                        color: Themes.accent
+                                        font {
+                                            pixelSize: MiscState.notifFontSize
+                                            family: "Symbols Nerd Font Mono"
+                                        }
+                                    }
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: "Bohemian Rhapsody — Queen"
+                                        elide: Text.ElideRight
+                                        color: Themes.fg
+                                        font.family: MiscState.notifFont
+                                        font.pixelSize: MiscState.notifFontSize
+                                        font.weight: Font.Bold
+                                    }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 8
+
+                                    Text {
+                                        text: "\uf04b"
+                                        color: Themes.dim
+                                        font {
+                                            pixelSize: MiscState.notifFontSize
+                                            family: "Symbols Nerd Font Mono"
+                                        }
+                                    }
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: "3:42 — Playing"
+                                        elide: Text.ElideRight
+                                        color: Themes.dim
+                                        font {
+                                            family: MiscState.notifFont
+                                            pixelSize: MiscState.notifFontSize
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Text {
+                        text: "Normal"
+                        color: Themes.dim
+                        font {
+                            pixelSize: 10
+                            family: "Quicksand"
+                        }
+                        Layout.bottomMargin: -2
+                        Layout.leftMargin: 88
+                    }
+
+                    // preview 2 — normal notification (icon + summary + body)
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.topMargin: 4
+                        Layout.bottomMargin: 8
+                        implicitHeight: 54
+                        radius: Math.max(0, Math.min(24, MiscState.notifRadius))
+                        color: Qt.rgba(1, 1, 1, 0.05)
+                        border.width: 1
+                        border.color: Themes.borderColor
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 10
+                            spacing: 10
+
+                            Text {
+                                text: "\uf0a2"
+                                color: Themes.accent
+                                font {
+                                    pixelSize: MiscState.notifFontSize + 4
+                                    family: "Symbols Nerd Font Mono"
+                                }
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 2
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: "New notification"
+                                    elide: Text.ElideRight
+                                    color: Themes.fg
+                                    font {
+                                        family: MiscState.notifFont
+                                        pixelSize: MiscState.notifFontSize
+                                        weight: Font.Bold
+                                    }
+                                }
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: "The quick brown fox jumps over the lazy dog."
+                                    elide: Text.ElideRight
+                                    color: Themes.dim
+                                    font {
+                                        family: MiscState.notifFont
+                                        pixelSize: MiscState.notifFontSize
+                                    }
+                                }
                             }
                         }
                     }
@@ -3231,7 +3385,7 @@ Item {
                         spacing: 12
 
                         Text {
-                            text: "\uf1dc"
+                            text: "\uf10c"
                             color: Themes.muted
                             font {
                                 pixelSize: 14
@@ -3285,7 +3439,7 @@ Item {
 
             Card {
                 title: "Presets"
-                icon: "\uf005"
+                icon: ""
                 accent: Themes.accent
 
                 ColumnLayout {
@@ -4477,7 +4631,7 @@ Item {
             }
 
             HelpTopic {
-                glyph: "\uf080"
+                glyph: ""
                 title: "Workspaces"
                 summary: "app icons · focus glow · urgent pulse"
 

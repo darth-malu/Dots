@@ -29,15 +29,28 @@ Rectangle {
         y: cardPadding
         spacing: cardSpacing
 
-        Text {
-            visible: root.title.length > 0
-            text: (root.icon ? root.icon + "  " : "") + root.title
-            color: root.accent
-            font {
-                pixelSize: 10
-                bold: true
-                family: "Quicksand"
-                letterSpacing: 1
+        RowLayout {
+            Text {
+                visible: root.icon
+                text: root.icon ? root.icon + "  " : ""
+                color: root.accent
+                font {
+                    pixelSize: 10
+                    bold: false
+                    family: "Symbols Nerd Font Mono"
+                    letterSpacing: 1
+                }
+            }
+            Text {
+                visible: root.title.length > 0
+                text: root.title
+                color: root.accent
+                font {
+                    pixelSize: 10
+                    bold: true
+                    family: "Quicksand"
+                    letterSpacing: 1
+                }
             }
         }
     }

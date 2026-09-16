@@ -77,7 +77,7 @@ BarBlock {
     Component.onCompleted: MiscState.qsOpen = showQsPopup
 
     onRightClicked: MiscState.toggleSysTray = !MiscState.toggleSysTray
-    onAltLeftClicked: MiscState.toggleSysTray = !MiscState.toggleSysTray
+    // onAltLeftClicked: MiscState.toggleSysTray = !MiscState.toggleSysTray
 
     Shortcut {
         sequence: "Escape"
@@ -126,7 +126,7 @@ BarBlock {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.top: parent.top
-                    anchors.margins: 4
+                    anchors.margins: 0 // 4::
                     spacing: 0
 
                     // ═══ CONTENT ═══
@@ -141,10 +141,10 @@ BarBlock {
                             icon: ""
                             accent: "transparent"
                             cardColor: "transparent"
-                            cardPadding: 8
+                            cardPadding: 8 // 8::
                             // cardPadding: 0
                             // x: 0
-                            Layout.bottomMargin: 12
+                            // Layout.bottomMargin: 12
 
                             // ── header — three equal thirds, each centred:
                             // avatar · identity + uptime · controls ──
@@ -185,7 +185,6 @@ BarBlock {
 
                                     Image {
                                         id: avatarImg
-
                                         anchors.fill: parent
                                         anchors.margins: 1
                                         source: MiscState.avatarUrl
@@ -217,6 +216,7 @@ BarBlock {
 
                                 Text {
                                     id: uptime
+                                    visible: avatarMa.containsMouse
                                     Layout.alignment: Qt.AlignLeft
                                     text: ResourcesState.uptimeText.length > 0 ? ResourcesState.uptimeText : "…"
                                     color: Themes.muted

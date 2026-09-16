@@ -181,7 +181,7 @@ WrapperMouseArea {
                         Layout.fillWidth: true
                         color: rootMouseArea.accent
                         font.family: MiscState.notifFont
-                        font.pixelSize: 12
+                        font.pixelSize: MiscState.notifFontSize
                         font.weight: Font.Bold
                     }
                 }
@@ -231,7 +231,7 @@ WrapperMouseArea {
                                 maximumLineCount: 1
                                 color: Themes.dim
                                 font.family: MiscState.notifFont
-                                font.pixelSize: 12
+                                font.pixelSize: MiscState.notifFontSize
                                 font.weight: Font.Medium
                             }
                         }
@@ -250,7 +250,7 @@ WrapperMouseArea {
                     text: rootMouseArea.n.body
                     color: Themes.dim
                     font.family: MiscState.notifFont
-                    font.pixelSize: 12
+                    font.pixelSize: MiscState.notifFontSize
                     font.weight: Font.Medium
                 }
 
