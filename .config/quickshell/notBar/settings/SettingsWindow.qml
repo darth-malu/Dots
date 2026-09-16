@@ -692,7 +692,7 @@ Item {
         required property string value
         signal picked(string font)
 
-        property var options: ["Quicksand", "ZedMono Nerd Font", "JetBrains Mono", "Nunito", "Lato"]
+        property var options: MiscState.fontOptions
 
         spacing: 12
         Layout.fillWidth: true
@@ -784,7 +784,7 @@ Item {
                 id: fontPopup
                 y: fontDrop.height + 4
                 width: fontDrop.width
-                height: fontPopupCol.implicitHeight + 8
+                height: fontFlick.implicitHeight + 8
                 closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
                 onOpened: fontDrop.dropOpen = true
                 onClosed: fontDrop.dropOpen = false
@@ -796,43 +796,57 @@ Item {
                     border.color: Themes.borderColor
                 }
 
-                contentItem: ColumnLayout {
-                    id: fontPopupCol
-                    spacing: 0
+                contentItem: Flickable {
+                    id: fontFlick
+                    clip: true
+                    contentWidth: fontPopup.width
+                    contentHeight: fontPopupCol.implicitHeight
+                    implicitHeight: Math.min(fontPopupCol.implicitHeight, 240)
+                    boundsBehavior: Flickable.StopAtBounds
 
-                    Repeater {
-                        model: fpr.options
+                    ColumnLayout {
+                        id: fontPopupCol
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            top: parent.top
+                        }
+                        spacing: 0
 
-                        Rectangle {
-                            required property string modelData
-                            property bool isHovered: fontItemMa.containsMouse
-                            property bool isSelected: fpr.value === modelData
+                        Repeater {
+                            model: fpr.options
 
-                            Layout.fillWidth: true
-                            implicitHeight: 24
-                            radius: 4
-                            color: isSelected ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
+                            Rectangle {
+                                required property string modelData
+                                property bool isHovered: fontItemMa.containsMouse
+                                property bool isSelected: fpr.value === modelData
 
-                            Text {
-                                anchors.left: parent.left
-                                anchors.leftMargin: 8
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: modelData
-                                color: isSelected ? Themes.accent : Themes.dim
-                                font {
-                                    pixelSize: 10
-                                    family: "Quicksand"
+                                Layout.fillWidth: true
+                                implicitHeight: 24
+                                radius: 4
+                                color: isSelected ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
+
+                                Text {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 8
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: modelData
+                                    color: isSelected ? Themes.accent : Themes.dim
+                                    font {
+                                        pixelSize: 10
+                                        family: "Quicksand"
+                                    }
                                 }
-                            }
 
-                            MouseArea {
-                                id: fontItemMa
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    fpr.picked(modelData);
-                                    fontPopup.close();
+                                MouseArea {
+                                    id: fontItemMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        fpr.picked(modelData);
+                                        fontPopup.close();
+                                    }
                                 }
                             }
                         }
@@ -2196,6 +2210,11 @@ Item {
                                             icon: "\uf017",
                                             label: "Clock",
                                             key: "showClock"
+                                        },
+                                        {
+                                            icon: "\uf1d3",
+                                            label: "Git",
+                                            key: "showGit"
                                         }
                                     ]
 
@@ -2962,7 +2981,7 @@ Item {
                             border.color: notifFontDropOpen ? Themes.accent : Themes.borderColor
 
                             property bool notifFontDropOpen: false
-                            property var fontOptions: ["Quicksand", "ZedMono Nerd Font", "JetBrains Mono", "Nunito", "Lato"]
+                            property var fontOptions: MiscState.fontOptions
 
                             Text {
                                 anchors.left: parent.left
@@ -3011,7 +3030,7 @@ Item {
                                 id: notifFontPopup
                                 y: notifFontDropdown.height + 4
                                 width: notifFontDropdown.width
-                                height: notifFontPopupCol.implicitHeight + 8
+                                height: notifFontFlick.implicitHeight + 8
                                 closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
                                 onOpened: notifFontDropdown.notifFontDropOpen = true
                                 onClosed: notifFontDropdown.notifFontDropOpen = false
@@ -3023,43 +3042,57 @@ Item {
                                     border.color: Themes.borderColor
                                 }
 
-                                contentItem: ColumnLayout {
-                                    id: notifFontPopupCol
-                                    spacing: 0
+                                contentItem: Flickable {
+                                    id: notifFontFlick
+                                    clip: true
+                                    contentWidth: notifFontPopup.width
+                                    contentHeight: notifFontPopupCol.implicitHeight
+                                    implicitHeight: Math.min(notifFontPopupCol.implicitHeight, 240)
+                                    boundsBehavior: Flickable.StopAtBounds
 
-                                    Repeater {
-                                        model: notifFontDropdown.fontOptions
+                                    ColumnLayout {
+                                        id: notifFontPopupCol
+                                        anchors {
+                                            left: parent.left
+                                            right: parent.right
+                                            top: parent.top
+                                        }
+                                        spacing: 0
 
-                                        Rectangle {
-                                            required property string modelData
-                                            property bool isHovered: notifFontItemMa.containsMouse
-                                            property bool isSelected: MiscState.notifFont === modelData
+                                        Repeater {
+                                            model: notifFontDropdown.fontOptions
 
-                                            Layout.fillWidth: true
-                                            implicitHeight: 24
-                                            radius: 4
-                                            color: isSelected ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
+                                            Rectangle {
+                                                required property string modelData
+                                                property bool isHovered: notifFontItemMa.containsMouse
+                                                property bool isSelected: MiscState.notifFont === modelData
 
-                                            Text {
-                                                anchors.left: parent.left
-                                                anchors.leftMargin: 8
-                                                anchors.verticalCenter: parent.verticalCenter
-                                                text: modelData
-                                                color: isSelected ? Themes.accent : Themes.dim
-                                                font {
-                                                    pixelSize: 10
-                                                    family: "Quicksand"
+                                                Layout.fillWidth: true
+                                                implicitHeight: 24
+                                                radius: 4
+                                                color: isSelected ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
+
+                                                Text {
+                                                    anchors.left: parent.left
+                                                    anchors.leftMargin: 8
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    text: modelData
+                                                    color: isSelected ? Themes.accent : Themes.dim
+                                                    font {
+                                                        pixelSize: 10
+                                                        family: "Quicksand"
+                                                    }
                                                 }
-                                            }
 
-                                            MouseArea {
-                                                id: notifFontItemMa
-                                                anchors.fill: parent
-                                                hoverEnabled: true
-                                                cursorShape: Qt.PointingHandCursor
-                                                onClicked: {
-                                                    MiscState.notifFont = modelData;
-                                                    notifFontPopup.close();
+                                                MouseArea {
+                                                    id: notifFontItemMa
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: {
+                                                        MiscState.notifFont = modelData;
+                                                        notifFontPopup.close();
+                                                    }
                                                 }
                                             }
                                         }

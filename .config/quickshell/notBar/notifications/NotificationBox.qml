@@ -17,7 +17,13 @@ WrapperMouseArea {
     property real timestamp
     property real elapsed: Date.now()
 
-    readonly property bool ifMusic: (n.appName == 'mzichi' || n.appName == 'ncmpcpp' || n.appName == 'spotifY')
+    readonly property bool ifMusic: NotificationState.isMusic(n)
+
+    // music bodies arrive as glyph-prefixed lines (see NotificationState.musicLines);
+    // this mirrors what's on screen so the expand button gauges content size
+    readonly property var musicRows: NotificationState.musicLines(n)
+    // mirrors what's on screen (text + glyph) so the expand button gauges size
+    readonly property string previewText: ifMusic ? musicRows.map(r => r.text + r.icon).join("") : (n.body ?? "")
 
     readonly property bool isImageIcon: n.image == "" && n.appIcon != ""
 
@@ -29,6 +35,8 @@ WrapperMouseArea {
 
     property int indexAll: -1
 
+    // music toasts show the configurable album-art size (Settings → art size);
+    // regular notifications keep the fixed 50px app icon
     property real iconSize: ifMusic ? MiscState.notifArtSize : 50
 
     property real iconRadius: iconSize / 5
@@ -118,7 +126,7 @@ WrapperMouseArea {
                         text: rootMouseArea.ifMusic ? "\uf001" : "\uf0f3"
                         color: Themes.accentSoft
                         font {
-                            pixelSize: Math.round(rootMouseArea.iconSize * 0.48)
+                            pixelSize: Math.round(rootMouseArea.iconSize * 0.68)
                             family: "Symbols Nerd Font Mono"
                         }
                     }
@@ -142,14 +150,33 @@ WrapperMouseArea {
                 id: contentLayout
                 spacing: 4
                 Layout.fillWidth: true
+                // music toasts park their short title/body against the top edge
+                // beside the icon — floating them mid-card looks awkward there;
+                // regular notifications keep their centered, historic look
+                Layout.alignment: rootMouseArea.ifMusic ? Qt.AlignTop : Qt.AlignVCenter
+                Layout.topMargin: 2
 
+                // first line = the track title with its 󰎍 prefix split into the small
+                // Symbols glyph, so the icon renders correctly beside the title
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 8
+                    spacing: 6
+
+                    Text {
+                        id: musicSummaryIcon
+                        visible: rootMouseArea.ifMusic && NotificationState.glyphParts(rootMouseArea.n.summary).icon != ""
+                        text: NotificationState.glyphParts(rootMouseArea.n.summary).icon
+                        color: rootMouseArea.accent
+                        Layout.alignment: Qt.AlignVCenter
+                        font {
+                            pixelSize: 10
+                            family: "Symbols Nerd Font Mono"
+                        }
+                    }
 
                     Text {
                         id: summary
-                        text: rootMouseArea.n.summary
+                        text: rootMouseArea.ifMusic ? NotificationState.cleanSummary(rootMouseArea.n.summary) : rootMouseArea.n.summary
                         elide: Text.ElideRight
                         Layout.fillWidth: true
                         color: rootMouseArea.accent
@@ -159,8 +186,61 @@ WrapperMouseArea {
                     }
                 }
 
+                // line break after the title — song toasts breathe between the
+                // bold header and the artist/album rows below
+                Item {
+                    visible: rootMouseArea.ifMusic
+                    Layout.fillWidth: true
+                    implicitHeight: 6
+                }
+
+                // song body: one row per line, small glyph (Symbols) beside the
+                // text (notifFont) — collapsible like the generic body below
+                ColumnLayout {
+                    id: musicBody
+                    visible: rootMouseArea.ifMusic && rootMouseArea.musicRows.length > 0
+                    Layout.fillWidth: true
+                    Layout.maximumWidth: 500
+                    spacing: 3
+
+                    Repeater {
+                        model: rootMouseArea.musicRows.slice(0, rootMouseArea.expanded ? 99 : 3)
+
+                        RowLayout {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            spacing: 6
+
+                            Text {
+                                visible: modelData.icon != ""
+                                text: modelData.icon
+                                color: Themes.mauve
+                                Layout.alignment: Qt.AlignVCenter
+                                font {
+                                    pixelSize: 10
+                                    family: "Symbols Nerd Font Mono"
+                                }
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
+                                text: modelData.text
+                                elide: Text.ElideRight
+                                wrapMode: Text.Wrap
+                                maximumLineCount: 1
+                                color: Themes.dim
+                                font.family: MiscState.notifFont
+                                font.pixelSize: 12
+                                font.weight: Font.Medium
+                            }
+                        }
+                    }
+                }
+
                 Text {
                     id: body
+                    visible: !rootMouseArea.ifMusic
                     Layout.fillWidth: true
                     Layout.maximumWidth: 500
                     Layout.preferredWidth: implicitWidth
@@ -205,7 +285,7 @@ WrapperMouseArea {
                                 font {
                                     pixelSize: 10
                                     bold: true
-                                    family: "Quicksand"
+                                    family: MiscState.notifFont
                                 }
 
                                 Behavior on color {
@@ -243,7 +323,7 @@ WrapperMouseArea {
 
             Rectangle {
                 id: expandButton
-                visible: body.text.length > (rootMouseArea.n.actions.length > 1 ? 50 : 100)
+                visible: rootMouseArea.previewText.length > (rootMouseArea.n.actions.length > 1 ? 50 : 100)
 
                 implicitWidth: 18
                 implicitHeight: 18

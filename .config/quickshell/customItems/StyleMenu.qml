@@ -113,6 +113,7 @@ PopupWindow {
 
                 ColumnLayout {
                     Layout.fillWidth: true
+                    Layout.topMargin: 2
                     spacing: 1
 
                     Text {

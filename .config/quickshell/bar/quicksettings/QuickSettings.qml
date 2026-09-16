@@ -25,7 +25,7 @@ BarBlock {
     property bool qsPopupArmed: false
     // 0 = hidden, 1 = reboot presets, 2 = shutdown presets
     property int timerPicker: 0
-    property bool compactNowPlaying: true
+    readonly property bool compactNowPlaying: MiscState.compactNowPlaying
     property bool shuffleOn: false
     property bool loopOn: false
 

@@ -43,7 +43,8 @@ Singleton {
         "pavucontrol": "pavucontrol",
         "stremio": "com.stremio.Stremio",
         "freetube": "freetube",
-        "telegram": "org.telegram.desktop"
+        "telegram": "org.telegram.desktop",
+        "spotube": "spotube"
     }
 
     // longest substring match wins so "chrome-xyz-pwa" hits before bare rules

@@ -42,10 +42,79 @@ Singleton {
         notifPanelOpen = !notifPanelOpen;
     }
 
+    // ── music notifications ──────────────────────────────────────────────
+    // MprisState.sendNotify ("-a mzichi") packs nerd-font glyphs (󰎍 title,
+    //  artist,  album) straight into the summary/body. Those glyphs only
+    // exist in the Symbols Nerd Font, so we split them out here and let the
+    // UI render the icon in Symbols + the text in the user's notifFont.
+    function isMusic(notif): bool {
+        if (!notif)
+            return false;
+        const a = String(notif.appName || "").toLowerCase();
+        return a === "mzichi" || a === "ncmpcpp" || a === "spotify";
+    }
+
+    // true for every code point the Nerd Font uses for its glyphs
+    // (BMP private-use area + the two supplementary PUA planes)
+    function _isGlyph(cp: int): bool {
+        return (cp >= 0xE000 && cp <= 0xF8FF) || (cp >= 0xF0000 && cp <= 0xFFFFD) || (cp >= 0x100000 && cp <= 0x10FFFD);
+    }
+
+    // splits the leading nerd-glyph (+ trailing whitespace) off any string:
+    // "󰎍  Some Title" → { icon: "󰎍", text: "Some Title" }; no glyph → { icon: "", text }
+    function glyphParts(s: string): var {
+        const str = String(s ?? "");
+        let i = 0;
+        let glyph = "";
+        const n = str.length;
+        while (i < n) {
+            const cp = str.codePointAt(i);
+            if (cp === 0x20 || cp === 0x9 || cp === 0xA0) {
+                i += 1;
+                continue;
+            }
+            if (root._isGlyph(cp)) {
+                if (glyph === "")
+                    glyph = String.fromCodePoint(cp);
+                i += cp > 0xFFFF ? 2 : 1;
+                continue;
+            }
+            break;
+        }
+        if (glyph === "")
+            return { icon: "", text: str };
+        return { icon: glyph, text: str.slice(i).replace(/^\s+/, "") };
+    }
+
+    // music body → [{icon, text}] rows (one per line), blank lines dropped
+    function musicLines(notif): var {
+        if (!root.isMusic(notif))
+            return [];
+        const body = notif && notif.body ? notif.body : "";
+        return String(body)
+            .split(/\r?\n/)
+            .map(l => root.glyphParts(l))
+            .filter(p => String(p.text || "").trim().length > 0);
+    }
+
+    // glyph-stripped, single-line body for history rows ("artist · album")
+    function cleanBody(s: string): string {
+        return String(s ?? "")
+            .split(/\r?\n/)
+            .map(l => root.glyphParts(l).text)
+            .filter(t => String(t || "").trim().length > 0)
+            .join(" · ");
+    }
+
+    // glyph-stripped summary (keeps the title, drops the 󰎍 prefix)
+    function cleanSummary(s: string): string {
+        return root.glyphParts(s).text || String(s ?? "");
+    }
+
     function onNewNotif(notif) {
         // console.log("[notif] app=" + notif.appName + " summary=" + notif.summary);
 
-        let isMusic = (notif.appName == 'mzichi' || notif.appName == 'ncmpcpp' || notif.appName == 'spotifY');
+        let isMusic = root.isMusic(notif);
 
         // nm-applet's stock connect popup is replaced by our themed one (emitted by NetworkState)
         if (notif.summary == "Connection established" && notif.appName != "Shell")
@@ -83,7 +152,7 @@ Singleton {
         function onQsOpenChanged() {
             if (!MiscState.qsOpen)
                 return;
-            const keep = root.popupNotifs.filter(n => !(n.appName == 'mzichi' || n.appName == 'ncmpcpp' || n.appName == 'spotifY'));
+            const keep = root.popupNotifs.filter(n => !root.isMusic(n));
             if (keep.length !== root.popupNotifs.length) {
                 root.popupNotifs = keep;
                 if (keep.length === 0 && !root.notifPanelOpen)

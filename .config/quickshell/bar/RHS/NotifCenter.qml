@@ -159,16 +159,29 @@ BarBlock {
                             radius: 9
                             color: clearMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.15) : Themes.separator
 
-                            Text {
+                            Row {
                                 id: clearTxt
 
                                 anchors.centerIn: parent
-                                text: "\uf1f8  clear"
-                                color: clearMa.containsMouse ? "#ff5555" : Themes.dim
-                                font {
-                                    pixelSize: 10
-                                    bold: true
-                                    family: "Symbols Nerd Font Mono, Quicksand"
+                                spacing: 5
+
+                                Text {
+                                    text: "\uf1f8"
+                                    color: clearMa.containsMouse ? "#ff5555" : Themes.dim
+                                    font {
+                                        pixelSize: 11
+                                        family: "Symbols Nerd Font Mono"
+                                    }
+                                }
+
+                                Text {
+                                    text: "clear"
+                                    color: clearMa.containsMouse ? "#ff5555" : Themes.dim
+                                    font {
+                                        pixelSize: 10
+                                        bold: true
+                                        family: MiscState.notifFont
+                                    }
                                 }
                             }
 
@@ -214,6 +227,17 @@ BarBlock {
                             required property int index
 
                             readonly property bool urgent: histRow.modelData.urgency === 2
+
+                            // music toasts carry nerd-glyphs (󰎍 title /  artist /
+                            //  album) — strip them for the history list so the
+                            // text renders in the user's notification font
+                            readonly property bool isMusic: NotificationState.isMusic(histRow.modelData)
+                            readonly property string cleanSummary: histRow.isMusic
+                                ? NotificationState.cleanSummary(histRow.modelData.summary)
+                                : (histRow.modelData.summary ?? "")
+                            readonly property string cleanBody: histRow.isMusic
+                                ? NotificationState.cleanBody(histRow.modelData.body)
+                                : String(histRow.modelData.body ?? "").split(String.fromCharCode(10)).join(" ")
 
                             // brief check-mark feedback after copying the content
                             property bool copied: false
@@ -287,7 +311,7 @@ BarBlock {
                                     Text {
                                         anchors.centerIn: parent
                                         visible: histRow.iconUrl == ""
-                                        text: "\uf0f3"
+                                        text: histRow.isMusic ? "\uf001" : "\uf0f3"
                                         color: Themes.muted
                                         font {
                                             pixelSize: 13
@@ -302,7 +326,7 @@ BarBlock {
 
                                     Text {
                                         Layout.fillWidth: true
-                                        text: histRow.modelData.summary
+                                        text: histRow.cleanSummary
                                         color: histRow.urgent ? "#ff5555" : Themes.accent
                                         elide: Text.ElideRight
                                         font {
@@ -316,8 +340,8 @@ BarBlock {
                                         id: bodyText
 
                                         Layout.fillWidth: true
-                                        visible: (histRow.expanded || root.query.length > 0) && histRow.modelData.body.length > 0
-                                        text: histRow.modelData.body.split(String.fromCharCode(10)).join(" ")
+                                        visible: (histRow.expanded || root.query.length > 0) && histRow.cleanBody.length > 0
+                                        text: histRow.cleanBody
                                         color: Themes.dim
                                         wrapMode: histRow.expanded ? Text.WrapAtWordBoundaryOrAnywhere : Text.NoWrap
                                         maximumLineCount: histRow.expanded ? 3 : 1

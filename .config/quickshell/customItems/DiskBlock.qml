@@ -631,7 +631,6 @@ done`;
 
                                     Text {
                                         Layout.preferredWidth: 46
-                                        horizontalAlignment: Text.AlignRight
                                         text: drow.parts[1] || ""
                                         color: Themes.muted
                                         font {
@@ -642,7 +641,6 @@ done`;
 
                                     Text {
                                         Layout.preferredWidth: 46
-                                        horizontalAlignment: Text.AlignRight
                                         text: drow.parts[3] || ""
                                         color: Themes.dim
                                         font {
@@ -684,7 +682,6 @@ done`;
 
                                     Text {
                                         Layout.preferredWidth: 36
-                                        horizontalAlignment: Text.AlignRight
                                         text: `${drow.pct}%`
                                         color: drow.tier
                                         font {
@@ -714,11 +711,11 @@ done`;
                                         }
 
                                         Text {
-                                            anchors.centerIn: parent
+                                            anchors.left: parent.left
+                                            anchors.verticalCenter: parent.verticalCenter
                                             text: dEmptyMa.containsMouse && drow.hasTrash
                                                 ? "\uf014"
                                                 : disk.trashSizeFor(drow.mount)
-                                            horizontalAlignment: Text.AlignRight
                                             color: dEmptyMa.containsMouse && drow.hasTrash
                                                 ? (drow.armed ? "#ff5555" : Themes.fg)
                                                 : drow.hasTrash ? "#ffb86c" : Themes.borderMuted

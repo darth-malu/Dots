@@ -121,6 +121,26 @@ Singleton {
         Prefs.write();
     }
 
+    // mpris card view state — compact strip vs expanded art; shared so the
+    // cog, alt-click and the SUPER+Play keybind all flip the same switch
+    property bool compactNowPlaying: true
+
+    // source of truth for every font dropdown in settings — add a family
+    // here (only ones actually installed are listed) to expose it everywhere
+    readonly property var fontOptions: [
+        "Quicksand", "Inter", "Nunito", "Lato", "IBM Plex Sans",
+        "ZedMono Nerd Font", "JetBrains Mono", "JetBrainsMono Nerd Font Mono",
+        "GeistMono Nerd Font", "CaskaydiaCove Nerd Font Mono",
+        "FantasqueSansM Nerd Font", "SauceCodePro Nerd Font Mono",
+        "SpaceMono Nerd Font", "VictorMono Nerd Font", "Iosevka Comfy",
+        "Mononoki Nerd Font", "EnvyCodeR Nerd Font", "DaddyTimeMono Nerd Font",
+        "Inter Display", "IBM Plex Mono", "JetBrainsMonoNL Nerd Font Mono",
+        "Lekton Nerd Font", "Lilex Nerd Font", "MartianMono Nerd Font",
+        "MesloLGM Nerd Font", "MesloLGS Nerd Font", "MonaspiceNe Nerd Font",
+        "Monofur Nerd Font", "Noto Sans Mono", "ProggyClean Nerd Font",
+        "Atkinson Hyperlegible Mono"
+    ]
+
     property bool showBattery: Prefs.prefs.showBattery
     onShowBatteryChanged: {
         Prefs.prefs.showBattery = showBattery;
@@ -230,6 +250,13 @@ Singleton {
     property bool showResources: Prefs.prefs.showResources
     onShowResourcesChanged: {
         Prefs.prefs.showResources = showResources;
+        Prefs.write();
+    }
+
+    // git monitor pill — off by default (Settings → Bar Modules)
+    property bool showGit: Prefs.prefs.showGit
+    onShowGitChanged: {
+        Prefs.prefs.showGit = showGit;
         Prefs.write();
     }
 

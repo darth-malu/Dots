@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.customItems
 import qs.services
+import qs.themes
 
 Loader {
     id: resourceLoader
@@ -16,6 +17,8 @@ Loader {
 
     sourceComponent: RowLayout {
         id: resourcesRow
+
+        spacing: Themes.moduleGap // matches rightBlock's module gap in Bar.qml
 
         DiskBlock {
             host: resourceLoader.host

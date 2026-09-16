@@ -53,13 +53,14 @@ Singleton {
             property bool showWorkspaces: true
             property bool transparentWsBadge: false
             property string notifFont: "ZedMono Nerd Font"
-            property int notifArtSize: 90
+            property int notifArtSize: 78
             property int notifRadius: 10
             property bool showVolumeOut: true
             property bool showVolumeIn: true
             property bool showAppVolume: false
             property bool showClock: true
             property bool showResources: true
+            property bool showGit: false
             property bool resourcesVisible: false
             property int themeScheme: 0
             property bool wifiRadioWanted: true

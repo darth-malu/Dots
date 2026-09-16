@@ -13,7 +13,7 @@ RowLayout {
     id: root
 
     // matches rightBlock's module gap in Bar.qml
-    spacing: 8
+    spacing: Themes.moduleGap
 
     Layout.alignment: Qt.AlignVCenter
 
@@ -33,7 +33,7 @@ RowLayout {
     Component {
         id: connections
         RowLayout {
-            spacing: 4
+            spacing: Themes.moduleGap // matches rightBlock's module gap in Bar.qml
 
             Netspeed {
                 host: root.host

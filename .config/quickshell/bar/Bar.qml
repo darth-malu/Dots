@@ -126,7 +126,7 @@ ShellRoot {
                     id: rightBlock
                     Layout.alignment: Qt.AlignRight
                     // macOS menu-bar rhythm — one identical gap between modules
-                    spacing: 8 // 14::
+                    spacing: Themes.moduleGap
 
                     // media moves in-line with the right cluster so the centered
                     // pill can no longer slide under the active-window title
@@ -140,6 +140,7 @@ ShellRoot {
                     }
                     Git {
                         // visible: false
+                        visible: MiscState.showGit
                         host: barr
                     }
                     SystemTray {

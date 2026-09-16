@@ -275,4 +275,9 @@ Singleton {
     readonly property color roundedUrgentBg: Qt.rgba(1, 0.33, 0.33, 0.15)
     readonly property color roundedBadgeBg: Qt.rgba(accent.r, accent.g, accent.b, 0.25)
     readonly property color roundedBadgeText: Qt.rgba(1, 1, 1, 0.5)
+
+    // uniform gap between the right-hand bar modules (mpris | resources |
+    // tray | volume…) — single source of truth so every RHS container keeps
+    // the same spacing
+    readonly property int moduleGap: 8
 }

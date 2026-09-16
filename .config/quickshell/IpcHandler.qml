@@ -54,8 +54,15 @@ Item {
             MiscState.showMpris = !MiscState.showMpris;
         }
 
-        function toggleMprisArt(): void {
+function toggleMprisArt(): void {
             MprisState.mprisArtVisible = !MprisState.mprisArtVisible;
+        }
+
+        function toggleView(): void {
+            // compact strip ⇄ expanded border/details view on the bar mpris
+            // module — the same switch ALT+click drives (Mpris.qml), so the
+            // SUPER+Play keybind and the mouse toggle the exact same state
+            MprisState.mprisCompact = !MprisState.mprisCompact;
         }
 
         function songArt(): void {

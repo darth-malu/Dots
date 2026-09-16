@@ -44,6 +44,16 @@ ClippingRectangle {
     // never resizes when the controls reveal
     implicitHeight: baseCardHeight + (chooserAvailable && chooserOpen ? chooserPanel.implicitHeight : 0)
 
+    // ALT + click anywhere on the card flips between the compact strip and
+    // the expanded art view (mirrors the SUPER+Play keybind, which drives
+    // the same MiscState.compactNowPlaying switch)
+    TapHandler {
+        acceptedButtons: Qt.LeftButton
+        acceptedModifiers: Qt.AltModifier
+        gesturePolicy: TapHandler.ReleaseWithinBounds
+        onTapped: MiscState.compactNowPlaying = !MiscState.compactNowPlaying
+    }
+
     // combined control — one button for both card duties, styled to
     // match the audio volume card's management cog: left-click runs the
     // caller's primary action (expand/collapse the art view), right-click
@@ -324,6 +334,9 @@ ClippingRectangle {
                 Layout.topMargin: 4
                 Layout.leftMargin: 4
                 Layout.rightMargin: 12
+                // the seek strip overlays the card floor below — keep the
+                // transport clear of its groove/knob
+                Layout.bottomMargin: 20
                 spacing: 2
 
                 // title + artist
@@ -403,42 +416,49 @@ ClippingRectangle {
                         Layout.fillWidth: true
                     }
                 }
+            }
+        }
 
-                // progress scrubber — part of the layout flow so it can't slip
-                // under the card clip; the groove keeps a fixed height so it
-                // never bobs on hover — only the knob + fill react (Scrubber)
-                Scrubber {
-                    id: compactProgress
+        // seek strip — a floor line pinned to the card's bottom border; it
+        // spans from the END of the album art all the way to the card's border
+        // (left = art's right edge via the square art's width, right clears the
+        // rounded corner) so it reads as part of the card edge, not a float
+        SeekStrip {
+            id: compactProgress
 
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 18
-                    accent: card.dominantColor
+            anchors {
+                left: parent.left
+                leftMargin: compactArt.width
+                right: parent.right
+                rightMargin: 8
+                bottom: parent.bottom
+            }
+            accent: card.dominantColor
+            length: MprisState.cardPlayer?.length ?? 0
 
-                    ratio: {
-                        card.progressTick;
-                        const p = MprisState.cardPlayer;
-                        if (!p || !(p.length > 0))
-                            return 0;
-                        const len = p.length;
-                        const raw = p.position ?? 0;
-                        if (raw == null || len <= 0 || isNaN(raw) || isNaN(len))
-                            return 0;
-                        return Math.max(0, Math.min(raw / len, 1));
-                    }
+            ratio: {
+                card.progressTick;
+                const p = MprisState.cardPlayer;
+                if (!p || !(p.length > 0))
+                    return 0;
+                const len = p.length;
+                const raw = p.position ?? 0;
+                if (raw == null || len <= 0 || isNaN(raw) || isNaN(len))
+                    return 0;
+                return Math.max(0, Math.min(raw / len, 1));
+            }
 
-                    onSeeked: frac => {
-                        const p = MprisState.cardPlayer;
-                        if (p && p.length > 0)
-                            p.position = frac * p.length;
-                    }
-                }
+            onSeeked: frac => {
+                const p = MprisState.cardPlayer;
+                if (p && p.length > 0)
+                    p.position = frac * p.length;
             }
         }
 
         ChooserCog {
             // peek until the card is hovered (or the chooser is open)
             visible: compactHover.hovered || card.chooserOpen
-            onClicked: card.compactNowPlaying = false
+            onClicked: MiscState.compactNowPlaying = false
             onOpenChooser: card.chooserOpen = !card.chooserOpen
             anchors {
                 right: parent.right
@@ -579,41 +599,36 @@ ClippingRectangle {
         Item {
             anchors.fill: parent
 
-            // progress scrubber pinned to the card's bottom border; tapping the
-            // track text below-slides the transport row in above the
-            // bottom-left title/artist — the groove stays a fixed height on
-            // hover so only the knob + fill brighten (Scrubber)
-            Item {
-                id: expProgressBox
+            // seek strip — same floor-line language as compact, adhered to the
+            // expanded card's bottom border and inset only by the corner
+            SeekStrip {
+                id: expProgress
 
                 anchors {
                     left: parent.left
                     right: parent.right
                     bottom: parent.bottom
+                    leftMargin: 12
+                    rightMargin: 12
                 }
-                height: 20
+                accent: card.dominantColor
+                length: MprisState.cardPlayer?.length ?? 0
 
-                Scrubber {
-                    id: expProgress
-                    anchors.fill: parent
-                    accent: card.dominantColor
+                ratio: {
+                    card.progressTick;
+                    const p = MprisState.cardPlayer;
+                    if (!p || !(p.length > 0))
+                        return 0;
+                    const raw = p.position ?? 0;
+                    if (raw == null || isNaN(raw) || raw <= 0)
+                        return 0;
+                    return Math.max(0, Math.min(raw / p.length, 1));
+                }
 
-                    ratio: {
-                        card.progressTick;
-                        const p = MprisState.cardPlayer;
-                        if (!p || !(p.length > 0))
-                            return 0;
-                        const raw = p.position ?? 0;
-                        if (raw == null || isNaN(raw) || raw <= 0)
-                            return 0;
-                        return Math.max(0, Math.min(raw / p.length, 1));
-                    }
-
-                    onSeeked: frac => {
-                        const p = MprisState.cardPlayer;
-                        if (p && p.length > 0)
-                            p.position = frac * p.length;
-                    }
+                onSeeked: frac => {
+                    const p = MprisState.cardPlayer;
+                    if (p && p.length > 0)
+                        p.position = frac * p.length;
                 }
             }
 
@@ -764,7 +779,7 @@ ClippingRectangle {
             // peek until the card is hovered (or the chooser is open)
             visible: expandedHover.hovered || card.chooserOpen
             // left = collapse back to compact, right = player chooser
-            onClicked: card.compactNowPlaying = true
+            onClicked: MiscState.compactNowPlaying = true
             onOpenChooser: card.chooserOpen = !card.chooserOpen
             anchors {
                 right: parent.right

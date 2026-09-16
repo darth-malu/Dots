@@ -16,7 +16,7 @@ RowLayout {
 
     Layout.alignment: Qt.AlignVCenter
     // consistent with the rest of the RHS module gap (Bar.qml rightBlock / SystemTray)
-    spacing: 8
+    spacing: Themes.moduleGap
 
     readonly property bool pipewireReady: PipewireState.pipewireReady
 

@@ -42,9 +42,9 @@ Item {
     // (the loud pink clashed with the progress ring)
     readonly property color brand: MprisState.brandColor(MprisState.player) ?? Themes.mauve
 
-    // compact pills show only the ring/icon; hovering reveals the details.
-    // the pill keeps a FIXED width at all times, so nothing moves on hover —
-    // only the detail items' opacity animates in place (stationary reveal)
+    // compact pills show only the ring; hovering reveals + expands the
+    // details. compact mode reserves NO hidden width, so the module sits flush
+    // with the neighbouring blocks and only widens (smoothly) while hovered.
     readonly property bool showDetails: !MprisState.mprisCompact || mprisRoot._hovering
 
     // 0..1 animated reveal factor — now drives *opacity only*. the geometry
@@ -242,9 +242,9 @@ Item {
                 id: pill
                 visible: mprisRoot.pillVisible
                 implicitHeight: mprisRoot.host ? mprisRoot.host.height : 30
-                // fixed footprint — reserving the full expanded width keeps
-                // the module stationary on hover; the details fade in over
-                // the pre-reserved slot instead of pushing the RHS icons
+                // width follows pillRow — compact reserves only the ring so
+                // the module reads as part of the right-hand block; the
+                // details animate their layout width in on hover
                 implicitWidth: pillRow.implicitWidth
                 radius: height / 2
                 // color: Qt.rgba(0.1, 0.04, 0.18, 0.4)
@@ -253,8 +253,11 @@ Item {
                 RowLayout {
                     id: pillRow
                     anchors.fill: parent
-                    anchors.leftMargin: 6
-                    anchors.rightMargin: 6
+                    // 2px content inset — identical to BarBlock's face, so the
+                    // visual gap around Mpris matches every other module pair
+                    // (12px = 2 content + 8 module gap + 2 content)
+                    anchors.leftMargin: 2
+                    anchors.rightMargin: 2
                     // fixed gap — the detail slots reserve their space
                     // unconditionally so the reveal never reflows
                     spacing: 6
@@ -262,7 +265,11 @@ Item {
                     // ── album art + fallback ──
                     Item {
                         opacity: mprisRoot._details
-                        Layout.preferredWidth: pill.height - 4
+                        // compact pills collapse the hidden detail slot too —
+                        // only the ring keeps its footprint, so the module sits
+                        // flush with the neighbouring blocks instead of holding
+                        // a big empty reservoir until hovered
+                        Layout.preferredWidth: (pill.height - 4) * mprisRoot._details
                         Layout.preferredHeight: pill.height - 4
 
                         Behavior on opacity {
@@ -333,6 +340,9 @@ Item {
                         id: title
                         opacity: mprisRoot._details
                         Layout.alignment: Qt.AlignVCenter
+                        // width follows the reveal so hidden detail slots don't
+                        // reserve bar space in compact mode (see art tile)
+                        Layout.preferredWidth: implicitWidth * mprisRoot._details
                         maxWidth: 150
                         scrolling: MprisState.marqueeEnabled
                         text: MprisState.player?.trackTitle || "Unknown Track"
@@ -358,6 +368,8 @@ Item {
                         visible: Mpris.players.length > 1
                         opacity: mprisRoot._details
                         Layout.alignment: Qt.AlignVCenter
+                        // follows the reveal like the title/art (see above)
+                        Layout.preferredWidth: implicitWidth * mprisRoot._details
 
                         Behavior on opacity {
                             NumberAnimation {
@@ -601,6 +613,16 @@ Item {
             implicitWidth: 280
             implicitHeight: 280
 
+            // a lost player must never leave a zombie popup behind — drop the
+            // request flag so the window hides for good
+            Connections {
+                target: MprisState
+                function onPlayerChanged() {
+                    if (MprisState.player === null)
+                        mprisRoot.showArtPopup = false;
+                }
+            }
+
             Rectangle {
                 id: artPopupRect
                 anchors.fill: parent
@@ -614,6 +636,7 @@ Item {
 
                 // album art fills the popup (respects the settings toggle)
                 Image {
+                    id: artPopupImage
                     anchors.fill: parent
                     source: MprisState.artFor(MprisState.player)
                     fillMode: Image.PreserveAspectCrop
@@ -625,8 +648,8 @@ Item {
                 // browsers never get art — show their icon instead
                 Text {
                     anchors.centerIn: parent
-                    visible: !MprisState.mprisArtVisible || MprisState.isBrowserPlayer(MprisState.player)
-                    text: MprisState.isBrowserPlayer(MprisState.player) ? MprisState.browserGlyph(MprisState.player) : "🎵"
+                    visible: MprisState.isBrowserPlayer(MprisState.player)
+                    text: MprisState.browserGlyph(MprisState.player)
                     color: Themes.accent
                     font {
                         pixelSize: 42
@@ -634,12 +657,25 @@ Item {
                     }
                 }
 
-                // fallback when no art
-                BarText {
+                // fallback — covers the "no art at all" case AND the brief
+                // window where the URL is set but the image is still loading/
+                // failed, so the popup is never a blank card
+                Text {
                     anchors.centerIn: parent
-                    visible: !(MprisState.player?.trackArtUrl ?? "") && !MprisState.isBrowserPlayer(MprisState.player)
+                    visible: !MprisState.isBrowserPlayer(MprisState.player)
+                        && (!MprisState.mprisArtVisible || artPopupImage.status !== Image.Ready)
                     text: "🎵"
-                    pointSize: 48
+                    color: Themes.dim
+                    font {
+                        pixelSize: 42
+                        family: "Symbols Nerd Font Mono"
+                    }
+                }
+
+                // click anywhere on the viewer to dismiss it (Escape also works)
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: mprisRoot.showArtPopup = false
                 }
             }
         }

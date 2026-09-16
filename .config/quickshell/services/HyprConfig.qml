@@ -57,16 +57,33 @@ Singleton {
         if (bs) root.borderSize = parseInt(bs[1], 10);
         const rnd = buf.match(/rounding\s*=\s*(\d+)/);
         if (rnd) root.rounding = parseInt(rnd[1], 10);
-        // first rgba inside active_border is the primary colour — must cross
-        // the inner `colors = { ... }` brace so the dual-tone form parses too
-        const ab = buf.match(/active_border\s*=\s*\{.*?"rgba\(([0-9A-Fa-f]{8})\)"/);
-        if (ab) root.activeBorder = "#" + ab[1].slice(0, 6);
-        const ib = buf.match(/inactive_border\s*=\s*"rgba\(([0-9A-Fa-f]{8})\)"/);
-        if (ib) root.inactiveBorder = "#" + ib[1].slice(0, 6);
-        const dw = buf.match(/active_border\s*=\s*\{[\s\S]*?"rgba\(([0-9A-Fa-f]{8})\)"\s*,\s*"rgba\(([0-9A-Fa-f]{8})\)"/);
-        root.dualTone = !!dw;
-        if (dw)
-            root.borderTone2 = "#" + dw[2].slice(0, 6);
+
+        // Border colours are single-line entries; parse them line by line and
+        // skip comment lines. general.lua ships a commented-out dual-tone example
+        // (`-- active_border   = { colors = {"rgba(33ccffee)", "rgba(CDDC39FF)"}, angle = 45 }`),
+        // and the old `[\s\S]*?` dual regex matched across lines into it, so
+        // dualTone always parsed as on even for a solid one-colour border and
+        // the switch couldn't hold OFF. Only a real, non-commented line may now
+        // feed the parse.
+        for (const raw of String(buf || "").split(/\r?\n/)) {
+            const line = raw.replace(/^\s+/, "");
+            if (line.startsWith("--") || line.startsWith("//"))
+                continue;
+            const ab = line.match(/^active_border\s*=\s*\{.*?"rgba\(([0-9A-Fa-f]{8})\)"/);
+            if (ab)
+                root.activeBorder = "#" + ab[1].slice(0, 6);
+            const dw = line.match(/^active_border\s*=\s*\{.*"rgba\(([0-9A-Fa-f]{8})\)"\s*,\s*"rgba\(([0-9A-Fa-f]{8})\)"/);
+            if (dw)
+                root.borderTone2 = "#" + dw[2].slice(0, 6);
+            if (dw) {
+                root.dualTone = true;
+            } else if (ab) {
+                root.dualTone = false;
+            }
+            const ib = line.match(/^inactive_border\s*=\s*"rgba\(([0-9A-Fa-f]{8})\)"/);
+            if (ib)
+                root.inactiveBorder = "#" + ib[1].slice(0, 6);
+        }
     }
 
     Process {
