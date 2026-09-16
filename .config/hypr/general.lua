@@ -3,11 +3,11 @@ hl.config({
     -- https://wiki.hyprland.org/Configuring/Variables/
     col = {
       active_border = { colors = { "rgba(00ABF5FF)" } }, --rgba(00FFF5aa)
-      -- active_border   = { colors = {"rgba(33ccffee)", "rgba(CDDC39FF)"}, angle = 45 },
+      -- active_border   = { colors = {"rgba(33ccffee)", "rgba(FF5555FF)"}, angle = 45 },
       inactive_border = "rgba(595959FF)",
     },
-    gaps_in = 6, -- NOTE: space essential for gaps script
-    gaps_out = 12,
+    gaps_in = 4, -- NOTE: space essential for gaps script
+    gaps_out = 9,
     border_size = 1,
     resize_on_border = true,
     resize_corner = 3,        -- 0:: 1-4 clockwise

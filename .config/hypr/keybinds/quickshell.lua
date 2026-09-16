@@ -7,11 +7,11 @@ hl.bind("XF86AudioNext", hl.dsp.exec_cmd("qs ipc call mpris next"), { locked = t
 hl.bind("XF86AudioPause", hl.dsp.exec_cmd("qs ipc call mpris pauseAll"), { locked = true })
 hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("qs ipc call mpris togglePlaying"), { locked = true })
 hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("qs ipc call mpris previous"), { locked = true })
-hl.bind(mod .. "+ XF86AudioPlay", hl.dsp.exec_cmd("qs ipc call mpris toggleMprisArt"), { locked = true })
+hl.bind(mod .. "XF86AudioPlay", hl.dsp.exec_cmd("qs ipc call mpris toggleView"), { locked = true })
 hl.bind("ALT + XF86AudioPlay", hl.dsp.exec_cmd("qs ipc call mpris toggleMpris"), { locked = true })
 
-hl.bind(mod .. "+ SHIFT + I", hl.dsp.exec_cmd("qs ipc call mpris songArt"), { locked = true })
-hl.bind(mod .. "+ ALT + I", hl.dsp.exec_cmd("qs ipc call notifications showLast"), { locked = true })
+hl.bind(mod .. "SHIFT+I", hl.dsp.exec_cmd("qs ipc call mpris songArt"), { locked = true })
+hl.bind(mod .. "ALT+I", hl.dsp.exec_cmd("qs ipc call notifications showLast"), { locked = true })
 hl.bind(mod .. "SHIFT+ space", hl.dsp.exec_cmd("qs ipc call notifications dismissAll"), { locked = true })
 
 -- BAR

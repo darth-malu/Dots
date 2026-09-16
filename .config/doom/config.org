@@ -2119,7 +2119,7 @@ NOTE: not needed in doom...it auto [[https://discourse.doomemacs.org/t/common-co
 #+end_src
 * Clipboard | xclip wayland
 FIXME: does not work
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp :tangle no
 (use-package! xclip
   :config
   (setq xclip-program "wl-copy")

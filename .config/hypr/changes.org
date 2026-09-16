@@ -1,0 +1,69 @@
+#+TITLE: changes.org — session changelog (2026-09-13)
+
+All work today, in rough order. Files under =~/.config/quickshell= unless noted.
+
+* Keyboard/tracking focus stuck (typing dies, only workspace-switch restores)
+  - ROOT CAUSE (hypr side): =general.no_focus_fallback = true= (general.lua:16).
+    When the focused window closes/floats (`SUPER+V`)/moves workspace (`SUPER+O`),
+    Hyprland left NO window focused instead of falling back — keyboard went nowhere
+    until a workspace re-activation refocused something. Matched the symptom
+    "have to change focus back and forth to make it focus windows".
+  - FIX: =no_focus_fallback = false= (reloaded live via =hyprctl reload=, verified
+    =general:no_focus_fallback = false=).
+  - STILL OPEN if it recurs: =input:follow_mouse=1= + =float_switch_override_focus=2=
+    (commonVariables.lua:38 TODO) and the WlSessionLock lock integration. Next lever if
+    needed: =input:follow_mouse = 2=.
+  - Verified during monitoring: no transient exclusive/grab layer appears while typing;
+    the only always-mapped top-level surface is the 1×1 caffeine idle-inhibitor window
+    (input-transparent, keyboardFocus none — not the cause).
+
+* Layer surface audit + namespaces (hyprctl layers)
+  - Level 0 background: =quickshell-bg= (BackgroundWindow) — already named.
+  - Level 1 bottom: =tildeBar= (Bar), =quickshell-clock= (DesktopClock),
+    =quickshell-quotes= (DesktopQuotes) — already named.
+  - Level 2 top: the mysterious 1×1 at (1919,1079) was the **CaffeineService
+    IdleInhibitor PanelWindow** (implicit 0×0, anchored bottom-right, no namespace).
+    → named =quickshell-caffeine= (CaffeineService.qml).
+  - Others (were falling back to process name =quickshell=):
+    * =quickshell-volume=       — notBar/Volume.qml          (OSD, +Quickshell.Wayland import)
+    * =quickshell-brightness-osd= — customItems/BrightnessOsd.qml (+Quickshell.Wayland import)
+    * =quickshell-logout=       — logout/WLogoutOverlay.qml
+    * =quickshell-activate=     — notBar/misc/Activate.qml
+    * =quickshell-rofi=         — notBar/rofi/Rofi.qml
+    * =quickshell-calc=         — notBar/rofi/calc/Calc.qml
+    * =quickshell-settings=     — notBar/settings/SettingsWindow.qml
+    * =quickshell-wallpaper-picker= — notBar/pickers/WallpaperPicker.qml
+    * =quickshell-emoji=        — notBar/pickers/EmojiPicker.qml
+    * =quickshell-color=        — notBar/pickers/ColorPicker.qml
+    * =quickshell-avatar-picker — notBar/pickers/AvatarPicker.qml
+  - Already named: polkit (=quickshell-polkit=), notifications
+    (=quickshell:notifications:overlay=). rules.lua references unaffected.
+
+* Adaptive workspaces in the bar (empty workspace number stuck on bar)
+  - Symptom: close all windows on a workspace → empty ws lingers in the bar forever.
+  - Both =bar/WorkspaceIcons.qml= (doRefresh) and =bar/WorkspaceNumbers.qml=
+    (workspaceList) now filter out workspaces with zero toplevels UNLESS it is the
+    currently active workspace (so the switch target never pops in/out; the empty
+    active badge styling still applies).
+
+* Removed desktop scroll-to-cycle-wallpaper (swipe) — BackgroundWindow.qml
+  - Deleted the full-screen =MouseArea= (acceptedButtons NoButton, onWheel →
+    next/prevWallpaper). Wallpaper now changes only via the rofi picker
+    (=SUPER-W=) / settings buttons / IPC =qs ipc call wallpaper next|prev= /
+    slideshow timer (slideshow off by default).
+
+* Quotes A/B test switch
+  - IpcHandler.qml wallpaper target: added =toggleQuotes()=
+    (flips WallpaperService.quotesEnabled).
+  - keybinds/quickshell.lua: =SUPER+SHIFT+W= → =qs ipc call wallpaper toggleQuotes=.
+  - Use it to prove/disprove whether the fullscreen bottom-layer quotes surface
+    (34 s repaint crossfade) is involved in the focus drops.
+
+* Rofi overlay exclusivity state machine (earlier today)
+  - services/RofiState.qml: =toggler()= renamed =close()=, clears all rofi flags;
+    cross-family mutual-exclusion guards across rofi/pickers/settings/logout.
+  - services/MiscState.qml: removed dead booleans (=toggleRofi=, =toggleAppLauncher=,
+    =toggleOpenWindows=, =toggleClipHist=); added settings/logout guards.
+  - services/PickerState.qml: extended mutual-exclusion guards.
+  - IpcHandler.qml: calc toggle simplified (guards handle exclusivity now).
+  - notBar/rofi/Rofi.qml: 4 =toggler()= call sites → =close()=.

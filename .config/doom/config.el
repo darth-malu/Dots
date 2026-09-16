@@ -562,15 +562,6 @@
                            ;;  :empty-lines 1)
                            )))
 
-(use-package! xclip
-  :config
-  (setq xclip-program "wl-copy")
-  (setq xclip-select-enable-clipboard t)
-  (setq xclip-mode t)
-  (setq xclip-method (quote wl-copy)))
-
-(setq xclip-select-enable-clipboard t)
-
 (defun my/markdown-toggler ()
   "This function toggles markdown view mode on/off 😀"
   (interactive)
