@@ -404,16 +404,17 @@ ClippingRectangle {
                     }
                 }
 
-                // progress bar — part of the layout flow so it can't slip
-                // under the card clip; pins the seek strip to the bottom,
-                // hovering enlarges it for easier seeking
-                Item {
+                // progress scrubber — part of the layout flow so it can't slip
+                // under the card clip; the groove keeps a fixed height so it
+                // never bobs on hover — only the knob + fill react (Scrubber)
+                Scrubber {
                     id: compactProgress
 
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 16
+                    Layout.preferredHeight: 18
+                    accent: card.dominantColor
 
-                    readonly property real ratio: {
+                    ratio: {
                         card.progressTick;
                         const p = MprisState.cardPlayer;
                         if (!p || !(p.length > 0))
@@ -425,53 +426,10 @@ ClippingRectangle {
                         return Math.max(0, Math.min(raw / len, 1));
                     }
 
-                    Rectangle {
-                        anchors {
-                            left: parent.left
-                            right: parent.right
-                            bottom: parent.bottom
-                        }
-                        height: compactProgressMa.containsMouse ? 9 : 3
-                        radius: height / 2
-                        color: Qt.rgba(1, 1, 1, 0.12)
-
-                        Behavior on height {
-                            NumberAnimation {
-                                duration: 160
-                                easing.type: Easing.OutCubic
-                            }
-                        }
-
-                        Rectangle {
-                            anchors {
-                                left: parent.left
-                                bottom: parent.bottom
-                            }
-                            width: parent.width * compactProgress.ratio
-                            height: parent.height
-                            radius: height / 2
-                            color: card.dominantColor
-
-                            Behavior on width {
-                                NumberAnimation {
-                                    duration: 200
-                                    easing.type: Easing.Linear
-                                }
-                            }
-                        }
-                    }
-
-                    MouseArea {
-                        id: compactProgressMa
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: mouse => {
-                            const p = MprisState.cardPlayer;
-                            if (p && p.length > 0)
-                                p.position = (mouse.x / width) * p.length;
-                        }
+                    onSeeked: frac => {
+                        const p = MprisState.cardPlayer;
+                        if (p && p.length > 0)
+                            p.position = frac * p.length;
                     }
                 }
             }
@@ -621,76 +579,40 @@ ClippingRectangle {
         Item {
             anchors.fill: parent
 
-            // progress strip pinned to the card's bottom border; tapping the
+            // progress scrubber pinned to the card's bottom border; tapping the
             // track text below-slides the transport row in above the
-            // bottom-left title/artist
+            // bottom-left title/artist — the groove stays a fixed height on
+            // hover so only the knob + fill brighten (Scrubber)
             Item {
-                id: expProgress
+                id: expProgressBox
 
                 anchors {
                     left: parent.left
                     right: parent.right
                     bottom: parent.bottom
                 }
-                height: 14
+                height: 20
 
-                readonly property real ratio: {
-                    card.progressTick;
-                    const p = MprisState.cardPlayer;
-                    if (!p || !(p.length > 0))
-                        return 0;
-                    const raw = p.position ?? 0;
-                    if (raw == null || isNaN(raw) || raw <= 0)
-                        return 0;
-                    return Math.max(0, Math.min(raw / p.length, 1));
-                }
-
-                Rectangle {
-                    anchors {
-                        left: parent.left
-                        right: parent.right
-                        bottom: parent.bottom
-                    }
-                    height: expProgressMa.containsMouse ? 10 : 4
-                    radius: height / 2
-                    color: Qt.rgba(1, 1, 1, 0.12)
-
-                    Behavior on height {
-                        NumberAnimation {
-                            duration: 160
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-
-                    Rectangle {
-                        anchors {
-                            left: parent.left
-                            bottom: parent.bottom
-                        }
-                        width: parent.width * expProgress.ratio
-                        height: parent.height
-                        radius: height / 2
-                        color: card.dominantColor
-
-                        Behavior on width {
-                            NumberAnimation {
-                                duration: 200
-                                easing.type: Easing.Linear
-                            }
-                        }
-                    }
-                }
-
-                MouseArea {
-                    id: expProgressMa
-
+                Scrubber {
+                    id: expProgress
                     anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: mouse => {
+                    accent: card.dominantColor
+
+                    ratio: {
+                        card.progressTick;
+                        const p = MprisState.cardPlayer;
+                        if (!p || !(p.length > 0))
+                            return 0;
+                        const raw = p.position ?? 0;
+                        if (raw == null || isNaN(raw) || raw <= 0)
+                            return 0;
+                        return Math.max(0, Math.min(raw / p.length, 1));
+                    }
+
+                    onSeeked: frac => {
                         const p = MprisState.cardPlayer;
                         if (p && p.length > 0)
-                            p.position = (mouse.x / width) * p.length;
+                            p.position = frac * p.length;
                     }
                 }
             }

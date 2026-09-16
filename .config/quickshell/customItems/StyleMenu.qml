@@ -75,31 +75,34 @@ PopupWindow {
             id: menuColumn
             anchors.fill: parent
             anchors.leftMargin: 4
-            anchors.rightMargin: 6
-            anchors.topMargin: 7
-            anchors.bottomMargin: 7
+            anchors.rightMargin: 4
+            anchors.topMargin: 2
+            anchors.bottomMargin: 4
             spacing: 2
 
             RowLayout {
                 Layout.fillWidth: true
-                // Layout.leftMargin: 4
+                Layout.leftMargin: 4
                 Layout.rightMargin: 4
                 Layout.topMargin: 2
                 Layout.bottomMargin: 2
                 spacing: 8
 
                 Rectangle {
-                    implicitWidth: 24
-                    implicitHeight: 24
+                    // implicitWidth: 24
+                    // implicitHeight: 24
+                    implicitWidth: modeIcon.width
+                    implicitHeight: modeIcon.height
                     radius: 6
-                    color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.15)
-                    border.width: 1
+                    // color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.15)
+                    color: 'transparent'
+                    border.width: 0
                     border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.35)
 
                     Text {
                         id: modeIcon
                         anchors.centerIn: parent
-                        text: root.mode === 0 ? "\uf1fc" : "\uf2d1"
+                        text: root.mode === 0 ? "" : ""
                         color: Themes.accent
                         font {
                             pixelSize: 11

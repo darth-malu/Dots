@@ -42,12 +42,14 @@ Item {
     // (the loud pink clashed with the progress ring)
     readonly property color brand: MprisState.brandColor(MprisState.player) ?? Themes.mauve
 
-    // compact pills show only the ring/icon; hovering expands the full layout
-    // (the default view is a settings option)
+    // compact pills show only the ring/icon; hovering reveals the details.
+    // the pill keeps a FIXED width at all times, so nothing moves on hover —
+    // only the detail items' opacity animates in place (stationary reveal)
     readonly property bool showDetails: !MprisState.mprisCompact || mprisRoot._hovering
 
-    // 0..1 animated expansion factor — drives width/spacing/opacity of the
-    // detail items so the compact hover is a smooth slide, not a pop
+    // 0..1 animated reveal factor — now drives *opacity only*. the geometry
+    // (art tile, title slot, spacing) is pre-reserved up front, so revealing
+    // the hidden details never shifts the module or its bar neighbours
     property real _details: 0
     Behavior on _details {
         NumberAnimation {
@@ -240,9 +242,10 @@ Item {
                 id: pill
                 visible: mprisRoot.pillVisible
                 implicitHeight: mprisRoot.host ? mprisRoot.host.height : 30
-                // in compact the pill hugs the ring flush (no dead padding),
-                // matching the tight sizing of the neighbouring RHS icons
-                implicitWidth: pillRow.implicitWidth + mprisRoot._details * 4
+                // fixed footprint — reserving the full expanded width keeps
+                // the module stationary on hover; the details fade in over
+                // the pre-reserved slot instead of pushing the RHS icons
+                implicitWidth: pillRow.implicitWidth
                 radius: height / 2
                 // color: Qt.rgba(0.1, 0.04, 0.18, 0.4)
                 color: "transparent"
@@ -250,17 +253,17 @@ Item {
                 RowLayout {
                     id: pillRow
                     anchors.fill: parent
-                    anchors.leftMargin: mprisRoot._details * 6
-                    anchors.rightMargin: mprisRoot._details * 6
-                    // hidden detail items still reserve their grid gap — collapse it
-                    spacing: mprisRoot._details * 6
+                    anchors.leftMargin: 6
+                    anchors.rightMargin: 6
+                    // fixed gap — the detail slots reserve their space
+                    // unconditionally so the reveal never reflows
+                    spacing: 6
 
                     // ── album art + fallback ──
                     Item {
-                        visible: mprisRoot._details > 0.01
                         opacity: mprisRoot._details
-                        Layout.preferredWidth: visible ? (pill.height - 4) * mprisRoot._details : 0
-                        Layout.preferredHeight: visible ? pill.height - 4 : 0
+                        Layout.preferredWidth: pill.height - 4
+                        Layout.preferredHeight: pill.height - 4
 
                         Behavior on opacity {
                             NumberAnimation {
@@ -314,6 +317,9 @@ Item {
                             anchors.fill: parent
                             acceptedButtons: Qt.LeftButton
                             cursorShape: Qt.PointingHandCursor
+                            // invisible during compact — don't open the popup
+                            // from a phantom click on the reserved slot
+                            enabled: mprisRoot._details > 0.5
                             onClicked: {
                                 mprisRoot._hovering = true;
                                 mprisRoot._details = 1;
@@ -325,10 +331,9 @@ Item {
                     // ── track title (marquee-scrolls when it doesn't fit) ──
                     MarqueeText {
                         id: title
-                        visible: mprisRoot._details > 0.01
                         opacity: mprisRoot._details
                         Layout.alignment: Qt.AlignVCenter
-                        maxWidth: 150 * mprisRoot._details
+                        maxWidth: 150
                         scrolling: MprisState.marqueeEnabled
                         text: MprisState.player?.trackTitle || "Unknown Track"
                         textColor: Themes.mprisTextColor
@@ -350,7 +355,7 @@ Item {
                         text: "· " + (MprisState.player?.identity || "")
                         color: Themes.toxicGreen
                         font: Themes.quicksand_medium
-                        visible: Mpris.players.length > 1 && mprisRoot._details > 0.01
+                        visible: Mpris.players.length > 1
                         opacity: mprisRoot._details
                         Layout.alignment: Qt.AlignVCenter
 
@@ -362,8 +367,9 @@ Item {
                         }
                     }
 
+                    // spacer keeps the ring pinned to the right edge whether or not
+                    // the details are currently revealed
                     Item {
-                        visible: mprisRoot._details > 0.01
                         Layout.fillWidth: true
                     }
 
