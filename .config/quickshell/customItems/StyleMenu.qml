@@ -61,7 +61,7 @@ PopupWindow {
     }
 
     implicitWidth: 150
-    implicitHeight: menuColumn.implicitHeight + 56
+    implicitHeight: menuColumn.implicitHeight + 14
 
     Rectangle {
         id: menuCard
@@ -70,15 +70,14 @@ PopupWindow {
         color: Themes.popupCardBg
         border.width: 2
         border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.3)
-        implicitHeight: menuColumn.implicitHeight
 
         ColumnLayout {
             id: menuColumn
             anchors.fill: parent
             anchors.leftMargin: 4
             anchors.rightMargin: 6
-            // anchors.topMargin: 6
-            // anchors.bottomMargin: 6
+            anchors.topMargin: 7
+            anchors.bottomMargin: 7
             spacing: 2
 
             RowLayout {

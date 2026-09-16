@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs.services
 import qs.themes
+import qs.bar.quicksettings.nowplaying
 
 WlSessionLockSurface {
     id: root
@@ -271,7 +272,7 @@ WlSessionLockSurface {
                 opacity: 0.6
             }
 
-            // ── now playing ──
+            // ── now playing with full controls (tracks + volume) ──
             Item {
                 id: np
 
@@ -286,7 +287,20 @@ WlSessionLockSurface {
                 }
                 property var npState: MprisState.progressState()
 
-                implicitHeight: row.implicitHeight + 16
+                // volume mirrors the quicksettings now playing card — MPRIS
+                // volume where supported, otherwise the real per-app pipewire
+                // stream (chrome etc.) so the lock edits the actual settings
+                readonly property var p: MprisState.player
+                readonly property bool mprisVolume: p?.volumeSupported ?? false
+                readonly property var extNode: {
+                    if (!p || p.volumeSupported)
+                        return null;
+                    return PipewireState.appStreamForPlayer(p);
+                }
+                readonly property bool muted: mprisVolume ? (p.volume <= 0) : (extNode?.audio?.muted ?? false)
+                readonly property real volume: mprisVolume ? (p.volume ?? 0) : (extNode?.audio?.volume ?? 0)
+
+                implicitHeight: npCol.implicitHeight + 16
 
                 Timer {
                     id: npTick
@@ -305,77 +319,208 @@ WlSessionLockSurface {
                     border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16)
                 }
 
-                RowLayout {
-                    id: row
-
+                ColumnLayout {
+                    id: npCol
                     anchors.fill: parent
-                    anchors.margins: 8
-                    spacing: 10
+                    anchors.margins: 10
+                    spacing: 7
 
-                    // art / glyph tile
-                    Rectangle {
-                        implicitWidth: 40
-                        implicitHeight: 40
-                        radius: 9
-                        color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12)
+                    // ── art / title / progress ──
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 10
 
-                        Image {
-                            id: artImg
-                            anchors.fill: parent
-                            anchors.margins: 2
-                            fillMode: Image.PreserveAspectCrop
-                            asynchronous: true
-                            sourceSize: Qt.size(80, 80)
-                            source: np.isBrowser ? "" : String(MprisState.player?.trackArtUrl ?? "")
-                            visible: status === Image.Ready
+                        Rectangle {
+                            implicitWidth: 40
+                            implicitHeight: 40
+                            radius: 9
+                            color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12)
+
+                            Image {
+                                id: artImg
+                                anchors.fill: parent
+                                anchors.margins: 2
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                                sourceSize: Qt.size(80, 80)
+                                source: np.isBrowser ? "" : String(MprisState.player?.trackArtUrl ?? "")
+                                visible: status === Image.Ready
+                            }
+
+                            Text {
+                                anchors.centerIn: parent
+                                visible: artImg.status !== Image.Ready
+                                text: np.isBrowser ? MprisState.browserGlyph(MprisState.player) : "\uf001"
+                                color: Themes.accent
+                                font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                            }
                         }
 
-                        Text {
-                            anchors.centerIn: parent
-                            visible: artImg.status !== Image.Ready
-                            text: np.isBrowser ? MprisState.browserGlyph(MprisState.player) : "\uf001"
-                            color: Themes.accent
-                            font { pixelSize: 14; family: "Symbols Nerd Font Mono" }
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 1
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: MprisState.player?.trackTitle || "Unknown Track"
+                                color: Themes.fg
+                                elide: Text.ElideRight
+                                font { pixelSize: 11; bold: true; family: "Quicksand" }
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: MprisState.player?.trackArtist || (MprisState.player?.identity ?? "")
+                                color: Themes.dim
+                                elide: Text.ElideRight
+                                font { pixelSize: 9; family: "Quicksand" }
+                            }
+
+                            // thin progress line
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.topMargin: 3
+                                implicitHeight: 2
+                                radius: 1
+                                color: Qt.rgba(1, 1, 1, 0.12)
+
+                                Rectangle {
+                                    readonly property real frac: np.pct
+                                    anchors.left: parent.left
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: parent.width * frac
+                                    height: parent.height
+                                    radius: 1
+                                    color: Themes.accent
+                                }
+                            }
                         }
                     }
 
-                    ColumnLayout {
+                    // ── transport — prev · play/pause · next ──
+                    RowLayout {
                         Layout.fillWidth: true
-                        spacing: 1
+                        Layout.topMargin: 2
+                        spacing: 6
 
-                        Text {
-                            Layout.fillWidth: true
-                            text: MprisState.player?.trackTitle || "Unknown Track"
-                            color: Themes.fg
-                            elide: Text.ElideRight
-                            font { pixelSize: 11; bold: true; family: "Quicksand" }
-                        }
-
-                        Text {
-                            Layout.fillWidth: true
-                            text: MprisState.player?.trackArtist || (MprisState.player?.identity ?? "")
-                            color: Themes.dim
-                            elide: Text.ElideRight
-                            font { pixelSize: 9; family: "Quicksand" }
-                        }
-
-                        // thin progress line
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.topMargin: 3
-                            implicitHeight: 2
-                            radius: 1
-                            color: Qt.rgba(1, 1, 1, 0.12)
-
-                            Rectangle {
-                                readonly property real frac: np.pct
-                                anchors.left: parent.left
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: parent.width * frac
-                                height: parent.height
-                                radius: 1
-                                color: Themes.accent
+                        Item { Layout.fillWidth: true }
+                        TrackButton {
+                            text: "\uf048"
+                            Layout.preferredWidth: 26
+                            Layout.preferredHeight: 26
+                            onClicked: {
+                                try { np.p?.previous(); } catch (e) {}
                             }
+                        }
+                        TrackButton {
+                            text: (np.p?.isPlaying ?? false) ? "\uf04c" : "\uf04b"
+                            Layout.preferredWidth: 26
+                            Layout.preferredHeight: 26
+                            onClicked: {
+                                try { np.p?.togglePlaying(); } catch (e) {}
+                            }
+                        }
+                        TrackButton {
+                            text: "\uf050"
+                            Layout.preferredWidth: 26
+                            Layout.preferredHeight: 26
+                            onClicked: {
+                                try { np.p?.next(); } catch (e) {}
+                            }
+                        }
+                        Item { Layout.fillWidth: true }
+                    }
+
+                    // ── volume — mute · slider · readout ──
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.topMargin: 2
+                        spacing: 8
+
+                        Rectangle {
+                            implicitWidth: 26
+                            implicitHeight: 26
+                            radius: 7
+                            color: volMuteMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.22) : np.muted ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.15) : Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.06)
+
+                            Behavior on color {
+                                ColorAnimation { duration: 120 }
+                            }
+
+                            border.width: np.muted || volMuteMa.containsMouse ? 1 : 0
+                            border.color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.3)
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: np.muted ? "\uf026" : "\uf028"
+                                color: np.muted ? Themes.muted : Themes.accent
+                                font { pixelSize: 12; family: "Symbols Nerd Font Mono" }
+                            }
+
+                            MouseArea {
+                                id: volMuteMa
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: MprisState.toggleMute(np.p)
+                            }
+                        }
+
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 18
+
+                            // groove
+                            Rectangle {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: parent.width
+                                height: 5
+                                radius: 2.5
+                                color: Qt.rgba(1, 1, 1, 0.1)
+
+                                // fill
+                                Rectangle {
+                                    anchors.left: parent.left
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: parent.width * Math.max(0, Math.min(np.volume, 1))
+                                    height: parent.height
+                                    radius: 2.5
+                                    color: np.muted ? Qt.rgba(0.38, 0.45, 0.64, 0.35) : Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.55)
+                                }
+
+                                MouseArea {
+                                    id: volBarMa
+                                    anchors.fill: parent
+                                    anchors.margins: -4
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    function setFromMouse(mx) {
+                                        if (!np.p)
+                                            return;
+                                        const frac = Math.max(0, Math.min(mx / width, 1));
+                                        if (np.mprisVolume)
+                                            np.p.volume = frac;
+                                        else if (np.extNode)
+                                            np.extNode.audio.volume = frac;
+                                    }
+                                    onPressed: mouse => setFromMouse(mouse.x)
+                                    onPositionChanged: mouse => {
+                                        if (mouse.buttons & Qt.LeftButton)
+                                            setFromMouse(mouse.x);
+                                    }
+                                    onWheel: wheel => {
+                                        if (np.p)
+                                            MprisState.adjustVolume(np.p, wheel.angleDelta.y > 0);
+                                        wheel.accepted = true;
+                                    }
+                                }
+                            }
+                        }
+
+                        Text {
+                            text: `${Math.round(np.volume * 100)}%`
+                            color: np.muted ? Themes.dim : Themes.fg
+                            font { pixelSize: 10; bold: true; family: "ZedMono Nerd Font" }
                         }
                     }
                 }

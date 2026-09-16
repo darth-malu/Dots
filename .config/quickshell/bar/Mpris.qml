@@ -308,13 +308,17 @@ Item {
                             pointSize: 10
                         }
 
-                        // left-click art → open enlarged art popup
+                        // left-click art → open enlarged art popup; the module
+                        // expands first so the clicked art is actually on screen
                         MouseArea {
                             anchors.fill: parent
                             acceptedButtons: Qt.LeftButton
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: if (!mprisRoot.showArtPopup)
-                                mprisRoot.showArtPopup = true
+                            onClicked: {
+                                mprisRoot._hovering = true;
+                                mprisRoot._details = 1;
+                                mprisRoot.showArtPopup = true;
+                            }
                         }
                     }
 
