@@ -37,7 +37,8 @@ WrapperMouseArea {
 
     // music toasts show the configurable album-art size (Settings → art size);
     // regular notifications keep the fixed 50px app icon
-    property real iconSize: ifMusic ? MiscState.notifArtSize : 50
+    // property real iconSize: ifMusic ? MiscState.notifArtSize : 50
+    property real iconSize: ifMusic ? MiscState.notifArtSize : (body.maximumLineCount > 2 ? MiscState.notifArtSize : 50)
 
     property real iconRadius: iconSize / 5
 
@@ -246,7 +247,7 @@ WrapperMouseArea {
                     Layout.preferredWidth: implicitWidth
                     elide: Text.ElideRight
                     wrapMode: Text.Wrap
-                    maximumLineCount: rootMouseArea.expanded ? 20 : (rootMouseArea.n.actions.length > 1 ? 1 : 3)
+                    maximumLineCount: rootMouseArea.expanded ? 20 : (rootMouseArea.n.actions.length > 1 ? 1 : 2)
                     text: rootMouseArea.n.body
                     color: Themes.dim
                     font.family: MiscState.notifFont

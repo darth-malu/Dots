@@ -177,11 +177,11 @@ BarBlock {
                                 Text {
                                     text: "clear"
                                     color: clearMa.containsMouse ? "#ff5555" : Themes.dim
-                                    font {
-                                        pixelSize: 10
-                                        bold: true
-                                        family: MiscState.notifFont
-                                    }
+font {
+                                            pixelSize: MiscState.notifFontSize
+                                            bold: true
+                                            family: MiscState.notifFont
+                                        }
                                 }
                             }
 
@@ -232,12 +232,8 @@ BarBlock {
                             //  album) — strip them for the history list so the
                             // text renders in the user's notification font
                             readonly property bool isMusic: NotificationState.isMusic(histRow.modelData)
-                            readonly property string cleanSummary: histRow.isMusic
-                                ? NotificationState.cleanSummary(histRow.modelData.summary)
-                                : (histRow.modelData.summary ?? "")
-                            readonly property string cleanBody: histRow.isMusic
-                                ? NotificationState.cleanBody(histRow.modelData.body)
-                                : String(histRow.modelData.body ?? "").split(String.fromCharCode(10)).join(" ")
+                            readonly property string cleanSummary: histRow.isMusic ? NotificationState.cleanSummary(histRow.modelData.summary) : (histRow.modelData.summary ?? "")
+                            readonly property string cleanBody: histRow.isMusic ? NotificationState.cleanBody(histRow.modelData.body) : String(histRow.modelData.body ?? "").split(String.fromCharCode(10)).join(" ")
 
                             // brief check-mark feedback after copying the content
                             property bool copied: false
@@ -330,7 +326,7 @@ BarBlock {
                                         color: histRow.urgent ? "#ff5555" : Themes.accent
                                         elide: Text.ElideRight
                                         font {
-                                            pixelSize: 12
+                                            pixelSize: MiscState.notifFontSize
                                             bold: true
                                             family: MiscState.notifFont
                                         }
@@ -346,7 +342,7 @@ BarBlock {
                                         wrapMode: histRow.expanded ? Text.WrapAtWordBoundaryOrAnywhere : Text.NoWrap
                                         maximumLineCount: histRow.expanded ? 3 : 1
                                         font {
-                                            pixelSize: 12
+                                            pixelSize: MiscState.notifFontSize
                                             weight: Font.Medium
                                             family: MiscState.notifFont
                                         }

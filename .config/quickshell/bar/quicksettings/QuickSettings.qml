@@ -41,10 +41,6 @@ BarBlock {
         onTriggered: root._openDebounce = false
     }
 
-    // ── player chooser — hidden until the bottom-left region is hovered,
-    // which reveals a small launcher button; clicking it expands the chip
-    // strip (wheel steps through players, click pins) ──
-
     // ── volume OSD ──
     onLeftClicked: {
         if (_openDebounce)
@@ -280,7 +276,7 @@ BarBlock {
                                     // armed menu or hover lights it red
                                     property bool hot: root.showPowerPopup
 
-                                    tint: hot || hovered ? "#ff5555" : Themes.muted
+                                    tint: hot || hovered ? "red" : Themes.muted
                                     border.color: hot ? Qt.rgba(0.95, 0.55, 0.66, 0.45) : hovered ? Qt.rgba(1, 0.33, 0.33, 0.45) : Qt.rgba(1, 1, 1, 0.08)
 
                                     onActivated: root.showPowerPopup = !root.showPowerPopup

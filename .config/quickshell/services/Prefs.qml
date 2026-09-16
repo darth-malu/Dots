@@ -31,8 +31,6 @@ Singleton {
 
         JsonAdapter {
             id: storeAdapter
-
-            // ── misc / settings keys ──
             property bool popupSolidBg: true
             property int popupTheme: -1
             property int popupOpacity: 82
@@ -52,8 +50,9 @@ Singleton {
             property bool boxyTheme: true
             property bool showWorkspaces: true
             property bool transparentWsBadge: false
-            property string notifFont: "ZedMono Nerd Font"
-            property int notifArtSize: 78
+            property string notifFont: "Quicksand"
+            property int notifArtSize: 79
+            property int notifFontSize: 10
             property int notifRadius: 10
             property bool showVolumeOut: true
             property bool showVolumeIn: true

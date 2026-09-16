@@ -39,8 +39,8 @@ Item {
         signal toggled
 
         Layout.alignment: Qt.AlignVCenter
-        implicitWidth: 36
-        implicitHeight: 20
+        implicitWidth: 34
+        implicitHeight: 18
         radius: 10
         color: on ? Themes.accent : Themes.borderMuted
 
@@ -907,7 +907,7 @@ Item {
         },
         {
             icon: "\uf144",
-            label: "Media"
+            label: "Mpris"
         },
         {
             icon: "\uf0a2",
@@ -930,20 +930,16 @@ Item {
             label: "Popups"
         },
         {
-            icon: "\uf120",
+            icon: "",
             label: "Hyprland"
         },
         {
-            icon: "\uf2d0",
-            label: "Launcher"
+            icon: "󱓟",
+            label: "Rofi"
         },
         {
             icon: "\uf1d3",
             label: "Git"
-        },
-        {
-            icon: "\uf059",
-            label: "Help"
         },
     ]
 
@@ -1209,7 +1205,7 @@ Item {
                         Layout.fillWidth: true
 
                         SettingRow {
-                            icon: "\uf1c5"
+                            icon: "󰺟"
                             label: "Enabled"
                             caption: WallpaperService.enabled ? "on" : "off"
                             checked: WallpaperService.enabled
@@ -1224,7 +1220,7 @@ Item {
                         }
 
                         SettingRow {
-                            icon: "\uf0b2"
+                            icon: "󱣵"
                             label: "Desktop frame"
                             caption: BarState.frameOn ? "accent" : "off"
                             checked: BarState.frameOn
@@ -1239,7 +1235,7 @@ Item {
                         }
 
                         SettingRow {
-                            icon: "\uf2f1"
+                            icon: "󱎫" // 
                             label: "SlideShow"
                             caption: WallpaperService.slideshowEnabled ? "slideshow" : "off"
                             checked: WallpaperService.slideshowEnabled
@@ -1254,7 +1250,7 @@ Item {
                         }
 
                         SettingRow {
-                            icon: "\uf005"
+                            icon: "󱫩"
                             label: "Rotate favorites only"
                             caption: WallpaperService.rotationFavoritesOnly ? (WallpaperService.favorites.length === 0 ? "no stars yet" : "stars only") : "all wallpapers"
                             checked: WallpaperService.rotationFavoritesOnly
@@ -1313,6 +1309,10 @@ Item {
 
                                 property bool slideshowDropOpen: false
                                 property var slideshowOptions: [
+                                    {
+                                        minutes: 1,
+                                        label: "1 min"
+                                    },
                                     {
                                         minutes: 5,
                                         label: "5 min"
@@ -1480,6 +1480,7 @@ Item {
 
                         // currently applied wallpaper + cycle controls
                         RowLayout {
+                            visible: false
                             Layout.fillWidth: true
                             Layout.preferredHeight: 34
                             Layout.topMargin: 4
@@ -1602,12 +1603,12 @@ Item {
 
                     BarTab {
                         label: "Style"
-                        glyph: "\ueac1"
+                        glyph: ""
                         idx: 0
                     }
                     BarTab {
                         label: "Bar Modules"
-                        glyph: "\uf132"
+                        glyph: "󰺟"
                         idx: 1
                     }
 
@@ -1625,8 +1626,8 @@ Item {
                         spacing: 12
 
                         Card {
-                            title: "Style"
-                            icon: ""
+                            // title: "Style"
+                            // icon: ""
                             accent: Themes.accent
 
                             ColumnLayout {
@@ -2097,7 +2098,7 @@ Item {
                                 }
 
                                 SettingRow {
-                                    icon: "󱗜"
+                                    icon: ""
                                     label: "Boxy"
                                     caption: MiscState.boxyTheme ? "all modules" : "rounded"
                                     checked: MiscState.boxyTheme
@@ -2112,7 +2113,7 @@ Item {
                                 }
 
                                 SettingRow {
-                                    icon: "\uf044"
+                                    icon: "󰤖"
                                     label: "Badge transparent"
                                     caption: MiscState.transparentWsBadge ? "on" : "off"
                                     checked: MiscState.transparentWsBadge
@@ -2172,8 +2173,8 @@ Item {
                         spacing: 12
 
                         Card {
-                            title: "Bar Modules"
-                            icon: "\uf132"
+                            // title: "Bar Modules"
+                            // icon: "\uf132"
                             accent: Themes.accent
 
                             ColumnLayout {
@@ -2264,7 +2265,7 @@ Item {
                                 }
 
                                 SettingRow {
-                                    icon: "\uf1c0"
+                                    icon: ""
                                     label: "Performance"
                                     caption: ResourcesState.resourcesVisible ? "on" : "off"
                                     checked: ResourcesState.resourcesVisible
@@ -2294,8 +2295,8 @@ Item {
                         Layout.fillWidth: true
 
                         SettingRow {
-                            icon: "\uf04b"
-                            label: "MPRIS"
+                            icon: "󰺟"
+                            label: "enabled"
                             checked: MiscState.showMpris
                             onFlipped: MiscState.showMpris = !MiscState.showMpris
                         }
@@ -2350,7 +2351,7 @@ Item {
                         }
 
                         SettingRow {
-                            icon: "\uf1ce"
+                            icon: "󰞗"
                             label: "Compact by default"
                             caption: "hover to expand"
                             checked: MprisState.mprisCompact
@@ -2365,7 +2366,7 @@ Item {
                         }
 
                         SettingRow {
-                            icon: "\uf07c"
+                            icon: ""
                             label: "Marquee titles"
                             checked: MprisState.marqueeEnabled
                             onFlipped: MprisState.marqueeEnabled = !MprisState.marqueeEnabled
@@ -2383,7 +2384,7 @@ Item {
                         Layout.fillWidth: true
 
                         SettingRow {
-                            icon: "\uf2d1"
+                            icon: "󰥠"
                             label: "Players"
                             checked: MiscState.showPlayerChooser
                             onFlipped: MiscState.showPlayerChooser = !MiscState.showPlayerChooser
@@ -2941,7 +2942,7 @@ Item {
 
             Card {
                 title: "Notifications"
-                icon: "\uf0a2"
+                // icon: "\uf0a2"
                 accent: Themes.accent
 
                 ColumnLayout {
@@ -3145,168 +3146,6 @@ Item {
                         Layout.leftMargin: 32
                     }
 
-                    // live previews — song-art style + normal, bind to the vars you tweak
-                    Text {
-                        text: "Song-art style"
-                        color: Themes.dim
-                        font {
-                            pixelSize: 10
-                            family: "Quicksand"
-                        }
-                        Layout.topMargin: 8
-                        Layout.leftMargin: 8
-                    }
-
-                    // preview 1 — a live "now playing" notification (art + glyph rows)
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.topMargin: 4
-                        Layout.bottomMargin: 6
-                        implicitHeight: 60
-                        radius: Math.max(0, Math.min(24, MiscState.notifRadius))
-                        color: Qt.rgba(1, 1, 1, 0.05)
-                        border.width: 1
-                        border.color: Themes.borderColor
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: 10
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: 10
-
-                            Rectangle {
-                                Layout.preferredWidth: Math.min(44, MiscState.notifArtSize)
-                                Layout.preferredHeight: Math.min(44, MiscState.notifArtSize)
-                                Layout.fillHeight: true
-                                radius: Math.max(0, Math.min(12, MiscState.notifRadius / 3))
-                                color: Qt.rgba(0.3, 0.6, 0.9, 0.35)
-                            }
-
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 2
-
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 8
-
-                                    Text {
-                                        text: "\uf1ce"
-                                        color: Themes.accent
-                                        font {
-                                            pixelSize: MiscState.notifFontSize
-                                            family: "Symbols Nerd Font Mono"
-                                        }
-                                    }
-
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: "Bohemian Rhapsody — Queen"
-                                        elide: Text.ElideRight
-                                        color: Themes.fg
-                                        font.family: MiscState.notifFont
-                                        font.pixelSize: MiscState.notifFontSize
-                                        font.weight: Font.Bold
-                                    }
-                                }
-
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 8
-
-                                    Text {
-                                        text: "\uf04b"
-                                        color: Themes.dim
-                                        font {
-                                            pixelSize: MiscState.notifFontSize
-                                            family: "Symbols Nerd Font Mono"
-                                        }
-                                    }
-
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: "3:42 — Playing"
-                                        elide: Text.ElideRight
-                                        color: Themes.dim
-                                        font {
-                                            family: MiscState.notifFont
-                                            pixelSize: MiscState.notifFontSize
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Text {
-                        text: "Normal"
-                        color: Themes.dim
-                        font {
-                            pixelSize: 10
-                            family: "Quicksand"
-                        }
-                        Layout.bottomMargin: -2
-                        Layout.leftMargin: 88
-                    }
-
-                    // preview 2 — normal notification (icon + summary + body)
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.topMargin: 4
-                        Layout.bottomMargin: 8
-                        implicitHeight: 54
-                        radius: Math.max(0, Math.min(24, MiscState.notifRadius))
-                        color: Qt.rgba(1, 1, 1, 0.05)
-                        border.width: 1
-                        border.color: Themes.borderColor
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: 10
-                            spacing: 10
-
-                            Text {
-                                text: "\uf0a2"
-                                color: Themes.accent
-                                font {
-                                    pixelSize: MiscState.notifFontSize + 4
-                                    family: "Symbols Nerd Font Mono"
-                                }
-                                Layout.alignment: Qt.AlignVCenter
-                            }
-
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 2
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: "New notification"
-                                    elide: Text.ElideRight
-                                    color: Themes.fg
-                                    font {
-                                        family: MiscState.notifFont
-                                        pixelSize: MiscState.notifFontSize
-                                        weight: Font.Bold
-                                    }
-                                }
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: "The quick brown fox jumps over the lazy dog."
-                                    elide: Text.ElideRight
-                                    color: Themes.dim
-                                    font {
-                                        family: MiscState.notifFont
-                                        pixelSize: MiscState.notifFontSize
-                                    }
-                                }
-                            }
-                        }
-                    }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
@@ -3385,7 +3224,7 @@ Item {
                         spacing: 12
 
                         Text {
-                            text: "\uf10c"
+                            text: "󱨈"
                             color: Themes.muted
                             font {
                                 pixelSize: 14
@@ -3439,7 +3278,7 @@ Item {
 
             Card {
                 title: "Presets"
-                icon: ""
+                // icon: ""
                 accent: Themes.accent
 
                 ColumnLayout {
@@ -3488,7 +3327,7 @@ Item {
                                 spacing: 8
 
                                 Text {
-                                    text: "\uf005"
+                                    text: modelData.name === "Rounded" ? "󱓻" : "󰝤"
                                     color: isActive ? Themes.accent : Themes.muted
                                     font {
                                         pixelSize: 12
@@ -4125,8 +3964,8 @@ Item {
             spacing: 12
 
             Card {
-                title: "Launcher"
-                icon: "\uf2d0"
+                title: "Rofi"
+                icon: "󱓟"
                 accent: Themes.rofiAccent
 
                 ColumnLayout {
@@ -4510,588 +4349,6 @@ Item {
                     }
                 }
             }
-        }
-    }
-
-    // ═══ HELP ═══
-    Component {
-        id: helpPage
-
-        ColumnLayout {
-            spacing: 10
-
-            HelpTopic {
-                glyph: "\uf0f3"
-                title: "Reminders"
-                summary: "calendar tasks · timed alerts · CLI"
-
-                HelpLine {
-                    text: "Click the clock in the bar to open the calendar popup."
-                }
-                HelpLine {
-                    text: "Pick a day, then type your task in the input at the bottom."
-                }
-                HelpLine {
-                    text: "The time field starts at the current hour — scroll or type on the HH/MM chips to adjust; every reminder is timed."
-                }
-                HelpLine {
-                    text: "Dots on day cells show how many reminders are pending. The list under the calendar groups them by day — ✕ removes an entry."
-                }
-                HelpLine {
-                    text: "When one is due you get a critical notification plus a chime. Reminders persist in ~/.config/quickshell/reminders.json."
-                }
-                HelpLine {
-                    text: "You can also manage them from the terminal:"
-                }
-                HelpCode {
-                    cmd: "qs -p ~/.config/quickshell ipc call reminders add \"Stand up\" 2026-08-25 09:00"
-                }
-                HelpCode {
-                    cmd: "qs -p ~/.config/quickshell ipc call reminders list"
-                }
-                HelpLine {
-                    text: "Use `done <id>` to complete and `remove <id>` to delete — ids come from `list`."
-                }
-            }
-
-            HelpTopic {
-                glyph: "\uf240"
-                title: "Battery alerts"
-                summary: "low / critical warnings · history graph"
-
-                HelpLine {
-                    text: "Low battery warns at 18%, critical at 5% — each fires once per discharge and re-arms when you plug in."
-                }
-                HelpLine {
-                    text: "Crossing a threshold plays a chime once per discharge and the pill blares orange/red until plugged in — no popup spam."
-                }
-                HelpLine {
-                    text: "Left-click the bar pill for details, history graph and power profiles; right-click toggles the percentage inside the pill."
-                }
-                HelpLine {
-                    text: "The chart icon in the popup enables a one-hour charge-history graph."
-                }
-            }
-
-            HelpTopic {
-                glyph: "\uf0e4"
-                title: "Speed test"
-                summary: "own tab · live progress · last-10 history"
-
-                HelpLine {
-                    text: "It lives in its own Settings → Speedtest tab: latency (best of 3 probes), a 50 MB download and a 9 MB upload against Cloudflare, using curl — no extra packages."
-                }
-                HelpLine {
-                    text: "The three bars under the tiles fill with real progress as each probe/chunk lands; the caption shows phase and percentage. A watchdog kills stalled runs, so a test can never hang forever."
-                }
-                HelpLine {
-                    text: "Every completed run is saved with the network it ran on (Wi-Fi SSID or Ethernet). The History card keeps the last 10 — the trash icon clears them. Results persist across reloads in speedtest-history.json."
-                }
-            }
-
-            HelpTopic {
-                glyph: "\uf133"
-                title: "Calendar & timer"
-                summary: "full-year grid · deep links · countdown presets"
-
-                HelpLine {
-                    text: "Right-click the calendar title flips between month and full-year grids; left-click reveals view tabs (calendar / reminders / timer)."
-                }
-                HelpLine {
-                    text: "Deep links jump straight into a view:"
-                }
-                HelpCode {
-                    cmd: "qs -p ~/.config/quickshell ipc call calendar year"
-                }
-                HelpCode {
-                    cmd: "qs -p ~/.config/quickshell ipc call timer start 300"
-                }
-                HelpLine {
-                    text: "The timer offers preset chips (5m–1h) and starts from zero — scroll the spinner to arm a duration, Reset zeroes everything."
-                }
-                HelpLine {
-                    text: "Reminder dots on day cells show pending counts; the compose time always opens at the bar clock's current time."
-                }
-            }
-
-            HelpTopic {
-                glyph: "\uf144"
-                title: "Media & player chooser"
-                summary: "pin players · wheel cycling · chip mute"
-
-                HelpLine {
-                    text: "With more than one player running, hover the bottom-left of the Now Playing card in quicksettings — a faint ⋯ button appears. Click it to open the player strip."
-                }
-                HelpLine {
-                    text: "Scroll the strip to cycle players, click a chip to pin that player, right-click any chip to mute/unmute it. Right- or middle-click anywhere on the card mutes the active player."
-                }
-                HelpLine {
-                    text: "The strip auto-closes after ~1 s when the pointer leaves. It can be turned off in Settings → Media → Now Playing."
-                }
-            }
-
-            HelpTopic {
-                glyph: ""
-                title: "Workspaces"
-                summary: "app icons · focus glow · urgent pulse"
-
-                HelpLine {
-                    text: "Settings → Bar → Icon workspaces switches between app icons and numbers. Clicking a pill jumps to that workspace."
-                }
-                HelpLine {
-                    text: "Icon pills show every open app; the focused window's icon glows purple while its siblings stay dim. Duplicate windows of one app show a count badge."
-                }
-                HelpLine {
-                    text: "A workspace with an urgent window (new message etc.) pulses red until visited."
-                }
-            }
-
-            HelpTopic {
-                glyph: "\uf1d3"
-                title: "Git monitor"
-                summary: "watch + commit + push all repos from one pill"
-
-                HelpLine {
-                    text: "The bar pill shows every configured repo at once. Left-click opens the monitor popup, right-click pushes all repos, shift+middle-click commits all, alt+left-click toggles the RHS performance modules. The pill spins while a probe or action is running."
-                }
-                HelpLine {
-                    text: "Repo states — grey no upstream · green clean & synced · cyan ahead/behind · orange untracked · yellow modified/staged · red unreachable path."
-                }
-                HelpLine {
-                    text: "The popup's top field holds an optional commit message; every commit button (per-repo and bulk) uses it while it has text, otherwise commits fall back to the default message. The field starts blank each time."
-                }
-                HelpLine {
-                    text: "The + button in the popup adds a repo: a normal checkout, or a bare dotfiles repo by also giving the worktree it tracks (e.g. dots over ~/). Duplicates are rejected."
-                }
-                HelpLine {
-                    text: "Settings → Git controls the popup tick period (5s–5min). Probing is on-demand: one git process per refresh, zero background polling. Untracked files are always scanned."
-                }
-                HelpLine {
-                    text: "Repos are also editable in ~/.config/quickshell/git-prefs.json (key repos, each entry path plus optional workTree); a dots bare repo is seeded on first run."
-                }
-            }
-
-            HelpTopic {
-                glyph: "\uf2f2"
-                title: "Power timers"
-                summary: "armed reboot / shutdown countdowns"
-
-                HelpLine {
-                    text: "In quicksettings' power menu, right-click Reboot or Shutdown to open the timer card, then set a delay with the slider (5–240 min)."
-                }
-                HelpLine {
-                    text: "A live countdown pill appears in the bar once armed — left-click it to cancel. Arming also works from the timer card's own toggle."
-                }
-            }
-
-            HelpTopic {
-                glyph: "\uf1eb"
-                title: "Network"
-                summary: "wifi / ethernet toggles · traffic graphs"
-
-                HelpLine {
-                    text: "In Settings → Connections, click the Wi-Fi tile to toggle the radio and the Ethernet tile to connect/disconnect — border colors track connection state."
-                }
-                HelpLine {
-                    text: "Plugging in Ethernet automatically drops Wi-Fi once so traffic takes the faster link — reconnecting manually afterwards is respected."
-                }
-                HelpLine {
-                    text: "Both popups support live traffic graphs (chart-icon in the header) and session totals; right-click the bar module toggles the rate readout on the bar itself."
-                }
-            }
-
-            HelpTopic {
-                glyph: "\uf0eb"
-                title: "Tips & storage"
-                summary: "shortcuts · where settings live"
-
-                HelpLine {
-                    text: "Escape closes any popup; most tray icons open menus on left-click."
-                }
-                HelpLine {
-                    text: "Double-click the bar (left or right) cycles all color schemes; style stays as set in Style."
-                }
-                HelpLine {
-                    text: "Scroll the bar to switch workspaces."
-                }
-                HelpLine {
-                    text: "Everything you toggle here persists in ~/.config/quickshell/prefs.json and survives reloads."
-                }
-                HelpLine {
-                    text: "Reminders live next to it in reminders.json; both files are plain JSON you can edit."
-                }
-            }
-
-            HelpTopic {
-                glyph: "\uf363"
-                title: "IPC handlers"
-                summary: "qs ipc call <target> <function> [args]"
-
-                HelpLine {
-                    text: "All targets are called with: qs -p ~/.config/quickshell ipc call <target> <fn>"
-                }
-
-                HelpCode {
-                    cmd: "ipc call mpris togglePlaying"
-                }
-                HelpCode {
-                    cmd: "ipc call brightness set 80"
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    Layout.topMargin: 4
-                    text: "mpris"
-                    color: Themes.accent
-                    font {
-                        pixelSize: 11
-                        bold: true
-                        family: "Quicksand"
-                    }
-                }
-                HelpLine {
-                    text: "togglePlaying · previous · next · pauseAll · raise · toggleMpris · toggleMprisArt · songArt"
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "brightness"
-                    color: Themes.accent
-                    font {
-                        pixelSize: 11
-                        bold: true
-                        family: "Quicksand"
-                    }
-                }
-                HelpLine {
-                    text: "get → current % · set(pct) · adjust(delta)"
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "notifications"
-                    color: Themes.accent
-                    font {
-                        pixelSize: 11
-                        bold: true
-                        family: "Quicksand"
-                    }
-                }
-                HelpLine {
-                    text: "dismissAll · showLast"
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "pipewire"
-                    color: Themes.accent
-                    font {
-                        pixelSize: 11
-                        bold: true
-                        family: "Quicksand"
-                    }
-                }
-                HelpLine {
-                    text: "mute → toggle input mute"
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "bar · netspeed · resources · SysTray"
-                    color: Themes.accent
-                    font {
-                        pixelSize: 11
-                        bold: true
-                        family: "Quicksand"
-                    }
-                }
-                HelpLine {
-                    text: "toggle → show/hide the corresponding bar element"
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "appLauncher · openWindows · clipHist · activate · emoji · color"
-                    color: Themes.accent
-                    font {
-                        pixelSize: 11
-                        bold: true
-                        family: "Quicksand"
-                    }
-                }
-                HelpLine {
-                    text: "toggle → open/close the overlay. color also has screenPick for eyedropper."
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "logout"
-                    color: Themes.accent
-                    font {
-                        pixelSize: 11
-                        bold: true
-                        family: "Quicksand"
-                    }
-                }
-                HelpLine {
-                    text: "toggle · open"
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "timer"
-                    color: Themes.accent
-                    font {
-                        pixelSize: 11
-                        bold: true
-                        family: "Quicksand"
-                    }
-                }
-                HelpLine {
-                    text: "start(seconds) · toggle · reset · add(minutes) · status → JSON"
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "reminders"
-                    color: Themes.accent
-                    font {
-                        pixelSize: 11
-                        bold: true
-                        family: "Quicksand"
-                    }
-                }
-                HelpLine {
-                    text: "add(text, date, time) · list → JSON · remove(id) · edit(id, text, date, time) · done(id)"
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "speedtest"
-                    color: Themes.accent
-                    font {
-                        pixelSize: 11
-                        bold: true
-                        family: "Quicksand"
-                    }
-                }
-                HelpLine {
-                    text: "start · cancel · status → JSON"
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "powerTimer"
-                    color: Themes.accent
-                    font {
-                        pixelSize: 11
-                        bold: true
-                        family: "Quicksand"
-                    }
-                }
-                HelpLine {
-                    text: "rebootIn(minutes) · shutdownIn(minutes) · cancel"
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "idleInhibitor"
-                    color: Themes.accent
-                    font {
-                        pixelSize: 11
-                        bold: true
-                        family: "Quicksand"
-                    }
-                }
-                HelpLine {
-                    text: "isEnabled → bool · toggle · enable · disable"
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "calendar"
-                    color: Themes.accent
-                    font {
-                        pixelSize: 11
-                        bold: true
-                        family: "Quicksand"
-                    }
-                }
-                HelpLine {
-                    text: "toggle · year · compact · probe · rem · timer · state"
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "Time"
-                    color: Themes.accent
-                    font {
-                        pixelSize: 11
-                        bold: true
-                        family: "Quicksand"
-                    }
-                }
-                HelpLine {
-                    text: "currentDate · currentDateTime → sends notify-send"
-                }
-            }
-        }
-    }
-
-    component HelpTopic: Rectangle {
-        id: topic
-
-        property string glyph
-        property string title
-        property string summary
-        default property alias body: bodyCol.children
-        property bool open: false
-
-        Layout.fillWidth: true
-        // fixed-height header + snap height + fade: animating a size
-        // bound to child implicit sizes jitters and clips mid-flight
-        readonly property int headH: 34
-        implicitHeight: 24 + headH + (topic.open ? 8 + bodyCol.implicitHeight : 0)
-        radius: 10
-        clip: true
-        color: Qt.rgba(1, 1, 1, 0.02)
-        border.width: 1
-        border.color: topic.open ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.35) : Themes.separator
-
-        Behavior on border.color {
-            ColorAnimation {
-                duration: 150
-            }
-        }
-
-        ColumnLayout {
-            anchors {
-                fill: parent
-                margins: 12
-            }
-            spacing: 8
-
-            RowLayout {
-                id: headRow
-
-                Layout.fillWidth: true
-                Layout.preferredHeight: topic.headH
-                spacing: 10
-
-                Rectangle {
-                    implicitWidth: 26
-                    implicitHeight: 26
-                    radius: 8
-                    color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12)
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: topic.glyph
-                        color: Themes.accent
-                        font {
-                            pixelSize: 13
-                            family: "Symbols Nerd Font Mono"
-                        }
-                    }
-                }
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 1
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: topic.title
-                        color: Themes.fg
-                        elide: Text.ElideRight
-                        font {
-                            pixelSize: 13
-                            bold: true
-                            family: "Quicksand"
-                        }
-                    }
-
-                    Text {
-                        Layout.fillWidth: true
-                        visible: !topic.open && topic.summary.length > 0
-                        text: topic.summary
-                        color: Themes.muted
-                        elide: Text.ElideRight
-                        font {
-                            pixelSize: 10
-                            family: "ZedMono Nerd Font"
-                        }
-                    }
-                }
-
-                Text {
-                    text: topic.open ? "\uf077" : "\uf078"
-                    color: Themes.muted
-                    font {
-                        pixelSize: 11
-                        family: "Symbols Nerd Font Mono"
-                    }
-                }
-
-                TapHandler {
-                    gesturePolicy: TapHandler.ReleaseWithinBounds
-                    onTapped: topic.open = !topic.open
-                }
-            }
-
-            ColumnLayout {
-                id: bodyCol
-
-                visible: opacity > 0
-                opacity: topic.open ? 1 : 0
-                Layout.fillWidth: true
-                spacing: 6
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: 140
-                    }
-                }
-            }
-        }
-    }
-
-    component HelpLine: Text {
-        // bullet prefix applied on completion — bindings stay literal
-        Component.onCompleted: text = "·  " + text
-        Layout.fillWidth: true
-        color: Themes.dim
-        wrapMode: Text.WordWrap
-        font {
-            pixelSize: 11
-            family: "Quicksand"
-        }
-    }
-
-    component HelpCode: Rectangle {
-        property string cmd
-
-        Layout.fillWidth: true
-        implicitHeight: codeTxt.implicitHeight + 14
-        radius: 7
-        color: "#181825"
-        border.width: 1
-        border.color: Themes.borderColor
-
-        Text {
-            id: codeTxt
-
-            anchors {
-                fill: parent
-                margins: 7
-            }
-            text: "$ " + parent.cmd
-            color: "#a6e3a1"
-            font {
-                pixelSize: 10
-                family: "ZedMono Nerd Font"
-            }
-            wrapMode: Text.WrapAnywhere
         }
     }
 }

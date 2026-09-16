@@ -24,14 +24,22 @@ Singleton {
     // settings + logout are exclusive keyboard-focus overlays too — open one
     // and every other overlay must stand down or typing dies (same rationale
     // as RofiState/PickerState)
-    onToggleSettingsChanged: if (toggleSettings) { RofiState.close(); PickerState.closeAll(); root.logoutOpen = false; }
+    onToggleSettingsChanged: if (toggleSettings) {
+        RofiState.close();
+        PickerState.closeAll();
+        root.logoutOpen = false;
+    }
 
     // true while the quicksettings popup is open (used to suppress redundant music toasts)
     property bool qsOpen: false
 
     // fullscreen logout / timer overlay
     property bool logoutOpen: false
-    onLogoutOpenChanged: if (logoutOpen) { RofiState.close(); PickerState.closeAll(); root.toggleSettings = false; }
+    onLogoutOpenChanged: if (logoutOpen) {
+        RofiState.close();
+        PickerState.closeAll();
+        root.toggleSettings = false;
+    }
 
     property date currentDate: new Date()
 
@@ -127,19 +135,7 @@ Singleton {
 
     // source of truth for every font dropdown in settings — add a family
     // here (only ones actually installed are listed) to expose it everywhere
-    readonly property var fontOptions: [
-        "Quicksand", "Inter", "Nunito", "Lato", "IBM Plex Sans",
-        "ZedMono Nerd Font", "JetBrains Mono", "JetBrainsMono Nerd Font Mono",
-        "GeistMono Nerd Font", "CaskaydiaCove Nerd Font Mono",
-        "FantasqueSansM Nerd Font", "SauceCodePro Nerd Font Mono",
-        "SpaceMono Nerd Font", "VictorMono Nerd Font", "Iosevka Comfy",
-        "Mononoki Nerd Font", "EnvyCodeR Nerd Font", "DaddyTimeMono Nerd Font",
-        "Inter Display", "IBM Plex Mono", "JetBrainsMonoNL Nerd Font Mono",
-        "Lekton Nerd Font", "Lilex Nerd Font", "MartianMono Nerd Font",
-        "MesloLGM Nerd Font", "MesloLGS Nerd Font", "MonaspiceNe Nerd Font",
-        "Monofur Nerd Font", "Noto Sans Mono", "ProggyClean Nerd Font",
-        "Atkinson Hyperlegible Mono"
-    ]
+    readonly property var fontOptions: ["Quicksand", "Inter", "Nunito", "Lato", "IBM Plex Sans", "ZedMono Nerd Font", "JetBrains Mono", "JetBrainsMono Nerd Font Mono", "GeistMono Nerd Font", "CaskaydiaCove Nerd Font Mono", "FantasqueSansM Nerd Font", "SauceCodePro Nerd Font Mono", "SpaceMono Nerd Font", "VictorMono Nerd Font", "Iosevka Comfy", "Mononoki Nerd Font", "EnvyCodeR Nerd Font", "DaddyTimeMono Nerd Font", "Inter Display", "IBM Plex Mono", "JetBrainsMonoNL Nerd Font Mono", "Lekton Nerd Font", "Lilex Nerd Font", "MartianMono Nerd Font", "MesloLGM Nerd Font", "MesloLGS Nerd Font", "MonaspiceNe Nerd Font", "Monofur Nerd Font", "Noto Sans Mono", "ProggyClean Nerd Font", "Atkinson Hyperlegible Mono"]
 
     property bool showBattery: Prefs.prefs.showBattery
     onShowBatteryChanged: {
@@ -207,8 +203,16 @@ Singleton {
 
     // notification popup art size and border radius
     property int notifArtSize: Prefs.prefs.notifArtSize
+
+    property int notifFontSize: Prefs.prefs.notifFontSize
+
     onNotifArtSizeChanged: {
         Prefs.prefs.notifArtSize = notifArtSize;
+        Prefs.write();
+    }
+
+    onNotifFontSizeChanged: {
+        Prefs.prefs.notifFontSize = notifFontSize;
         Prefs.write();
     }
 
