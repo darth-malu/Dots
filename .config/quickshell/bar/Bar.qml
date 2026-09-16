@@ -91,11 +91,10 @@ ShellRoot {
                     Layout.leftMargin: 6
 
                     // workspace module — icons (default) or numbers, swappable live.
-                    // width collapses to 0 when disabled so the bar space is
-                    // actually reclaimed and handed back to the ActiveWindow title
+                    // `active` (not just visible) ensures the module is destroyed and
+                    // its size is fully reclaimed when disabled.
                     Loader {
-                        visible: MiscState.showWorkspaces
-                        width: MiscState.showWorkspaces ? implicitWidth : 0
+                        active: MiscState.showWorkspaces
                         sourceComponent: MiscState.iconWorkspaces ? iconWorkspacesComp : numWorkspacesComp
                     }
                 }

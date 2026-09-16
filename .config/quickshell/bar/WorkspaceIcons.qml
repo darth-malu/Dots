@@ -246,18 +246,31 @@ RowLayout {
                             }
                         }
 
-                        Text {
+                        // multi-instance counter — macOS-style accent pill that
+                        // hugs the icon's top-right corner
+                        Rectangle {
                             visible: parent.count > 1
+                            anchors.top: parent.top
                             anchors.right: parent.right
-                            anchors.bottom: parent.bottom
-                            // anchors.rightMargin: -2
-                            // anchors.bottomMargin: -3
-                            text: parent.count
-                            color: Themes.activeTextColor
-                            font {
-                                pixelSize: 9
-                                bold: true
-                                family: "ZedMono Nerd Font"
+                            anchors.topMargin: -4
+                            anchors.rightMargin: -3
+                            implicitHeight: 13
+                            implicitWidth: badgeText.implicitWidth + 7
+                            radius: 6.5
+                            color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.95)
+                            border.width: 1
+                            border.color: Qt.rgba(1, 1, 1, 0.25)
+
+                            Text {
+                                id: badgeText
+                                anchors.centerIn: parent
+                                text: parent.parent.count > 9 ? "9+" : parent.parent.count
+                                color: "#17181c"
+                                font {
+                                    pixelSize: 8
+                                    bold: true
+                                    family: "ZedMono Nerd Font"
+                                }
                             }
                         }
                     }

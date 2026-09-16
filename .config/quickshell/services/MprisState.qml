@@ -375,6 +375,12 @@ Singleton {
     }
 
     function refresh() {
+        try {
+            root.doRefresh();
+        } catch (e) {}
+    }
+
+    function doRefresh() {
         let playing = [];
         for (let p of Mpris.players.values) {
             if (root.isIgnored(p))
@@ -441,10 +447,31 @@ Singleton {
     function pauseOthers(p) {
         if (!p || !p.isPlaying)
             return;
-        for (const other of Mpris.players.values) {
-            if (other !== p && other.isPlaying && other.canPause)
-                other.pause();
-        }
+        // a config reload tears down and re-creates every Mpris connection in
+        // one tick; a DBus pause() aimed at a peer whose socket just dropped
+        // can hard-crash mpd/spotify. Park cross-player writes for a short
+        // window after registration/destruction events. Evaluated fresh at
+        // call time so it can never go stale.
+        if (Date.now() < root._churnUntil)
+            return;
+        try {
+            for (const other of Mpris.players.values) {
+                if (other !== p && other.isPlaying && other.canPause)
+                    other.pause();
+            }
+        } catch (e) {}
+    }
+
+    // ── reload churn guard ──
+    // a config reload tears down and re-creates every Mpris connection (and the
+    // StatusNotifier name) in the same tick. _churnUntil marks a short quiet
+    // window that only pauseOthers() consults (fresh, at call time); refresh()
+    // itself is never gated, so selection and mprisVisible always track live
+    // players.
+    property real _churnUntil: 0
+
+    function _markChurn() {
+        _churnUntil = Date.now() + 900;
     }
 
     function sendNotify() {
@@ -500,8 +527,11 @@ Singleton {
             required property MprisPlayer modelData
             target: modelData
 
-            Component.onCompleted: root.refresh()
-            Component.onDestruction: root.refresh()
+            // engine reload fires both of these for every player in one tick —
+            // mark the churn window so pauseOthers() stays off peers during the
+            // storm (refresh itself always runs, so selection tracks live)
+            Component.onCompleted: { root._markChurn(); root.refresh(); }
+            Component.onDestruction: { root._markChurn(); root.refresh(); }
 
             function onPlaybackStateChanged() {
                 root.refresh();

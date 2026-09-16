@@ -361,6 +361,46 @@ Item {
             Layout.alignment: Qt.AlignVCenter
         }
 
+        // reset button — appears when value differs from default
+        Rectangle {
+            visible: isr.value !== isr.defaultValue
+            implicitWidth: 22
+            implicitHeight: 22
+            radius: 6
+            color: rstHover.containsMouse ? Qt.rgba(Themes.red.r, Themes.red.g, Themes.red.b, 0.18) : "transparent"
+            border.width: 1
+            border.color: rstHover.containsMouse ? Themes.red : "transparent"
+            Layout.alignment: Qt.AlignVCenter
+            Behavior on color {
+                ColorAnimation {
+                    duration: 100
+                }
+            }
+            Behavior on border.color {
+                ColorAnimation {
+                    duration: 100
+                }
+            }
+
+            HoverHandler {
+                id: rstHover
+            }
+            Text {
+                anchors.centerIn: parent
+                text: "\uf0e2"
+                color: rstHover.containsMouse ? Themes.red : Themes.muted
+                font {
+                    pixelSize: 10
+                    family: "Symbols Nerd Font Mono"
+                }
+            }
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: isr.committed(isr.defaultValue)
+            }
+        }
+
         Item {
             Layout.fillWidth: true
         }
@@ -427,46 +467,6 @@ Item {
             glyph: "\uf067"
             Layout.alignment: Qt.AlignVCenter
             onStepped: isr.nudge(1)
-        }
-
-        // reset button — appears when value differs from default
-        Rectangle {
-            visible: isr.value !== isr.defaultValue
-            implicitWidth: 22
-            implicitHeight: 22
-            radius: 6
-            color: rstHover.containsMouse ? Qt.rgba(Themes.red.r, Themes.red.g, Themes.red.b, 0.18) : "transparent"
-            border.width: 1
-            border.color: rstHover.containsMouse ? Themes.red : "transparent"
-            Layout.alignment: Qt.AlignVCenter
-            Behavior on color {
-                ColorAnimation {
-                    duration: 100
-                }
-            }
-            Behavior on border.color {
-                ColorAnimation {
-                    duration: 100
-                }
-            }
-
-            HoverHandler {
-                id: rstHover
-            }
-            Text {
-                anchors.centerIn: parent
-                text: "\uf0e2"
-                color: rstHover.containsMouse ? Themes.red : Themes.muted
-                font {
-                    pixelSize: 10
-                    family: "Symbols Nerd Font Mono"
-                }
-            }
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: isr.committed(isr.defaultValue)
-            }
         }
     }
 
@@ -1046,8 +1046,12 @@ Item {
             }
 
             Rectangle {
-                implicitWidth: 880
-                implicitHeight: 640
+                implicitWidth: 880 // 880
+                // the panel hugs the left nav block: its height comes from the
+                // nav column's content (header + N category rows + spacing) plus
+                // the vertical chrome — RowLayout margin 1 + rect margin 2 +
+                // column margins (top 16 / bottom 8) → 19 top, 11 bottom
+                implicitHeight: leftNavCol.implicitHeight + 30
 
                 anchors.centerIn: parent
 
@@ -1067,12 +1071,18 @@ Item {
                     spacing: 0
 
                     Rectangle {
+                        id: leftRect
                         Layout.preferredWidth: 220
                         Layout.fillHeight: true
+                        Layout.margins: 2
                         radius: 16
+                        // topLeftRadius: 16
+                        // bottomLeftRadius: 16
                         color: Themes.cardBg
 
                         ColumnLayout {
+                            id: leftNavCol
+
                             anchors {
                                 fill: parent
                                 margins: 8
@@ -1080,9 +1090,23 @@ Item {
                             }
                             spacing: 4
 
+                            RowLayout {
+                                Text {
+                                // Layout.fillWidth: true
+                                Layout.leftMargin: 12
+                                Layout.rightMargin: 2
+                                Layout.bottomMargin: 12
+                                text: ""
+                                color: Themes.fg
+                                font {
+                                    pixelSize: 16
+                                    bold: true
+                                    family: "Quicksand"
+                                }
+                                }
                             Text {
                                 Layout.fillWidth: true
-                                Layout.leftMargin: 12
+                                // Layout.leftMargin: 12
                                 Layout.bottomMargin: 12
                                 text: "Settings"
                                 color: Themes.fg
@@ -1091,6 +1115,7 @@ Item {
                                     bold: true
                                     family: "Quicksand"
                                 }
+                            }
                             }
 
                             Repeater {
@@ -3134,7 +3159,7 @@ Item {
                         maxV: 24
                         stepV: 1
                         value: MiscState.notifFontSize
-                        defaultValue: 12
+                        defaultValue: 10
                         unit: "px"
                         onCommitted: MiscState.notifFontSize = v
                     }
@@ -3146,68 +3171,17 @@ Item {
                         Layout.leftMargin: 32
                     }
 
-                    Rectangle {
-                        Layout.fillWidth: true
-                        height: 1
-                        color: Themes.separator
-                        Layout.leftMargin: 32
-                    }
-
                     // notification art size
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 38
-                        spacing: 12
-
-                        Text {
-                            text: "\uf03e"
-                            color: Themes.muted
-                            font {
-                                pixelSize: 14
-                                family: "Symbols Nerd Font Mono"
-                            }
-                            Layout.preferredWidth: 20
-                            horizontalAlignment: Text.AlignHCenter
-                        }
-
-                        Text {
-                            text: "Art size"
-                            color: Themes.fg
-                            font {
-                                pixelSize: 12
-                                family: "Quicksand"
-                                bold: true
-                            }
-                            Layout.alignment: Qt.AlignVCenter
-                        }
-
-                        Item {
-                            Layout.fillWidth: true
-                        }
-
-                        Text {
-                            text: MiscState.notifArtSize + "px"
-                            color: Themes.accent
-                            font {
-                                pixelSize: 10
-                                family: "ZedMono Nerd Font"
-                            }
-                            Layout.alignment: Qt.AlignVCenter
-                        }
-
-                        Row {
-                            spacing: 4
-                            Layout.alignment: Qt.AlignVCenter
-
-                            StepBtn {
-                                glyph: "\uf068"
-                                onStepped: MiscState.notifArtSize = Math.max(24, MiscState.notifArtSize - 4)
-                            }
-                            StepBtn {
-                                glyph: "\uf067"
-                                onStepped: MiscState.notifArtSize = Math.min(120, MiscState.notifArtSize + 4)
-                            }
-                        }
+                    IntStepRow {
+                        icon: "\uf03e"
+                        label: "Art size"
+                        minV: 24
+                        maxV: 120
+                        stepV: 4
+                        value: MiscState.notifArtSize
+                        defaultValue: 79
+                        unit: "px"
+                        onCommitted: MiscState.notifArtSize = v
                     }
 
                     Rectangle {
@@ -3218,60 +3192,16 @@ Item {
                     }
 
                     // notification border radius
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 38
-                        spacing: 12
-
-                        Text {
-                            text: "󱨈"
-                            color: Themes.muted
-                            font {
-                                pixelSize: 14
-                                family: "Symbols Nerd Font Mono"
-                            }
-                            Layout.preferredWidth: 20
-                            horizontalAlignment: Text.AlignHCenter
-                        }
-
-                        Text {
-                            text: "Radius"
-                            color: Themes.fg
-                            font {
-                                pixelSize: 12
-                                family: "Quicksand"
-                                bold: true
-                            }
-                            Layout.alignment: Qt.AlignVCenter
-                        }
-
-                        Item {
-                            Layout.fillWidth: true
-                        }
-
-                        Text {
-                            text: MiscState.notifRadius + "px"
-                            color: Themes.accent
-                            font {
-                                pixelSize: 10
-                                family: "ZedMono Nerd Font"
-                            }
-                            Layout.alignment: Qt.AlignVCenter
-                        }
-
-                        Row {
-                            spacing: 4
-                            Layout.alignment: Qt.AlignVCenter
-
-                            StepBtn {
-                                glyph: "\uf068"
-                                onStepped: MiscState.notifRadius = Math.max(0, MiscState.notifRadius - 2)
-                            }
-                            StepBtn {
-                                glyph: "\uf067"
-                                onStepped: MiscState.notifRadius = Math.min(24, MiscState.notifRadius + 2)
-                            }
-                        }
+                    IntStepRow {
+                        icon: "󱨈"
+                        label: "Radius"
+                        minV: 0
+                        maxV: 24
+                        stepV: 2
+                        value: MiscState.notifRadius
+                        defaultValue: 10
+                        unit: "px"
+                        onCommitted: MiscState.notifRadius = v
                     }
                 }
             }

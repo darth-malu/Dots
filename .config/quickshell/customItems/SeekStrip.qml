@@ -108,32 +108,40 @@ Item {
             }
         }
 
-        // halo — soft read-glow behind the knob over art
+        // halo — soft read-glow behind the knob over art. Kept tight: a wider
+        // disc reads as fog, this is just enough lift to separate knob/art
         Rectangle {
             anchors.centerIn: parent
-            width: parent.width * 2.2
+            width: parent.width * 1.5
             height: width
             radius: width / 2
-            color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, drag.pressed ? 0.34 : 0.26)
+            color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, drag.pressed ? 0.24 : 0.15)
             z: -1
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: 90
+                }
+            }
         }
     }
 
-    // time pill — floats over the strip on hover/drag once a track length is
-    // known; "grip, don't guess" feedback while seeking
+    // time pill — floats above the strip on hover/drag once a track length is
+    // known; "grip, don't guess" feedback while seeking. macOS-style: a slim
+    // rounded capsule with a glassy dark fill and a hairline top highlight.
     Rectangle {
         id: pill
         anchors.bottom: groove.top
-        anchors.bottomMargin: 6
+        anchors.bottomMargin: 7
         x: Math.max(3, Math.min(head.x + head.width / 2 - width / 2, root.width - width - 3))
         visible: root.length > 0 && (root.hot)
         opacity: visible ? 1 : 0
-        color: Qt.rgba(0, 0, 0, 0.6)
+        color: Qt.rgba(0.08, 0.08, 0.1, 0.92)
         border.width: 1
-        border.color: Qt.rgba(1, 1, 1, 0.12)
-        radius: 4
-        implicitWidth: timeRow.implicitWidth + 10
-        implicitHeight: timeRow.implicitHeight + 4
+        border.color: Qt.rgba(1, 1, 1, 0.14)
+        radius: 8
+        implicitWidth: timeRow.implicitWidth + 14
+        implicitHeight: 24
 
         Behavior on opacity {
             NumberAnimation {
@@ -141,19 +149,29 @@ Item {
             }
         }
 
+        // hairline top highlight — the glassy "lip"
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: 1
+            color: Qt.rgba(1, 1, 1, 0.18)
+        }
+
         Row {
             id: timeRow
 
             anchors.centerIn: parent
-            spacing: 4
+            spacing: 5
 
             Text {
                 text: root.curTime
                 color: Themes.fg
                 font {
-                    pixelSize: 9
+                    pixelSize: 10
                     bold: true
                     family: "ZedMono Nerd Font"
+                    letterSpacing: 0.3
                 }
             }
 
@@ -161,7 +179,7 @@ Item {
                 text: "/"
                 color: Themes.dim
                 font {
-                    pixelSize: 9
+                    pixelSize: 10
                     family: "ZedMono Nerd Font"
                 }
             }
@@ -170,7 +188,7 @@ Item {
                 text: root.totalTime
                 color: Themes.dim
                 font {
-                    pixelSize: 9
+                    pixelSize: 10
                     family: "ZedMono Nerd Font"
                 }
             }

@@ -19,9 +19,7 @@ import qs.logout
 ShellRoot {
     Bar {}
     Volume {}
-    IpcHandler {
-        id: ipcHandlers
-    }
+    IpcHandler {}
     NotificationOverlay {}
     Activate {}
     AppLauncher {}
@@ -40,52 +38,3 @@ ShellRoot {
     DesktopClock {}
     DesktopQuotes {}
 }
-
-// reload-nudge
-
-// nudge
-
-// nudge2
-
-// nudge
-
-// nudge
-
-// nudge
-
-// nudge
-
-// nudge
-
-// nudge
-
-// nudge
-
-// nudge
-
-// nudge
-
-// nudge
-
-// nudge
-
-// nudge
-
-// nudge
-
-// nudge
-
-// nudge
-
-// nudge
-
-// nudge
-
-// nudge
-
-// nudge
-
-// nudge
-
-// nudge
-
