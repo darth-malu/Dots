@@ -47,9 +47,11 @@ Singleton {
             property bool showBattery: true
             property bool showNotifTray: true
             property bool iconWorkspaces: true
+            property bool dotWorkspaces: false
             property bool boxyTheme: true
             property bool showWorkspaces: true
             property bool transparentWsBadge: false
+            property bool cleanWsNumbers: false
             property string notifFont: "Quicksand"
             property int notifArtSize: 79
             property int notifFontSize: 10

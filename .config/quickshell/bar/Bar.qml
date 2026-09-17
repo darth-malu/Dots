@@ -95,7 +95,8 @@ ShellRoot {
                     // its size is fully reclaimed when disabled.
                     Loader {
                         active: MiscState.showWorkspaces
-                        sourceComponent: MiscState.iconWorkspaces ? iconWorkspacesComp : numWorkspacesComp
+                        sourceComponent: MiscState.dotWorkspaces ? dotWorkspacesComp
+                            : MiscState.iconWorkspaces ? iconWorkspacesComp : numWorkspacesComp
                     }
                 }
 
@@ -163,6 +164,12 @@ ShellRoot {
                 id: iconWorkspacesComp
 
                 WorkspaceIcons {}
+            }
+
+            Component {
+                id: dotWorkspacesComp
+
+                WorkspaceDots {}
             }
 
             Component {

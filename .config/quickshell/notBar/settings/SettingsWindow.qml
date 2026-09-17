@@ -2130,6 +2130,21 @@ Item {
                                 }
 
                                 SettingRow {
+                                    icon: "󰇘"
+                                    label: "Dots"
+                                    caption: MiscState.dotWorkspaces ? "on" : "off"
+                                    checked: MiscState.dotWorkspaces
+                                    onFlipped: MiscState.dotWorkspaces = !MiscState.dotWorkspaces
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    height: 1
+                                    color: Themes.separator
+                                    Layout.leftMargin: 32
+                                }
+
+                                SettingRow {
                                     icon: ""
                                     label: "Boxy"
                                     caption: MiscState.boxyTheme ? "all modules" : "rounded"
@@ -2150,6 +2165,21 @@ Item {
                                     caption: MiscState.transparentWsBadge ? "on" : "off"
                                     checked: MiscState.transparentWsBadge
                                     onFlipped: MiscState.transparentWsBadge = !MiscState.transparentWsBadge
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    height: 1
+                                    color: Themes.separator
+                                    Layout.leftMargin: 32
+                                }
+
+                                SettingRow {
+                                    icon: "󰎠"
+                                    label: "Clean numbers"
+                                    caption: MiscState.cleanWsNumbers ? "on" : "off"
+                                    checked: MiscState.cleanWsNumbers
+                                    onFlipped: MiscState.cleanWsNumbers = !MiscState.cleanWsNumbers
                                 }
                             }
 

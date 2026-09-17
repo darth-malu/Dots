@@ -172,10 +172,25 @@ Singleton {
         Prefs.write();
     }
 
+    // workspace module flavour — true = GNOME-style dots, overrides icons/numbers
+    property bool dotWorkspaces: Prefs.prefs.dotWorkspaces
+    onDotWorkspacesChanged: {
+        Prefs.prefs.dotWorkspaces = dotWorkspaces;
+        Prefs.write();
+    }
+
     // transparent active workspace number badge (parent container stays colored)
     property bool transparentWsBadge: Prefs.prefs.transparentWsBadge
     onTransparentWsBadgeChanged: {
         Prefs.prefs.transparentWsBadge = transparentWsBadge;
+        Prefs.write();
+    }
+
+    // clean numbers — active icon container drops its bg, only the app icons
+    // float unboxed; the workspace number badge keeps its bg and border
+    property bool cleanWsNumbers: Prefs.prefs.cleanWsNumbers
+    onCleanWsNumbersChanged: {
+        Prefs.prefs.cleanWsNumbers = cleanWsNumbers;
         Prefs.write();
     }
 

@@ -43,7 +43,9 @@ RowLayout {
                 return false;
             return true;
         });
-        list.sort((a, b) => String(a.name ?? 0).localeCompare(String(b.name ?? 0), undefined, { numeric: true }));
+        list.sort((a, b) => String(a.name ?? 0).localeCompare(String(b.name ?? 0), undefined, {
+                numeric: true
+            }));
 
         const sig = list.map(w => String(w.name)).join(",");
         if (sig !== _listSig) {
@@ -129,7 +131,7 @@ RowLayout {
 
             radius: boxy ? (isEmpty ? 0 : Themes.boxyRadius) : Themes.roundedRadius
 
-            color: isEmpty ? "transparent" : boxy ? (isActive ? Themes.boxyActiveBg : "transparent") : (isActive ? Themes.roundedActiveBg : "transparent")
+            color: isEmpty || MiscState.cleanWsNumbers ? "transparent" : boxy ? (isActive ? Themes.boxyActiveBg : "transparent") : (isActive ? Themes.roundedActiveBg : "transparent")
 
             Behavior on color {
                 ColorAnimation {
@@ -164,21 +166,40 @@ RowLayout {
 
                 spacing: 0
 
-// workspace number badge — visible in both themes; an empty
-                    // workspace collapses to a small accent-tinted badge
-                    Rectangle {
-                        id: numberContainer
+                // workspace number badge — visible in both themes; an empty
+                // workspace collapses to a small accent-tinted badge
+                Rectangle {
+                    id: numberContainer
 
-                        visible: true
-                        Layout.fillHeight: true
-                        Layout.rightMargin: 4
-                        implicitWidth: 18
-                        implicitHeight: width
-                        radius: boxy ? Themes.boxyRadius : Themes.roundedRadius
-                        color: rootBlock.isEmpty ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12) : rootBlock.isActive ? (MiscState.transparentWsBadge ? "transparent" : (boxy ? Themes.boxyActiveBg : Themes.roundedBadgeBg)) : rootBlock.urgent ? Themes.roundedUrgentBg : "transparent"
+                    visible: true
+                    // fixed size — never stretches when the icon cells grow
+                    // (dots below icons) so the number itself stays put
+                    Layout.alignment: Qt.AlignVCenter
+                    Layout.rightMargin: 4
+                    implicitWidth: 18
+                    implicitHeight: width
+                    radius: boxy ? Themes.boxyRadius : Themes.roundedRadius
+                    // clean numbers — the icons float unboxed, so the active
+                    // number badge keeps its bg and gains a hairline to stay
+                    // the only chrome in the block
+                    border.width: MiscState.cleanWsNumbers && rootBlock.isActive ? (boxy ? Themes.boxyBorderWidth : Themes.roundedBorderWidth) : 0
+                    border.color: boxy ? Themes.boxyActiveBorder : Themes.roundedActiveBorder
+                    color: rootBlock.isEmpty ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12) : rootBlock.isActive ? (MiscState.transparentWsBadge ? "transparent" : (boxy ? Themes.boxyActiveBg : Themes.roundedBadgeBg)) : rootBlock.urgent ? Themes.roundedUrgentBg : "transparent"
 
                     Behavior on color {
                         ColorAnimation {
+                            duration: 200
+                            easing.type: Easing.OutQuad
+                        }
+                    }
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: 200
+                            easing.type: Easing.OutQuad
+                        }
+                    }
+                    Behavior on border.width {
+                        NumberAnimation {
                             duration: 200
                             easing.type: Easing.OutQuad
                         }
@@ -223,15 +244,22 @@ RowLayout {
 
                         readonly property int count: modelData.count
 
+                        // dots design — one dot per additional instance, capped
+                        // at 3; the cell height never changes, the icon just
+                        // makes room (16 → 13) for the 3px dot row underneath
+                        readonly property bool hasDots: count > 1
+                        readonly property int dotCount: hasDots ? Math.min(count, 3) : 0
+
                         Layout.alignment: Qt.AlignVCenter
                         Layout.leftMargin: 2
                         implicitWidth: 16
                         implicitHeight: 16
 
                         IconImage {
-                            anchors.centerIn: parent
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.top: parent.top
                             source: parent.modelData.source
-                            implicitSize: 16
+                            implicitSize: iconCell.hasDots ? 13 : 16
                             asynchronous: true
                             // active workspace: keep the focused app full-bright,
                             // dim the unfocused ones when more than one is open;
@@ -246,30 +274,27 @@ RowLayout {
                             }
                         }
 
-                        // multi-instance counter — macOS-style accent pill that
-                        // hugs the icon's top-right corner
-                        Rectangle {
-                            visible: parent.count > 1
-                            anchors.top: parent.top
-                            anchors.right: parent.right
-                            anchors.topMargin: -4
-                            anchors.rightMargin: -3
-                            implicitHeight: 13
-                            implicitWidth: badgeText.implicitWidth + 7
-                            radius: 6.5
-                            color: Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.95)
-                            border.width: 1
-                            border.color: Qt.rgba(1, 1, 1, 0.25)
+                        // multi-instance indicator — dot row sitting under the
+                        // icon instead of a top-right count pill
+                        Row {
+                            id: dotsRow
 
-                            Text {
-                                id: badgeText
-                                anchors.centerIn: parent
-                                text: parent.parent.count > 9 ? "9+" : parent.parent.count
-                                color: "#17181c"
-                                font {
-                                    pixelSize: 8
-                                    bold: true
-                                    family: "ZedMono Nerd Font"
+                            visible: parent.count > 1
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.bottom: parent.bottom
+                            spacing: 2
+                            height: 3
+
+                            Repeater {
+                                model: iconCell.dotCount
+
+                                delegate: Rectangle {
+                                    width: 3
+                                    height: 3
+                                    radius: 1.5
+                                    color: rootBlock.isActive
+                                        ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.9)
+                                        : Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.55)
                                 }
                             }
                         }
