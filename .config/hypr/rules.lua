@@ -14,7 +14,7 @@ local bgNoAnim = hl.layer_rule({
   match   = { namespace = "^quickshell-bg$" },
   no_anim = true,
 })
-bgNoAnim:set_enabled(true)
+bgNoAnim:set_enabled(false) --TODO: see if working
 
 -- The glass bar (mode 3) is a semi-transparent layersurface; blur what sits
 -- behind the tildeBar namespace so the 0.45 tint reads as true frosted glass
@@ -62,19 +62,6 @@ local wayland_drag = hl.window_rule({
 })
 wayland_drag:set_enabled(false)
 
-local xwayland_chrome_weirdness = hl.window_rule({
-  name     = "fix-xwayland-weird",
-  match    = {
-    class    = "^(.*)$",
-    title    = "^(.*)$",
-    xwayland = true,
-  },
-
-  no_focus = true,
-  float    = true,                           --NOTE: changed cause might be causing issue with steam
-})
-xwayland_chrome_weirdness:set_enabled(false) --NOTE: causes zero focus on steam
-
 local qt6ct = hl.window_rule({
   name  = "Select Fonts Qt6 settings",
   match = {
@@ -87,19 +74,38 @@ qt6ct:set_enabled(false)
 
 local centerFloatWindows = hl.window_rule({
   name = "Floating windows",
-  match = { float = true },
+  match = { float = true, xwayland = false },
   center = true,
   border_size = 0
 })
 centerFloatWindows:set_enabled(true)
 
-local float_ludusavi = hl.window_rule({
-  name = "Select WIndow float",
+local xwaylandMenus = hl.window_rule({
+  name = "xWayland windows",
+  match = { float = true, xwayland = true },
+  no_blur = true,
+  -- dim_around = true,
+})
+xwaylandMenus:set_enabled(true)
+
+local stremio = hl.window_rule({
+  name = "Stremio Idle Inhibit",
+  match = { class = "com.stremio.Stremio" },
+  -- no_blur = true,
+  -- border_size = 0
+  idle_inhibit = "focus",
+  no_screen_share = true, --TODO: test
+  dim_around = true,
+})
+stremio:set_enabled(true)
+
+local ludusavi = hl.window_rule({
+  name = "Select Window float -- ludusave",
   match = { class = "ludusavi", title = "Select Folder" },
   -- center = true,
   float = true,
 })
-float_ludusavi:set_enabled(true)
+ludusavi:set_enabled(true)
 
 hl.window_rule({
   name = "Hypr pipewire Float",
@@ -116,7 +122,7 @@ local noBorder_exSpecial = hl.window_rule({
 noBorder_exSpecial:set_enabled(false)
 
 local noBorder_all = hl.window_rule({
-  name = "No border if only visible window in workspace (except special)",
+  name = "No border if only visible window in workspace",
   match = { workspace = "w[tv1]" },
   border_size = 0,
 })
@@ -135,7 +141,10 @@ noBorder_all:set_enabled(true)
 -- hl.workspace_rule({ workspace = "w[tv1]s[false]", border_size = 0})
 -- hl.workspace_rule({ workspace = "w[tv1]", gaps_out = 0, gaps_in = 0 })
 hl.workspace_rule({ workspace = "f[1]", gaps_out = 0, gaps_in = 0 })
-hl.workspace_rule({ workspace = "special:easy", "easyeffects" })
+hl.workspace_rule({
+  workspace = "special:easy",
+  on_created_empty = "app2unit -s a easyeffects || uwsm-app -s a easyeffects",
+})
 hl.workspace_rule({
   workspace = "special:nc",
   on_created_empty =
@@ -146,7 +155,8 @@ hl.workspace_rule({
   on_created_empty =
   "[workspace special:magic;float true;size (monitor_w*0.9) (monitor_h*0.8);center true] app2unit -s a kitty || uwsm-app -s a kitty"
 })
--- hl.workspace_rule({ workspace = "7", layout = "scrolling" })
+
+hl.workspace_rule({ workspace = "10", layout = "scrolling" })
 
 -- TODO: see if I need persistence on QUickshell windows (for testing)
 -- Ref https://wiki.hypr.land/Configuring/Basics/Workspace-Rules/
@@ -351,3 +361,19 @@ hl.window_rule({
 -- })
 --[[
 ]]
+
+-- SMART GAPS
+-- hl.workspace_rule({ workspace = "w[tv1]s[false]", gaps_out = 0, gaps_in = 0 })
+-- hl.workspace_rule({ workspace = "f[1]s[false]", gaps_out = 0, gaps_in = 0 })
+-- hl.window_rule({ match = { float = false, workspace = "w[tv1]s[false]" }, border_size = 0 })
+-- hl.window_rule({ match = { float = false, workspace = "w[tv1]s[false]" }, rounding = 0 })
+-- hl.window_rule({ match = { float = false, workspace = "f[1]s[false]" }, border_size = 0 })
+-- hl.window_rule({ match = { float = false, workspace = "f[1]s[false]" }, rounding = 0 })
+
+-- WHEN ONLY ONE
+-- hl.workspace_rule({ workspace = "w[tv1]", gaps_out = 0, gaps_in = 0 })
+-- hl.workspace_rule({ workspace = "f[1]", gaps_out = 0, gaps_in = 0 })
+-- hl.window_rule({ match = { float = false, workspace = "w[tv1]" }, border_size = 0 })
+-- hl.window_rule({ match = { float = false, workspace = "w[tv1]" }, rounding = 0 })
+-- hl.window_rule({ match = { float = false, workspace = "f[1]" }, border_size = 0 })
+-- hl.window_rule({ match = { float = false, workspace = "f[1]" }, rounding = 0 })

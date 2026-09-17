@@ -2,9 +2,9 @@ hl.config({
   general = {
     -- https://wiki.hyprland.org/Configuring/Variables/
     col = {
-      active_border = { colors = { "rgba(00ABF5FF)" } }, --rgba(00FFF5aa)
+      active_border = { colors = { "rgba(2196F3FF)" } }, --rgba(00FFF5aa)
       -- active_border   = { colors = {"rgba(33ccffee)", "rgba(FF5555FF)"}, angle = 45 },
-      inactive_border = "rgba(595959FF)",
+      inactive_border = "rgba(607D8BFF)",
     },
     gaps_in = 4, -- NOTE: space essential for gaps script
     gaps_out = 9,

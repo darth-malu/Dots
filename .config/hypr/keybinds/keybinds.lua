@@ -69,8 +69,6 @@ closeWindowBind:set_enabled(true)
 
 -- hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
-hl.bind(mainMod .. " + slash", hl.dsp.layout("swapsplit")) -- SUPER+, was swapsplit — now SUPER+, = openWindows
-hl.bind("SUPER + SHIFT + slash", hl.dsp.layout("togglesplit"))
 -- hl.bind("SUPER + A", hl.dsp.layout("togglesplit"))
 hl.bind(mainMod .. "+ A", hl.dsp.window.pseudo())
 
@@ -119,22 +117,10 @@ hl.bind(mainMod .. "+ SHIFT + left", hl.dsp.group.move_window())
 -- "$mod $sl , right, movewindoworgroup, r"
 -- "$mod $sl , left, movewindoworgroup, l"
 
--- MOVEMENT
--- Move focus with mainMod + arrow keys
-hl.bind(mainMod .. "+ CONTROL + H", hl.dsp.focus({ direction = "left" }))
-hl.bind(mainMod .. "+ CONTROL + L", hl.dsp.focus({ direction = "right" }))
-hl.bind(mainMod .. "+ CONTROL + k", hl.dsp.focus({ direction = "up" }))
-hl.bind(mainMod .. "+ CONTROL + j", hl.dsp.focus({ direction = "down" }))
-hl.bind(mainMod .. "+ CONTROL + H", hl.dsp.focus({ direction = "left" }))
-
-hl.bind("SUPER + l", hl.dsp.focus({ workspace = "m+1" }))
-hl.bind("SUPER + h", hl.dsp.focus({ workspace = "m-1" }))
-
 -- URGENT, LAST , EMPTY
 hl.bind(mainMod .. "+ O", hl.dsp.window.move({ workspace = "emptym" }))
 hl.bind(mainMod .. "+ K", hl.dsp.focus({ last = "urgent_or_last" })) -- can be --last
 
-hl.bind("SUPER + space", hl.dsp.window.cycle_next())                 -- can be --last
 
 -- Switch workspaces with mainMod + [0-9]
 -- Move active window to a workspace with mainMod + SHIFT + [0-9]
@@ -173,3 +159,154 @@ hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO
 hl.bind("XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"),
   { locked = true, repeating = true })
 -- hl.bind("XF86AudioMicMute",     hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"),   { locked = true, repeating = true })
+
+
+--[[ MOVE ALL WINDOWS IN CURRENT WORKSPACE TO ANOTHEr
+local function moveWindowsCurrentWorkspace(ws, f)
+  local cws = hl.get_active_workspace()
+  local windows = hl.get_windows({ workspace = cws })
+
+  for _, w in pairs(windows) do
+    hl.dispatch(
+      hl.dsp.window.move({
+        window = w,
+        workspace = ws,
+        follow = f
+      })
+    )
+  end
+end
+
+for i = 1, 10 do
+  local key = i % 10
+  hl.bind("SUPER+SHIFT+ALT+" .. key, function()
+    moveWindowsCurrentWorkspace(i, true)
+  end)
+end
+
+for i = 1, 10 do
+  local key = i % 10
+  hl.bind("SUPER+CTRL+ALT+" .. key, function()
+    moveWindowsCurrentWorkspace(i, false)
+  end)
+end
+
+-- CLOSE ALL WINDOWS AT ONCe
+local function closeAllWindows()
+  local windows = hl.get_windows()
+
+  for _, w in pairs(windows) do
+    hl.dispatch(hl.dsp.window.close({ window = w }))
+  end
+end
+
+local function closeAllWindowsCurrentWorkspace()
+  local cws = hl.get_active_workspace()
+  local windows = hl.get_windows({ workspace = cws })
+
+  for _, w in pairs(windows) do
+    hl.dispatch(hl.dsp.window.close({ window = w }))
+  end
+end
+
+hl.bind("SUPER+SHIFT+BackSpace", closeAllWindowsCurrentWorkspace)
+hl.bind("SUPER+SHIFT+Delete", closeAllWindows)
+]]
+
+--[[
+hl.bind("SUPER + x", function()
+  local game_mode = (hl.get_config("animations.enabled") == false)
+
+  if game_mode then
+    hl.exec_cmd("hyprctl reload")
+    return
+  end
+
+  hl.config({
+    general = {
+      gaps_in = 0,
+      gaps_out = 0, -- Disable gaps
+      border_size = 0,
+    },
+
+    animations = {
+      enabled = false, -- Disable animations
+    },
+
+    -- Disable blur, shadow and window rounding
+    decoration = {
+      shadow = { enabled = false },
+      blur = { enabled = false },
+      rounding = 0,
+    }
+  })
+end)
+]]
+
+-- PER-LAYOUT BINDSS
+local function layout_bind(bind_table)
+  return function()
+    local workspace = hl.get_active_special_workspace() or
+        hl.get_active_workspace()
+
+    if not workspace then
+      return
+    end
+
+    local layout = workspace.tiled_layout
+
+    if bind_table[layout] then
+      hl.dispatch(bind_table[layout])
+    end
+  end
+end
+
+hl.bind("SUPER + bracketleft", layout_bind({
+  scrolling = hl.dsp.layout("swapcol l"), -- Scrolling: swap column with left one
+  dwindle   = hl.dsp.layout("swapsplit"), -- Dwindle: swap window split
+  monocle   = hl.dsp.layout("cycleprev"), -- Monocle and master: cycle prev window
+  master    = hl.dsp.layout("cycleprev"),
+}))
+
+hl.bind("SUPER + bracketright", layout_bind({
+  scrolling = hl.dsp.layout("swapcol r"),
+  dwindle   = hl.dsp.layout("swapsplit"),
+  monocle   = hl.dsp.layout("cyclenext"), -- Monocle and master: cycle next window
+  master    = hl.dsp.layout("cyclenext"),
+}))
+
+-- hl.bind(mainMod .. " + slash",
+hl.bind("SUPER + SHIFT + bracketleft", hl.dsp.layout("togglesplit"))
+hl.bind("SUPER + SHIFT + bracketright", hl.dsp.layout("togglesplit"))
+hl.bind("SUPER + space", hl.dsp.window.cycle_next()) -- can be --last
+
+
+hl.bind("SUPER + l", layout_bind({
+  dwindle = hl.dsp.focus({ workspace = "m+1" }),
+  -- scrolling = hl.dsp.layout("swapsplit"), -- Dwindle: swap window split
+}))
+
+hl.bind("SUPER + h", layout_bind({
+  dwindle = hl.dsp.focus({ workspace = "m-1" }),
+  -- scrolling = hl.dsp.layout("swapsplit"), -- Dwindle: swap window split
+}))
+
+hl.bind(mainMod .. "+ CONTROL + H", layout_bind({
+  dwindle = hl.dsp.focus({ direction = "left" }),
+  -- scrolling = hl.dsp.layout("swapsplit"), -- Dwindle: swap window split
+}))
+
+hl.bind(mainMod .. "+ CONTROL + L", layout_bind({
+  dwindle = hl.dsp.focus({ direction = "right" }),
+  -- scrolling = hl.dsp.layout("swapsplit"), -- Dwindle: swap window split
+}))
+
+hl.bind(mainMod .. "+ CONTROL + k", layout_bind({
+  dwindle = hl.dsp.focus({ direction = "up" }),
+  -- scrolling = hl.dsp.layout("swapsplit"), -- Dwindle: swap window split
+}))
+
+hl.bind(mainMod .. "+ CONTROL + j", layout_bind({
+  dwindle = hl.dsp.focus({ direction = "down" }),
+  -- scrolling = hl.dsp.layout("swapsplit"), -- Dwindle: swap window split
+}))

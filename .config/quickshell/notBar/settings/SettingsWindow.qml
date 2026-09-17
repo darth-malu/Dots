@@ -1017,6 +1017,8 @@ Item {
 
         color: "transparent"
 
+        readonly property int rounding: 12
+
         anchors {
             top: true
             left: true
@@ -1046,16 +1048,16 @@ Item {
             }
 
             Rectangle {
-                implicitWidth: 880 // 880
+                implicitWidth: 780 // 880
                 // the panel hugs the left nav block: its height comes from the
                 // nav column's content (header + N category rows + spacing) plus
                 // the vertical chrome — RowLayout margin 1 + rect margin 2 +
                 // column margins (top 16 / bottom 8) → 19 top, 11 bottom
-                implicitHeight: leftNavCol.implicitHeight + 30
+                implicitHeight: leftNavCol.implicitHeight + 6
 
                 anchors.centerIn: parent
 
-                radius: 16
+                radius: window.rounding
                 color: Themes.panelBg
                 border.width: 1
                 border.color: Themes.borderColor
@@ -1072,10 +1074,10 @@ Item {
 
                     Rectangle {
                         id: leftRect
-                        Layout.preferredWidth: 220
+                        Layout.preferredWidth: 150
                         Layout.fillHeight: true
                         Layout.margins: 2
-                        radius: 16
+                        radius: window.rounding
                         // topLeftRadius: 16
                         // bottomLeftRadius: 16
                         color: Themes.cardBg
@@ -1085,49 +1087,52 @@ Item {
 
                             anchors {
                                 fill: parent
-                                margins: 8
-                                topMargin: 16
+                                margins: 2
+                                topMargin: 2
                             }
                             spacing: 4
 
                             RowLayout {
+                                id: settingsHeaderText
+                                visible: false
                                 Text {
-                                // Layout.fillWidth: true
-                                Layout.leftMargin: 12
-                                Layout.rightMargin: 2
-                                Layout.bottomMargin: 12
-                                text: ""
-                                color: Themes.fg
-                                font {
-                                    pixelSize: 16
-                                    bold: true
-                                    family: "Quicksand"
+                                    // Layout.fillWidth: true
+                                    Layout.leftMargin: 12
+                                    Layout.rightMargin: 2
+                                    Layout.bottomMargin: 12
+                                    text: ""
+                                    color: Themes.fg
+                                    font {
+                                        pixelSize: 16
+                                        bold: true
+                                        family: "Quicksand"
+                                    }
                                 }
+                                Text {
+                                    Layout.fillWidth: true
+                                    // Layout.leftMargin: 12
+                                    Layout.bottomMargin: 12
+                                    text: "Settings"
+                                    color: Themes.fg
+                                    font {
+                                        pixelSize: 16
+                                        bold: true
+                                        family: "Quicksand"
+                                    }
                                 }
-                            Text {
-                                Layout.fillWidth: true
-                                // Layout.leftMargin: 12
-                                Layout.bottomMargin: 12
-                                text: "Settings"
-                                color: Themes.fg
-                                font {
-                                    pixelSize: 16
-                                    bold: true
-                                    family: "Quicksand"
-                                }
-                            }
                             }
 
                             Repeater {
+                                id: leftColRepeater
                                 model: root.categories
 
-                                Rectangle {
+                                delegate: Rectangle {
                                     required property int index
                                     required property var modelData
 
                                     Layout.fillWidth: true
-                                    implicitHeight: 36
-                                    radius: 8
+                                    implicitHeight: 26
+                                    radius: 10
                                     color: root.currentCategory === index ? Qt.rgba(0.54, 0.57, 0.96, 0.15) : "transparent"
 
                                     Behavior on color {
@@ -1186,8 +1191,10 @@ Item {
                         Item {
                             anchors {
                                 fill: parent
-                                margins: 24
-                                topMargin: 28
+                                // margins: 24
+                                leftMargin: 4
+                                rightMargin: 12
+                                topMargin: 4
                             }
 
                             Flickable {
@@ -3362,40 +3369,6 @@ Item {
                     }
                 }
             }
-
-            Card {
-                title: "Notes"
-                icon: "\uf05a"
-                accent: Themes.accent2
-
-                ColumnLayout {
-                    spacing: 4
-                    Layout.fillWidth: true
-                    Layout.topMargin: 2
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: "· Lower rates feel snappier, higher rates save battery."
-                        color: Themes.dim
-                        font {
-                            pixelSize: 11
-                            family: "ZedMono Nerd Font"
-                        }
-                        wrapMode: Text.WordWrap
-                    }
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: "· Values persist across config reloads."
-                        color: Themes.dim
-                        font {
-                            pixelSize: 11
-                            family: "ZedMono Nerd Font"
-                        }
-                        wrapMode: Text.WordWrap
-                    }
-                }
-            }
         }
     }
 
@@ -3679,7 +3652,7 @@ Item {
 
             Card {
                 title: "Window layout"
-                icon: "\uf120"
+                // icon: "\uf120"
                 accent: Themes.accent
 
                 ColumnLayout {
@@ -3687,7 +3660,7 @@ Item {
                     Layout.fillWidth: true
 
                     SettingRow {
-                        icon: "\uf0b2"
+                        icon: "󱉵"
                         label: "Gaps out on/off"
                         caption: HyprConfig.gapsOutEnabled ? "on" : "off"
                         checked: HyprConfig.gapsOutEnabled
@@ -3703,7 +3676,7 @@ Item {
 
                     HyprStepRow {
                         id: gapsInRow
-                        icon: "\uf0b2"
+                        icon: ""
                         label: "Gaps in"
                         key: "gapsIn"
                         minValue: 0
@@ -3719,7 +3692,7 @@ Item {
 
                     HyprStepRow {
                         id: gapsOutRow
-                        icon: "\uf0b2"
+                        icon: ""
                         label: "Gaps out"
                         key: "gapsOut"
                         minValue: 0
@@ -3736,7 +3709,7 @@ Item {
 
                     HyprStepRow {
                         id: borderSizeRow
-                        icon: "\uf0c8"
+                        icon: ""
                         label: "Border size"
                         key: "borderSize"
                         minValue: 0
@@ -3752,7 +3725,7 @@ Item {
 
                     HyprStepRow {
                         id: roundingRow
-                        icon: "\uf1b2"
+                        icon: "󱨈"
                         label: "Corner rounding"
                         key: "rounding"
                         minValue: 0
@@ -3763,7 +3736,7 @@ Item {
 
             Card {
                 title: "Borders"
-                icon: "\uf0c8"
+                // icon: "\uf0c8"
                 accent: Themes.accent
 
                 ColumnLayout {
@@ -3772,7 +3745,7 @@ Item {
 
                     HyprColorRow {
                         id: activeBorderRow
-                        icon: "\uf096"
+                        icon: ""
                         label: "Active border"
                         borderKey: "activeBorder"
                     }
@@ -3786,7 +3759,7 @@ Item {
 
                     HyprColorRow {
                         id: inactiveBorderRow
-                        icon: "\uf096"
+                        icon: "󱗽"
                         label: "Inactive border"
                         borderKey: "inactiveBorder"
                     }
@@ -4040,19 +4013,6 @@ Item {
                         }
                     }
                 }
-            }
-
-            // ── bring the whole launcher family onto one canvas ──
-            Text {
-                Layout.fillWidth: true
-                Layout.leftMargin: 4
-                text: "Blur applies to the launcher, calc, and every picker — the panel bg turns translucent while blur is on."
-                color: Themes.dim
-                font {
-                    pixelSize: 10
-                    family: "ZedMono Nerd Font"
-                }
-                wrapMode: Text.WordWrap
             }
         }
     }
