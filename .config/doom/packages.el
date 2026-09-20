@@ -38,6 +38,7 @@
 (package! tldr)
 (package! all-the-icons) ;TODO add desc
 (package! elcord)
+(package! helpful)
 ;; (package! org-contacts) ;;FIXME?
 ;; (package! xclip)
 ;; (package! codeium :recipe (:host github :repo "Exafunction/codeium.el"))

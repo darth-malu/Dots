@@ -7,7 +7,7 @@ import QtQuick.Layouts
 
 // GNOME-inspired workspace indicator — a row of dots, one per workspace,
 // with the active workspace drawn as an elongated accent pill. Replaces the
-// plain workspace numbers when MiscState.dotWorkspaces is enabled.
+// plain workspace numbers when MiscState.workspaceStyle is 0.
 RowLayout {
     id: root
 

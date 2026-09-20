@@ -165,17 +165,10 @@ Singleton {
         Prefs.write();
     }
 
-    // workspace module flavour — true = app icons (default), false = numbers
-    property bool iconWorkspaces: Prefs.prefs.iconWorkspaces
-    onIconWorkspacesChanged: {
-        Prefs.prefs.iconWorkspaces = iconWorkspaces;
-        Prefs.write();
-    }
-
-    // workspace module flavour — true = GNOME-style dots, overrides icons/numbers
-    property bool dotWorkspaces: Prefs.prefs.dotWorkspaces
-    onDotWorkspacesChanged: {
-        Prefs.prefs.dotWorkspaces = dotWorkspaces;
+    // workspace module flavour — 0 = GNOME dots, 1 = numbers, 2 = app icons
+    property int workspaceStyle: Prefs.prefs.workspaceStyle
+    onWorkspaceStyleChanged: {
+        Prefs.prefs.workspaceStyle = workspaceStyle;
         Prefs.write();
     }
 

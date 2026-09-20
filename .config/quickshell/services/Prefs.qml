@@ -46,8 +46,8 @@ Singleton {
             property bool showEthernet: true
             property bool showBattery: true
             property bool showNotifTray: true
-            property bool iconWorkspaces: true
-            property bool dotWorkspaces: false
+            // workspace module flavour — 0 = dots, 1 = numbers, 2 = icons
+            property int workspaceStyle: 2
             property bool boxyTheme: true
             property bool showWorkspaces: true
             property bool transparentWsBadge: false

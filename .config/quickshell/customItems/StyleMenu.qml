@@ -8,7 +8,8 @@ import qs.services
 import qs.themes
 
 // Right-clicking the bar opens this at the cursor (theme roster); left-click
-// opens it in style mode (bar treatments). Single instance, switched by mode.
+// opens it in style mode (bar treatments); alt-click in workspace mode
+// (dots / numbers / icons). Single instance, switched by mode.
 PopupWindow {
     id: root
 
@@ -25,10 +26,12 @@ PopupWindow {
     anchor.rect.x: root.xPos
     anchor.rect.y: root.host.height + 8
 
-    // 0 = color scheme roster, 1 = bar treatment roster
+    // 0 = color scheme roster, 1 = bar treatment roster, 2 = workspace flavour
     readonly property var themeNames: ["Pyrple", "Gron", "Gruvbox", "Rose", "Everforest", "Bleu"]
     readonly property var styleNames: ["Transparent", "Solid +", "Solid", "Glass +", "Glass", "Glass !border"]
-    readonly property string menuTitle: root.mode === 0 ? "Color Scheme" : "Bar Style"
+    readonly property var workspaceNames: ["Dots", "Workspaces", "Workspaces + icons"]
+    readonly property string menuTitle: root.mode === 0 ? "Color Scheme" : root.mode === 1 ? "Bar Style" : "Workspaces"
+    readonly property var rosterNames: root.mode === 0 ? root.themeNames : root.mode === 1 ? root.styleNames : root.workspaceNames
 
     function openAt(m: int, gx: real): void {
         // clicking the same bar button again toggles the popup closed
@@ -43,14 +46,18 @@ PopupWindow {
     }
 
     function currentSel(): int {
-        return root.mode === 0 ? MiscState.themeScheme : BarState.barMode;
+        return root.mode === 0 ? MiscState.themeScheme
+            : root.mode === 1 ? BarState.barMode
+            : MiscState.workspaceStyle;
     }
 
     function applySel(i: int): void {
         if (root.mode === 0)
             MiscState.themeScheme = i;
-        else
+        else if (root.mode === 1)
             BarState.barMode = i;
+        else
+            MiscState.workspaceStyle = i;
         root.menuOpen = false;
     }
 
@@ -102,7 +109,7 @@ PopupWindow {
                     Text {
                         id: modeIcon
                         anchors.centerIn: parent
-                        text: root.mode === 0 ? "" : ""
+                        text: root.mode === 0 ? "" : root.mode === 1 ? "" : "󰇘"
                         color: Themes.accent
                         font {
                             pixelSize: 11
@@ -126,7 +133,7 @@ PopupWindow {
 
                     Text {
                         visible: false
-                        text: "currently " + (root.mode === 0 ? root.themeNames[root.currentSel()] : root.styleNames[root.currentSel()])
+                        text: "currently " + root.rosterNames[root.currentSel()]
                         color: Themes.muted
                         font {
                             pixelSize: 9
@@ -167,7 +174,7 @@ PopupWindow {
             Repeater {
                 id: rosterRepeater
 
-                model: root.mode === 0 ? root.themeNames : root.styleNames
+                model: root.rosterNames
 
                 delegate: Rectangle {
                     required property int index

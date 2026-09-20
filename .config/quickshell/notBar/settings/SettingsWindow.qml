@@ -12,12 +12,9 @@ import qs.bar.RHS
 import Quickshell.Services.Mpris
 import Quickshell.Networking
 import qs.themes
-
 Item {
     id: root
-
     property int currentCategory: 0
-
     // primary-screen width — the bar width slider's starting/default value.
     // prefs store 0 as "full-bleed"; here we display and step in real pixels
     // so the first scroll departs from the actual full width, never a
@@ -30,26 +27,21 @@ Item {
         const w = BarState.barWidth > 0 ? BarState.barWidth : root.barWidthDefault;
         return Math.min(barWidthDefault, w);
     }
-
     // ── shared switch pill — one control, one look, everywhere ──
     component SwitchPill: Rectangle {
         id: sp
-
         property bool on: false
         signal toggled
-
         Layout.alignment: Qt.AlignVCenter
         implicitWidth: 34
         implicitHeight: 18
         radius: 10
         color: on ? Themes.accent : Themes.borderMuted
-
         Behavior on color {
             ColorAnimation {
                 duration: 120
             }
         }
-
         Rectangle {
             width: 16
             height: 16
@@ -57,7 +49,6 @@ Item {
             color: Themes.panelBg
             x: sp.on ? parent.width - width - 2 : 2
             y: (parent.height - height) / 2
-
             Behavior on x {
                 NumberAnimation {
                     duration: 120
@@ -65,28 +56,23 @@ Item {
                 }
             }
         }
-
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
             onClicked: sp.toggled()
         }
     }
-
     // ── single-line setting row: glyph · label · (state caption) · switch ──
     component SettingRow: RowLayout {
         id: sr
-
         required property string icon
         required property string label
         property string caption
         property bool checked
         signal flipped
-
         spacing: 12
         Layout.fillWidth: true
         Layout.preferredHeight: 38
-
         Text {
             text: sr.icon
             color: sr.checked ? Themes.accent : Themes.muted
@@ -97,7 +83,6 @@ Item {
             Layout.preferredWidth: 20
             horizontalAlignment: Text.AlignHCenter
         }
-
         Text {
             text: sr.label
             color: Themes.fg
@@ -109,11 +94,9 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             elide: Text.ElideRight
         }
-
         Item {
             Layout.fillWidth: true
         }
-
         Text {
             visible: sr.caption.length > 0
             text: sr.caption
@@ -124,27 +107,22 @@ Item {
             }
             Layout.alignment: Qt.AlignVCenter
         }
-
         SwitchPill {
             on: sr.checked
             onToggled: sr.flipped()
         }
     }
-
     // ── one clickable / holdable arrow button ──
     component StepBtn: Rectangle {
         id: sb
-
         property string glyph
         signal stepped
-
         implicitWidth: 24
         implicitHeight: 24
         radius: 7
         color: sbMa.containsMouse || sbMa.pressed ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16) : Themes.separator
         border.width: 1
         border.color: sbMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.45) : "transparent"
-
         Behavior on color {
             ColorAnimation {
                 duration: 110
@@ -155,7 +133,6 @@ Item {
                 duration: 110
             }
         }
-
         Text {
             anchors.centerIn: parent
             text: sb.glyph
@@ -165,17 +142,14 @@ Item {
                 bold: true
                 family: "Symbols Nerd Font Mono"
             }
-
             Behavior on color {
                 ColorAnimation {
                     duration: 110
                 }
             }
         }
-
         MouseArea {
             id: sbMa
-
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
@@ -186,7 +160,6 @@ Item {
             }
             onReleased: sbHold.stop()
             onCanceled: sbHold.stop()
-
             Timer {
                 id: sbHold
                 interval: 400
@@ -196,11 +169,9 @@ Item {
             }
         }
     }
-
     // ── poll-rate stepper row: glyph · label · [−] value [+] ──
     component PollRow: RowLayout {
         id: pr
-
         required property string icon
         required property string label
         required property int minMs
@@ -209,7 +180,6 @@ Item {
         property int valueMs
         // fired whenever the value changes
         signal committed(int ms)
-
         function nudge(dir) {
             const v = Math.max(minMs, Math.min(maxMs, valueMs + dir * stepMs));
             if (v === valueMs)
@@ -217,11 +187,9 @@ Item {
             valueMs = v;
             committed(v);
         }
-
         spacing: 12
         Layout.fillWidth: true
         Layout.preferredHeight: 34
-
         Text {
             text: pr.icon
             color: Themes.accent
@@ -232,7 +200,6 @@ Item {
             Layout.preferredWidth: 20
             horizontalAlignment: Text.AlignHCenter
         }
-
         Text {
             text: pr.label
             color: Themes.fg
@@ -243,28 +210,23 @@ Item {
             }
             Layout.alignment: Qt.AlignVCenter
         }
-
         Item {
             Layout.fillWidth: true
         }
-
         StepBtn {
             glyph: "\uf068"
             Layout.alignment: Qt.AlignVCenter
             onStepped: pr.nudge(-1)
         }
-
         // live value readout — scroll over it to adjust
         Rectangle {
             id: valBox
-
             implicitWidth: 58
             implicitHeight: 24
             radius: 7
             color: valHover.containsMouse ? Themes.cardBgHover : Themes.cardBg
             border.width: 1
             border.color: valHover.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.5) : Themes.borderColor
-
             Behavior on color {
                 ColorAnimation {
                     duration: 110
@@ -275,11 +237,9 @@ Item {
                     duration: 110
                 }
             }
-
             HoverHandler {
                 id: valHover
             }
-
             WheelHandler {
                 acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                 onWheel: ev => {
@@ -287,7 +247,6 @@ Item {
                     ev.accepted = true;
                 }
             }
-
             Text {
                 anchors.centerIn: parent
                 text: root.fmtMs(pr.valueMs)
@@ -297,7 +256,6 @@ Item {
                     bold: true
                     family: "ZedMono Nerd Font"
                 }
-
                 Behavior on color {
                     ColorAnimation {
                         duration: 110
@@ -305,18 +263,15 @@ Item {
                 }
             }
         }
-
         StepBtn {
             glyph: "\uf067"
             Layout.alignment: Qt.AlignVCenter
             onStepped: pr.nudge(1)
         }
     }
-
     // ── generic int stepper row: glyph · label · [−] value[unit] [+] ──
     component IntStepRow: RowLayout {
         id: isr
-
         required property string icon
         required property string label
         required property int minV
@@ -327,18 +282,15 @@ Item {
         property string unit: ""
         signal committed(int v)
         signal resetRequested
-
         function nudge(dir) {
             const v = Math.max(minV, Math.min(maxV, value + dir * stepV));
             if (v === value)
                 return;
             committed(v);
         }
-
         spacing: 12
         Layout.fillWidth: true
         Layout.preferredHeight: 34
-
         Text {
             text: isr.icon
             color: Themes.accent
@@ -349,7 +301,6 @@ Item {
             Layout.preferredWidth: 20
             horizontalAlignment: Text.AlignHCenter
         }
-
         Text {
             text: isr.label
             color: Themes.fg
@@ -360,7 +311,6 @@ Item {
             }
             Layout.alignment: Qt.AlignVCenter
         }
-
         // reset button — appears when value differs from default
         Rectangle {
             visible: isr.value !== isr.defaultValue
@@ -381,7 +331,6 @@ Item {
                     duration: 100
                 }
             }
-
             HoverHandler {
                 id: rstHover
             }
@@ -400,28 +349,23 @@ Item {
                 onClicked: isr.committed(isr.defaultValue)
             }
         }
-
         Item {
             Layout.fillWidth: true
         }
-
         StepBtn {
             glyph: "\uf068"
             Layout.alignment: Qt.AlignVCenter
             onStepped: isr.nudge(-1)
         }
-
         // value readout with unit suffix — scroll over it to adjust
         Rectangle {
             id: valBox3
-
             implicitWidth: 70
             implicitHeight: 24
             radius: 7
             color: valHover3.containsMouse ? Themes.cardBgHover : Themes.cardBg
             border.width: 1
             border.color: valHover3.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.5) : Themes.borderColor
-
             Behavior on color {
                 ColorAnimation {
                     duration: 110
@@ -432,11 +376,9 @@ Item {
                     duration: 110
                 }
             }
-
             HoverHandler {
                 id: valHover3
             }
-
             WheelHandler {
                 acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                 onWheel: ev => {
@@ -444,7 +386,6 @@ Item {
                     ev.accepted = true;
                 }
             }
-
             Text {
                 anchors.centerIn: parent
                 text: `${isr.value}${isr.unit}`
@@ -454,7 +395,6 @@ Item {
                     bold: true
                     family: "ZedMono Nerd Font"
                 }
-
                 Behavior on color {
                     ColorAnimation {
                         duration: 110
@@ -462,21 +402,18 @@ Item {
                 }
             }
         }
-
         StepBtn {
             glyph: "\uf067"
             Layout.alignment: Qt.AlignVCenter
             onStepped: isr.nudge(1)
         }
     }
-
     // ── persistent Hyprland integer option stepper ──
     // reads the value from (and writes back to) the user's lua config via the
     // HyprConfig service, then `hyprctl reload` applies it instantly. The row
     // also steps under the mouse wheel.
     component HyprStepRow: Item {
         id: hsr
-
         required property string icon
         required property string label
         required property string key   // HyprConfig property — "gapsIn" etc.
@@ -484,25 +421,19 @@ Item {
         property int maxValue: 200
         property int stepValue: 1
         property bool interactive: true
-
         readonly property int value: HyprConfig[hsr.key]
-
         opacity: hsr.interactive ? 1 : 0.45
-
         function nudge(dir) {
             if (!hsr.interactive)
                 return;
             const v = Math.max(hsr.minValue, Math.min(hsr.maxValue, hsr.value + dir * hsr.stepValue));
             HyprConfig.applyInt(hsr.key, v);
         }
-
         Layout.fillWidth: true
         Layout.preferredHeight: 34
-
         RowLayout {
             anchors.fill: parent
             spacing: 12
-
             Text {
                 text: hsr.icon
                 color: Themes.accent
@@ -513,7 +444,6 @@ Item {
                 Layout.preferredWidth: 20
                 horizontalAlignment: Text.AlignHCenter
             }
-
             Text {
                 text: hsr.label
                 color: Themes.fg
@@ -524,17 +454,14 @@ Item {
                 }
                 Layout.alignment: Qt.AlignVCenter
             }
-
             Item {
                 Layout.fillWidth: true
             }
-
             StepBtn {
                 glyph: "\uf068"
                 Layout.alignment: Qt.AlignVCenter
                 onStepped: hsr.nudge(-1)
             }
-
             Rectangle {
                 implicitWidth: 44
                 implicitHeight: 24
@@ -542,7 +469,6 @@ Item {
                 color: Themes.cardBg
                 border.width: 1
                 border.color: Themes.borderColor
-
                 Text {
                     anchors.centerIn: parent
                     text: hsr.value
@@ -554,14 +480,12 @@ Item {
                     }
                 }
             }
-
             StepBtn {
                 glyph: "\uf067"
                 Layout.alignment: Qt.AlignVCenter
                 onStepped: hsr.nudge(1)
             }
         }
-
         // wheel over the whole row steps the value (up = +step, down = −step)
         MouseArea {
             anchors.fill: parent
@@ -574,24 +498,19 @@ Item {
             }
         }
     }
-
     // ── persistent Hyprland border-color picker (material palette popup) ──
     component HyprColorRow: RowLayout {
         id: hcr
-
         required property string icon
         required property string label
         required property string borderKey   // HyprConfig property — "activeBorder" | "inactiveBorder"
         readonly property color value: HyprConfig[hcr.borderKey]
-
         function applyColor(hex) {
             HyprConfig.applyBorder(hcr.borderKey, hex);
         }
-
         spacing: 12
         Layout.fillWidth: true
         Layout.preferredHeight: 38
-
         Text {
             text: hcr.icon
             color: Themes.accent
@@ -602,7 +521,6 @@ Item {
             Layout.preferredWidth: 20
             horizontalAlignment: Text.AlignHCenter
         }
-
         Text {
             text: hcr.label
             color: Themes.fg
@@ -613,7 +531,6 @@ Item {
             }
             Layout.alignment: Qt.AlignVCenter
         }
-
         Text {
             text: "saved"
             color: Themes.muted
@@ -623,21 +540,17 @@ Item {
             }
             Layout.alignment: Qt.AlignVCenter
         }
-
         Item {
             Layout.fillWidth: true
         }
-
         Rectangle {
             id: hcrSwatch
-
             Layout.preferredWidth: 34
             Layout.preferredHeight: 22
             radius: 6
             color: hcr.value
             border.width: 1
             border.color: hcrMa.containsMouse ? Themes.accent : Themes.borderColor
-
             MouseArea {
                 id: hcrMa
                 anchors.fill: parent
@@ -645,21 +558,18 @@ Item {
                 cursorShape: Qt.PointingHandCursor
                 onClicked: hcrPopup.open()
             }
-
             Popup {
                 id: hcrPopup
                 x: -40
                 y: -hcrPopupCol.implicitHeight - 12
                 width: 200
                 closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
-
                 background: Rectangle {
                     radius: 8
                     color: Themes.cardBg
                     border.width: 1
                     border.color: Themes.borderColor
                 }
-
                 contentItem: GridLayout {
                     id: hcrPopupCol
                     columns: 8
@@ -667,17 +577,14 @@ Item {
                     rowSpacing: 4
                     anchors.margins: 8
                     Layout.margins: 8
-
                     Repeater {
                         model: ["#f44336", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5", "#2196f3", "#03a9f4", "#00bcd4", "#009688", "#4caf50", "#8bc34a", "#cddc39", "#ffeb3b", "#ffc107", "#ff9800", "#ff5722", "#795548", "#9e9e9e", "#607d8b", "#00abf5", "#50fa7b", "#ff5555", "#ffb86c", "#ffffff", "#000000", "#0a0f0f", "#dce8e6", "#bae2ff"]
                         delegate: Rectangle {
                             required property var modelData
-
                             Layout.preferredWidth: 20
                             Layout.preferredHeight: 20
                             radius: 5
                             color: modelData
-
                             MouseArea {
                                 anchors.fill: parent
                                 hoverEnabled: true
@@ -693,24 +600,19 @@ Item {
             }
         }
     }
-
     // ── font-roster dropdown row: glyph · label · [current font ▾] ──
     // mirrors the notification font picker but as a component so font
     // settings (quote/author/...) share one look instead of inline dupes
     component FontPickerRow: RowLayout {
         id: fpr
-
         required property string icon
         required property string label
         required property string value
         signal picked(string font)
-
         property var options: MiscState.fontOptions
-
         spacing: 12
         Layout.fillWidth: true
         Layout.preferredHeight: 38
-
         Text {
             text: fpr.icon
             color: Themes.accent
@@ -721,7 +623,6 @@ Item {
             Layout.preferredWidth: 20
             horizontalAlignment: Text.AlignHCenter
         }
-
         Text {
             text: fpr.label
             color: Themes.fg
@@ -732,14 +633,11 @@ Item {
             }
             Layout.alignment: Qt.AlignVCenter
         }
-
         Item {
             Layout.fillWidth: true
         }
-
         Rectangle {
             id: fontDrop
-
             Layout.alignment: Qt.AlignVCenter
             width: 140
             height: 24
@@ -747,9 +645,7 @@ Item {
             color: fontDropMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : Themes.cardBg
             border.width: 1
             border.color: fontDrop.dropOpen ? Themes.accent : Themes.borderColor
-
             property bool dropOpen: false
-
             Text {
                 anchors.left: parent.left
                 anchors.leftMargin: 8
@@ -764,7 +660,6 @@ Item {
                 elide: Text.ElideRight
                 width: parent.width - 24
             }
-
             Text {
                 anchors.right: parent.right
                 anchors.rightMargin: 6
@@ -776,7 +671,6 @@ Item {
                     family: "Symbols Nerd Font Mono"
                 }
                 rotation: fontDrop.dropOpen ? 180 : 0
-
                 Behavior on rotation {
                     NumberAnimation {
                         duration: 120
@@ -784,7 +678,6 @@ Item {
                     }
                 }
             }
-
             MouseArea {
                 id: fontDropMa
                 anchors.fill: parent
@@ -792,7 +685,6 @@ Item {
                 cursorShape: Qt.PointingHandCursor
                 onClicked: fontDrop.dropOpen = !fontDrop.dropOpen
             }
-
             Popup {
                 id: fontPopup
                 y: fontDrop.height + 4
@@ -801,14 +693,12 @@ Item {
                 closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
                 onOpened: fontDrop.dropOpen = true
                 onClosed: fontDrop.dropOpen = false
-
                 background: Rectangle {
                     radius: 6
                     color: Themes.cardBg
                     border.width: 1
                     border.color: Themes.borderColor
                 }
-
                 contentItem: Flickable {
                     id: fontFlick
                     clip: true
@@ -816,7 +706,6 @@ Item {
                     contentHeight: fontPopupCol.implicitHeight
                     implicitHeight: Math.min(fontPopupCol.implicitHeight, 240)
                     boundsBehavior: Flickable.StopAtBounds
-
                     ColumnLayout {
                         id: fontPopupCol
                         anchors {
@@ -825,20 +714,16 @@ Item {
                             top: parent.top
                         }
                         spacing: 0
-
                         Repeater {
                             model: fpr.options
-
                             Rectangle {
                                 required property string modelData
                                 property bool isHovered: fontItemMa.containsMouse
                                 property bool isSelected: fpr.value === modelData
-
                                 Layout.fillWidth: true
                                 implicitHeight: 24
                                 radius: 4
                                 color: isSelected ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
-
                                 Text {
                                     anchors.left: parent.left
                                     anchors.leftMargin: 8
@@ -850,7 +735,6 @@ Item {
                                         family: "Quicksand"
                                     }
                                 }
-
                                 MouseArea {
                                     id: fontItemMa
                                     anchors.fill: parent
@@ -865,10 +749,8 @@ Item {
                         }
                     }
                 }
-
                 onVisibleChanged: fontDrop.dropOpen = visible
             }
-
             Connections {
                 target: fontDrop
                 function onDropOpenChanged() {
@@ -880,7 +762,6 @@ Item {
             }
         }
     }
-
     function fmtMs(ms) {
         if (ms >= 1000) {
             const s = Math.round(ms / 100) / 10;
@@ -888,14 +769,12 @@ Item {
         }
         return ms + "ms";
     }
-
     function wpBaseName(path) {
         var p = String(path ?? "");
         if (p.length === 0)
             return "none";
         return p.split("/").pop();
     }
-
     readonly property var categories: [
         {
             icon: "\uf080",
@@ -942,7 +821,6 @@ Item {
             label: "Git"
         },
     ]
-
     // launcher roster picker values (mirror of MiscState.rofiTheme)
     readonly property var rofiSchemes: [-1, 0, 1, 2, 3, 4, 5]
     readonly property var rofiSchemeNames: ["Pyrple", "Gron", "Gruvbox", "Rose", "Everforest", "Soramane"]
@@ -952,7 +830,6 @@ Item {
             return "auto — " + root.rofiSchemeNames[MiscState.themeScheme];
         return root.rofiSchemeNames[t];
     }
-
     // popup roster picker values (mirror of MiscState.popupTheme)
     readonly property var popupSchemes: [-1, 0, 1, 2, 3, 4, 5]
     readonly property string popupThemeName: {
@@ -961,21 +838,17 @@ Item {
             return "auto — " + root.rofiSchemeNames[MiscState.themeScheme];
         return root.rofiSchemeNames[t];
     }
-
     readonly property string hostName: QuickState.hostName
-
     property string activeInterface: ""
     readonly property string netState: {
         var raw = netFile.text().trim();
         return raw.length > 0 ? raw : "down";
     }
     readonly property bool isOnline: root.netState === "up"
-
     FileView {
         id: netFile
         path: root.activeInterface.length > 0 ? `file:///sys/class/net/${root.activeInterface}/operstate` : ""
     }
-
     Process {
         id: interfaceCheck
         running: false
@@ -987,7 +860,6 @@ Item {
             }
         }
     }
-
     Timer {
         id: infoTimer
         interval: 15000
@@ -997,35 +869,27 @@ Item {
             interfaceCheck.running = true;
         }
     }
-
     PanelWindow {
         id: window
-
         visible: MiscState.toggleSettings
-
         onVisibleChanged: {
             if (visible) {
                 settingsKeyHandler.forceActiveFocus();
                 interfaceCheck.running = true;
             }
         }
-
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "quickshell-settings"
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-
         color: "transparent"
-
         readonly property int rounding: 12
-
         anchors {
             top: true
             left: true
             bottom: true
             right: true
         }
-
         // Escape closes the settings — hosted on a real Item so Keys can
         // attach (the panel interface itself isn't an Item)
         Item {
@@ -1037,16 +901,13 @@ Item {
                     MiscState.toggleSettings = false;
             }
         }
-
         Rectangle {
             anchors.fill: parent
             color: "#60000000"
-
             MouseArea {
                 anchors.fill: parent
                 onClicked: MiscState.toggleSettings = false
             }
-
             Rectangle {
                 implicitWidth: 780 // 880
                 // the panel hugs the left nav block: its height comes from the
@@ -1054,24 +915,19 @@ Item {
                 // the vertical chrome — RowLayout margin 1 + rect margin 2 +
                 // column margins (top 16 / bottom 8) → 19 top, 11 bottom
                 implicitHeight: leftNavCol.implicitHeight + 6
-
                 anchors.centerIn: parent
-
                 radius: window.rounding
                 color: Themes.panelBg
                 border.width: 1
                 border.color: Themes.borderColor
-
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {} // consume clicks to prevent closing
                 }
-
                 RowLayout {
                     anchors.fill: parent
                     anchors.margins: 1
                     spacing: 0
-
                     Rectangle {
                         id: leftRect
                         Layout.preferredWidth: 150
@@ -1081,17 +937,14 @@ Item {
                         // topLeftRadius: 16
                         // bottomLeftRadius: 16
                         color: Themes.cardBg
-
                         ColumnLayout {
                             id: leftNavCol
-
                             anchors {
                                 fill: parent
                                 margins: 2
                                 topMargin: 2
                             }
                             spacing: 4
-
                             RowLayout {
                                 id: settingsHeaderText
                                 visible: false
@@ -1121,26 +974,21 @@ Item {
                                     }
                                 }
                             }
-
                             Repeater {
                                 id: leftColRepeater
                                 model: root.categories
-
                                 delegate: Rectangle {
                                     required property int index
                                     required property var modelData
-
                                     Layout.fillWidth: true
                                     implicitHeight: 26
                                     radius: 10
                                     color: root.currentCategory === index ? Qt.rgba(0.54, 0.57, 0.96, 0.15) : "transparent"
-
                                     Behavior on color {
                                         ColorAnimation {
                                             duration: 100
                                         }
                                     }
-
                                     RowLayout {
                                         anchors {
                                             left: parent.left
@@ -1148,7 +996,6 @@ Item {
                                             leftMargin: 12
                                         }
                                         spacing: 10
-
                                         Text {
                                             text: modelData.icon
                                             color: root.currentCategory === index ? Themes.accent : Themes.muted
@@ -1157,7 +1004,6 @@ Item {
                                                 family: "Symbols Nerd Font Mono"
                                             }
                                         }
-
                                         Text {
                                             text: modelData.label
                                             color: root.currentCategory === index ? Themes.fg : Themes.dim
@@ -1168,7 +1014,6 @@ Item {
                                             }
                                         }
                                     }
-
                                     MouseArea {
                                         anchors.fill: parent
                                         cursorShape: Qt.PointingHandCursor
@@ -1176,18 +1021,15 @@ Item {
                                     }
                                 }
                             }
-
                             Item {
                                 Layout.fillHeight: true
                             }
                         }
                     }
-
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         color: "transparent"
-
                         Item {
                             anchors {
                                 fill: parent
@@ -1196,7 +1038,6 @@ Item {
                                 rightMargin: 12
                                 topMargin: 4
                             }
-
                             Flickable {
                                 anchors.fill: parent
                                 contentWidth: parent.width
@@ -1206,7 +1047,6 @@ Item {
                                 ScrollBar.vertical: ScrollBar {
                                     policy: ScrollBar.AlwaysOff
                                 }
-
                                 Loader {
                                     id: pageLoader
                                     width: parent.width
@@ -1218,24 +1058,19 @@ Item {
                 }
             }
         }
-
         // ═══ WALLPAPER ═══
         Component {
             id: wallpaperPage
-
             ColumnLayout {
                 id: wpPage
                 spacing: 12
-
                 Card {
                     title: "Wallpaper"
                     icon: "\uf03e"
                     accent: Themes.accent
-
                     ColumnLayout {
                         spacing: 0
                         Layout.fillWidth: true
-
                         SettingRow {
                             icon: "󰺟"
                             label: "Enabled"
@@ -1243,14 +1078,12 @@ Item {
                             checked: WallpaperService.enabled
                             onFlipped: WallpaperService.enabled = !WallpaperService.enabled
                         }
-
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
                             color: Themes.separator
                             Layout.leftMargin: 32
                         }
-
                         SettingRow {
                             icon: "󱣵"
                             label: "Desktop frame"
@@ -1258,14 +1091,12 @@ Item {
                             checked: BarState.frameOn
                             onFlipped: BarState.frameOn = !BarState.frameOn
                         }
-
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
                             color: Themes.separator
                             Layout.leftMargin: 32
                         }
-
                         SettingRow {
                             icon: "󱎫" // 
                             label: "SlideShow"
@@ -1273,14 +1104,12 @@ Item {
                             checked: WallpaperService.slideshowEnabled
                             onFlipped: WallpaperService.slideshowEnabled = !WallpaperService.slideshowEnabled
                         }
-
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
                             color: Themes.separator
                             Layout.leftMargin: 32
                         }
-
                         SettingRow {
                             icon: "󱫩"
                             label: "Rotate favorites only"
@@ -1288,20 +1117,17 @@ Item {
                             checked: WallpaperService.rotationFavoritesOnly
                             onFlipped: WallpaperService.rotationFavoritesOnly = !WallpaperService.rotationFavoritesOnly
                         }
-
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
                             color: Themes.separator
                             Layout.leftMargin: 32
                         }
-
                         // interval dropdown — like the notification font picker
                         RowLayout {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 38
                             spacing: 12
-
                             Text {
                                 text: "\uf254"
                                 color: Themes.accent
@@ -1312,7 +1138,6 @@ Item {
                                 Layout.preferredWidth: 20
                                 horizontalAlignment: Text.AlignHCenter
                             }
-
                             Text {
                                 text: "Interval"
                                 color: Themes.fg
@@ -1323,14 +1148,11 @@ Item {
                                 }
                                 Layout.alignment: Qt.AlignVCenter
                             }
-
                             Item {
                                 Layout.fillWidth: true
                             }
-
                             Rectangle {
                                 id: slideshowDropdown
-
                                 Layout.alignment: Qt.AlignVCenter
                                 width: 140
                                 height: 24
@@ -1338,7 +1160,6 @@ Item {
                                 color: slideshowDropMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : Themes.cardBg
                                 border.width: 1
                                 border.color: slideshowDropOpen ? Themes.accent : Themes.borderColor
-
                                 property bool slideshowDropOpen: false
                                 property var slideshowOptions: [
                                     {
@@ -1378,14 +1199,12 @@ Item {
                                         label: "1 day"
                                     }
                                 ]
-
                                 function curLabel() {
                                     for (var i = 0; i < slideshowOptions.length; i++)
                                         if (slideshowOptions[i].minutes === WallpaperService.slideshowMinutes)
                                             return slideshowOptions[i].label;
                                     return "30 min";
                                 }
-
                                 Text {
                                     anchors.left: parent.left
                                     anchors.leftMargin: 8
@@ -1400,7 +1219,6 @@ Item {
                                     elide: Text.ElideRight
                                     width: parent.width - 24
                                 }
-
                                 Text {
                                     anchors.right: parent.right
                                     anchors.rightMargin: 6
@@ -1412,7 +1230,6 @@ Item {
                                         family: "Symbols Nerd Font Mono"
                                     }
                                     rotation: slideshowDropdown.slideshowDropOpen ? 180 : 0
-
                                     Behavior on rotation {
                                         NumberAnimation {
                                             duration: 120
@@ -1420,7 +1237,6 @@ Item {
                                         }
                                     }
                                 }
-
                                 MouseArea {
                                     id: slideshowDropMa
                                     anchors.fill: parent
@@ -1428,7 +1244,6 @@ Item {
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: slideshowDropdown.slideshowDropOpen = !slideshowDropdown.slideshowDropOpen
                                 }
-
                                 Popup {
                                     id: slideshowPopup
                                     y: slideshowDropdown.height + 4
@@ -1437,31 +1252,25 @@ Item {
                                     closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
                                     onOpened: slideshowDropdown.slideshowDropOpen = true
                                     onClosed: slideshowDropdown.slideshowDropOpen = false
-
                                     background: Rectangle {
                                         radius: 6
                                         color: Themes.cardBg
                                         border.width: 1
                                         border.color: Themes.borderColor
                                     }
-
                                     contentItem: ColumnLayout {
                                         id: slideshowPopupCol
                                         spacing: 0
-
                                         Repeater {
                                             model: slideshowDropdown.slideshowOptions
-
                                             Rectangle {
                                                 required property var modelData
                                                 property bool isHovered: slideshowItemMa.containsMouse
                                                 property bool isSelected: WallpaperService.slideshowMinutes === modelData.minutes
-
                                                 Layout.fillWidth: true
                                                 implicitHeight: 24
                                                 radius: 4
                                                 color: isSelected ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
-
                                                 Text {
                                                     anchors.left: parent.left
                                                     anchors.leftMargin: 8
@@ -1473,7 +1282,6 @@ Item {
                                                         family: "Quicksand"
                                                     }
                                                 }
-
                                                 MouseArea {
                                                     id: slideshowItemMa
                                                     anchors.fill: parent
@@ -1487,10 +1295,8 @@ Item {
                                             }
                                         }
                                     }
-
                                     onVisibleChanged: slideshowDropdown.slideshowDropOpen = visible
                                 }
-
                                 Connections {
                                     target: slideshowDropdown
                                     function onSlideshowDropOpenChanged() {
@@ -1502,14 +1308,12 @@ Item {
                                 }
                             }
                         }
-
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
                             color: Themes.separator
                             Layout.leftMargin: 32
                         }
-
                         // currently applied wallpaper + cycle controls
                         RowLayout {
                             visible: false
@@ -1517,7 +1321,6 @@ Item {
                             Layout.preferredHeight: 34
                             Layout.topMargin: 4
                             spacing: 8
-
                             Text {
                                 text: "\uf03e"
                                 color: Themes.accent
@@ -1528,7 +1331,6 @@ Item {
                                 Layout.preferredWidth: 20
                                 horizontalAlignment: Text.AlignHCenter
                             }
-
                             Text {
                                 Layout.fillWidth: true
                                 text: root.wpBaseName(WallpaperService.current)
@@ -1541,17 +1343,14 @@ Item {
                                 }
                                 Layout.alignment: Qt.AlignVCenter
                             }
-
                             Rectangle {
                                 id: wpRefreshBtn
-
                                 implicitWidth: 24
                                 implicitHeight: 24
                                 radius: 7
                                 color: wpRefreshMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16) : Themes.separator
                                 border.width: 1
                                 border.color: wpRefreshMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.45) : "transparent"
-
                                 Text {
                                     anchors.centerIn: parent
                                     text: "\uf2f1"
@@ -1561,7 +1360,6 @@ Item {
                                         family: "Symbols Nerd Font Mono"
                                     }
                                 }
-
                                 MouseArea {
                                     id: wpRefreshMa
                                     anchors.fill: parent
@@ -1570,17 +1368,14 @@ Item {
                                     onClicked: WallpaperService._refreshList()
                                 }
                             }
-
                             Rectangle {
                                 id: wpPickerBtn
-
                                 implicitWidth: wpPickerTxt.implicitWidth + 14
                                 implicitHeight: 24
                                 radius: 7
                                 color: wpPickerMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16) : Themes.separator
                                 border.width: 1
                                 border.color: wpPickerMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.45) : "transparent"
-
                                 Text {
                                     id: wpPickerTxt
                                     anchors.centerIn: parent
@@ -1592,7 +1387,6 @@ Item {
                                         family: "Symbols Nerd Font Mono, Quicksand"
                                     }
                                 }
-
                                 MouseArea {
                                     id: wpPickerMa
                                     anchors.fill: parent
@@ -1601,7 +1395,6 @@ Item {
                                     onClicked: PickerState.wallpaperOpen = true
                                 }
                             }
-
                             StepBtn {
                                 glyph: "\uf04a"
                                 onStepped: WallpaperService.prevWallpaper()
@@ -1615,24 +1408,18 @@ Item {
                 }
             }
         }
-
         // ═══ BAR ═══
         Component {
             id: barPage
-
             ColumnLayout {
                 id: barPageRoot
-
                 spacing: 12
-
                 // which section of the bar page is showing
                 property int barTab: 0
-
                 // ── tab strip · style | bar modules ──
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 6
-
                     BarTab {
                         label: "Style"
                         glyph: ""
@@ -1643,36 +1430,29 @@ Item {
                         glyph: "󰺟"
                         idx: 1
                     }
-
                     Item {
                         Layout.fillWidth: true
                     }
                 }
-
                 StackLayout {
                     Layout.fillWidth: true
                     currentIndex: barPageRoot.barTab
-
                     // ── tab · style ──
                     ColumnLayout {
                         spacing: 12
-
                         Card {
                             // title: "Style"
                             // icon: ""
                             accent: Themes.accent
-
                             ColumnLayout {
                                 spacing: 0
                                 Layout.fillWidth: true
                                 Layout.bottomMargin: 20
-
                                 // color theme dropdown
                                 RowLayout {
                                     Layout.fillWidth: true
                                     Layout.preferredHeight: 38
                                     spacing: 12
-
                                     Text {
                                         text: ""
                                         color: Themes.accent
@@ -1683,7 +1463,6 @@ Item {
                                         Layout.preferredWidth: 20
                                         horizontalAlignment: Text.AlignHCenter
                                     }
-
                                     Text {
                                         text: "Color theme"
                                         color: Themes.fg
@@ -1694,14 +1473,11 @@ Item {
                                         }
                                         Layout.alignment: Qt.AlignVCenter
                                     }
-
                                     Item {
                                         Layout.fillWidth: true
                                     }
-
                                     Rectangle {
                                         id: colorThemeDropdown
-
                                         Layout.alignment: Qt.AlignVCenter
                                         width: 140
                                         height: 24
@@ -1709,7 +1485,6 @@ Item {
                                         color: colorThemeDropMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : Themes.cardBg
                                         border.width: 1
                                         border.color: colorThemeDropOpen ? Themes.accent : Themes.borderColor
-
                                         property bool colorThemeDropOpen: false
                                         property var colorThemeOptions: [
                                             {
@@ -1737,14 +1512,12 @@ Item {
                                                 label: "Soramane"
                                             }
                                         ]
-
                                         function curLabel() {
                                             for (var i = 0; i < colorThemeOptions.length; i++)
                                                 if (colorThemeOptions[i].key === MiscState.themeScheme)
                                                     return colorThemeOptions[i].label;
                                             return "Pyrple";
                                         }
-
                                         Text {
                                             anchors.left: parent.left
                                             anchors.leftMargin: 8
@@ -1759,7 +1532,6 @@ Item {
                                             elide: Text.ElideRight
                                             width: parent.width - 24
                                         }
-
                                         Text {
                                             anchors.right: parent.right
                                             anchors.rightMargin: 6
@@ -1771,7 +1543,6 @@ Item {
                                                 family: "Symbols Nerd Font Mono"
                                             }
                                             rotation: colorThemeDropdown.colorThemeDropOpen ? 180 : 0
-
                                             Behavior on rotation {
                                                 NumberAnimation {
                                                     duration: 120
@@ -1779,7 +1550,6 @@ Item {
                                                 }
                                             }
                                         }
-
                                         MouseArea {
                                             id: colorThemeDropMa
                                             anchors.fill: parent
@@ -1787,11 +1557,9 @@ Item {
                                             cursorShape: Qt.PointingHandCursor
                                             onClicked: colorThemeDropdown.colorThemeDropOpen = !colorThemeDropdown.colorThemeDropOpen
                                         }
-
                                         // dropdown list
                                         Rectangle {
                                             id: colorThemePopup
-
                                             visible: colorThemeDropdown.colorThemeDropOpen
                                             anchors.top: parent.bottom
                                             anchors.topMargin: 4
@@ -1803,13 +1571,11 @@ Item {
                                             border.width: 1
                                             border.color: Themes.borderColor
                                             z: 100
-
                                             onVisibleChanged: {
                                                 colorThemeDropdown.colorThemeDropOpen = visible;
                                                 if (visible)
                                                     colorThemePopupBg.forceActiveFocus();
                                             }
-
                                             MouseArea {
                                                 id: colorThemePopupBg
                                                 anchors.fill: parent
@@ -1817,16 +1583,13 @@ Item {
                                                 propagateComposedEvents: true
                                                 z: -1
                                             }
-
                                             Column {
                                                 id: colorThemeCol
                                                 anchors.fill: parent
                                                 anchors.margins: 6
                                                 spacing: 2
-
                                                 Repeater {
                                                     model: colorThemeDropdown.colorThemeOptions
-
                                                     delegate: Rectangle {
                                                         id: themeOpt
                                                         required property var modelData
@@ -1840,7 +1603,6 @@ Item {
                                                                 duration: 100
                                                             }
                                                         }
-
                                                         Text {
                                                             anchors.left: parent.left
                                                             anchors.leftMargin: 8
@@ -1858,7 +1620,6 @@ Item {
                                                                 }
                                                             }
                                                         }
-
                                                         Text {
                                                             visible: themeOpt.sel
                                                             anchors.right: parent.right
@@ -1871,7 +1632,6 @@ Item {
                                                                 family: "Symbols Nerd Font Mono"
                                                             }
                                                         }
-
                                                         MouseArea {
                                                             id: themeOptMa
                                                             anchors.fill: parent
@@ -1886,7 +1646,6 @@ Item {
                                                 }
                                             }
                                         }
-
                                         // close when clicking outside
                                         Connections {
                                             target: window
@@ -1902,7 +1661,6 @@ Item {
                                     Layout.fillWidth: true
                                     Layout.preferredHeight: 38
                                     spacing: 12
-
                                     Text {
                                         text: ""
                                         color: Themes.accent
@@ -1913,7 +1671,6 @@ Item {
                                         Layout.preferredWidth: 20
                                         horizontalAlignment: Text.AlignHCenter
                                     }
-
                                     Text {
                                         text: "Bar style"
                                         color: Themes.fg
@@ -1924,14 +1681,11 @@ Item {
                                         }
                                         Layout.alignment: Qt.AlignVCenter
                                     }
-
                                     Item {
                                         Layout.fillWidth: true
                                     }
-
                                     Rectangle {
                                         id: barStyleDropdown
-
                                         Layout.alignment: Qt.AlignVCenter
                                         width: 140
                                         height: 24
@@ -1939,7 +1693,6 @@ Item {
                                         color: barStyleDropMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : Themes.cardBg
                                         border.width: 1
                                         border.color: barStyleDropOpen ? Themes.accent : Themes.borderColor
-
                                         property bool barStyleDropOpen: false
                                         property var barStyleOptions: [
                                             {
@@ -1967,14 +1720,12 @@ Item {
                                                 label: "Glass Borderless"
                                             }
                                         ]
-
                                         function curLabel() {
                                             for (var i = 0; i < barStyleOptions.length; i++)
                                                 if (barStyleOptions[i].key === BarState.barMode)
                                                     return barStyleOptions[i].label;
                                             return "Transparent";
                                         }
-
                                         Text {
                                             anchors.left: parent.left
                                             anchors.leftMargin: 8
@@ -1989,7 +1740,6 @@ Item {
                                             elide: Text.ElideRight
                                             width: parent.width - 24
                                         }
-
                                         Text {
                                             anchors.right: parent.right
                                             anchors.rightMargin: 6
@@ -2001,7 +1751,6 @@ Item {
                                                 family: "Symbols Nerd Font Mono"
                                             }
                                             rotation: barStyleDropdown.barStyleDropOpen ? 180 : 0
-
                                             Behavior on rotation {
                                                 NumberAnimation {
                                                     duration: 120
@@ -2009,7 +1758,6 @@ Item {
                                                 }
                                             }
                                         }
-
                                         MouseArea {
                                             id: barStyleDropMa
                                             anchors.fill: parent
@@ -2017,7 +1765,6 @@ Item {
                                             cursorShape: Qt.PointingHandCursor
                                             onClicked: barStyleDropdown.barStyleDropOpen = !barStyleDropdown.barStyleDropOpen
                                         }
-
                                         Popup {
                                             id: barStylePopup
                                             y: barStyleDropdown.height + 4
@@ -2026,31 +1773,25 @@ Item {
                                             closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
                                             onOpened: barStyleDropdown.barStyleDropOpen = true
                                             onClosed: barStyleDropdown.barStyleDropOpen = false
-
                                             background: Rectangle {
                                                 radius: 6
                                                 color: Themes.cardBg
                                                 border.width: 1
                                                 border.color: Themes.borderColor
                                             }
-
                                             contentItem: ColumnLayout {
                                                 id: barStylePopupCol
                                                 spacing: 0
-
                                                 Repeater {
                                                     model: barStyleDropdown.barStyleOptions
-
                                                     Rectangle {
                                                         required property var modelData
                                                         property bool isHovered: barStyleItemMa.containsMouse
                                                         property bool isSelected: BarState.barMode === modelData.key
-
                                                         Layout.fillWidth: true
                                                         implicitHeight: 24
                                                         radius: 4
                                                         color: isSelected ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
-
                                                         Text {
                                                             anchors.left: parent.left
                                                             anchors.leftMargin: 8
@@ -2062,7 +1803,6 @@ Item {
                                                                 family: "Quicksand"
                                                             }
                                                         }
-
                                                         MouseArea {
                                                             id: barStyleItemMa
                                                             anchors.fill: parent
@@ -2076,10 +1816,8 @@ Item {
                                                     }
                                                 }
                                             }
-
                                             onVisibleChanged: barStyleDropdown.barStyleDropOpen = visible
                                         }
-
                                         Connections {
                                             target: barStyleDropdown
                                             function onBarStyleDropOpenChanged() {
@@ -2091,7 +1829,184 @@ Item {
                                         }
                                     }
                                 }
-
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    height: 1
+                                    color: Themes.separator
+                                    Layout.leftMargin: 32
+                                }
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 38
+                                    spacing: 12
+                                    Text {
+                                        text: ""
+                                        color: MiscState.showWorkspaces ? Themes.accent : Themes.muted
+                                        font {
+                                            pixelSize: 14
+                                            family: "Symbols Nerd Font Mono"
+                                        }
+                                        Layout.preferredWidth: 20
+                                        horizontalAlignment: Text.AlignHCenter
+                                    }
+                                    Text {
+                                        text: "Workspaces"
+                                        color: Themes.fg
+                                        font {
+                                            pixelSize: 12
+                                            family: "Quicksand"
+                                            bold: true
+                                        }
+                                        Layout.alignment: Qt.AlignVCenter
+                                    }
+                                    Item {
+                                        Layout.fillWidth: true
+                                    }
+                                    Rectangle {
+                                        id: wsStyleDropdown
+                                        Layout.alignment: Qt.AlignVCenter
+                                        width: 140
+                                        height: 24
+                                        radius: 6
+                                        color: wsStyleDropMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : Themes.cardBg
+                                        border.width: 1
+                                        border.color: wsStyleDropOpen ? Themes.accent : Themes.borderColor
+                                        property bool wsStyleDropOpen: false
+                                        property var wsStyleOptions: [
+                                            {
+                                                key: -1,
+                                                label: "Off"
+                                            },
+                                            {
+                                                key: 0,
+                                                label: "Dots"
+                                            },
+                                            {
+                                                key: 1,
+                                                label: "Workspaces"
+                                            },
+                                            {
+                                                key: 2,
+                                                label: "Workspaces + icons"
+                                            }
+                                        ]
+                                        function curLabel() {
+                                            if (!MiscState.showWorkspaces)
+                                                return "Off";
+                                            for (var i = 0; i < wsStyleOptions.length; i++)
+                                                if (wsStyleOptions[i].key === MiscState.workspaceStyle)
+                                                    return wsStyleOptions[i].label;
+                                            return "Dots";
+                                        }
+                                        Text {
+                                            anchors.left: parent.left
+                                            anchors.leftMargin: 8
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: wsStyleDropdown.curLabel()
+                                            color: Themes.fg
+                                            font {
+                                                pixelSize: 10
+                                                bold: true
+                                                family: "Quicksand"
+                                            }
+                                            elide: Text.ElideRight
+                                            width: parent.width - 24
+                                        }
+                                        Text {
+                                            anchors.right: parent.right
+                                            anchors.rightMargin: 6
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: "\uf078"
+                                            color: Themes.muted
+                                            font {
+                                                pixelSize: 8
+                                                family: "Symbols Nerd Font Mono"
+                                            }
+                                            rotation: wsStyleDropdown.wsStyleDropOpen ? 180 : 0
+                                            Behavior on rotation {
+                                                NumberAnimation {
+                                                    duration: 120
+                                                    easing.type: Easing.OutQuad
+                                                }
+                                            }
+                                        }
+                                        MouseArea {
+                                            id: wsStyleDropMa
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: wsStyleDropdown.wsStyleDropOpen = !wsStyleDropdown.wsStyleDropOpen
+                                        }
+                                        Popup {
+                                            id: wsStylePopup
+                                            y: wsStyleDropdown.height + 4
+                                            width: wsStyleDropdown.width
+                                            height: wsStylePopupCol.implicitHeight + 8
+                                            closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
+                                            onOpened: wsStyleDropdown.wsStyleDropOpen = true
+                                            onClosed: wsStyleDropdown.wsStyleDropOpen = false
+                                            background: Rectangle {
+                                                radius: 6
+                                                color: Themes.cardBg
+                                                border.width: 1
+                                                border.color: Themes.borderColor
+                                            }
+                                            contentItem: ColumnLayout {
+                                                id: wsStylePopupCol
+                                                spacing: 0
+                                                Repeater {
+                                                    model: wsStyleDropdown.wsStyleOptions
+                                                    Rectangle {
+                                                        required property var modelData
+                                                        property bool isSelected: (modelData.key === -1 && !MiscState.showWorkspaces)
+                                                            || (modelData.key >= 0 && MiscState.showWorkspaces && MiscState.workspaceStyle === modelData.key)
+                                                        property bool isHovered: wsStyleItemMa.containsMouse
+                                                        Layout.fillWidth: true
+                                                        implicitHeight: 24
+                                                        radius: 4
+                                                        color: isSelected ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
+                                                        Text {
+                                                            anchors.left: parent.left
+                                                            anchors.leftMargin: 8
+                                                            anchors.verticalCenter: parent.verticalCenter
+                                                            text: modelData.label
+                                                            color: isSelected ? Themes.accent : Themes.dim
+                                                            font {
+                                                                pixelSize: 10
+                                                                family: "Quicksand"
+                                                            }
+                                                        }
+                                                        MouseArea {
+                                                            id: wsStyleItemMa
+                                                            anchors.fill: parent
+                                                            hoverEnabled: true
+                                                            cursorShape: Qt.PointingHandCursor
+                                                            onClicked: {
+                                                                if (modelData.key === -1) {
+                                                                    MiscState.showWorkspaces = false;
+                                                                } else {
+                                                                    MiscState.workspaceStyle = modelData.key;
+                                                                    MiscState.showWorkspaces = true;
+                                                                }
+                                                                wsStylePopup.close();
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        onVisibleChanged: wsStyleDropdown.wsStyleDropOpen = visible
+                                    }
+                                    Connections {
+                                        target: wsStyleDropdown
+                                        function onWsStyleDropOpenChanged() {
+                                            if (wsStyleDropdown.wsStyleDropOpen && !wsStylePopup.visible)
+                                                wsStylePopup.open();
+                                            else if (!wsStyleDropdown.wsStyleDropOpen && wsStylePopup.visible)
+                                                wsStylePopup.close();
+                                        }
+                                    }
+                                }
                                 Rectangle {
                                     Layout.fillWidth: true
                                     height: 1
@@ -2100,65 +2015,18 @@ Item {
                                 }
 
                                 SettingRow {
-                                    icon: ""
-                                    label: "Workspaces"
-                                    caption: MiscState.showWorkspaces ? "on" : "off"
-                                    checked: MiscState.showWorkspaces
-                                    onFlipped: MiscState.showWorkspaces = !MiscState.showWorkspaces
-                                }
-
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    height: 1
-                                    color: Themes.separator
-                                    Layout.leftMargin: 32
-                                }
-
-                                SettingRow {
-                                    icon: ""
-                                    label: "Icons"
-                                    caption: MiscState.iconWorkspaces ? "on" : "off"
-                                    checked: MiscState.iconWorkspaces
-                                    onFlipped: MiscState.iconWorkspaces = !MiscState.iconWorkspaces
-                                }
-
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    height: 1
-                                    color: Themes.separator
-                                    Layout.leftMargin: 32
-                                }
-
-                                SettingRow {
-                                    icon: "󰇘"
-                                    label: "Dots"
-                                    caption: MiscState.dotWorkspaces ? "on" : "off"
-                                    checked: MiscState.dotWorkspaces
-                                    onFlipped: MiscState.dotWorkspaces = !MiscState.dotWorkspaces
-                                }
-
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    height: 1
-                                    color: Themes.separator
-                                    Layout.leftMargin: 32
-                                }
-
-                                SettingRow {
-                                    icon: ""
+                                    icon: "󰄮"
                                     label: "Boxy"
                                     caption: MiscState.boxyTheme ? "all modules" : "rounded"
                                     checked: MiscState.boxyTheme
                                     onFlipped: MiscState.boxyTheme = !MiscState.boxyTheme
                                 }
-
                                 Rectangle {
                                     Layout.fillWidth: true
                                     height: 1
                                     color: Themes.separator
                                     Layout.leftMargin: 32
                                 }
-
                                 SettingRow {
                                     icon: "󰤖"
                                     label: "Badge transparent"
@@ -2166,14 +2034,12 @@ Item {
                                     checked: MiscState.transparentWsBadge
                                     onFlipped: MiscState.transparentWsBadge = !MiscState.transparentWsBadge
                                 }
-
                                 Rectangle {
                                     Layout.fillWidth: true
                                     height: 1
                                     color: Themes.separator
                                     Layout.leftMargin: 32
                                 }
-
                                 SettingRow {
                                     icon: "󰎠"
                                     label: "Clean numbers"
@@ -2182,18 +2048,15 @@ Item {
                                     onFlipped: MiscState.cleanWsNumbers = !MiscState.cleanWsNumbers
                                 }
                             }
-
                             // ── bar size ──
                             Card {
                                 title: "Bar Size"
                                 // icon: "󰞗"
                                 accent: Themes.accent
-
                                 ColumnLayout {
                                     spacing: 12
                                     Layout.fillWidth: true
                                     Layout.topMargin: 4
-
                                     IntStepRow {
                                         icon: ""
                                         label: "Bar height"
@@ -2205,7 +2068,6 @@ Item {
                                         unit: "px"
                                         onCommitted: v => BarState.barHeight = v
                                     }
-
                                     IntStepRow {
                                         icon: "\uf07e"
                                         label: "Bar width"
@@ -2229,20 +2091,16 @@ Item {
                             }
                         }
                     }
-
                     // ── tab · bar modules ──
                     ColumnLayout {
                         spacing: 12
-
                         Card {
                             // title: "Bar Modules"
                             // icon: "\uf132"
                             accent: Themes.accent
-
                             ColumnLayout {
                                 spacing: 0
                                 Layout.fillWidth: true
-
                                 Repeater {
                                     model: [
                                         {
@@ -2291,23 +2149,18 @@ Item {
                                             key: "showGit"
                                         }
                                     ]
-
                                     delegate: ColumnLayout {
                                         id: modCell
-
                                         required property var modelData
                                         required property int index
-
                                         spacing: 0
                                         Layout.fillWidth: true
-
                                         SettingRow {
                                             icon: modCell.modelData.icon
                                             label: modCell.modelData.label
                                             checked: MiscState[modCell.modelData.key]
                                             onFlipped: MiscState[modCell.modelData.key] = !MiscState[modCell.modelData.key]
                                         }
-
                                         // separator between module rows
                                         Rectangle {
                                             visible: modCell.index < 8
@@ -2318,14 +2171,12 @@ Item {
                                         }
                                     }
                                 }
-
                                 Rectangle {
                                     Layout.fillWidth: true
                                     height: 1
                                     color: Themes.separator
                                     Layout.leftMargin: 32
                                 }
-
                                 SettingRow {
                                     icon: ""
                                     label: "Performance"
@@ -2339,79 +2190,66 @@ Item {
                 }
             }
         }
-
         // ═══ MEDIA ═══
         Component {
             id: mediaPage
-
             ColumnLayout {
                 spacing: 12
-
                 Card {
                     title: "MPRIS"
                     icon: ""
                     accent: Themes.accent
-
                     ColumnLayout {
                         spacing: 0
                         Layout.fillWidth: true
-
                         SettingRow {
                             icon: "󰺟"
                             label: "enabled"
                             checked: MiscState.showMpris
                             onFlipped: MiscState.showMpris = !MiscState.showMpris
                         }
-
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
                             color: Themes.separator
                             Layout.leftMargin: 32
                         }
-
                         SettingRow {
                             icon: "\uf03e"
                             label: "Art"
                             checked: MprisState.mprisArtVisible
                             onFlipped: MprisState.mprisArtVisible = !MprisState.mprisArtVisible
                         }
-
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
                             color: Themes.separator
                             Layout.leftMargin: 32
                         }
-
                         SettingRow {
                             icon: "\uf1ce"
                             label: "Progress ring"
                             checked: MprisState.showMprisProgress
                             onFlipped: MprisState.showMprisProgress = !MprisState.showMprisProgress
                         }
-
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
                             color: Themes.separator
                             Layout.leftMargin: 32
                         }
-
                         SettingRow {
                             icon: "\uf070"
                             label: "Hide when idle"
                             checked: MprisState.hideWhenIdle
                             onFlipped: MprisState.hideWhenIdle = !MprisState.hideWhenIdle
                         }
-
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
                             color: Themes.separator
                             Layout.leftMargin: 32
                         }
-
                         SettingRow {
                             icon: "󰞗"
                             label: "Compact by default"
@@ -2419,14 +2257,12 @@ Item {
                             checked: MprisState.mprisCompact
                             onFlipped: MprisState.mprisCompact = !MprisState.mprisCompact
                         }
-
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
                             color: Themes.separator
                             Layout.leftMargin: 32
                         }
-
                         SettingRow {
                             icon: ""
                             label: "Marquee titles"
@@ -2435,44 +2271,37 @@ Item {
                         }
                     }
                 }
-
                 Card {
                     title: "Now Playing"
                     icon: ""
                     accent: Themes.accent
-
                     ColumnLayout {
                         spacing: 0
                         Layout.fillWidth: true
-
                         SettingRow {
                             icon: "󰥠"
                             label: "Players"
                             checked: MiscState.showPlayerChooser
                             onFlipped: MiscState.showPlayerChooser = !MiscState.showPlayerChooser
                         }
-
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
                             color: Themes.separator
                             Layout.leftMargin: 32
                         }
-
                         SettingRow {
                             icon: "\uf074"
                             label: "Shuffle button"
                             checked: MiscState.showShuffle
                             onFlipped: MiscState.showShuffle = !MiscState.showShuffle
                         }
-
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
                             color: Themes.separator
                             Layout.leftMargin: 32
                         }
-
                         SettingRow {
                             icon: "\uf079"
                             label: "Loop button"
@@ -2483,24 +2312,18 @@ Item {
                 }
             }
         }
-
         // ═══ CONNECTIONS ═══
         Component {
             id: connectionsPage
-
             ColumnLayout {
                 id: connPage
-
                 spacing: 12
-
                 // which half of the connections page is showing
                 property int connTab: 0
-
                 // ── tab strip · network | speedtest ──
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 6
-
                     ConnTab {
                         label: "Network"
                         glyph: "\uf1eb"
@@ -2511,29 +2334,23 @@ Item {
                         glyph: "\uf1fe"
                         idx: 1
                     }
-
                     Item {
                         Layout.fillWidth: true
                     }
                 }
-
                 StackLayout {
                     Layout.fillWidth: true
                     currentIndex: connPage.connTab
-
                     // ── tab · network ──
                     ColumnLayout {
                         spacing: 12
-
                         Card {
                             title: "Connections"
                             icon: "\uf1eb"
                             accent: Themes.accent
-
                             ColumnLayout {
                                 spacing: 0
                                 Layout.fillWidth: true
-
                                 // omarchy-quattro style: one quiet row per interface —
                                 // glyph · name/state · live caption · switch
                                 SettingRow {
@@ -2548,14 +2365,12 @@ Item {
                                     checked: NetworkState.wifiEnabled
                                     onFlipped: MiscState.setWifiRadio(!NetworkState.wifiEnabled)
                                 }
-
                                 Rectangle {
                                     Layout.fillWidth: true
                                     height: 1
                                     color: Themes.separator
                                     Layout.leftMargin: 32
                                 }
-
                                 SettingRow {
                                     icon: "\uef44"
                                     label: ["Ethernet off", "No carrier", "Ethernet"][NetworkState.ethernet?.hasLink ? 2 : NetworkState.ethernet?.connected ? 1 : 0]
@@ -2563,14 +2378,12 @@ Item {
                                     checked: NetworkState.ethernet?.hasLink || false
                                     onFlipped: NetworkState.setEthernetEnabled(!(NetworkState.ethernet?.hasLink || false))
                                 }
-
                                 Rectangle {
                                     Layout.fillWidth: true
                                     height: 1
                                     color: Themes.separator
                                     Layout.leftMargin: 32
                                 }
-
                                 SettingRow {
                                     icon: "\uf294"
                                     label: Bt.enabled ? (Bt.connected && Bt.btDev.length > 0 ? Bt.btDev : "Bluetooth") : "Bluetooth"
@@ -2580,16 +2393,13 @@ Item {
                                 }
                             }
                         }
-
                         Card {
                             title: "Preferences"
                             icon: "\uf013"
                             accent: Themes.accent
-
                             ColumnLayout {
                                 spacing: 0
                                 Layout.fillWidth: true
-
                                 SettingRow {
                                     icon: "\uf1eb"
                                     label: "Highlight"
@@ -2597,14 +2407,12 @@ Item {
                                     checked: MiscState.wifiGreenName
                                     onFlipped: MiscState.wifiGreenName = !MiscState.wifiGreenName
                                 }
-
                                 Rectangle {
                                     Layout.fillWidth: true
                                     height: 1
                                     color: Themes.separator
                                     Layout.leftMargin: 32
                                 }
-
                                 SettingRow {
                                     icon: "\uf1fe"
                                     label: "Totals"
@@ -2615,26 +2423,20 @@ Item {
                             }
                         }
                     }
-
                     // ── tab · speedtest ──
                     ColumnLayout {
                         spacing: 12
-
                         SpeedtestPanel {}
-
                         Card {
                             title: "History"
                             icon: "\uf1fe"
                             accent: Themes.accent2
-
                             ColumnLayout {
                                 spacing: 7
                                 Layout.fillWidth: true
-
                                 RowLayout {
                                     Layout.fillWidth: true
                                     spacing: 6
-
                                     Text {
                                         text: "last " + SpeedtestState.history.length + " runs"
                                         color: Themes.muted
@@ -2643,18 +2445,15 @@ Item {
                                             family: "ZedMono Nerd Font"
                                         }
                                     }
-
                                     Item {
                                         Layout.fillWidth: true
                                     }
-
                                     Rectangle {
                                         visible: SpeedtestState.history.length > 0
                                         implicitWidth: 20
                                         implicitHeight: 20
                                         radius: 6
                                         color: hClearMa.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.16) : "transparent"
-
                                         Text {
                                             anchors.centerIn: parent
                                             text: "\uf1f8"
@@ -2664,7 +2463,6 @@ Item {
                                                 family: "Symbols Nerd Font Mono"
                                             }
                                         }
-
                                         MouseArea {
                                             id: hClearMa
                                             anchors.fill: parent
@@ -2674,27 +2472,21 @@ Item {
                                         }
                                     }
                                 }
-
                                 Repeater {
                                     model: SpeedtestState.history
-
                                     delegate: Rectangle {
                                         id: hrow
-
                                         required property int index
                                         required property var modelData
-
                                         Layout.fillWidth: true
                                         implicitHeight: hrowCol.implicitHeight + 14
                                         radius: 8
                                         color: hrowHover.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12) : "transparent"
-
                                         Behavior on color {
                                             ColorAnimation {
                                                 duration: 120
                                             }
                                         }
-
                                         MouseArea {
                                             id: hrowHover
                                             anchors.fill: parent
@@ -2702,20 +2494,17 @@ Item {
                                             acceptedButtons: Qt.NoButton
                                             z: -1
                                         }
-
                                         readonly property var d: new Date(hrow.modelData.ts * 1000)
                                         readonly property real dv: hrow.modelData.down ?? 0
                                         readonly property real uv: hrow.modelData.up ?? 0
                                         readonly property real pv: hrow.modelData.ping ?? 0
                                         readonly property string srv: hrow.modelData.server ?? ""
-
                                         function _fmt(when) {
                                             const mo = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][when.getMonth()];
                                             const hh = String(when.getHours()).padStart(2, "0");
                                             const mm = String(when.getMinutes()).padStart(2, "0");
                                             return mo + " " + when.getDate() + " · " + hh + ":" + mm;
                                         }
-
                                         ColumnLayout {
                                             id: hrowCol
                                             anchors {
@@ -2725,11 +2514,9 @@ Item {
                                                 margins: 7
                                             }
                                             spacing: 5
-
                                             RowLayout {
                                                 Layout.fillWidth: true
                                                 spacing: 6
-
                                                 Text {
                                                     text: hrow._fmt(hrow.d)
                                                     color: Themes.dim
@@ -2739,11 +2526,9 @@ Item {
                                                     }
                                                     Layout.preferredWidth: 88
                                                 }
-
                                                 Row {
                                                     spacing: 4
                                                     visible: hrow.modelData.net.length > 0
-
                                                     Text {
                                                         text: hrow.modelData.net === "Ethernet" ? "\uef44" : "\uf1eb"
                                                         color: hrow.modelData.net === "Ethernet" ? Themes.accent2 : Themes.accent
@@ -2752,7 +2537,6 @@ Item {
                                                             family: "Symbols Nerd Font Mono"
                                                         }
                                                     }
-
                                                     Text {
                                                         text: hrow.modelData.net
                                                         color: hrow.index === 0 ? Themes.fg : Themes.dim
@@ -2763,11 +2547,9 @@ Item {
                                                         }
                                                     }
                                                 }
-
                                                 Item {
                                                     Layout.fillWidth: true
                                                 }
-
                                                 Text {
                                                     text: hrow.pv.toFixed(0) + " ms"
                                                     color: "#f1fa8c"
@@ -2779,7 +2561,6 @@ Item {
                                                     Layout.preferredWidth: 52
                                                     horizontalAlignment: Text.AlignRight
                                                 }
-
                                                 Text {
                                                     text: hrow.dv.toFixed(1)
                                                     color: "#50fa7b"
@@ -2791,7 +2572,6 @@ Item {
                                                     Layout.preferredWidth: 40
                                                     horizontalAlignment: Text.AlignRight
                                                 }
-
                                                 Text {
                                                     text: hrow.uv > 0 ? hrow.uv.toFixed(1) : "—"
                                                     color: Themes.pink
@@ -2804,13 +2584,11 @@ Item {
                                                     horizontalAlignment: Text.AlignRight
                                                 }
                                             }
-
                                             Rectangle {
                                                 Layout.fillWidth: true
                                                 implicitHeight: 6
                                                 radius: 3
                                                 color: Qt.rgba(1, 1, 1, 0.06)
-
                                                 Rectangle {
                                                     anchors.left: parent.left
                                                     anchors.top: parent.top
@@ -2818,7 +2596,6 @@ Item {
                                                     width: parent.width * Math.min(Math.max(hrow.dv, 0) / 150, 1)
                                                     radius: 3
                                                     color: hrow.dv > 80 ? "#50fa7b" : hrow.dv > 30 ? "#f1fa8c" : "#ffb86c"
-
                                                     Rectangle {
                                                         anchors.right: parent.right
                                                         anchors.verticalCenter: parent.verticalCenter
@@ -2828,7 +2605,6 @@ Item {
                                                         visible: hrow.dv > 4
                                                         color: hrow.dv > 80 ? "#50fa7b" : hrow.dv > 30 ? "#f1fa8c" : "#ffb86c"
                                                     }
-
                                                     Behavior on width {
                                                         NumberAnimation {
                                                             duration: 200
@@ -2837,7 +2613,6 @@ Item {
                                                     }
                                                 }
                                             }
-
                                             Text {
                                                 visible: hrow.srv.length > 0 && hrowHover.containsMouse
                                                 text: hrow.srv + " · " + Math.round(hrow.modelData.mb ?? 0) + " MB · " + (hrow.modelData.secs ?? 0) + "s"
@@ -2850,7 +2625,6 @@ Item {
                                         }
                                     }
                                 }
-
                                 Text {
                                     visible: SpeedtestState.history.length === 0
                                     Layout.alignment: Qt.AlignHCenter
@@ -2870,36 +2644,28 @@ Item {
             }
         }
     }
-
     component BarTab: Rectangle {
         id: btab
-
         property string label
         property string glyph
         property int idx
-
         readonly property bool active: barPageRoot.barTab === btab.idx
         readonly property bool hovered: btabMa.containsMouse
-
         Layout.preferredHeight: 26
         implicitWidth: btabRow.implicitWidth + 18
         radius: 8
         color: active ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16) : hovered ? Qt.rgba(1, 1, 1, 0.05) : Qt.rgba(1, 1, 1, 0.03)
         border.width: 1
         border.color: active ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.5) : Qt.rgba(1, 1, 1, 0.07)
-
         Behavior on color {
             ColorAnimation {
                 duration: 110
             }
         }
-
         Row {
             id: btabRow
-
             anchors.centerIn: parent
             spacing: 6
-
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: btab.glyph
@@ -2909,7 +2675,6 @@ Item {
                     family: "Symbols Nerd Font Mono"
                 }
             }
-
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: btab.label
@@ -2922,46 +2687,36 @@ Item {
                 }
             }
         }
-
         MouseArea {
             id: btabMa
-
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: barPageRoot.barTab = btab.idx
         }
     }
-
     component ConnTab: Rectangle {
         id: ctab
-
         property string label
         property string glyph
         property int idx
-
         readonly property bool active: connPage.connTab === ctab.idx
         readonly property bool hovered: tabMa.containsMouse
-
         Layout.preferredHeight: 26
         implicitWidth: tabRow.implicitWidth + 18
         radius: 8
         color: active ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.16) : hovered ? Qt.rgba(1, 1, 1, 0.05) : Qt.rgba(1, 1, 1, 0.03)
         border.width: 1
         border.color: active ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.5) : Qt.rgba(1, 1, 1, 0.07)
-
         Behavior on color {
             ColorAnimation {
                 duration: 110
             }
         }
-
         Row {
             id: tabRow
-
             anchors.centerIn: parent
             spacing: 6
-
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: ctab.glyph
@@ -2971,7 +2726,6 @@ Item {
                     family: "Symbols Nerd Font Mono"
                 }
             }
-
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: ctab.label
@@ -2984,39 +2738,31 @@ Item {
                 }
             }
         }
-
         MouseArea {
             id: tabMa
-
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: connPage.connTab = ctab.idx
         }
     }
-
     // ═══ NOTIFICATIONS ═══
     Component {
         id: notificationsPage
-
         ColumnLayout {
             spacing: 12
-
             Card {
                 title: "Notifications"
                 // icon: "\uf0a2"
                 accent: Themes.accent
-
                 ColumnLayout {
                     spacing: 0
                     Layout.fillWidth: true
-
                     // notification font dropdown
                     RowLayout {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 38
                         spacing: 12
-
                         Text {
                             text: "\uf031"
                             color: Themes.muted
@@ -3027,7 +2773,6 @@ Item {
                             Layout.preferredWidth: 20
                             horizontalAlignment: Text.AlignHCenter
                         }
-
                         Text {
                             text: "Notification font"
                             color: Themes.fg
@@ -3038,14 +2783,11 @@ Item {
                             }
                             Layout.alignment: Qt.AlignVCenter
                         }
-
                         Item {
                             Layout.fillWidth: true
                         }
-
                         Rectangle {
                             id: notifFontDropdown
-
                             Layout.alignment: Qt.AlignVCenter
                             width: 140
                             height: 24
@@ -3053,10 +2795,8 @@ Item {
                             color: notifFontDropMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : Themes.cardBg
                             border.width: 1
                             border.color: notifFontDropOpen ? Themes.accent : Themes.borderColor
-
                             property bool notifFontDropOpen: false
                             property var fontOptions: MiscState.fontOptions
-
                             Text {
                                 anchors.left: parent.left
                                 anchors.leftMargin: 8
@@ -3071,7 +2811,6 @@ Item {
                                 elide: Text.ElideRight
                                 width: parent.width - 24
                             }
-
                             Text {
                                 anchors.right: parent.right
                                 anchors.rightMargin: 6
@@ -3083,7 +2822,6 @@ Item {
                                     family: "Symbols Nerd Font Mono"
                                 }
                                 rotation: notifFontDropdown.notifFontDropOpen ? 180 : 0
-
                                 Behavior on rotation {
                                     NumberAnimation {
                                         duration: 120
@@ -3091,7 +2829,6 @@ Item {
                                     }
                                 }
                             }
-
                             MouseArea {
                                 id: notifFontDropMa
                                 anchors.fill: parent
@@ -3099,7 +2836,6 @@ Item {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: notifFontDropdown.notifFontDropOpen = !notifFontDropdown.notifFontDropOpen
                             }
-
                             Popup {
                                 id: notifFontPopup
                                 y: notifFontDropdown.height + 4
@@ -3108,14 +2844,12 @@ Item {
                                 closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
                                 onOpened: notifFontDropdown.notifFontDropOpen = true
                                 onClosed: notifFontDropdown.notifFontDropOpen = false
-
                                 background: Rectangle {
                                     radius: 6
                                     color: Themes.cardBg
                                     border.width: 1
                                     border.color: Themes.borderColor
                                 }
-
                                 contentItem: Flickable {
                                     id: notifFontFlick
                                     clip: true
@@ -3123,7 +2857,6 @@ Item {
                                     contentHeight: notifFontPopupCol.implicitHeight
                                     implicitHeight: Math.min(notifFontPopupCol.implicitHeight, 240)
                                     boundsBehavior: Flickable.StopAtBounds
-
                                     ColumnLayout {
                                         id: notifFontPopupCol
                                         anchors {
@@ -3132,20 +2865,16 @@ Item {
                                             top: parent.top
                                         }
                                         spacing: 0
-
                                         Repeater {
                                             model: notifFontDropdown.fontOptions
-
                                             Rectangle {
                                                 required property string modelData
                                                 property bool isHovered: notifFontItemMa.containsMouse
                                                 property bool isSelected: MiscState.notifFont === modelData
-
                                                 Layout.fillWidth: true
                                                 implicitHeight: 24
                                                 radius: 4
                                                 color: isSelected ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.2) : isHovered ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
-
                                                 Text {
                                                     anchors.left: parent.left
                                                     anchors.leftMargin: 8
@@ -3157,7 +2886,6 @@ Item {
                                                         family: "Quicksand"
                                                     }
                                                 }
-
                                                 MouseArea {
                                                     id: notifFontItemMa
                                                     anchors.fill: parent
@@ -3172,10 +2900,8 @@ Item {
                                         }
                                     }
                                 }
-
                                 onVisibleChanged: notifFontDropdown.notifFontDropOpen = visible
                             }
-
                             Connections {
                                 target: notifFontDropdown
                                 function onNotifFontDropOpenChanged() {
@@ -3187,7 +2913,6 @@ Item {
                             }
                         }
                     }
-
                     // media/notification font size — live here too on the preview below
                     IntStepRow {
                         icon: "\uf034"
@@ -3200,14 +2925,12 @@ Item {
                         unit: "px"
                         onCommitted: MiscState.notifFontSize = v
                     }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: Themes.separator
                         Layout.leftMargin: 32
                     }
-
                     // notification art size
                     IntStepRow {
                         icon: "\uf03e"
@@ -3220,14 +2943,12 @@ Item {
                         unit: "px"
                         onCommitted: MiscState.notifArtSize = v
                     }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: Themes.separator
                         Layout.leftMargin: 32
                     }
-
                     // notification border radius
                     IntStepRow {
                         icon: "󱨈"
@@ -3242,16 +2963,13 @@ Item {
                     }
                 }
             }
-
             Card {
                 title: "Presets"
                 // icon: ""
                 accent: Themes.accent
-
                 ColumnLayout {
                     spacing: 0
                     Layout.fillWidth: true
-
                     Repeater {
                         model: [
                             {
@@ -3267,32 +2985,25 @@ Item {
                                 radius: 0
                             }
                         ]
-
                         delegate: Rectangle {
                             id: presetCell
-
                             required property var modelData
                             required property int index
-
                             readonly property bool isActive: MiscState.notifFont === modelData.font && MiscState.notifArtSize === modelData.artSize && MiscState.notifRadius === modelData.radius
-
                             Layout.fillWidth: true
                             implicitHeight: 36
                             radius: 6
                             color: presetMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.12) : isActive ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.08) : "transparent"
-
                             Behavior on color {
                                 ColorAnimation {
                                     duration: 100
                                 }
                             }
-
                             RowLayout {
                                 anchors.fill: parent
                                 anchors.leftMargin: 12
                                 anchors.rightMargin: 12
                                 spacing: 8
-
                                 Text {
                                     text: modelData.name === "Rounded" ? "󱓻" : "󰝤"
                                     color: isActive ? Themes.accent : Themes.muted
@@ -3301,7 +3012,6 @@ Item {
                                         family: "Symbols Nerd Font Mono"
                                     }
                                 }
-
                                 Text {
                                     Layout.fillWidth: true
                                     text: presetCell.modelData.name
@@ -3312,7 +3022,6 @@ Item {
                                         bold: isActive
                                     }
                                 }
-
                                 // active indicator
                                 Rectangle {
                                     visible: presetCell.isActive
@@ -3322,7 +3031,6 @@ Item {
                                     color: Themes.accent
                                 }
                             }
-
                             MouseArea {
                                 id: presetMa
                                 anchors.fill: parent
@@ -3340,24 +3048,19 @@ Item {
             }
         }
     }
-
     // ═══ PERFORMANCE ═══
     Component {
         id: performancePage
-
         ColumnLayout {
             spacing: 12
-
             Card {
                 title: "Poll Rates"
                 icon: "\uf2db"
                 accent: Themes.accent
-
                 ColumnLayout {
                     spacing: 14
                     Layout.fillWidth: true
                     Layout.topMargin: 4
-
                     PollRow {
                         icon: "\uf4bc"
                         label: "CPU · Memory"
@@ -3367,7 +3070,6 @@ Item {
                         valueMs: ResourcesState.cpuMemInterval
                         onCommitted: ms => ResourcesState.cpuMemInterval = ms
                     }
-
                     PollRow {
                         icon: "\uf1eb"
                         label: "Network speed"
@@ -3377,7 +3079,6 @@ Item {
                         valueMs: NetworkState.netInterval
                         onCommitted: ms => NetworkState.netInterval = ms
                     }
-
                     PollRow {
                         icon: "\uf0a0"
                         label: "Disk usage"
@@ -3387,7 +3088,6 @@ Item {
                         valueMs: ResourcesState.diskInterval
                         onCommitted: ms => ResourcesState.diskInterval = ms
                     }
-
                     PollRow {
                         icon: "\uf240"
                         label: "Battery history"
@@ -3401,24 +3101,19 @@ Item {
             }
         }
     }
-
     // ═══ DESKTOP ═══
     Component {
         id: desktopPage
-
         ColumnLayout {
             id: dsPage
             spacing: 12
-
             Card {
                 title: "Desktop"
                 icon: "\uf108"
                 accent: Themes.accent
-
                 ColumnLayout {
                     spacing: 0
                     Layout.fillWidth: true
-
                     SettingRow {
                         icon: "\uf017"
                         label: "Clock on desktop"
@@ -3426,21 +3121,18 @@ Item {
                         checked: WallpaperService.desktopClock
                         onFlipped: WallpaperService.desktopClock = !WallpaperService.desktopClock
                     }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: Themes.separator
                         Layout.leftMargin: 32
                     }
-
                     // bar-text tone — "auto" keeps the wallpaper-follow behaviour
                     // (default), light/dark pin the bar glyphs explicitly
                     RowLayout {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 38
                         spacing: 12
-
                         Text {
                             text: "\uf1c0"
                             color: Themes.accent
@@ -3451,7 +3143,6 @@ Item {
                             Layout.preferredWidth: 20
                             horizontalAlignment: Text.AlignHCenter
                         }
-
                         Text {
                             text: "Bar text"
                             color: Themes.fg
@@ -3462,11 +3153,9 @@ Item {
                             }
                             Layout.alignment: Qt.AlignVCenter
                         }
-
                         Item {
                             Layout.fillWidth: true
                         }
-
                         Rectangle {
                             Layout.alignment: Qt.AlignVCenter
                             implicitWidth: barToneRow.implicitWidth + 6
@@ -3475,13 +3164,10 @@ Item {
                             color: Themes.cardBg
                             border.width: 1
                             border.color: Themes.borderColor
-
                             Row {
                                 id: barToneRow
-
                                 anchors.centerIn: parent
                                 spacing: 2
-
                                 Repeater {
                                     model: [
                                         {
@@ -3497,28 +3183,21 @@ Item {
                                             label: "dark"
                                         }
                                     ]
-
                                     delegate: Rectangle {
                                         id: barToneOpt
-
                                         required property var modelData
-
                                         readonly property bool sel: WallpaperService.barTextTone === barToneOpt.modelData.key
-
                                         width: barToneLbl.implicitWidth + 20
                                         height: 22
                                         radius: 6
                                         color: sel ? Themes.accent : barToneMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.14) : "transparent"
-
                                         Behavior on color {
                                             ColorAnimation {
                                                 duration: 120
                                             }
                                         }
-
                                         Text {
                                             id: barToneLbl
-
                                             anchors.centerIn: parent
                                             text: barToneOpt.modelData.label
                                             color: barToneOpt.sel ? "#181825" : barToneMa.containsMouse ? Themes.fg : Themes.dim
@@ -3527,17 +3206,14 @@ Item {
                                                 bold: true
                                                 family: "Quicksand"
                                             }
-
                                             Behavior on color {
                                                 ColorAnimation {
                                                     duration: 120
                                                 }
                                             }
                                         }
-
                                         MouseArea {
                                             id: barToneMa
-
                                             anchors.fill: parent
                                             hoverEnabled: true
                                             cursorShape: Qt.PointingHandCursor
@@ -3550,7 +3226,6 @@ Item {
                     }
                 }
             }
-
             // separator between the Desktop and Quotes sections
             Rectangle {
                 Layout.fillWidth: true
@@ -3559,16 +3234,13 @@ Item {
                 height: 1
                 color: Themes.separator
             }
-
             Card {
                 title: "Quotes"
                 icon: "\uf10d"
                 accent: Themes.accent
-
                 ColumnLayout {
                     spacing: 0
                     Layout.fillWidth: true
-
                     SettingRow {
                         icon: "\uf10d"
                         label: "Quotes on desktop"
@@ -3576,14 +3248,12 @@ Item {
                         checked: WallpaperService.quotesEnabled
                         onFlipped: WallpaperService.quotesEnabled = !WallpaperService.quotesEnabled
                     }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: Themes.separator
                         Layout.leftMargin: 32
                     }
-
                     SettingRow {
                         icon: "\uf140"
                         label: "Quote background"
@@ -3591,14 +3261,12 @@ Item {
                         checked: QuotesState.showBg
                         onFlipped: QuotesState.showBg = !QuotesState.showBg
                     }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: Themes.separator
                         Layout.leftMargin: 32
                     }
-
                     SettingRow {
                         icon: "\uf11d"
                         label: "Funny extras"
@@ -3606,14 +3274,12 @@ Item {
                         checked: QuotesState.showFun
                         onFlipped: QuotesState.showFun = !QuotesState.showFun
                     }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: Themes.separator
                         Layout.leftMargin: 32
                     }
-
                     SettingRow {
                         icon: "\uf00a"
                         label: "Hyprland quotes"
@@ -3621,42 +3287,36 @@ Item {
                         checked: QuotesState.showHypr
                         onFlipped: QuotesState.showHypr = !QuotesState.showHypr
                     }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: Themes.separator
                         Layout.leftMargin: 32
                     }
-
                     FontPickerRow {
                         icon: "\uf10d"
                         label: "Quote font"
                         value: QuotesState.quoteFont
                         onPicked: QuotesState.quoteFont = font
                     }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: Themes.separator
                         Layout.leftMargin: 32
                     }
-
                     FontPickerRow {
                         icon: "\uf007"
                         label: "Author font"
                         value: QuotesState.authorFont
                         onPicked: QuotesState.authorFont = font
                     }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: Themes.separator
                         Layout.leftMargin: 32
                     }
-
                     PollRow {
                         icon: "\uf2f1"
                         label: "Quote rotation"
@@ -3670,25 +3330,19 @@ Item {
             }
         }
     }
-
     // ═══ HYPRLAND ═══
     Component {
         id: hyprlandPage
-
         ColumnLayout {
             id: hyPage
-
             spacing: 12
-
             Card {
                 title: "Window layout"
                 // icon: "\uf120"
                 accent: Themes.accent
-
                 ColumnLayout {
                     spacing: 0
                     Layout.fillWidth: true
-
                     SettingRow {
                         icon: "󱉵"
                         label: "Gaps out on/off"
@@ -3696,14 +3350,12 @@ Item {
                         checked: HyprConfig.gapsOutEnabled
                         onFlipped: HyprConfig.setGapsOutEnabled(!HyprConfig.gapsOutEnabled)
                     }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: Themes.separator
                         Layout.leftMargin: 32
                     }
-
                     HyprStepRow {
                         id: gapsInRow
                         icon: ""
@@ -3712,14 +3364,12 @@ Item {
                         minValue: 0
                         maxValue: 48
                     }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: Themes.separator
                         Layout.leftMargin: 32
                     }
-
                     HyprStepRow {
                         id: gapsOutRow
                         icon: ""
@@ -3729,14 +3379,12 @@ Item {
                         maxValue: 64
                         interactive: HyprConfig.gapsOutEnabled
                     }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: Themes.separator
                         Layout.leftMargin: 32
                     }
-
                     HyprStepRow {
                         id: borderSizeRow
                         icon: ""
@@ -3745,14 +3393,12 @@ Item {
                         minValue: 0
                         maxValue: 12
                     }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: Themes.separator
                         Layout.leftMargin: 32
                     }
-
                     HyprStepRow {
                         id: roundingRow
                         icon: "󱨈"
@@ -3763,44 +3409,37 @@ Item {
                     }
                 }
             }
-
             Card {
                 title: "Borders"
                 // icon: "\uf0c8"
                 accent: Themes.accent
-
                 ColumnLayout {
                     spacing: 0
                     Layout.fillWidth: true
-
                     HyprColorRow {
                         id: activeBorderRow
                         icon: ""
                         label: "Active border"
                         borderKey: "activeBorder"
                     }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: Themes.separator
                         Layout.leftMargin: 32
                     }
-
                     HyprColorRow {
                         id: inactiveBorderRow
                         icon: "󱗽"
                         label: "Inactive border"
                         borderKey: "inactiveBorder"
                     }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: Themes.separator
                         Layout.leftMargin: 32
                     }
-
                     SettingRow {
                         icon: "\uf04b"
                         label: "Dual tone borders"
@@ -3808,14 +3447,12 @@ Item {
                         checked: HyprConfig.dualTone
                         onFlipped: HyprConfig.setDualTone(!HyprConfig.dualTone)
                     }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: Themes.separator
                         Layout.leftMargin: 32
                     }
-
                     HyprColorRow {
                         id: borderTone2Row
                         icon: "\uf096"
@@ -3825,12 +3462,10 @@ Item {
                     }
                 }
             }
-
             RowLayout {
                 Layout.fillWidth: true
                 Layout.topMargin: 2
                 spacing: 6
-
                 Text {
                     text: "\uf05a"
                     color: Themes.muted
@@ -3839,7 +3474,6 @@ Item {
                         family: "Symbols Nerd Font Mono"
                     }
                 }
-
                 Text {
                     Layout.fillWidth: true
                     text: "Values are read from and written to ~/.config/hypr/general.lua + decoration.lua and applied instantly (hyprctl reload)"
@@ -3850,7 +3484,6 @@ Item {
                         family: "Quicksand"
                     }
                 }
-
                 // restore the hardcoded default values to the lua files
                 // (~/.config/hypr/general.lua + decoration.lua) and apply
                 // them instantly (hyprctl reload)
@@ -3861,7 +3494,6 @@ Item {
                     color: resetMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.15) : Themes.separator
                     border.width: 1
                     border.color: resetMa.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.45) : "transparent"
-
                     Text {
                         id: resetLbl
                         anchors.centerIn: parent
@@ -3873,7 +3505,6 @@ Item {
                             family: "Symbols Nerd Font Mono, Quicksand"
                         }
                     }
-
                     MouseArea {
                         id: resetMa
                         anchors.fill: parent
@@ -3883,29 +3514,23 @@ Item {
                     }
                 }
             }
-
             // pull the current values from the lua config every time the page opens
             Component.onCompleted: HyprConfig.reload()
         }
     }
-
     // ═══ LAUNCHER (ROFIS) ═══
     Component {
         id: rofiPage
-
         ColumnLayout {
             spacing: 12
-
             Card {
                 title: "Rofi"
                 icon: "󱓟"
                 accent: Themes.rofiAccent
-
                 ColumnLayout {
                     spacing: 14
                     Layout.fillWidth: true
                     Layout.topMargin: 4
-
                     SettingRow {
                         icon: "\uf0c9"
                         label: "Backdrop blur"
@@ -3913,14 +3538,12 @@ Item {
                         checked: MiscState.rofiBlur
                         onFlipped: MiscState.rofiBlur = !MiscState.rofiBlur
                     }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: Themes.separator
                         Layout.leftMargin: 32
                     }
-
                     IntStepRow {
                         icon: "\uf06e"
                         label: "Panel opacity"
@@ -3931,7 +3554,6 @@ Item {
                         unit: "%"
                         onCommitted: v => MiscState.rofiOpacity = v / 100
                     }
-
                     IntStepRow {
                         icon: "\uf0b0"
                         label: "Blur radius"
@@ -3942,19 +3564,16 @@ Item {
                         unit: "px"
                         onCommitted: v => MiscState.rofiRadius = v
                     }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: Themes.separator
                         Layout.leftMargin: 32
                     }
-
                     // theme roster header — Auto follows the active scheme
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 12
-
                         Text {
                             text: "\uf13b"
                             color: Themes.muted
@@ -3965,7 +3584,6 @@ Item {
                             Layout.preferredWidth: 20
                             horizontalAlignment: Text.AlignHCenter
                         }
-
                         Text {
                             text: "Rofi theme"
                             color: Themes.fg
@@ -3976,11 +3594,9 @@ Item {
                             }
                             Layout.alignment: Qt.AlignVCenter
                         }
-
                         Item {
                             Layout.fillWidth: true
                         }
-
                         Text {
                             text: root.rofiThemeName
                             color: Themes.accent
@@ -3992,34 +3608,27 @@ Item {
                             Layout.alignment: Qt.AlignVCenter
                         }
                     }
-
                     Row {
                         Layout.fillWidth: true
                         spacing: 6
-
                         Repeater {
                             model: ["Auto", "Pyrple", "Gron", "Gruvbox", "Rose", "Everforest", "Soramane"]
-
                             delegate: Rectangle {
                                 required property int index
                                 required property string modelData
-
                                 readonly property bool active: MiscState.rofiTheme === root.rofiSchemes[index]
                                 readonly property bool hovered: themePillMa.containsMouse
-
                                 implicitHeight: 26
                                 implicitWidth: themePillLabel.implicitWidth + 16
                                 radius: 8
                                 color: active ? Qt.rgba(Themes.rofiAccent.r, Themes.rofiAccent.g, Themes.rofiAccent.b, 0.16) : hovered ? Qt.rgba(1, 1, 1, 0.05) : Qt.rgba(1, 1, 1, 0.03)
                                 border.width: 1
                                 border.color: active ? Qt.rgba(Themes.rofiAccent.r, Themes.rofiAccent.g, Themes.rofiAccent.b, 0.5) : Qt.rgba(1, 1, 1, 0.07)
-
                                 Behavior on color {
                                     ColorAnimation {
                                         duration: 110
                                     }
                                 }
-
                                 Text {
                                     id: themePillLabel
                                     anchors.centerIn: parent
@@ -4031,7 +3640,6 @@ Item {
                                         family: "Quicksand"
                                     }
                                 }
-
                                 MouseArea {
                                     id: themePillMa
                                     anchors.fill: parent
@@ -4046,24 +3654,19 @@ Item {
             }
         }
     }
-
     // ═══ POPUPS ═══
     Component {
         id: popupsPage
-
         ColumnLayout {
             spacing: 12
-
             Card {
                 title: "Popups"
                 icon: "\uf070"
                 accent: Themes.pink
-
                 ColumnLayout {
                     spacing: 14
                     Layout.fillWidth: true
                     Layout.topMargin: 4
-
                     SettingRow {
                         icon: "\uf2d0"
                         label: "Background"
@@ -4071,14 +3674,12 @@ Item {
                         checked: MiscState.popupSolidBg
                         onFlipped: MiscState.popupSolidBg = !MiscState.popupSolidBg
                     }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: Themes.separator
                         Layout.leftMargin: 32
                     }
-
                     IntStepRow {
                         icon: "\uf06e"
                         label: "Glass opacity"
@@ -4089,19 +3690,16 @@ Item {
                         unit: "%"
                         onCommitted: v => MiscState.popupOpacity = v / 100
                     }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: Themes.separator
                         Layout.leftMargin: 32
                     }
-
                     // theme roster header — Auto follows the active scheme
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 12
-
                         Text {
                             text: "\uf13b"
                             color: Themes.muted
@@ -4112,7 +3710,6 @@ Item {
                             Layout.preferredWidth: 20
                             horizontalAlignment: Text.AlignHCenter
                         }
-
                         Text {
                             text: "Popup theme"
                             color: Themes.fg
@@ -4123,11 +3720,9 @@ Item {
                             }
                             Layout.alignment: Qt.AlignVCenter
                         }
-
                         Item {
                             Layout.fillWidth: true
                         }
-
                         Text {
                             text: root.popupThemeName
                             color: Themes.accent
@@ -4139,34 +3734,27 @@ Item {
                             Layout.alignment: Qt.AlignVCenter
                         }
                     }
-
                     Row {
                         Layout.fillWidth: true
                         spacing: 6
-
                         Repeater {
                             model: ["Auto", "Pyrple", "Gron", "Gruvbox", "Rose", "Everforest", "Soramane"]
-
                             delegate: Rectangle {
                                 required property int index
                                 required property string modelData
-
                                 readonly property bool active: MiscState.popupTheme === root.popupSchemes[index]
                                 readonly property bool hovered: popupPillMa.containsMouse
-
                                 implicitHeight: 26
                                 implicitWidth: popupPillLabel.implicitWidth + 16
                                 radius: 8
                                 color: active ? Qt.rgba(Themes.pink.r, Themes.pink.g, Themes.pink.b, 0.16) : hovered ? Qt.rgba(1, 1, 1, 0.05) : Qt.rgba(1, 1, 1, 0.03)
                                 border.width: 1
                                 border.color: active ? Qt.rgba(Themes.pink.r, Themes.pink.g, Themes.pink.b, 0.5) : Qt.rgba(1, 1, 1, 0.07)
-
                                 Behavior on color {
                                     ColorAnimation {
                                         duration: 110
                                     }
                                 }
-
                                 Text {
                                     id: popupPillLabel
                                     anchors.centerIn: parent
@@ -4178,7 +3766,6 @@ Item {
                                         family: "Quicksand"
                                     }
                                 }
-
                                 MouseArea {
                                     id: popupPillMa
                                     anchors.fill: parent
@@ -4191,7 +3778,6 @@ Item {
                     }
                 }
             }
-
             // ── what the toggle covers ──
             Text {
                 Layout.fillWidth: true
@@ -4206,24 +3792,19 @@ Item {
             }
         }
     }
-
     // ═══ GIT ═══
     Component {
         id: gitPage
-
         ColumnLayout {
             spacing: 12
-
             Card {
                 title: "Git"
                 icon: "\uf1d3"
                 accent: Themes.sevUnpushed
-
                 ColumnLayout {
                     spacing: 14
                     Layout.fillWidth: true
                     Layout.topMargin: 4
-
                     PollRow {
                         icon: "\uf017"
                         label: "Poll interval"
@@ -4235,17 +3816,14 @@ Item {
                     }
                 }
             }
-
             Card {
                 title: "Notes"
                 icon: "\uf05a"
                 accent: Themes.accent2
-
                 ColumnLayout {
                     spacing: 4
                     Layout.fillWidth: true
                     Layout.topMargin: 2
-
                     Text {
                         Layout.fillWidth: true
                         text: "· Untracked files surface as a separate warning tier on the git pill."
@@ -4256,7 +3834,6 @@ Item {
                         }
                         wrapMode: Text.WordWrap
                     }
-
                     Text {
                         Layout.fillWidth: true
                         text: "· The poll interval bounds the live refresh while the Git popup is open."

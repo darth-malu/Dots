@@ -64,6 +64,12 @@ ClippingRectangle {
         signal clicked
         signal openChooser
 
+        // transient controls peek off the panel's HoverHandler — while the
+        // mouse is on this button ITS OWN mouse area takes over hover, so it
+        // must keep itself (and its sibling picker) visible or it vanishes
+        // the instant you reach for it
+        readonly property bool hovered: cogMouse.containsMouse
+
         implicitWidth: 18
         implicitHeight: 18
         radius: 5
@@ -462,7 +468,8 @@ ClippingRectangle {
 
         ChooserCog {
             // peek until the items panel is hovered (or the chooser is open)
-            visible: compactItemsHover.hovered || card.chooserOpen
+            // — plus this cog's own hover so reaching for it doesn't kill it
+            visible: compactItemsHover.hovered || hovered || card.chooserOpen
             onClicked: MiscState.compactNowPlaying = false
             onOpenChooser: card.chooserOpen = !card.chooserOpen
             anchors {
@@ -478,7 +485,7 @@ ClippingRectangle {
         Rectangle {
             id: compactSwitcher
 
-            visible: card.chooserAvailable && (compactItemsHover.hovered || card.chooserOpen)
+            visible: card.chooserAvailable && (compactItemsHover.hovered || compactSwitcherMa.containsMouse || card.chooserOpen)
             implicitWidth: 18
             implicitHeight: 18
             radius: 5
@@ -782,7 +789,8 @@ ClippingRectangle {
 
         ChooserCog {
             // peek until the card is hovered (or the chooser is open)
-            visible: expandedHover.hovered || card.chooserOpen
+            // — plus this cog's own hover so reaching for it doesn't kill it
+            visible: expandedHover.hovered || hovered || card.chooserOpen
             // left = collapse back to compact, right = player chooser
             onClicked: MiscState.compactNowPlaying = true
             onOpenChooser: card.chooserOpen = !card.chooserOpen
@@ -800,7 +808,7 @@ ClippingRectangle {
         Rectangle {
             id: expSwitcher
 
-            visible: card.chooserAvailable && (expandedHover.hovered || card.chooserOpen)
+            visible: card.chooserAvailable && (expandedHover.hovered || expSwitcherMa.containsMouse || card.chooserOpen)
             implicitWidth: 18
             implicitHeight: 18
             radius: 5

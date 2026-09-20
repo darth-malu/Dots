@@ -115,6 +115,7 @@
 (use-package! emacs
   :init
   (setq custom-file (expand-file-name "custom.el" doom-user-dir))
+  (load custom-file 'noerror 'no-message)
   :custom
   (fancy-splash-image (file-name-concat doom-user-dir "emacs.png"))
         ;; initial-buffer-choice #'eshell
@@ -200,10 +201,18 @@
   (drag-stuff-global-mode 1)
   (drag-stuff-define-keys)
   (customize-set-variable 'uniquify-buffer-name-style 'post-forward)
-  (customize-set-variable 'uniquify-separator " ❄ ") ;💎 🧿💢
+  (customize-set-variable 'uniquify-separator "•") ;💎 🧿💢❄
+  ;; (customize-set-variable uniquify-after-kill-buffer-p t)
   ;; (customize-set-variable 'ein:jupyter-server-use-command 'server)
   ;; (customize-set-variable 'ein:jupyter-server-use-subcommand "server")
   ;; (load! "+darthBinds")  ;; FIXME: where darthBinds
+
+  ;; Configure the `tab-bar-show` variable to 1 to display the tab bar exclusively
+  ;; when multiple tabs are open:
+  ;; Automatically apply verified, safe file-local variables. This eliminates
+  ;; confirmation prompts when loading files, while ensuring that unauthorized or
+  ;; risky configurations are silently ignored.
+  ;; (setq enable-local-variables :safe)
   :bind (
          :map evil-normal-state-map
           ;;;misc
@@ -246,10 +255,106 @@
   (elcord-display-elapsed nil)
   (elcord-idle-message "Sipo Kwenye Keyboard...👻")
   :config
-  ;; (elcord-mode 1)
+  (elcord-mode 1)
   (setq elcord--editor-name "Church of Emacs"
-        elcord-use-major-mode-as-main-icon t
-        ))
+        elcord-use-major-mode-as-main-icon t))
+
+;; Helpful is an alternative to the built-in Emacs help that provides much more
+;; contextual information.
+(use-package helpful
+  :commands (helpful-callable
+             helpful-variable
+             helpful-key
+             helpful-command
+             helpful-at-point
+             helpful-function)
+  :bind
+  ([remap describe-command] . helpful-command)
+  ([remap describe-function] . helpful-callable)
+  ([remap describe-key] . helpful-key)
+  ([remap describe-symbol] . helpful-symbol)
+  ([remap describe-variable] . helpful-variable)
+  :init
+  (setq helpful-max-buffers 7))
+
+;; `vterm' is an Emacs terminal emulator that provides a fully interactive shell
+;; experience within Emacs, supporting features such as color, cursor movement,
+;; and advanced terminal capabilities. Unlike standard Emacs terminal modes,
+;; `vterm' utilizes the libvterm C library for high-performance emulation. This
+;; ensures accurate terminal behavior when running shell programs, text-based
+;; applications, and REPLs.
+(use-package vterm
+  :if (bound-and-true-p module-file-suffix)
+  :commands (vterm
+             vterm-send-string
+             vterm-send-return
+             vterm-send-key
+             vterm-module-compile)
+
+  :preface
+  (when noninteractive
+    ;; vterm unnecessarily triggers compilation of vterm-module.so upon loading.
+    ;; This prevents that during byte-compilation (`use-package' eagerly loads
+    ;; packages when compiling).
+    (advice-add #'vterm-module-compile :override #'ignore))
+
+  (defun my-vterm--setup ()
+    ;; Hide the mode-line
+    (setq mode-line-format nil)
+
+    ;; Inhibit early horizontal scrolling
+    (setq-local hscroll-margin 0)
+
+    ;; Suppress prompts for terminating active processes when closing vterm
+    (setq-local confirm-kill-processes nil))
+
+  :init
+  (add-hook 'vterm-mode-hook #'my-vterm--setup)
+
+  (setq vterm-timer-delay 0.05)  ; Faster vterm
+  (setq vterm-kill-buffer-on-exit t)
+  (setq vterm-max-scrollback 5000))
+
+(use-package! eglot
+  :config
+  (setq eglot-autoshutdown t)
+  (setq eglot-sync-connect nil)           ;nil eq 0
+
+  ;; disable lsp event logging
+  ;; Disable event logging completely (Emacs >= 30)
+  (setq eglot-events-buffer-config '(:size 0 :format short)) ;short, full
+  ;; For Emacs <= 29
+  ;; (setq eglot-events-buffer-size 0)
+
+  ;; Increase single chunk bytes to read from subprocess
+  (setq read-process-output-max
+        (or (when (eq system-type 'gnu/linux)
+              (condition-case nil
+                  ;; On GNU/Linux systems, the value should not exceed
+                  ;; /proc/sys/fs/pipe-max-size
+                  (with-temp-buffer
+                    (insert-file-contents "/proc/sys/fs/pipe-max-size")
+                    (string-to-number (buffer-string)))
+                (error
+                nil))
+              (* 1024 1024))))
+
+  (setq eglot-max-file-watches 5000)      ;5000::
+  ;; TODO: use dir-locals to ignore node_modules
+
+  ;; Disable automatic code action indicators to reduce background polling
+  (setq eglot-code-action-indications nil)
+
+  (with-eval-after-load 'eglot
+    (add-to-list 'eglot-ignored-server-capabilities :documentOnTypeFormattingProvider))
+
+  (with-eval-after-load 'eglot
+    (add-to-list 'eglot-ignored-server-capabilities :documentHighlightProvider))
+
+  ;; types & parameter names -- minibuffer
+
+  ;; Suppress mode-line progress animations
+  (setq eglot-report-progress nil))
 
 (use-package! org-auto-tangle
   :defer t
@@ -260,7 +365,24 @@
 
 (use-package! corfu
   :init
-  (customize-set-variable 'corfu-auto nil))
+  (customize-set-variable 'corfu-auto nil)
+  :config
+  ;; Hide commands in M-x which do not apply to the current mode.
+  (setq read-extended-command-predicate #'command-completion-default-include-p)
+  )
+
+;; Cape, or Completion At Point Extensions, extends the capabilities of
+;; in-buffer completion. It integrates with Corfu or the default completion UI,
+;; by providing additional backends through completion-at-point-functions.
+(use-package cape
+  :commands (cape-dabbrev cape-file cape-elisp-block)
+  :bind ("C-c p" . cape-prefix-map)
+  :init
+  ;; Add to the global default value of `completion-at-point-functions' which is
+  ;; used by `completion-at-point'.
+  (add-hook 'completion-at-point-functions #'cape-dabbrev)
+  (add-hook 'completion-at-point-functions #'cape-file)
+  (add-hook 'completion-at-point-functions #'cape-elisp-block))
 
 ;; Trying to save workspaces
 (after! persp
@@ -328,6 +450,27 @@
                                 ("NOTE"       success bold)
                                 ("DEPRECATED" font-lock-doc-face bold))))
 
+;; Constrain vertical cursor movement to lines within the buffer
+(setq dired-movement-style 'bounded-files)
+
+;; Dired buffers: Automatically hide file details (permissions, size,
+;; modification date, etc.) and all the files in the `dired-omit-files' regular
+;; expression for a cleaner display.
+(add-hook 'dired-mode-hook #'dired-hide-details-mode)
+
+;; Hide files from dired
+(setq dired-omit-files (concat "\\`[.]\\'"
+                               "\\|\\(?:\\.js\\)?\\.meta\\'"
+                               "\\|\\.\\(?:elc\\|a\\|o\\|pyc\\|pyo\\|swp\\|class\\)\\'"
+                               "\\|^\\.DS_Store\\'"
+                               "\\|^\\.\\(?:svn\\|git\\)\\'"
+                               "\\|^\\.ccls-cache\\'"
+                               "\\|^__pycache__\\'"
+                               "\\|^\\.project\\(?:ile\\)?\\'"
+                               "\\|^flycheck_.*"
+                               "\\|^flymake_.*"))
+(add-hook 'dired-mode-hook #'dired-omit-mode)
+
 (custom-set-faces!
   '(aw-leading-char-face
     :foreground "white" :background "red"
@@ -380,7 +523,15 @@
         org-roam-db-location (file-name-concat org-roam-directory ".org-roam.db")
         org-roam-dailies-directory (expand-file-name "Journal" org-roam-directory))
   (org-roam-db-autosync-mode)
-
+  ;; (setq org-hide-leading-stars t)
+  (setq org-startup-indented t)
+  ;; (setq org-adapt-indentation nil)
+  ;; (setq org-edit-src-content-indentation 0)
+  ;; (setq org-fontify-done-headline t)
+  ;; (setq org-fontify-todo-headline t)
+  ;; (setq org-fontify-whole-heading-line t)
+  ;; (setq org-fontify-quote-and-verse-blocks t)
+  ;; (setq org-startup-truncated t)
   :custom
   (org-log-done 'time) ; task done with timestamp
   ;; (org-log-done-with-time nil)
@@ -389,9 +540,7 @@
   (org-hide-emphasis-markers t)
   (org-tag-alist
       '(("@home" . ?h) ("@school" . ?s)
-
         ("@carthage" . ?C) ("@tangier" . ?T)
-
         ("@work" . ?w) ("@pyrple" . ?p) ("@youtubr" . ?y)
         ("@emacs" . ?e) ("@linux" . ?l) ("@nix" . ?n)))
 

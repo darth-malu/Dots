@@ -9,42 +9,17 @@ Singleton {
     // ── dynamic per-workspace app icons ──
     // class → freedesktop icon; title-in-class overrides take priority
     readonly property var classIconMap: {
-        "kitty": "kitty",
         "foot": "foot",
-        "discord": "discord",
-        "zen": "zen",
-        "firefox": "firefox",
+        "obs": "com.obsproject.Studio",
         "librewolf": "librewolf",
-        "chrom": "google-chrome",
         "steam": "steam",
-        "spotify": "spotify-client",
-        "spotube": "spotube",
         "easyeffects": "com.github.wwmm.easyeffects",
         "pwvucontrol": "com.saivert.pwvucontrol",
-        "obs": "com.obsproject.Studio",
-        "mpv": "mpv",
-        "nautilus": "org.gnome.Nautilus",
-        "dolphin": "org.kde.dolphin",
-        "code": "visual-studio-code",
-        "emacs": "emacs",
-        "neovide": "neovide",
         "telegram": "telegram",
-        "signal": "signal",
-        "thunderbird": "thunderbird",
-        "lutris": "net.lutris.Lutris",
-        "heroic": "com.heroicgameslauncher.hgl",
         "bottles": "com.usebottles.bottles",
         "inkscape": "org.inkscape.Inkscape",
-        "gimp": "gimp",
-        "dota": "steam_icon_570",
-        "blueman": "blueman-manager",
-        "qutebrowser": "qutebrowser",
-        "zathura": "org.pwmt.zathura",
-        "pavucontrol": "pavucontrol",
-        "stremio": "com.stremio.Stremio",
-        "freetube": "freetube",
         "telegram": "org.telegram.desktop",
-        "spotube": "spotube"
+        "dota": "steam_icon_570"
     }
 
     // longest substring match wins so "chrome-xyz-pwa" hits before bare rules
@@ -73,6 +48,19 @@ Singleton {
         return "application-x-executable";
     }
 
+    // ── exclusion patterns (class regex × title regex) ──
+    // NOTE: UNTESTED
+    readonly property var excludePatterns: [
+        {
+            cls: /^$/,
+            title: /^$/
+        },
+        {
+            cls: /foocar/i,
+            title: /.*/
+        },
+    ]
+
     // ── title-in-class overrides ──
     // icon values are literal nerd-font / emoji chars — NOT escape sequences
     readonly property var titleClassOverrides: [
@@ -100,18 +88,6 @@ Singleton {
             cls: /electron/i,
             title: /WhatsApp Electron/,
             icon: "whatsapp"
-        },
-    ]
-
-    // ── exclusion patterns (class regex × title regex) ──
-    readonly property var excludePatterns: [
-        {
-            cls: /^$/,
-            title: /^$/
-        },
-        {
-            cls: /fcitx/i,
-            title: /.*/
         },
     ]
 

@@ -90,13 +90,14 @@ ShellRoot {
                     Layout.alignment: Qt.AlignLeft
                     Layout.leftMargin: 6
 
-                    // workspace module — icons (default) or numbers, swappable live.
+                    // workspace module — dots, numbers, or app icons (workspaceStyle),
+                    // swappable live via the alt-click flavour popup.
                     // `active` (not just visible) ensures the module is destroyed and
                     // its size is fully reclaimed when disabled.
                     Loader {
                         active: MiscState.showWorkspaces
-                        sourceComponent: MiscState.dotWorkspaces ? dotWorkspacesComp
-                            : MiscState.iconWorkspaces ? iconWorkspacesComp : numWorkspacesComp
+                        sourceComponent: MiscState.workspaceStyle === 0 ? dotWorkspacesComp
+                            : MiscState.workspaceStyle === 1 ? numWorkspacesComp : iconWorkspacesComp
                     }
                 }
 
@@ -115,7 +116,11 @@ ShellRoot {
                     }
                     onClicked: mouse => {
                         const gx = barActions.mapToGlobal(mouse.x, 0).x;
-                        styleMenu.openAt(mouse.button === Qt.RightButton ? 0 : 1, gx);
+                        // alt-click = workspace flavour popup (dots / numbers / icons)
+                        if (mouse.modifiers & Qt.AltModifier)
+                            styleMenu.openAt(2, gx);
+                        else
+                            styleMenu.openAt(mouse.button === Qt.RightButton ? 0 : 1, gx);
                     }
                     ActiveWindow {
                         id: activeText
