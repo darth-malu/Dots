@@ -2288,6 +2288,11 @@ FIXME: does not work
 
 (setq xclip-select-enable-clipboard t)
 #+end_src
+* Setenv | Fix xclip | org-download-clipboard
+#+begin_src emacs-lisp :tangle no
+(setenv "XDG_SESSION_TYPE" "wayland")
+#+end_src
+
 * Markdown
 =Markdown-view-mode= toggle
 #+begin_src elisp :tangle yes
