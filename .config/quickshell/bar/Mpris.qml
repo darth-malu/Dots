@@ -107,26 +107,22 @@ Item {
         }
 
         onWheel: event => {
-            // plain wheel = volume, alt + wheel = scroll the player list
-            if (event.modifiers & Qt.AltModifier) {
-                var players = MprisState.controlPlayers;
-                if (players.length > 1) {
-                    var cur = MprisState.player;
-                    var idx = players.indexOf(cur);
-                    var dir = event.angleDelta.y > 0 ? 1 : -1;
-                    var next = players[((idx < 0 ? 0 : idx) + dir + players.length) % players.length];
-                    MprisState.player = next;
-                }
+            // plain wheel = volume.
+            // alt + wheel = scroll the player list, but NOT here: pointer-event
+            // modifiers are unreliable on this layer-shell (no keyboard focus,
+            // Bar.qml:27), so Hyprland's own "ALT + mouse_up/down" binds detect
+            // the alt and drive MprisState.cyclePlayer() via "qs ipc call mpris
+            // cycle next/prev" (IpcHandler.qml / keybinds). Hyprland consumes
+            // those wheel events, so they never reach this handler.
+            const p = MprisState.player;
+            if (!p) {
                 event.accepted = true;
-            } else {
-                const p = MprisState.player;
-                if (!p)
-                    return;
-                MprisState.adjustVolume(p, event.angleDelta.y > 0);
-                mprisRoot.showVolume = true;
-                hideVolumeTimer.restart();
-                event.accepted = true;
+                return;
             }
+            MprisState.adjustVolume(p, event.angleDelta.y > 0);
+            mprisRoot.showVolume = true;
+            hideVolumeTimer.restart();
+            event.accepted = true;
         }
 
         // ── the wrapper's ONE managed child — extra visual children get

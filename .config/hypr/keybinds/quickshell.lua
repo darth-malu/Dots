@@ -14,6 +14,13 @@ hl.bind(mod .. "SHIFT+I", hl.dsp.exec_cmd("qs ipc call mpris songArt"), { locked
 hl.bind(mod .. "ALT+I", hl.dsp.exec_cmd("qs ipc call notifications showLast"), { locked = true })
 hl.bind(mod .. "SHIFT+ space", hl.dsp.exec_cmd("qs ipc call notifications dismissAll"), { locked = true })
 
+-- alt + wheel = cycle the bartop mpris player (up = previous, down = next).
+-- the bar is a layer-shell without keyboard focus, so its own wheel events
+-- never carry the alt modifier — the compositor's binds see it reliably and
+-- consume the wheel before it reaches the bar's volume handler.
+hl.bind("ALT + mouse_up", hl.dsp.exec_cmd("qs ipc call mpris cycle prev"), { locked = true })
+hl.bind("ALT + mouse_down", hl.dsp.exec_cmd("qs ipc call mpris cycle next"), { locked = true })
+
 -- BAR
 hl.bind(mod .. "Delete", hl.dsp.exec_cmd("qs ipc call logout toggle"), { locked = true }) --now integrated into quickshell (toggle via IPC)
 hl.bind(mod .. "HOME", hl.dsp.exec_cmd("qs ipc call bar toggleBar"), { locked = true })

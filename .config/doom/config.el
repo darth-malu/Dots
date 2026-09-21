@@ -711,6 +711,8 @@
                            ;;  :empty-lines 1)
                            )))
 
+(setenv "XDG_SESSION_TYPE" "wayland")
+
 (defun my/markdown-toggler ()
   "This function toggles markdown view mode on/off 😀"
   (interactive)

@@ -54,6 +54,16 @@ Item {
             MiscState.showMpris = !MiscState.showMpris;
         }
 
+        function cycle(dir: string): void {
+            // alt+wheel player cycling — driven by Hyprland mouse binds
+            // (ALT + mouse_up/down). Pointer-event modifiers are unreliable on a
+            // layer-shell without keyboard focus, so the compositor's own binds
+            // do the detecting; wheel + alt anywhere selects the next/prev
+            // pickable player (pinned, so refresh() can't clobber the pick).
+            const d = dir === "next" ? 1 : dir === "prev" ? -1 : (parseInt(dir, 10) || 0);
+            MprisState.cyclePlayer(d);
+        }
+
 function toggleMprisArt(): void {
             MprisState.mprisArtVisible = !MprisState.mprisArtVisible;
         }

@@ -124,6 +124,30 @@ Singleton {
         root.pinPlayerName = list[idx].dbusName;
     }
 
+    // bar module alt+wheel — step the selected (bar) player through the
+    // pickable list. Mirrors moveCardPin() so a wheel pick is stable: the
+    // landed player is pinned, which refresh() honours until it disappears.
+    // Assigned by dbusName (not object identity) so it survives the player
+    // objects being recreated by a reload.
+    function cyclePlayer(dir) {
+        const list = root.pickablePlayers;
+        if (list.length === 0)
+            return;
+        const cur = root.player?.dbusName ?? "";
+        let idx = -1;
+        for (let i = 0; i < list.length; i++)
+            if (list[i].dbusName === cur)
+                idx = i;
+        if (idx === -1)
+            idx = dir > 0 ? 0 : list.length - 1;
+        else
+            idx = (idx + dir + list.length) % list.length;
+        const next = list[idx];
+        root.pinPlayerName = next.dbusName;
+        root.lastPlayer = next;
+        root.player = next;
+    }
+
     // right-click on the switcher — pin the first player that is actually playing
     function jumpToPlaying() {
         const playing = root.controlPlayers.filter(p => !root.isIgnored(p) && p.isPlaying);
@@ -394,8 +418,12 @@ Singleton {
         // a pinned player clamps the selection in place — auto-selection must
         // not chase playback changes while a pin is active (both the card and
         // the bar track root.player); it falls back only once the pinned
-        // player disappears
+        // player disappears. A pin whose player died is dead weight — drop it
+        // so a revival (or a fresh player reusing the bus name) can't silently
+        // re-lock the selection.
         const pinned = root.pinPlayerName.length > 0 ? root.playerByName(root.pinPlayerName) : null;
+        if (!pinned && root.pinPlayerName.length > 0)
+            root.pinPlayerName = "";
         if (pinned) {
             if (root.player !== pinned)
                 root.player = pinned;
