@@ -24,7 +24,7 @@ Singleton {
 
     // Core identity tokens (themed)
     readonly property color accent2: pick("#8be9fd", "#48bfe3", "#8ec07c", "#f2b0cd", "#83c092", "#a6d8ff")  // cyan secondary → everforest aqua / soramane pale sky
-    readonly property color pink: pick("#ff79c6", "#e5a8cf", "#b16286", "#ff6b9d", "#d699b6", "#ffa7cd")
+    readonly property color pink: pick("#ff79c6", "#e5a8cf", "#b16286", "#ff6b9d", "#d699b6", "#ffa7cd") // "#ff79c6", "#e31096"
     readonly property color fg: pick("#f8f8f2", "#eef4f7", "#ebdbb2", "#f6eaf1", "#d3c6aa", "#eaf3ff")
     readonly property color dim: pick("#b8bfcb", "#aebbc4", "#a89984", "#b8a8b4", "#9da9a0", "#b7c4de")
     readonly property color muted: pick("#6272a4", "#5f6f7d", "#928374", "#8a647a", "#859289", "#8fa2c9")

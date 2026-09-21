@@ -24,22 +24,37 @@ Singleton {
     }
 
     property bool mprisArtVisible: prefs.mprisArtVisible
-    onMprisArtVisibleChanged: { prefs.mprisArtVisible = mprisArtVisible; root.persistPrefs(); }
+    onMprisArtVisibleChanged: {
+        prefs.mprisArtVisible = mprisArtVisible;
+        root.persistPrefs();
+    }
 
     property bool showMprisProgress: prefs.showMprisProgress
-    onShowMprisProgressChanged: { prefs.showMprisProgress = showMprisProgress; root.persistPrefs(); }
+    onShowMprisProgressChanged: {
+        prefs.showMprisProgress = showMprisProgress;
+        root.persistPrefs();
+    }
 
     property bool hideWhenIdle: prefs.hideWhenIdle
-    onHideWhenIdleChanged: { prefs.hideWhenIdle = hideWhenIdle; root.persistPrefs(); }
+    onHideWhenIdleChanged: {
+        prefs.hideWhenIdle = hideWhenIdle;
+        root.persistPrefs();
+    }
 
     // scroll-to-marquee song titles (pill + quicksettings card)
     property bool marqueeEnabled: prefs.marqueeEnabled
-    onMarqueeEnabledChanged: { prefs.marqueeEnabled = marqueeEnabled; root.persistPrefs(); }
+    onMarqueeEnabledChanged: {
+        prefs.marqueeEnabled = marqueeEnabled;
+        root.persistPrefs();
+    }
 
     // pill default view — compact (icon + thin progress ring only) or the
     // full artwork/title layout; hovering the compact pill expands it
     property bool mprisCompact: prefs.mprisCompact
-    onMprisCompactChanged: { prefs.mprisCompact = mprisCompact; root.persistPrefs(); }
+    onMprisCompactChanged: {
+        prefs.mprisCompact = mprisCompact;
+        root.persistPrefs();
+    }
 
     // ── persistent store ──
     FileView {
@@ -158,6 +173,10 @@ Singleton {
     // per-app glyph for the switcher button — shows which app the card controls
     function appGlyph(p) {
         const s = ((p?.identity ?? "") + " " + (p?.desktopEntry ?? "")).toLowerCase();
+        if (s.includes("mpv"))
+            return "\uf36e";   // nf-linux-mpv — the actual mpv logo
+        if (s.includes("mpd") || s.includes("ncmpcpp"))
+            return "󰎇";  // nf-md-music_clef_treble — mpd is the music daemon
         if (s.includes("spotify"))
             return "\uf1bc";
         if (s.includes("chrome") || s.includes("chromium"))
@@ -165,6 +184,40 @@ Singleton {
         if (s.includes("firefox") || s.includes("zen"))
             return "\uf269";
         return "\uf001";
+    }
+
+    // middle-click on the bar module — raise the player's window via MPRIS
+    // Raise when the player supports it (CanRaise), otherwise pull up its
+    // Hyprland window. Classes are case-sensitive on focus, hence the
+    // case-variant regexes; the syntax is this build's lua dispatcher:
+    // hyprctl dispatch 'hl.dsp.focus{window="class:..."}'.
+    function _focusByClass(re): void {
+        Quickshell.execDetached(["hyprctl", "dispatch", 'hl.dsp.focus{window="class:' + re + '"}']);
+    }
+
+    function raiseOrFocus(p) {
+        if (!p)
+            return;
+        if (p.canRaise) {
+            p.raise();
+            return;
+        }
+        const s = ((p.identity ?? "") + " " + (p.desktopEntry ?? "")).toLowerCase();
+        // mpd/ncmpcpp: the client runs in a terminal (kitty or foot) held on
+        // special:nc — "focusing" it means summoning that scratchpad (and the
+        // on_created_empty rule respawns ncmpcpp if it's gone)
+        if (s.includes("mpd") || s.includes("ncmpcpp")) {
+            Quickshell.execDetached(["hyprctl", "dispatch", 'hl.dsp.workspace.toggle_special("nc")']);
+            return;
+        }
+        if (s.includes("mpv"))
+            return root._focusByClass("[Mm]pv");
+        if (s.includes("spotify"))
+            return root._focusByClass("[Ss]potify");
+        if (s.includes("chrome") || s.includes("chromium"))
+            return root._focusByClass("([Gg]oogle-[Cc]hrome|[Cc]hromium|[Cc]hrome)");
+        if (s.includes("firefox") || s.includes("zen"))
+            return root._focusByClass("([Ff]irefox|[Zz]en|[Ll]ibrewolf)");
     }
 
     // brand accent per player — drives the bar ring + center glyph (and the
@@ -242,7 +295,11 @@ Singleton {
         Quickshell.execDetached(["sh", "-c", wpStreamLookup(kw) + `[ -n "$id" ] && wpctl set-mute "$id" toggle`]);
     }
 
-    property var ignored: ["mpv", "whatsapp", "undefined"]
+    // players hidden from every mpris module (picker, bar, songart, cycler):
+    // "undefined" is a phantom identity some engines register, whatsapp's web
+    // client is background noise — mpv is intentionally NOT here anymore, it's
+    // a first-class player again (bar pill, nowplaying card, lock, songart).
+    property var ignored: ["whatsapp", "undefined"]
 
     // browsers are shown like any player but must NEVER display album art
     function isBrowserPlayer(p) {
@@ -276,7 +333,13 @@ Singleton {
     //   · playing while pinned at length  → time the restarted pass itself,
     //     synthesising 0..1 so the indicator walks, then wraps, forever.
     function progressState(): var {
-        return { fp: "", lastRaw: -1, synth: false, synthPos: 0, lastTick: 0 };
+        return {
+            fp: "",
+            lastRaw: -1,
+            synth: false,
+            synthPos: 0,
+            lastTick: 0
+        };
     }
 
     function _fpOf(p): string {
@@ -558,8 +621,14 @@ Singleton {
             // engine reload fires both of these for every player in one tick —
             // mark the churn window so pauseOthers() stays off peers during the
             // storm (refresh itself always runs, so selection tracks live)
-            Component.onCompleted: { root._markChurn(); root.refresh(); }
-            Component.onDestruction: { root._markChurn(); root.refresh(); }
+            Component.onCompleted: {
+                root._markChurn();
+                root.refresh();
+            }
+            Component.onDestruction: {
+                root._markChurn();
+                root.refresh();
+            }
 
             function onPlaybackStateChanged() {
                 root.refresh();

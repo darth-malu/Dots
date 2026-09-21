@@ -73,7 +73,7 @@ Item {
         id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
 
         onEntered: {
             mprisRoot._hovering = true;
@@ -95,6 +95,7 @@ Item {
             // the whole event map, nothing else:
             //   left        = toggle play/pause
             //   right       = next
+            //   middle      = raise / summon the player's window
             //   alt + left  = toggle compact/expanded
             if ((mouse.modifiers & Qt.AltModifier) && mouse.button == Qt.LeftButton)
                 MprisState.mprisCompact = !MprisState.mprisCompact;
@@ -104,6 +105,8 @@ Item {
                     p.togglePlaying();
             } else if (mouse.button == Qt.RightButton)
                 MprisState.player?.next();
+            else if (mouse.button == Qt.MiddleButton)
+                MprisState.raiseOrFocus(MprisState.player);
         }
 
         onWheel: event => {

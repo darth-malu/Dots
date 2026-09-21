@@ -12,9 +12,7 @@ BarBlock {
 
     // no pill background at rest — it only lights up while the swap
     // view (right-click) is open, with a faint hover hint otherwise
-    color: showSwap ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.18)
-        : mouseArea.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.10)
-        : "transparent"
+    color: showSwap ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.18) : mouseArea.containsMouse ? Qt.rgba(Themes.accent.r, Themes.accent.g, Themes.accent.b, 0.10) : "transparent"
 
     property bool showSwap: false
 
@@ -23,7 +21,7 @@ BarBlock {
     readonly property string memoryDetail: `${ResourcesState.memUsed.toFixed(1)}G / ${ResourcesState.memTotal.toFixed(1)}G`
     readonly property string swapInfo: ResourcesState.swapTotal > 0 ? ` ${ResourcesState.swapUsed.toFixed(1)}Gi` : ""
 
-    readonly property color memoryColor: memoryPercent > 90 ? "#ff5555" : memoryPercent > 80 ? "#f1fa8c" : Themes.accent
+    readonly property color memoryColor: memoryPercent > 90 ? "#ff5555" : memoryPercent > 80 ? "#e31096" : Themes.accent
     readonly property color swapColor: ResourcesState.swapPercent > 80 ? "#ff5555" : Themes.accent2
 
     onClicked: mouse => {
@@ -167,7 +165,9 @@ BarBlock {
                             }
                         }
 
-                        Item { Layout.fillWidth: true }
+                        Item {
+                            Layout.fillWidth: true
+                        }
 
                         Text {
                             text: `${memory.memoryDetail} · ${memory.memoryPercent}%`
@@ -198,10 +198,7 @@ BarBlock {
                             // share of total RAM drives the accent colour
                             readonly property real frac: ResourcesState.memTotal > 0 ? kib / (ResourcesState.memTotal * 1048576) : 0
                             // same 4-band palette as the cpu popup: cyan → green → orange → red
-                            readonly property color accent: frac > 0.15 ? "#ff5555"
-                                : frac > 0.06 ? "#ffb86c"
-                                : frac > 0.02 ? "#50fa7b"
-                                : Themes.accent2
+                            readonly property color accent: frac > 0.15 ? "#ff5555" : frac > 0.06 ? "#ffb86c" : frac > 0.02 ? "#50fa7b" : Themes.accent2
                             readonly property real relMax: ResourcesState.memProcs.count > 0 ? Math.max(ResourcesState.memProcs.get(0).kib, 1) : 1
 
                             radius: 8

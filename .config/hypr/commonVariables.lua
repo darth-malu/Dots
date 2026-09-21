@@ -26,7 +26,7 @@ hl.config({
     kb_layout                   = "us",
     kb_variant                  = "",
     kb_model                    = "",
-    kb_options                  = "caps:swapescape",
+    -- kb_options                  = "caps:swapescape",
     kb_rules                    = "",
 
     numlock_by_default          = true,
@@ -34,9 +34,9 @@ hl.config({
     follow_mouse                = 1,
     mouse_refocus               = false, -- true:: -- if true mouse must cross boundary for focus change, follow_mouse must be 1
 
-    float_switch_override_focus = 2, -- (1:: or 2), focus will change to the window under the cursor when changing from tiled-to-floating and vice versa. If 2, focus will also follow mouse on float-to-float switches.
+    float_switch_override_focus = 2,     -- (1:: or 2), focus will change to the window under the cursor when changing from tiled-to-floating and vice versa. If 2, focus will also follow mouse on float-to-float switches.
     -- TODO: see if this is what is causing issues with my focusss
-    sensitivity                 = 0, -- -1.0 - 1.0, 0 means no modification.
+    sensitivity                 = 0,     -- -1.0 - 1.0, 0 means no modification.
   },
 })
 
