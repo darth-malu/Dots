@@ -42,6 +42,8 @@ WrapperMouseArea {
 
     property real iconRadius: iconSize / 5
 
+    readonly property int xButtonSize: 20
+
     // critical notifications keep a red border; wifi connects show a signal-tinted wifi glyph
     readonly property bool urgent: n.urgency == NotificationUrgency.Critical
     readonly property bool isWifiConnect: n.appName == "Shell" && n.body.startsWith("signal · ")
@@ -258,6 +260,7 @@ WrapperMouseArea {
                 RowLayout {
                     visible: rootMouseArea.n.actions.length > 1
                     Layout.fillWidth: true
+                    Layout.bottomMargin: 4
                     implicitHeight: actionRepeater.implicitHeight
                     spacing: 4
 
@@ -326,8 +329,8 @@ WrapperMouseArea {
                 id: expandButton
                 visible: rootMouseArea.previewText.length > (rootMouseArea.n.actions.length > 1 ? 50 : 100)
 
-                implicitWidth: 18
-                implicitHeight: 18
+                implicitWidth: rootMouseArea.xButtonSize
+                implicitHeight: rootMouseArea.xButtonSize
                 radius: 5
                 color: expandMA.containsMouse ? Qt.rgba(1, 1, 1, 0.09) : Themes.separator
 
@@ -358,8 +361,8 @@ WrapperMouseArea {
 
             Rectangle {
                 id: closeButton
-                implicitWidth: 18
-                implicitHeight: 18
+                implicitWidth: rootMouseArea.xButtonSize
+                implicitHeight: rootMouseArea.xButtonSize
                 radius: 5
                 color: closeMA.containsMouse ? Qt.rgba(1, 0.33, 0.33, 0.25) : Themes.separator
 

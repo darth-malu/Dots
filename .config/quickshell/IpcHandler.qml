@@ -210,7 +210,8 @@ function toggleMprisArt(): void {
         // straight-to-eyedropper shortcut
         function screenPick(): string {
             PickerState.colorOpen = false;
-            Quickshell.execDetached(["sh", "-c", "hyprpicker | tr -d '\\n' | wl-copy && notify-send -a Color -t 1500 'color copied to clipboard'"]);
+            Quickshell.execDetached(["sh", "-c",
+                "(command -v hyprpicker >/dev/null 2>&1 && hyprpicker || (p=$(slurp -p) || exit 1; g=$(printf '%s\\n' \"$p\" | tr -cs '0-9.' '\\n' | head -2 | paste -sd ','); grim -g \"$g 1x1\" -t ppm - 2>/dev/null | tail -c 3 | od -An -tx1 | tr -d ' \\n')) | tr -d '\\n' | wl-copy && notify-send -a Color -t 1500 'color copied to clipboard'"]);
             return "picking…";
         }
     }

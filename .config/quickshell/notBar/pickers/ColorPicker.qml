@@ -13,7 +13,7 @@ import qs.themes
 // Fully-featured color picker (dankmaterialshell-style):
 // · SV gradient square + hue slider + opacity slider drive an HSV state model
 // · screen eyedropper (hyprpicker) loads the pixel straight into the editor
-// · HEX / RGB / HSL / HSV readouts, each one click from the clipboard
+// · HEX / RGB / HSL / HSV inputs — type any format and the picker follows
 // · material palette + persisted recents load colors back into the editor
 PanelWindow {
     id: root
@@ -90,12 +90,15 @@ PanelWindow {
         alpha = c.a;
         gradX = sat;
         gradY = 1 - val;
-        syncHexField();
+        syncFields();
     }
 
-    function syncHexField() {
+    function syncFields() {
         if (!hexField.activeFocus)
             hexField.text = hexString(true);
+        rgbField.sync();
+        hslField.sync();
+        hsvField.sync();
     }
 
     function validHex(s) {
@@ -109,6 +112,52 @@ PanelWindow {
         return t.toLowerCase();
     }
 
+    function parseRgb(s) {
+        const m = s.trim().match(/^rgba?\(\s*([\d.]+)\s*[,\s]\s*([\d.]+)\s*[,\s]\s*([\d.]+)\s*(?:[,\s/]\s*([\d.]+)\s*(%?)\s*)?\)$/i);
+        if (!m) return null;
+        const r = Math.max(0, Math.min(255, +m[1])) / 255;
+        const g = Math.max(0, Math.min(255, +m[2])) / 255;
+        const b = Math.max(0, Math.min(255, +m[3])) / 255;
+        let a = m[4] === undefined ? 1 : +m[4];
+        if (m[4] !== undefined && (a > 1 || m[5] === "%"))
+            a = m[5] === "%" ? a / 100 : a / 255;
+        a = Math.max(0, Math.min(1, a));
+        if ([r, g, b, a].some(n => isNaN(n))) return null;
+        return Qt.rgba(r, g, b, a);
+    }
+
+    function parseHsl(s) {
+        const m = s.trim().match(/^hsla?\(\s*([\d.]+)\s*[,\s]\s*([\d.]+)\s*%?\s*[,\s]\s*([\d.]+)\s*%?\s*(?:[,\s/]\s*([\d.]+)\s*(%?)\s*)?\)$/i);
+        if (!m) return null;
+        const h = ((+m[1]) % 360 + 360) % 360 / 360;
+        const sl = Math.max(0, Math.min(100, +m[2])) / 100;
+        const l = Math.max(0, Math.min(100, +m[3])) / 100;
+        let a = m[4] === undefined ? 1 : +m[4];
+        if (m[4] !== undefined && (a > 1 || m[5] === "%"))
+            a /= 100;
+        a = Math.max(0, Math.min(1, a));
+        if ([h, sl, l, a].some(n => isNaN(n))) return null;
+        return Qt.hsla(h, sl, l, a);
+    }
+
+    function parseHsv(s) {
+        const m = s.trim().match(/^hsva?\(\s*([\d.]+)\s*[,\s]\s*([\d.]+)\s*%?\s*[,\s]\s*([\d.]+)\s*%?\s*(?:[,\s/]\s*([\d.]+)\s*(%?)\s*)?\)$/i);
+        if (!m) return null;
+        const h = ((+m[1]) % 360 + 360) % 360 / 360;
+        const sv = Math.max(0, Math.min(100, +m[2])) / 100;
+        const v = Math.max(0, Math.min(100, +m[3])) / 100;
+        let a = m[4] === undefined ? 1 : +m[4];
+        if (m[4] !== undefined && (a > 1 || m[5] === "%"))
+            a /= 100;
+        a = Math.max(0, Math.min(1, a));
+        if ([h, sv, v, a].some(n => isNaN(n))) return null;
+        return Qt.hsva(h, sv, v, a);
+    }
+
+    function validRgb(s) { return parseRgb(s) !== null; }
+    function validHsl(s) { return parseHsl(s) !== null; }
+    function validHsv(s) { return parseHsv(s) !== null; }
+
     function copyText(text, label) {
         Quickshell.execDetached(["sh", "-c", `printf '%s' '${text}' | wl-copy && notify-send -a Color -t 1500 'copied ${label || text}'`]);
         PickerState.pushRecentColor(normalizeHex(hexString(true)));
@@ -120,14 +169,20 @@ PanelWindow {
 
     onVisibleChanged: {
         if (visible)
-            syncHexField();
+            syncFields();
     }
 
-    // ── screen eyedropper — hyprpicker prints the picked hex ──
+    // ── screen eyedropper — hyprpicker preferred, grim+slurp fallback ──
     Process {
         id: hyprpick
 
-        command: ["sh", "-c", "hyprpicker"]
+        command: ["sh", "-c", [
+            "if command -v hyprpicker >/dev/null 2>&1; then exec hyprpicker; fi",
+            "p=$(slurp -p) || exit 1",
+            "g=$(printf '%s\\n' \"$p\" | tr -cs '0-9.' '\\n' | head -2 | paste -sd ',')",
+            "h=$(grim -g \"$g 1x1\" -t ppm - 2>/dev/null | tail -c 3 | od -An -tx1 | tr -d ' \\n')",
+            "[ -n \"$h\" ] && printf '#%s\\n' \"$h\""
+        ].join("; ")]
         running: false
 
         stdout: StdioCollector {
@@ -415,7 +470,7 @@ PanelWindow {
                         root.gradY = Math.max(0, Math.min(1, mouse.y / height));
                         root.sat = root.gradX;
                         root.val = 1 - root.gradY;
-                        root.syncHexField();
+                        root.syncFields();
                     }
                     onPressed: mouse => apply(mouse)
                     onPositionChanged: mouse => {
@@ -432,7 +487,7 @@ PanelWindow {
                 frac: root.hue
                 onDragged: f => {
                     root.hue = f;
-                    root.syncHexField();
+                    root.syncFields();
                 }
             }
 
@@ -448,7 +503,7 @@ PanelWindow {
                     frac: root.alpha
                     onDragged: f => {
                         root.alpha = f;
-                        root.syncHexField();
+                        root.syncFields();
                     }
                 }
 
@@ -492,7 +547,7 @@ PanelWindow {
                 Layout.fillWidth: true
                 spacing: 5
 
-                // HEX gets an editable field; the rest are read-only rows
+                // HEX, RGB, HSL, HSV — type any format and the picker follows
                 RowLayout {
                     spacing: 7
 
@@ -513,7 +568,7 @@ PanelWindow {
 
                         Layout.fillWidth: true
                         Layout.preferredHeight: 26
-                        // text is managed imperatively by syncHexField() — a
+                        // text is managed imperatively by syncFields() — a
                         // declarative binding here loops with onTextChanged
                         color: root.validHex(text) || text.length === 0 ? Themes.windowTextColor : "#ff5555"
                         font {
@@ -550,7 +605,7 @@ PanelWindow {
                             }
                         }
                         Keys.onEscapePressed: {
-                            root.syncHexField();
+                            root.syncFields();
                             focus = false;
                         }
                     }
@@ -560,19 +615,31 @@ PanelWindow {
                     }
                 }
 
-                FormatRow {
+                FormatField {
+                    id: rgbField
+
                     label: "RGB"
-                    value: root.rgbString()
+                    fmt: root.rgbString()
+                    isValid: s => root.validRgb(s)
+                    onValidInput: t => root.updateFromColor(root.parseRgb(t))
                 }
 
-                FormatRow {
+                FormatField {
+                    id: hslField
+
                     label: "HSL"
-                    value: root.hslString()
+                    fmt: root.hslString()
+                    isValid: s => root.validHsl(s)
+                    onValidInput: t => root.updateFromColor(root.parseHsl(t))
                 }
 
-                FormatRow {
+                FormatField {
+                    id: hsvField
+
                     label: "HSV"
-                    value: root.hsvString()
+                    fmt: root.hsvString()
+                    isValid: s => root.validHsv(s)
+                    onValidInput: t => root.updateFromColor(root.parseHsv(t))
                 }
             }
 
@@ -774,16 +841,23 @@ PanelWindow {
         }
     }
 
-    component FormatRow: RowLayout {
-        id: fr
+    component FormatField: RowLayout {
+        id: ff
 
         property string label
-        property string value
+        property string fmt
+        property var isValid: (s) => false
+        property var onValidInput: (s) => {}
+
+        function sync() {
+            if (!input.activeFocus)
+                input.text = ff.fmt;
+        }
 
         spacing: 7
 
         Text {
-            text: fr.label
+            text: ff.label
             color: Qt.rgba(Themes.rofiDelegateText.r, Themes.rofiDelegateText.g, Themes.rofiDelegateText.b, 0.55)
             font {
                 pixelSize: 8
@@ -794,31 +868,57 @@ PanelWindow {
             Layout.preferredWidth: 30
         }
 
-        Rectangle {
-            Layout.fillWidth: true
-            implicitHeight: 26
-            radius: 6
-            color: Qt.rgba(1, 1, 1, 0.05)
-            border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.08)
+        TextField {
+            id: input
 
-            Text {
-                anchors.left: parent.left
-                anchors.leftMargin: 8
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                text: fr.value
-                color: Themes.windowTextColor
-                font {
-                    pixelSize: 10
-                    family: "ZedMono Nerd Font"
+            Layout.fillWidth: true
+            Layout.preferredHeight: 26
+            color: activeFocus && !ff.isValid(text) ? "#ff5555" : Themes.windowTextColor
+            font {
+                pixelSize: 10
+                family: "ZedMono Nerd Font"
+            }
+            selectByMouse: true
+            maximumLength: 40
+            verticalAlignment: TextInput.AlignVCenter
+            leftPadding: 8
+            rightPadding: 8
+            background: Rectangle {
+                radius: 6
+                color: Qt.rgba(1, 1, 1, 0.05)
+                border.width: 1
+                border.color: input.activeFocus ? Themes.accent : Qt.rgba(1, 1, 1, 0.08)
+            }
+            onTextChanged: {
+                if (activeFocus && ff.isValid(text))
+                    ff.onValidInput(text);
+            }
+            onActiveFocusChanged: {
+                if (!activeFocus)
+                    input.text = ff.fmt;
+            }
+            Keys.onReturnPressed: {
+                if (ff.isValid(text)) {
+                    ff.onValidInput(text);
+                    root.copyText(text);
+                    focus = false;
                 }
-                elide: Text.ElideRight
+            }
+            Keys.onEnterPressed: {
+                if (ff.isValid(text)) {
+                    ff.onValidInput(text);
+                    root.copyText(text);
+                    focus = false;
+                }
+            }
+            Keys.onEscapePressed: {
+                input.text = ff.fmt;
+                focus = false;
             }
         }
 
         CopyButton {
-            onClicked: root.copyText(fr.value)
+            onClicked: root.copyText(input.text)
         }
     }
 }
