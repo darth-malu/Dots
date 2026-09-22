@@ -14,6 +14,7 @@ import Quickshell.Networking
 import qs.themes
 Item {
     id: root
+    signal resetDropdowns()
     property int currentCategory: 0
     // primary-screen width — the bar width slider's starting/default value.
     // prefs store 0 as "full-bleed"; here we display and step in real pixels
@@ -683,7 +684,16 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: fontDrop.dropOpen = !fontDrop.dropOpen
+                property bool wasOpen: false
+                onPressed: wasOpen = fontPopup.opened || fontPopup.visible || fontDrop.dropOpen
+                onClicked: {
+                    if (wasOpen) {
+                        fontDrop.dropOpen = false;
+                        fontPopup.close();
+                    } else {
+                        fontDrop.dropOpen = true;
+                    }
+                }
             }
             Popup {
                 id: fontPopup
@@ -744,12 +754,11 @@ Item {
                                         fpr.picked(modelData);
                                         fontPopup.close();
                                     }
-                                }
+}
                             }
                         }
                     }
                 }
-                onVisibleChanged: fontDrop.dropOpen = visible
             }
             Connections {
                 target: fontDrop
@@ -758,6 +767,13 @@ Item {
                         fontPopup.open();
                     else if (!fontDrop.dropOpen && fontPopup.visible)
                         fontPopup.close();
+                }
+            }
+            Connections {
+                target: root
+                function onResetDropdowns() {
+                    fontDrop.dropOpen = false;
+                    fontPopup.close();
                 }
             }
         }
@@ -876,6 +892,7 @@ Item {
             if (visible) {
                 settingsKeyHandler.forceActiveFocus();
                 interfaceCheck.running = true;
+                root.resetDropdowns();
             }
         }
         exclusionMode: ExclusionMode.Ignore
@@ -1242,7 +1259,16 @@ Item {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    onClicked: slideshowDropdown.slideshowDropOpen = !slideshowDropdown.slideshowDropOpen
+                                    property bool wasOpen: false
+                                    onPressed: wasOpen = slideshowPopup.opened || slideshowPopup.visible || slideshowDropdown.slideshowDropOpen
+                                    onClicked: {
+                                        if (wasOpen) {
+                                            slideshowDropdown.slideshowDropOpen = false;
+                                            slideshowPopup.close();
+                                        } else {
+                                            slideshowDropdown.slideshowDropOpen = true;
+                                        }
+                                    }
                                 }
                                 Popup {
                                     id: slideshowPopup
@@ -1295,7 +1321,6 @@ Item {
                                             }
                                         }
                                     }
-                                    onVisibleChanged: slideshowDropdown.slideshowDropOpen = visible
                                 }
                                 Connections {
                                     target: slideshowDropdown
@@ -1304,6 +1329,13 @@ Item {
                                             slideshowPopup.open();
                                         else if (!slideshowDropdown.slideshowDropOpen && slideshowPopup.visible)
                                             slideshowPopup.close();
+                                    }
+                                }
+                                Connections {
+                                    target: root
+                                    function onResetDropdowns() {
+                                        slideshowDropdown.slideshowDropOpen = false;
+                                        slideshowPopup.close();
                                     }
                                 }
                             }
@@ -1555,35 +1587,33 @@ Item {
                                             anchors.fill: parent
                                             hoverEnabled: true
                                             cursorShape: Qt.PointingHandCursor
-                                            onClicked: colorThemeDropdown.colorThemeDropOpen = !colorThemeDropdown.colorThemeDropOpen
+                                            property bool wasOpen: false
+                                            onPressed: wasOpen = colorThemePopup.opened || colorThemePopup.visible || colorThemeDropdown.colorThemeDropOpen
+                                            onClicked: {
+                                                if (wasOpen) {
+                                                    colorThemeDropdown.colorThemeDropOpen = false;
+                                                    colorThemePopup.close();
+                                                } else {
+                                                    colorThemeDropdown.colorThemeDropOpen = true;
+                                                }
+                                            }
                                         }
-                                        // dropdown list
-                                        Rectangle {
+                                        Popup {
                                             id: colorThemePopup
-                                            visible: colorThemeDropdown.colorThemeDropOpen
-                                            anchors.top: parent.bottom
-                                            anchors.topMargin: 4
-                                            x: 0
+                                            y: colorThemeDropdown.height + 4
                                             width: colorThemeDropdown.width
                                             height: colorThemeCol.implicitHeight + 12
-                                            radius: 8
-                                            color: Themes.cardBg
-                                            border.width: 1
-                                            border.color: Themes.borderColor
-                                            z: 100
-                                            onVisibleChanged: {
-                                                colorThemeDropdown.colorThemeDropOpen = visible;
-                                                if (visible)
-                                                    colorThemePopupBg.forceActiveFocus();
+                                            padding: 0
+                                            closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
+                                            onOpened: colorThemeDropdown.colorThemeDropOpen = true
+                                            onClosed: colorThemeDropdown.colorThemeDropOpen = false
+                                            background: Rectangle {
+                                                radius: 8
+                                                color: Themes.cardBg
+                                                border.width: 1
+                                                border.color: Themes.borderColor
                                             }
-                                            MouseArea {
-                                                id: colorThemePopupBg
-                                                anchors.fill: parent
-                                                hoverEnabled: true
-                                                propagateComposedEvents: true
-                                                z: -1
-                                            }
-                                            Column {
+                                            contentItem: Column {
                                                 id: colorThemeCol
                                                 anchors.fill: parent
                                                 anchors.margins: 6
@@ -1639,19 +1669,18 @@ Item {
                                                             cursorShape: Qt.PointingHandCursor
                                                             onClicked: {
                                                                 MiscState.themeScheme = themeOpt.modelData.key;
-                                                                colorThemeDropdown.colorThemeDropOpen = false;
+                                                                colorThemePopup.close();
                                                             }
                                                         }
                                                     }
                                                 }
                                             }
                                         }
-                                        // close when clicking outside
                                         Connections {
-                                            target: window
-                                            function onVisibleChanged() {
-                                                if (!window.visible)
-                                                    colorThemeDropdown.colorThemeDropOpen = false;
+                                            target: root
+                                            function onResetDropdowns() {
+                                                colorThemeDropdown.colorThemeDropOpen = false;
+                                                colorThemePopup.close();
                                             }
                                         }
                                     }
@@ -1763,7 +1792,16 @@ Item {
                                             anchors.fill: parent
                                             hoverEnabled: true
                                             cursorShape: Qt.PointingHandCursor
-                                            onClicked: barStyleDropdown.barStyleDropOpen = !barStyleDropdown.barStyleDropOpen
+                                            property bool wasOpen: false
+                                            onPressed: wasOpen = barStylePopup.opened || barStylePopup.visible || barStyleDropdown.barStyleDropOpen
+                                            onClicked: {
+                                                if (wasOpen) {
+                                                    barStyleDropdown.barStyleDropOpen = false;
+                                                    barStylePopup.close();
+                                                } else {
+                                                    barStyleDropdown.barStyleDropOpen = true;
+                                                }
+                                            }
                                         }
                                         Popup {
                                             id: barStylePopup
@@ -1816,7 +1854,6 @@ Item {
                                                     }
                                                 }
                                             }
-                                            onVisibleChanged: barStyleDropdown.barStyleDropOpen = visible
                                         }
                                         Connections {
                                             target: barStyleDropdown
@@ -1825,6 +1862,13 @@ Item {
                                                     barStylePopup.open();
                                                 else if (!barStyleDropdown.barStyleDropOpen && barStylePopup.visible)
                                                     barStylePopup.close();
+                                            }
+                                        }
+                                        Connections {
+                                            target: root
+                                            function onResetDropdowns() {
+                                                barStyleDropdown.barStyleDropOpen = false;
+                                                barStylePopup.close();
                                             }
                                         }
                                     }
@@ -1935,7 +1979,16 @@ Item {
                                             anchors.fill: parent
                                             hoverEnabled: true
                                             cursorShape: Qt.PointingHandCursor
-                                            onClicked: wsStyleDropdown.wsStyleDropOpen = !wsStyleDropdown.wsStyleDropOpen
+                                            property bool wasOpen: false
+                                            onPressed: wasOpen = wsStylePopup.opened || wsStylePopup.visible || wsStyleDropdown.wsStyleDropOpen
+                                            onClicked: {
+                                                if (wasOpen) {
+                                                    wsStyleDropdown.wsStyleDropOpen = false;
+                                                    wsStylePopup.close();
+                                                } else {
+                                                    wsStyleDropdown.wsStyleDropOpen = true;
+                                                }
+                                            }
                                         }
                                         Popup {
                                             id: wsStylePopup
@@ -1995,7 +2048,6 @@ Item {
                                                 }
                                             }
                                         }
-                                        onVisibleChanged: wsStyleDropdown.wsStyleDropOpen = visible
                                     }
                                     Connections {
                                         target: wsStyleDropdown
@@ -2004,6 +2056,13 @@ Item {
                                                 wsStylePopup.open();
                                             else if (!wsStyleDropdown.wsStyleDropOpen && wsStylePopup.visible)
                                                 wsStylePopup.close();
+                                        }
+                                    }
+                                    Connections {
+                                        target: root
+                                        function onResetDropdowns() {
+                                            wsStyleDropdown.wsStyleDropOpen = false;
+                                            wsStylePopup.close();
                                         }
                                     }
                                 }
@@ -2834,7 +2893,16 @@ Item {
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: notifFontDropdown.notifFontDropOpen = !notifFontDropdown.notifFontDropOpen
+                                property bool wasOpen: false
+                                onPressed: wasOpen = notifFontPopup.opened || notifFontPopup.visible || notifFontDropdown.notifFontDropOpen
+                                onClicked: {
+                                    if (wasOpen) {
+                                        notifFontDropdown.notifFontDropOpen = false;
+                                        notifFontPopup.close();
+                                    } else {
+                                        notifFontDropdown.notifFontDropOpen = true;
+                                    }
+                                }
                             }
                             Popup {
                                 id: notifFontPopup
@@ -2900,17 +2968,23 @@ Item {
                                         }
                                     }
                                 }
-                                onVisibleChanged: notifFontDropdown.notifFontDropOpen = visible
+                        }
+                        Connections {
+                            target: notifFontDropdown
+                            function onNotifFontDropOpenChanged() {
+                                if (notifFontDropdown.notifFontDropOpen && !notifFontPopup.visible)
+                                    notifFontPopup.open();
+                                else if (!notifFontDropdown.notifFontDropOpen && notifFontPopup.visible)
+                                    notifFontPopup.close();
                             }
-                            Connections {
-                                target: notifFontDropdown
-                                function onNotifFontDropOpenChanged() {
-                                    if (notifFontDropdown.notifFontDropOpen && !notifFontPopup.visible)
-                                        notifFontPopup.open();
-                                    else if (!notifFontDropdown.notifFontDropOpen && notifFontPopup.visible)
-                                        notifFontPopup.close();
-                                }
+                        }
+                        Connections {
+                            target: root
+                            function onResetDropdowns() {
+                                notifFontDropdown.notifFontDropOpen = false;
+                                notifFontPopup.close();
                             }
+                        }
                         }
                     }
                     // media/notification font size — live here too on the preview below
