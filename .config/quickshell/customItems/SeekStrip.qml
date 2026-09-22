@@ -14,6 +14,9 @@ Item {
     property real ratio: 0
     property real length: 0
     property color accent: Themes.accent
+    // resting groove/fill thickness (a hairline) vs the hover/seek thickness
+    property real idleHeight: 2
+    property real hotHeight: 6
     signal seeked(real frac)
 
     implicitHeight: 16
@@ -48,7 +51,7 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        height: root.hot ? 6 : 2
+        height: root.hot ? root.hotHeight : root.idleHeight
         radius: 0
         color: root.hot ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(1, 1, 1, 0.10)
 
@@ -70,7 +73,7 @@ Item {
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         width: parent.width * root.shown
-        height: root.hot ? 6 : 2
+        height: root.hot ? root.hotHeight : root.idleHeight
         radius: 0
         color: root.accent
 

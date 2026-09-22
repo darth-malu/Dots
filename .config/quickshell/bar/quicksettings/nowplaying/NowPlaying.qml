@@ -444,6 +444,8 @@ ClippingRectangle {
                 rightMargin: 0
                 bottom: parent.bottom
             }
+            // a hairline floor line at rest; swells into a track on hover
+            idleHeight: 1
             accent: card.dominantColor
             length: MprisState.cardPlayer?.length ?? 0
 
@@ -620,8 +622,8 @@ ClippingRectangle {
                     left: parent.left
                     right: parent.right
                     bottom: parent.bottom
-                    leftMargin: 12
-                    rightMargin: 12
+                    leftMargin: 0
+                    rightMargin: 0
                 }
                 accent: card.dominantColor
                 length: MprisState.cardPlayer?.length ?? 0

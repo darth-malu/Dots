@@ -33,6 +33,11 @@ BarBlock {
     // that opens the popup can't immediately close it
     property bool _openDebounce: false
 
+    // set while the grab is mid-dismiss: a compositor dismiss hides the
+    // popup before the host button's release-click lands, so the toggle
+    // must be swallowed once to avoid reopening it
+    property bool _grabDismissing: false
+
     Timer {
         id: openDebounceTimer
         interval: 250
@@ -41,9 +46,19 @@ BarBlock {
         onTriggered: root._openDebounce = false
     }
 
+    Timer {
+        id: dismissDebounceTimer
+        interval: 150
+        repeat: false
+        onTriggered: {
+            root._grabDismissing = false;
+            root.showQsPopup = false;
+        }
+    }
+
     // ── volume OSD ──
     onLeftClicked: {
-        if (_openDebounce)
+        if (_openDebounce || _grabDismissing)
             return;
         root.showQsPopup = !root.showQsPopup;
     }
@@ -89,8 +104,18 @@ BarBlock {
         PopupWindow {
             id: quickSettingsPopup
             visible: root.showQsPopup
-            grabFocus: false
+            grabFocus: true
             color: "transparent"
+
+            onVisibleChanged: {
+                if (!visible && !root._grabDismissing) {
+                    // a grab-dismiss hides the window without flipping our flag
+                    // (MiscState.qsOpen, the loader, even shortcuts all depend
+                    // on it) — sync it back once this click gesture settles
+                    root._grabDismissing = true;
+                    dismissDebounceTimer.restart();
+                }
+            }
 
             anchor.window: root.host
             anchor.rect.x: {
