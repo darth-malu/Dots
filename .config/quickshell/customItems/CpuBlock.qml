@@ -68,14 +68,7 @@ BarBlock {
             Layout.preferredWidth: 26
             Layout.preferredHeight: 26
 
-            // solid disc behind the ring so it reads over any wallpaper —
-            // same slot look as the mpris play-button ring
-            Rectangle {
-                anchors.fill: parent
-                anchors.margins: 2
-                radius: width / 2
-                color: Qt.rgba(0, 0, 0, 0.28)
-            }
+            GaugeBg {}
 
             Canvas {
                 id: gauge
@@ -249,10 +242,7 @@ BarBlock {
 
                             readonly property real cval: c
                             // 4 visually distinct bands: cool cyan → green → orange → red
-                            readonly property color accent: cval > 80 ? "#ff5555"
-                                : cval > 60 ? "#ffb86c"
-                                : cval > 30 ? "#50fa7b"
-                                : Themes.accent2
+                            readonly property color accent: cval > 80 ? "#ff5555" : cval > 60 ? "#ffb86c" : cval > 30 ? "#50fa7b" : Themes.accent2
 
                             radius: 8
                             Layout.fillWidth: true
@@ -363,17 +353,17 @@ BarBlock {
                         }
                     }
 
-                        Text {
-                            visible: ResourcesState.cpuProcs.count === 0
-                            text: "sampling…"
-                            color: Themes.muted
-                            font {
-                                pixelSize: 10
-                                italic: true
-                                family: "Quicksand"
-                            }
-                            Layout.alignment: Qt.AlignHCenter
+                    Text {
+                        visible: ResourcesState.cpuProcs.count === 0
+                        text: "sampling…"
+                        color: Themes.muted
+                        font {
+                            pixelSize: 10
+                            italic: true
+                            family: "Quicksand"
                         }
+                        Layout.alignment: Qt.AlignHCenter
+                    }
                 }
             }
         }

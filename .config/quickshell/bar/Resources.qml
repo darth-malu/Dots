@@ -18,7 +18,7 @@ Loader {
     sourceComponent: RowLayout {
         id: resourcesRow
 
-        spacing: Themes.moduleGap // matches rightBlock's module gap in Bar.qml
+        spacing: Themes.moduleGap2 // matches rightBlock's module gap in Bar.qml
 
         DiskBlock {
             host: resourceLoader.host

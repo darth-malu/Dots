@@ -18,6 +18,7 @@ Item {
     height: mprisRoot.pillVisible ? pill.implicitHeight : idleVolumeSpot.height
     implicitWidth: width
     implicitHeight: height
+    // Layout.rightMargin: Themes.moduleGap2
 
     visible: MiscState.showMpris && MprisState.mprisVisible
 
@@ -244,10 +245,11 @@ Item {
                 // width follows pillRow — compact reserves only the ring so
                 // the module reads as part of the right-hand block; the
                 // details animate their layout width in on hover
-                implicitWidth: pillRow.implicitWidth
+                implicitWidth: pillRow.implicitWidth - 10
                 radius: height / 2
                 // color: Qt.rgba(0.1, 0.04, 0.18, 0.4)
                 color: "transparent"
+                anchors.leftMargin: 2
 
                 RowLayout {
                     id: pillRow
@@ -255,11 +257,10 @@ Item {
                     // 2px content inset — identical to BarBlock's face, so the
                     // visual gap around Mpris matches every other module pair
                     // (12px = 2 content + 8 module gap + 2 content)
-                    anchors.leftMargin: 2
-                    anchors.rightMargin: 2
+                    // anchors.rightMargin: 8
                     // fixed gap — the detail slots reserve their space
                     // unconditionally so the reveal never reflows
-                    spacing: 6
+                    spacing: 2
 
                     // ── album art + fallback ──
                     Item {
@@ -383,6 +384,7 @@ Item {
                     // the details are currently revealed
                     Item {
                         Layout.fillWidth: true
+                        visible: false
                     }
 
                     // ── player icon button with progress ring ──
@@ -399,7 +401,8 @@ Item {
                             anchors.fill: parent
                             anchors.margins: 2
                             radius: width / 2
-                            color: Qt.rgba(0, 0, 0, 0.28)
+                            // color: Qt.rgba(0, 0, 0, 0.28)
+                            color: "transparent"
                         }
 
                         Canvas {
@@ -468,7 +471,7 @@ Item {
                                 // dim track
                                 ctx.beginPath();
                                 ctx.arc(cx, cy, r, 0, Math.PI * 2);
-                                ctx.strokeStyle = Qt.rgba(Themes.mauve.r, Themes.mauve.g, Themes.mauve.b, 0.18);
+                                ctx.strokeStyle = Qt.rgba(Themes.mauve.r, Themes.mauve.g, Themes.mauve.b, 0.18); // trough
                                 ctx.lineWidth = 1.5;
                                 ctx.stroke();
 
@@ -679,8 +682,7 @@ Item {
                 // failed, so the popup is never a blank card
                 Text {
                     anchors.centerIn: parent
-                    visible: !MprisState.isBrowserPlayer(MprisState.player)
-                        && (!MprisState.mprisArtVisible || artPopupImage.status !== Image.Ready)
+                    visible: !MprisState.isBrowserPlayer(MprisState.player) && (!MprisState.mprisArtVisible || artPopupImage.status !== Image.Ready)
                     text: "🎵"
                     color: Themes.dim
                     font {

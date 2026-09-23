@@ -16,7 +16,7 @@ RowLayout {
 
     Layout.alignment: Qt.AlignVCenter
     // consistent with the rest of the RHS module gap (Bar.qml rightBlock / SystemTray)
-    spacing: Themes.moduleGap
+    spacing: Themes.moduleGap + 2
 
     readonly property bool pipewireReady: PipewireState.pipewireReady
 
@@ -48,9 +48,12 @@ RowLayout {
                     const muted = (a?.muted) ?? true;
                     const v = a?.volume ?? 0;
                     if (vi.isOut) {
-                        if (muted || v === 0) return "\uf026";
-                        if (v <= 0.33) return "\uf027";
-                        if (v <= 0.66) return "\uf027";
+                        if (muted || v === 0)
+                            return "\uf026";
+                        if (v <= 0.33)
+                            return "\uf027";
+                        if (v <= 0.66)
+                            return "\uf027";
                         return "\uf028";
                     }
                     return muted ? "\uf131" : "\uf130";
@@ -60,9 +63,12 @@ RowLayout {
                         const a = vi.node?.audio;
                         const muted = (a?.muted) ?? true;
                         const v = a?.volume ?? 0;
-                        if (muted || v === 0) return 1;
-                        if (v <= 0.33) return 0.55;
-                        if (v <= 0.66) return 0.75;
+                        if (muted || v === 0)
+                            return 1;
+                        if (v <= 0.33)
+                            return 0.55;
+                        if (v <= 0.66)
+                            return 0.75;
                         return 1;
                     }
                     return viMa.containsMouse ? 1 : 0.8;

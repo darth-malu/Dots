@@ -40,14 +40,7 @@ BarBlock {
             Layout.preferredWidth: 26
             Layout.preferredHeight: 26
 
-            // solid disc behind the ring so it reads over any wallpaper —
-            // same slot look as the mpris play-button ring
-            Rectangle {
-                anchors.fill: parent
-                anchors.margins: 2
-                radius: width / 2
-                color: Qt.rgba(0, 0, 0, 0.28)
-            }
+            GaugeBg {}
 
             Canvas {
                 id: gauge

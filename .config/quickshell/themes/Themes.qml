@@ -280,4 +280,5 @@ Singleton {
     // tray | volume…) — single source of truth so every RHS container keeps
     // the same spacing
     readonly property int moduleGap: 8
+    readonly property int moduleGap2: 2
 }
